@@ -11,6 +11,7 @@ import {
   input,
   signal,
 } from '@angular/core';
+import { clamp } from '../../utils/math.utils';
 
 export type BackdropMode = 'scroll' | 'still';
 
@@ -103,12 +104,10 @@ export class Backdrop {
     if (index === 0) {
       return 1;
     }
-    return Math.max(
+    return clamp(
+      this.position() - index + 1,
       0,
-      Math.min(
-        1,
-        this.position() - index + 1,
-      ),
+      1,
     );
   }
 }

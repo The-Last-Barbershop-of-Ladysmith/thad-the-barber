@@ -11,25 +11,13 @@ import {
   toIsoDate,
   toTimeKey,
 } from '../../../shared/utils/date.utils';
+import { hashToUnit } from '../../../shared/utils/math.utils';
 import { type BookingRules, type DateRange, type TimeSlot } from '../models/booking.models';
 
 export const BOOKING_RULES: BookingRules = {
   daysAhead: 60,
   slotMinutes: 30,
 };
-
-/** FNV-1a → [0, 1). Stable per input so the mock calendar doesn't reshuffle on every visit. */
-function hash(input: string): number {
-  let value: number = 2166136261;
-  for (let i: number = 0; i < input.length; i++) {
-    value ^= input.charCodeAt(i);
-    value = Math.imul(
-      value,
-      16777619,
-    );
-  }
-  return (value >>> 0) / 4294967295;
-}
 
 /**
  * Open dates and time slots.
@@ -83,7 +71,7 @@ export class AvailabilityService {
       return false;
     }
     // Mock: the shop is closed for the day.
-    if (hash(toIsoDate(date)) < 0.12) {
+    if (hashToUnit(toIsoDate(date)) < 0.12) {
       return false;
     }
     return this.slotsFor(date).some((slot: TimeSlot): boolean => slot.available);
@@ -106,7 +94,7 @@ export class AvailabilityService {
       start + BOOKING_RULES.slotMinutes <= hours.closesAt;
       start += BOOKING_RULES.slotMinutes
     ) {
-      const taken: boolean = (isToday && start <= nowMinutes) || hash(`${iso}@${start}`) < 0.35;
+      const taken: boolean = (isToday && start <= nowMinutes) || hashToUnit(`${iso}@${start}`) < 0.35;
       slots.push({
         time: toTimeKey(start),
         label: formatMinutes(start),

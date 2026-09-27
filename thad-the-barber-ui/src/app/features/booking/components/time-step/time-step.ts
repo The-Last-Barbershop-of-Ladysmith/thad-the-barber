@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input, type InputSignal, output, type OutputEmitterRef, type Signal } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { SelectButtonModule } from 'primeng/selectbutton';
@@ -11,6 +12,7 @@ interface SlotOption extends TimeSlot { disabled: boolean; }
 @Component({
   selector: 'app-time-step',
   imports: [
+    DatePipe,
     FormsModule,
     SelectButtonModule,
     ProgressSpinnerModule,
@@ -22,7 +24,7 @@ interface SlotOption extends TimeSlot { disabled: boolean; }
 export class TimeStep {
   readonly slots: InputSignal<TimeSlot[]> = input<TimeSlot[]>([]);
   readonly selected: InputSignal<string | null> = input<string | null>(null);
-  readonly dayLabel: InputSignal<string | null> = input<string | null>(null);
+  readonly day: InputSignal<Date | null> = input<Date | null>(null);
   readonly openCount: InputSignal<number> = input(0);
   readonly loading: InputSignal<boolean> = input(false);
 

@@ -15,7 +15,13 @@ import { type DatePickerMonthChangeEvent } from 'primeng/types/datepicker';
 import { type Weekday } from '../../core/models/shop.models';
 import { ShopHoursService } from '../../core/services/shop-hours.service';
 import { Backdrop } from '../../shared/components/backdrop/backdrop';
-import { fromIsoDate, toIsoDate, toMonthKey } from '../../shared/utils/date.utils';
+import {
+  formatLongDate,
+  formatShortDate,
+  fromIsoDate,
+  toIsoDate,
+  toMonthKey,
+} from '../../shared/utils/date.utils';
 import { PHONE_PATTERN, nameValidators, phoneValidators } from '../../shared/validators/form.validators';
 import { type AppState } from '../../store/app.state';
 import { BookingSummary, type SummaryRow } from './components/booking-summary/booking-summary';
@@ -31,30 +37,6 @@ import {
 import { AvailabilityService } from './services/availability.service';
 import { BookingPageActions } from './state/booking.actions';
 import { bookingFeature } from './state/booking.feature';
-
-/** "Saturday, October 3" */
-function longDate(date: Date): string {
-  return date.toLocaleDateString(
-    'en-US',
-    {
-      weekday: 'long',
-      month: 'long',
-      day: 'numeric',
-    },
-  );
-}
-
-/** "Sat, Oct 3" */
-function shortDate(date: Date): string {
-  return date.toLocaleDateString(
-    'en-US',
-    {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-    },
-  );
-}
 
 /** Booking page: date → time → details, with a live summary. Selection lives in the booking slice. */
 @Component({
@@ -113,11 +95,6 @@ export class Booking implements OnInit {
 
   private readonly attempted: WritableSignal<boolean> = signal(false);
 
-  protected readonly dayLabel: Signal<string | null> = computed((): string | null => {
-    const day: Date | null = this.selectedDay();
-    return day ? longDate(day) : null;
-  });
-
   private readonly missing: Signal<string[]> = computed((): string[] => {
     const details: Partial<BookingDetails> = this.details();
     const name: string = details.name ?? '';
@@ -149,7 +126,7 @@ export class Booking implements OnInit {
     return [
       {
         label: 'Date',
-        value: day ? shortDate(day) : '—',
+        value: day ? formatShortDate(day) : '—',
       },
       {
         label: 'Time',
@@ -173,7 +150,7 @@ export class Booking implements OnInit {
     }
     const time: string = this.slots().find((slot: TimeSlot): boolean => slot.time === booking.time)?.label
       ?? booking.time;
-    return `${longDate(fromIsoDate(booking.date))} at ${time}. A text confirmation goes to ${booking.phone}.`;
+    return `${formatLongDate(fromIsoDate(booking.date))} at ${time}. A text confirmation goes to ${booking.phone}.`;
   });
 
   constructor() {

@@ -1,11 +1,11 @@
 <section class="stack gap-3">
   <span class="eyebrow">2 — Pick a time</span>
-  @if (!dayLabel()) {
+  @if (!day()) {
     <div class="empty">Select a day to see open times</div>
   } @else if (loading()) {
     <p-progress-spinner class="size-10" strokeWidth="4" ariaLabel="Loading times" />
   } @else {
-    <span class="text-sm text-surface-200">{{ dayLabel() }} · {{ openCount() }} open</span>
+    <span class="text-sm text-surface-200">{{ day() | date: 'EEEE, MMMM d' }} · {{ openCount() }} open</span>
     <p-selectbutton
       [options]="options()"
       optionLabel="label"

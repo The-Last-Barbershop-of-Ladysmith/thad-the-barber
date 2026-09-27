@@ -1,4 +1,9 @@
+import { formatDate } from '@angular/common';
+
 /** Local-time date helpers. The store keeps dates as ISO strings so state stays serializable. */
+
+/** Locale for display labels. They use `formatDate`, the same formatter behind Angular's `DatePipe`. */
+const DATE_LOCALE: string = 'en-US';
 
 function pad(value: number): string {
   return String(value).padStart(
@@ -98,4 +103,22 @@ export function formatMinutes(
 /** 630 → "10:30" (24h key used for slot values) */
 export function toTimeKey(minutes: number): string {
   return `${pad(Math.floor(minutes / 60))}:${pad(minutes % 60)}`;
+}
+
+/** Date → "Saturday, October 3" */
+export function formatLongDate(date: Date): string {
+  return formatDate(
+    date,
+    'EEEE, MMMM d',
+    DATE_LOCALE,
+  );
+}
+
+/** Date → "Sat, Oct 3" */
+export function formatShortDate(date: Date): string {
+  return formatDate(
+    date,
+    'EEE, MMM d',
+    DATE_LOCALE,
+  );
 }

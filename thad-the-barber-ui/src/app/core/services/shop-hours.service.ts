@@ -2,50 +2,13 @@ import { DestroyRef, Injectable, type Signal, type WritableSignal, computed, inj
 import { OPENING_HOURS } from '../config/shop-info';
 import { type HoursRow, type OpenStatus, type OpeningHours, type Weekday } from '../models/shop.models';
 import { formatMinutes } from '../../shared/utils/date.utils';
-
-const DAY_NAMES: Record<Weekday, string> = {
-  0: 'Sunday',
-  1: 'Monday',
-  2: 'Tuesday',
-  3: 'Wednesday',
-  4: 'Thursday',
-  5: 'Friday',
-  6: 'Saturday',
-};
-
-const DAY_SHORT: Record<Weekday, string> = {
-  0: 'Sun',
-  1: 'Mon',
-  2: 'Tue',
-  3: 'Wed',
-  4: 'Thu',
-  5: 'Fri',
-  6: 'Sat',
-};
-
-/** Monday-first order, so a run of closed weekdays reads "Monday – Friday". */
-const WEEK_FROM_MONDAY: readonly Weekday[] = [
-  1,
-  2,
-  3,
-  4,
-  5,
-  6,
-  0,
-];
-
-function toWeekday(day: number): Weekday {
-  return (((day % 7) + 7) % 7) as Weekday;
-}
-
-/** "Monday – Friday", or just "Monday" for a single day. */
-function spanLabel(
-  first: Weekday,
-  last: Weekday,
-  names: Record<Weekday, string>,
-): string {
-  return first === last ? names[first] : `${names[first]} – ${names[last]}`;
-}
+import {
+  WEEKDAY_NAMES,
+  WEEKDAY_SHORT_NAMES,
+  WEEK_FROM_MONDAY,
+  toWeekday,
+  weekdaySpanLabel,
+} from '../../shared/utils/weekday.utils';
 
 /** Opening hours and the live "Open now" status shown in the schedule section. */
 @Injectable({ providedIn: 'root' })
@@ -113,7 +76,7 @@ export class ShopHoursService {
       if (next) {
         return {
           isOpen: false,
-          label: `Closed · Opens ${DAY_SHORT[day]} ${formatMinutes(
+          label: `Closed · Opens ${WEEKDAY_SHORT_NAMES[day]} ${formatMinutes(
             next.opensAt,
             true,
           )}`,
@@ -128,8 +91,8 @@ export class ShopHoursService {
 
   private buildRows(): HoursRow[] {
     const open: HoursRow[] = this.hours.map((entry: OpeningHours): HoursRow => ({
-      label: DAY_NAMES[entry.day],
-      shortLabel: DAY_SHORT[entry.day],
+      label: WEEKDAY_NAMES[entry.day],
+      shortLabel: WEEKDAY_SHORT_NAMES[entry.day],
       range: `${formatMinutes(entry.opensAt)} – ${formatMinutes(entry.closesAt)}`,
       shortRange: `${formatMinutes(
         entry.opensAt,
@@ -151,15 +114,15 @@ export class ShopHoursService {
     return [
       ...open,
       {
-        label: spanLabel(
+        label: weekdaySpanLabel(
           first,
           last,
-          DAY_NAMES,
+          WEEKDAY_NAMES,
         ),
-        shortLabel: spanLabel(
+        shortLabel: weekdaySpanLabel(
           first,
           last,
-          DAY_SHORT,
+          WEEKDAY_SHORT_NAMES,
         ),
         range: 'Closed',
         shortRange: 'Closed',
