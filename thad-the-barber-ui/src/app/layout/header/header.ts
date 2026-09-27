@@ -8,7 +8,7 @@ import { filter, map } from 'rxjs';
 import { HOME_SECTIONS, SHOP_INFO } from '../../core/config/shop-info';
 import { type NavItem, type ShopInfo } from '../../core/models/shop.models';
 import { LayoutActions } from '../../store/app.actions';
-import { selectMenuOpen } from '../../store/app.feature';
+import { layoutFeature } from '../../store/app.feature';
 import { type AppState } from '../../store/app.state';
 
 /** Fixed top bar: section links on desktop, a drawer menu on mobile, "Back to site" on the booking page. */
@@ -29,7 +29,7 @@ export class Header {
 
   protected readonly shop: ShopInfo = SHOP_INFO;
   protected readonly sections: readonly NavItem[] = HOME_SECTIONS;
-  protected readonly menuOpen: Signal<boolean> = this.store.selectSignal(selectMenuOpen);
+  protected readonly menuOpen: Signal<boolean> = this.store.selectSignal(layoutFeature.selectMenuOpen);
   protected readonly onBookingPage: Signal<boolean> = toSignal(
     this.router.events.pipe(
       filter((event: Event): event is NavigationEnd => event instanceof NavigationEnd),

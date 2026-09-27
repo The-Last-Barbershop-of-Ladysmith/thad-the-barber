@@ -30,19 +30,7 @@ import {
 } from './models/booking.models';
 import { AvailabilityService } from './services/availability.service';
 import { BookingPageActions } from './state/booking.actions';
-import {
-  selectConfirmation,
-  selectDisabledDates,
-  selectError,
-  selectIsBooked,
-  selectIsSubmitting,
-  selectOpenSlotCount,
-  selectSelectedDay,
-  selectSelectedSlot,
-  selectSelectedTime,
-  selectSlots,
-  selectSlotsLoading,
-} from './state/booking.feature';
+import { bookingFeature } from './state/booking.feature';
 
 /** "Saturday, October 3" */
 function longDate(date: Date): string {
@@ -88,17 +76,18 @@ export class Booking implements OnInit {
   protected readonly window: DateRange = inject(AvailabilityService).bookingWindow();
   protected readonly closedDays: Weekday[] = inject(ShopHoursService).closedWeekdays();
 
-  protected readonly selectedDay: Signal<Date | null> = this.store.selectSignal(selectSelectedDay);
-  protected readonly selectedTime: Signal<string | null> = this.store.selectSignal(selectSelectedTime);
-  protected readonly selectedSlot: Signal<TimeSlot | null> = this.store.selectSignal(selectSelectedSlot);
-  protected readonly disabledDates: Signal<Date[]> = this.store.selectSignal(selectDisabledDates);
-  protected readonly slots: Signal<TimeSlot[]> = this.store.selectSignal(selectSlots);
-  protected readonly slotsLoading: Signal<boolean> = this.store.selectSignal(selectSlotsLoading);
-  protected readonly openSlotCount: Signal<number> = this.store.selectSignal(selectOpenSlotCount);
-  protected readonly submitting: Signal<boolean> = this.store.selectSignal(selectIsSubmitting);
-  protected readonly booked: Signal<boolean> = this.store.selectSignal(selectIsBooked);
-  protected readonly error: Signal<string | null> = this.store.selectSignal(selectError);
-  private readonly confirmation: Signal<BookingConfirmation | null> = this.store.selectSignal(selectConfirmation);
+  protected readonly selectedDay: Signal<Date | null> = this.store.selectSignal(bookingFeature.selectSelectedDay);
+  protected readonly selectedTime: Signal<string | null> = this.store.selectSignal(bookingFeature.selectSelectedTime);
+  protected readonly selectedSlot: Signal<TimeSlot | null> = this.store.selectSignal(bookingFeature.selectSelectedSlot);
+  protected readonly disabledDates: Signal<Date[]> = this.store.selectSignal(bookingFeature.selectDisabledDates);
+  protected readonly slots: Signal<TimeSlot[]> = this.store.selectSignal(bookingFeature.selectSlots);
+  protected readonly slotsLoading: Signal<boolean> = this.store.selectSignal(bookingFeature.selectSlotsLoading);
+  protected readonly openSlotCount: Signal<number> = this.store.selectSignal(bookingFeature.selectOpenSlotCount);
+  protected readonly submitting: Signal<boolean> = this.store.selectSignal(bookingFeature.selectIsSubmitting);
+  protected readonly booked: Signal<boolean> = this.store.selectSignal(bookingFeature.selectIsBooked);
+  protected readonly error: Signal<string | null> = this.store.selectSignal(bookingFeature.selectError);
+  private readonly confirmation: Signal<BookingConfirmation | null> =
+    this.store.selectSignal(bookingFeature.selectConfirmation);
 
   protected readonly form: BookingDetailsForm = new FormGroup({
     name: new FormControl(

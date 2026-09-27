@@ -8,7 +8,7 @@ import { ButtonModule } from 'primeng/button';
 import { InputMaskModule } from 'primeng/inputmask';
 import { MessageModule } from 'primeng/message';
 import { HomePageActions } from '../../state/home.actions';
-import { selectIsSubscribing, selectSmsSignup } from '../../state/home.feature';
+import { homeFeature } from '../../state/home.feature';
 
 /** Phone number opt-in for text alerts, shown inside the first announcement. */
 @Component({
@@ -26,8 +26,8 @@ import { selectIsSubscribing, selectSmsSignup } from '../../state/home.feature';
 export class SmsSignup {
   private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
 
-  protected readonly signup: Signal<SmsSignupState> = this.store.selectSignal(selectSmsSignup);
-  protected readonly submitting: Signal<boolean> = this.store.selectSignal(selectIsSubscribing);
+  protected readonly signup: Signal<SmsSignupState> = this.store.selectSignal(homeFeature.selectSmsSignup);
+  protected readonly submitting: Signal<boolean> = this.store.selectSignal(homeFeature.selectIsSubscribing);
   protected readonly phone: FormControl<string> = new FormControl(
     '',
     {

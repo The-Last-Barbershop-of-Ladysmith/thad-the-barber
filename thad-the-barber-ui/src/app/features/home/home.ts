@@ -10,7 +10,7 @@ import { ScheduleCta } from './components/schedule-cta/schedule-cta';
 import { Testimonials } from './components/testimonials/testimonials';
 import { Visit } from './components/visit/visit';
 import { HomePageActions } from './state/home.actions';
-import { selectAnnouncements, selectGallery, selectTestimonials } from './state/home.feature';
+import { homeFeature } from './state/home.feature';
 
 /** Home page: the one-page scroll of sections from the wireframe. Reads content from the home slice. */
 @Component({
@@ -30,9 +30,9 @@ import { selectAnnouncements, selectGallery, selectTestimonials } from './state/
 export class Home implements OnInit {
   private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
 
-  protected readonly announcements: Signal<Announcement[]> = this.store.selectSignal(selectAnnouncements);
-  protected readonly testimonials: Signal<Testimonial[]> = this.store.selectSignal(selectTestimonials);
-  protected readonly gallery: Signal<GalleryPhoto[]> = this.store.selectSignal(selectGallery);
+  protected readonly announcements: Signal<Announcement[]> = this.store.selectSignal(homeFeature.selectAnnouncements);
+  protected readonly testimonials: Signal<Testimonial[]> = this.store.selectSignal(homeFeature.selectTestimonials);
+  protected readonly gallery: Signal<GalleryPhoto[]> = this.store.selectSignal(homeFeature.selectGallery);
 
   ngOnInit(): void {
     this.store.dispatch(HomePageActions.opened());

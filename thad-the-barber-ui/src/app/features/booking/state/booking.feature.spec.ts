@@ -1,5 +1,5 @@
 import { type TimeSlot } from '../models/booking.models';
-import { selectOpenSlotCount, selectSelectedSlot } from './booking.feature';
+import { bookingFeature } from './booking.feature';
 import { type BookingState, initialBookingState } from './booking.state';
 
 const slots: TimeSlot[] = [
@@ -33,8 +33,8 @@ describe(
             selectedTime: '11:00',
           },
         };
-        expect(selectOpenSlotCount(root)).toBe(2);
-        expect(selectSelectedSlot(root)?.label).toBe('11:00 AM');
+        expect(bookingFeature.selectOpenSlotCount(root)).toBe(2);
+        expect(bookingFeature.selectSelectedSlot(root)?.label).toBe('11:00 AM');
       },
     );
   },
