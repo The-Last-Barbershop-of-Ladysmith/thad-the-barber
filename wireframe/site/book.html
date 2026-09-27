@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Book an appointment · Thad The Barber</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0;background:#120c08;font-family:Helvetica,Arial,sans-serif;color:#f4e6d8}a{color:#f4e6d8;text-decoration:none}a:hover{color:#E8904A}*{box-sizing:border-box}input::placeholder{color:#8a7a6c}</style></helmet>
+<div aria-hidden="true" style="position:fixed;inset:0;z-index:0;pointer-events:none;background:#120c08"><img src="assets/keys/k6.webp" alt="" style="width:100%;height:100%;object-fit:cover;object-position:30% 60%;display:block"><div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(18,12,8,.55),rgba(18,12,8,.8) 55%,rgba(18,12,8,.9))"></div></div>
+<header style="position:fixed;top:0;left:0;right:0;z-index:2;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:22px 32px 56px;flex-wrap:wrap;background:linear-gradient(180deg,rgba(13,8,5,.92) 0%,rgba(13,8,5,.6) 55%,rgba(13,8,5,0) 100%);pointer-events:none">
+    <div style="pointer-events:auto"><a href="index.html" style="display:block;line-height:0"><img src="assets/logo-1c.png" alt="Thad The Barber" style="height:48px;width:auto;display:block;filter:drop-shadow(0 1px 6px rgba(0,0,0,.6))"></a></div>
+    <a href="index.html" style="pointer-events:auto;color:#f4e6d8;font-size:15px;font-weight:600;text-shadow:0 1px 8px rgba(0,0,0,.8);transition:color .2s ease;white-space:nowrap" style-hover="color:#F4B46E">← Back to site</a>
+  </header>
+<div style="position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:128px 24px 0;display:flex;flex-direction:column;gap:40px">
+  
+
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <div style="font-size:12px;letter-spacing:.1em;color:#d8c3ad">BOOK AN APPOINTMENT</div>
+    <h1 style="margin:0;font-size:40px">Schedule your cut</h1>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:32px;align-items:start">
+    <div style="display:flex;flex-direction:column;gap:32px">
+      <section data-screen-label="1 Date" style="display:flex;flex-direction:column;gap:12px">
+        <div style="font-size:12px;letter-spacing:.1em;color:#d8c3ad">1 — PICK A DATE</div>
+        <div style="background:rgba(18,12,8,.78);backdrop-filter:blur(6px);padding:16px;display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center;font-family:monospace;font-size:13px">
+            <div onClick="{{ prevMonth }}" style="padding:8px 12px;cursor:pointer;color:{{ prevColor }}">‹ prev</div>
+            <div style="font-weight:bold">{{ monthLabel }}</div>
+            <div onClick="{{ nextMonth }}" style="padding:8px 12px;cursor:pointer;color:{{ nextColor }}">next ›</div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px">
+            <sc-for list="{{ weekdays }}" as="w" hint-placeholder-count="7">
+              <div style="text-align:center;font-family:monospace;font-size:11px;color:#d8c3ad;padding:4px 0">{{ w }}</div>
+            </sc-for>
+            <sc-for list="{{ days }}" as="d" hint-placeholder-count="35">
+              <div onClick="{{ d.pick }}" style="background:{{ d.bg }};color:{{ d.color }};visibility:{{ d.vis }};text-decoration:{{ d.strike }};cursor:{{ d.cursor }};aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-family:monospace;font-size:13px">{{ d.n }}</div>
+            </sc-for>
+          </div>
+          <div style="display:flex;gap:16px;flex-wrap:wrap;font-family:monospace;font-size:11px;color:#d8c3ad">
+            <div style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;background:rgba(244,230,216,.16)"></span>available</div>
+            <div style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;background:rgba(244,230,216,.04);outline:1px solid rgba(244,230,216,.15)"></span>closed / booked</div>
+            <div style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;background:#E8904A"></span>selected</div>
+          </div>
+        </div>
+      </section>
+
+      <section data-screen-label="2 Time" style="display:flex;flex-direction:column;gap:12px">
+        <div style="font-size:12px;letter-spacing:.1em;color:#d8c3ad">2 — PICK A TIME</div>
+        <sc-if value="{{ noDay }}" hint-placeholder-val="{{ true }}">
+          <div style="border:1px dashed rgba(244,230,216,.35);padding:20px;font-family:monospace;font-size:12px;color:#777;text-align:center">Select a day to see open times</div>
+        </sc-if>
+        <sc-if value="{{ hasDay }}" hint-placeholder-val="{{ false }}">
+          <div style="font-family:monospace;font-size:12px;color:#d8c3ad">{{ dayLong }} · {{ openCount }} open</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px">
+            <sc-for list="{{ times }}" as="t" hint-placeholder-count="12">
+              <div onClick="{{ t.pick }}" style="background:{{ t.bg }};color:{{ t.color }};text-decoration:{{ t.strike }};cursor:{{ t.cursor }};padding:12px 4px;text-align:center;font-family:monospace;font-size:13px;white-space:nowrap">{{ t.label }}</div>
+            </sc-for>
+          </div>
+        </sc-if>
+      </section>
+
+      <section data-screen-label="3 Details" style="display:flex;flex-direction:column;gap:12px">
+        <div style="font-size:12px;letter-spacing:.1em;color:#d8c3ad">3 — YOUR DETAILS</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px">
+          <label style="display:flex;flex-direction:column;gap:6px;font-family:monospace;font-size:11px;color:#d8c3ad">NAME
+            <input value="{{ name }}" onChange="{{ onName }}" placeholder="First & last name" autocomplete="name" style="background:rgba(18,12,8,.7);border:1px solid rgba(244,230,216,.25);padding:14px;font-family:monospace;font-size:14px;color:#f4e6d8;outline:none;border-radius:0"></input>
+          </label>
+          <label style="display:flex;flex-direction:column;gap:6px;font-family:monospace;font-size:11px;color:#d8c3ad">PHONE
+            <input value="{{ phone }}" onChange="{{ onPhone }}" placeholder="(555) 555-5555" type="tel" inputmode="tel" autocomplete="tel" style="background:rgba(18,12,8,.7);border:1px solid rgba(244,230,216,.25);padding:14px;font-family:monospace;font-size:14px;color:#f4e6d8;outline:none;border-radius:0"></input>
+          </label>
+        </div>
+      </section>
+    </div>
+
+    <aside data-screen-label="Summary" style="background:rgba(18,12,8,.78);backdrop-filter:blur(6px);padding:24px;display:flex;flex-direction:column;gap:14px;position:sticky;top:24px">
+      <div style="font-size:12px;letter-spacing:.1em;color:#d8c3ad">BOOKING SUMMARY</div>
+      <div style="display:flex;justify-content:space-between;gap:8px;font-family:monospace;font-size:12px"><span style="color:#d8c3ad">Date</span><span>{{ sumDate }}</span></div>
+      <div style="display:flex;justify-content:space-between;gap:8px;font-family:monospace;font-size:12px"><span style="color:#d8c3ad">Time</span><span>{{ sumTime }}</span></div>
+      <div style="display:flex;justify-content:space-between;gap:8px;font-family:monospace;font-size:12px"><span style="color:#d8c3ad">Name</span><span>{{ sumName }}</span></div>
+      <div style="display:flex;justify-content:space-between;gap:8px;font-family:monospace;font-size:12px"><span style="color:#d8c3ad">Phone</span><span>{{ sumPhone }}</span></div>
+      <div onClick="{{ confirm }}" style="background:{{ ctaBg }};color:{{ ctaColor }};padding:16px;text-align:center;font-weight:700;cursor:{{ ctaCursor }};white-space:nowrap">{{ confirmLabel }}</div>
+      <sc-if value="{{ showHint }}" hint-placeholder-val="{{ false }}">
+        <div style="font-family:monospace;font-size:11px;color:#d8c3ad">{{ hint }}</div>
+      </sc-if>
+      <sc-if value="{{ done }}" hint-placeholder-val="{{ false }}">
+        <div style="background:rgba(18,12,8,.85);border:1px solid #E8904A;padding:14px;font-family:monospace;font-size:12px;display:flex;flex-direction:column;gap:6px"><strong>You're booked.</strong><span>{{ doneMsg }}</span></div>
+      </sc-if>
+    </aside>
+  </div>
+
+  <footer data-screen-label="Footer" style="padding:24px 0 32px">
+    <div style="width:100%;max-width:1200px;margin:0 auto;display:flex;flex-direction:column;gap:32px;background:rgba(13,8,5,.86);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(232,144,74,.22);border-radius:18px;padding:clamp(24px,4vw,44px)">
+      <div style="display:flex;flex-wrap:wrap;gap:32px">
+        <div style="flex:1 1 180px;display:flex;flex-direction:column;align-items:flex-start;gap:14px">
+          <img src="assets/logo-1c.png" alt="Thad The Barber" style="height:56px;width:auto;display:block">
+          <span style="color:#e6d6c4;font-size:15px;line-height:1.5">Fresh cuts for the whole family.</span>
+        </div>
+        <div style="flex:1 1 160px;display:flex;flex-direction:column;gap:8px"><div style="font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#E8904A">Visit</div><span style="color:#e6d6c4;font-size:15px;line-height:1.5">Jenny's Barber &amp; Beauty Salon<br>2022 Augustine Ave<br>Fredericksburg, VA 22401</span><a href="https://www.google.com/maps/dir/?api=1&amp;destination=Jenny%27s+Barber+%26+Beauty+Salon,+2022+Augustine+Ave,+Fredericksburg,+VA+22401" target="_blank" rel="noopener" style="color:#E8904A;font-size:15px;font-weight:600;text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:1.5px" style-hover="color:#F4B46E">Get directions →</a></div>
+        <div style="flex:1 1 160px;display:flex;flex-direction:column;gap:8px"><div style="font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#E8904A">Hours</div><span style="color:#e6d6c4;font-size:15px;line-height:1.5">Sat · 10 AM – 7 PM</span><span style="color:#e6d6c4;font-size:15px;line-height:1.5">Sun · 10 AM – 4 PM</span><span style="color:#a8988a;font-size:14px">Closed Mon – Fri</span></div>
+        <div style="flex:1 1 160px;display:flex;flex-direction:column;gap:8px"><div style="font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#E8904A">Contact</div><a href="tel:+15406212143" style="color:#e6d6c4;font-size:15px" style-hover="color:#F4B46E">(540) 621-2143</a><a href="sms:+15406212143" style="color:#e6d6c4;font-size:15px" style-hover="color:#F4B46E">Text a question</a></div>
+        <div style="flex:0 0 auto;display:flex;flex-direction:column;gap:10px"><div style="font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#E8904A">Follow</div><div style="display:flex;gap:10px"><a href="#" aria-label="Instagram" style="width:40px;height:40px;border-radius:50%;border:1px solid rgba(232,144,74,.45);display:flex;align-items:center;justify-content:center;transition:background .25s ease,border-color .25s ease" style-hover="background:rgba(232,144,74,.18);border-color:#E8904A"><img src="assets/icon-instagram.svg" alt="" style="width:18px;height:18px;display:block"></a><a href="#" aria-label="Facebook" style="width:40px;height:40px;border-radius:50%;border:1px solid rgba(232,144,74,.45);display:flex;align-items:center;justify-content:center;transition:background .25s ease,border-color .25s ease" style-hover="background:rgba(232,144,74,.18);border-color:#E8904A"><img src="assets/icon-facebook.svg" alt="" style="width:18px;height:18px;display:block"></a></div></div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:16px;padding-top:20px;border-top:1px solid rgba(232,144,74,.18)">
+        <span style="font-size:13px;color:#a8988a">© 2026 Thad The Barber · Fredericksburg, VA</span>
+        <nav style="display:flex;flex-wrap:wrap;gap:20px"><a href="index.html#announcements" style="color:#cdbba8;font-size:13px" style-hover="color:#F4B46E">Announcements</a><a href="index.html#schedule" style="color:#cdbba8;font-size:13px" style-hover="color:#F4B46E">Schedule</a><a href="index.html#visit" style="color:#cdbba8;font-size:13px" style-hover="color:#F4B46E">Visit</a><a href="index.html#testimonials" style="color:#cdbba8;font-size:13px" style-hover="color:#F4B46E">Testimonials</a><a href="index.html#gallery" style="color:#cdbba8;font-size:13px" style-hover="color:#F4B46E">Gallery</a><a href="#" style="color:#cdbba8;font-size:13px" style-hover="color:#F4B46E">Back to top ↑</a></nav>
+      </div>
+    </div>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;slotMinutes&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;15&quot;,&quot;30&quot;,&quot;60&quot;],&quot;default&quot;:&quot;30&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Scheduling&quot;},&quot;daysAhead&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;min&quot;:7,&quot;max&quot;:180,&quot;default&quot;:60,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Scheduling&quot;}}">
+class Component extends DCLogic {
+  constructor(p) { super(p); const t = new Date(); t.setHours(0,0,0,0); this.today = t; this.state = { y: t.getFullYear(), m: t.getMonth(), day: null, time: null, name: '', phone: '', done: false, tried: false }; }
+  hash(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0) / 4294967295; }
+  key(d) { return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); }
+  slots(d) {
+    const step = Number(this.props.slotMinutes ?? 30), open = 10 * 60, close = (d.getDay() === 0 ? 16 : 19) * 60, out = [];
+    const now = new Date(), isToday = +d === +this.today, nowMin = now.getHours() * 60 + now.getMinutes();
+    for (let t = open; t + step <= close; t += step) {
+      const h = Math.floor(t / 60), mm = t % 60, h12 = ((h + 11) % 12) + 1;
+      out.push({ label: h12 + ':' + String(mm).padStart(2, '0') + (h < 12 ? ' AM' : ' PM'), taken: (isToday && t <= nowMin) || this.hash(this.key(d) + '@' + t) < 0.35 });
+    }
+    return out;
+  }
+  available(d) {
+    const ahead = Number(this.props.daysAhead ?? 60), max = new Date(this.today); max.setDate(max.getDate() + ahead);
+    if (d < this.today || d > max) return false;
+    const dow = d.getDay(), closed = dow !== 0 && dow !== 6;
+    if (closed) return false;
+    if (this.hash(this.key(d)) < 0.12) return false;
+    return this.slots(d).some(s => !s.taken);
+  }
+  fmtPhone(v) { const d = v.replace(/\D/g, '').slice(0, 10); if (d.length < 4) return d; if (d.length < 7) return '(' + d.slice(0,3) + ') ' + d.slice(3); return '(' + d.slice(0,3) + ') ' + d.slice(3,6) + '-' + d.slice(6); }
+  renderVals() {
+    const { y, m, day, time, name, phone, done, tried } = this.state;
+    const first = new Date(y, m, 1), lead = first.getDay(), dim = new Date(y, m + 1, 0).getDate();
+    const canPrev = y > this.today.getFullYear() || m > this.today.getMonth();
+    const lim = new Date(this.today); lim.setDate(lim.getDate() + Number(this.props.daysAhead ?? 60));
+    const canNext = new Date(y, m + 1, 1) <= lim;
+    const go = dm => () => { const d = new Date(y, m + dm, 1); this.setState({ y: d.getFullYear(), m: d.getMonth() }); };
+    const days = [];
+    for (let i = 0; i < lead; i++) days.push({ n: '', vis: 'hidden', bg: 'transparent', color: '#222', strike: 'none', cursor: 'default' });
+    for (let n = 1; n <= dim; n++) {
+      const d = new Date(y, m, n), ok = this.available(d), sel = day && +day === +d;
+      days.push({ n, vis: 'visible', bg: sel ? '#E8904A' : ok ? 'rgba(244,230,216,.16)' : 'rgba(244,230,216,.04)', color: sel ? '#120c08' : ok ? '#f4e6d8' : '#7d6d60', strike: ok || d < this.today ? 'none' : 'line-through', cursor: ok ? 'pointer' : 'not-allowed', pick: ok ? () => this.setState({ day: d, time: null, done: false }) : undefined });
+    }
+    const sl = day ? this.slots(day) : [];
+    const digits = phone.replace(/\D/g, '').length;
+    const ready = day && time && name.trim().length > 1 && digits === 10;
+    const missing = [!day && 'a date', !time && 'a time', name.trim().length < 2 && 'your name', digits !== 10 && 'a 10-digit phone'].filter(Boolean);
+    const long = d => d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+    return {
+      monthLabel: first.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+      prevMonth: canPrev ? go(-1) : undefined, nextMonth: canNext ? go(1) : undefined,
+      prevColor: canPrev ? '#f4e6d8' : '#6d5f54', nextColor: canNext ? '#f4e6d8' : '#6d5f54',
+      weekdays: ['S','M','T','W','T','F','S'], days,
+      noDay: !day, hasDay: !!day, dayLong: day ? long(day) : '', openCount: sl.filter(s => !s.taken).length,
+      times: sl.map(s => { const sel = time === s.label; return { label: s.label, bg: sel ? '#E8904A' : s.taken ? 'rgba(244,230,216,.04)' : 'rgba(244,230,216,.16)', color: sel ? '#120c08' : s.taken ? '#7d6d60' : '#f4e6d8', strike: s.taken ? 'line-through' : 'none', cursor: s.taken ? 'not-allowed' : 'pointer', pick: s.taken ? undefined : () => this.setState({ time: s.label, done: false }) }; }),
+      name, phone,
+      onName: e => this.setState({ name: e.target.value, done: false }),
+      onPhone: e => this.setState({ phone: this.fmtPhone(e.target.value), done: false }),
+      sumDate: day ? day.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : '—',
+      sumTime: time || '—', sumName: name.trim() || '—', sumPhone: phone || '—',
+      ctaBg: ready ? '#E8904A' : 'rgba(244,230,216,.18)', ctaColor: ready ? '#120c08' : '#d8c3ad', ctaCursor: ready ? 'pointer' : 'not-allowed',
+      confirmLabel: done ? 'Booked ✓' : 'Confirm booking',
+      showHint: tried && !ready, hint: 'Still need ' + missing.join(', ') + '.',
+      done, doneMsg: day && time ? `${long(day)} at ${time}. A text confirmation goes to ${phone}.` : '',
+      confirm: () => ready ? this.setState({ done: true }) : this.setState({ tried: true })
+    };
+  }
+}
+</script>
+</body>
+</html>
