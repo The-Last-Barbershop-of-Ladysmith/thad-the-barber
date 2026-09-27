@@ -1,25 +1,8 @@
-import { type MemoizedSelector, createFeature, createReducer, createSelector, on } from '@ngrx/store';
+import { type MemoizedSelector, createFeature, createSelector } from '@ngrx/store';
 import { fromIsoDate } from '../../../shared/utils/date.utils';
 import { type TimeSlot } from '../models/booking.models';
-import {
-  BookingApiActions,
-  BookingPageActions,
-  type ConfirmationPayload,
-  type DatePayload,
-  type ErrorPayload,
-  type MonthAvailabilityPayload,
-  type MonthPayload,
-  type SlotsPayload,
-  type TimePayload,
-} from './booking.actions';
-import { type BookingState, type BookingStatus, initialBookingState } from './booking.state';
-
-/** Changing the date, time or details after booking starts a fresh booking. */
-const clearOutcome: Pick<BookingState, 'status' | 'confirmation' | 'error'> = {
-  status: 'idle',
-  confirmation: null,
-  error: null,
-};
+import { bookingReducer } from './booking.reducer';
+import { type BookingStatus } from './booking.state';
 
 /**
  * `createFeature` scopes everything under the `booking` key: it generates `selectBookingState`
@@ -28,128 +11,7 @@ const clearOutcome: Pick<BookingState, 'status' | 'confirmation' | 'error'> = {
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the Feature type.
 export const bookingFeature = createFeature({
   name: 'booking',
-  reducer: createReducer(
-    initialBookingState,
-    on(
-      BookingPageActions.monthViewed,
-      (
-        state: BookingState,
-        { month }: MonthPayload,
-      ): BookingState => ({
-        ...state,
-        visibleMonth: month,
-      }),
-    ),
-    on(
-      BookingApiActions.monthAvailabilityLoaded,
-      (
-        state: BookingState,
-        {
-          month,
-          unavailableDates,
-        }: MonthAvailabilityPayload,
-      ): BookingState =>
-        month === state.visibleMonth
-          ? {
-            ...state,
-            unavailableDates,
-          }
-          : state,
-    ),
-    on(
-      BookingPageActions.dateSelected,
-      (
-        state: BookingState,
-        { date }: DatePayload,
-      ): BookingState => ({
-        ...state,
-        ...clearOutcome,
-        selectedDate: date,
-        selectedTime: null,
-        slots: [],
-        slotsLoading: true,
-      }),
-    ),
-    on(
-      BookingApiActions.slotsLoaded,
-      (
-        state: BookingState,
-        {
-          date,
-          slots,
-        }: SlotsPayload,
-      ): BookingState =>
-        date === state.selectedDate
-          ? {
-            ...state,
-            slots,
-            slotsLoading: false,
-          }
-          : state,
-    ),
-    on(
-      BookingApiActions.slotsLoadFailed,
-      (
-        state: BookingState,
-        { error }: ErrorPayload,
-      ): BookingState => ({
-        ...state,
-        slotsLoading: false,
-        error,
-      }),
-    ),
-    on(
-      BookingPageActions.timeSelected,
-      (
-        state: BookingState,
-        { time }: TimePayload,
-      ): BookingState => ({
-        ...state,
-        ...clearOutcome,
-        selectedTime: time,
-      }),
-    ),
-    on(
-      BookingPageActions.detailsEdited,
-      (state: BookingState): BookingState =>
-        state.status === 'booked'
-          ? {
-            ...state,
-            ...clearOutcome,
-          }
-          : state,
-    ),
-    on(
-      BookingPageActions.confirmRequested,
-      (state: BookingState): BookingState => ({
-        ...state,
-        status: 'submitting',
-        error: null,
-      }),
-    ),
-    on(
-      BookingApiActions.bookingConfirmed,
-      (
-        state: BookingState,
-        { confirmation }: ConfirmationPayload,
-      ): BookingState => ({
-        ...state,
-        status: 'booked',
-        confirmation,
-      }),
-    ),
-    on(
-      BookingApiActions.bookingFailed,
-      (
-        state: BookingState,
-        { error }: ErrorPayload,
-      ): BookingState => ({
-        ...state,
-        status: 'error',
-        error,
-      }),
-    ),
-  ),
+  reducer: bookingReducer,
 });
 
 export const {

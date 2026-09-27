@@ -1,7 +1,6 @@
-import { type MemoizedSelector, createFeature, createReducer, createSelector, on } from '@ngrx/store';
-import { type HomeContent } from '../models/home.models';
-import { HomeApiActions, HomePageActions } from './home.actions';
-import { type HomeState, type RequestStatus, type SmsSignupState, initialHomeState } from './home.state';
+import { type MemoizedSelector, createFeature, createSelector } from '@ngrx/store';
+import { homeReducer } from './home.reducer';
+import { type RequestStatus, type SmsSignupState } from './home.state';
 
 /**
  * `createFeature` scopes everything under the `home` key: it generates `selectHomeState`
@@ -10,76 +9,7 @@ import { type HomeState, type RequestStatus, type SmsSignupState, initialHomeSta
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the Feature type.
 export const homeFeature = createFeature({
   name: 'home',
-  reducer: createReducer(
-    initialHomeState,
-    on(
-      HomePageActions.opened,
-      (state: HomeState): HomeState => ({
-        ...state,
-        contentStatus: 'pending',
-      }),
-    ),
-    on(
-      HomeApiActions.contentLoaded,
-      (
-        state: HomeState,
-        { content }: { content: HomeContent; },
-      ): HomeState => ({
-        ...state,
-        ...content,
-        contentStatus: 'success',
-      }),
-    ),
-    on(
-      HomeApiActions.contentLoadFailed,
-      (state: HomeState): HomeState => ({
-        ...state,
-        contentStatus: 'error',
-      }),
-    ),
-    on(
-      HomePageActions.smsSignupSubmitted,
-      (
-        state: HomeState,
-        { phone }: { phone: string; },
-      ): HomeState => ({
-        ...state,
-        smsSignup: {
-          status: 'pending',
-          phone,
-          error: null,
-        },
-      }),
-    ),
-    on(
-      HomeApiActions.smsSignupSucceeded,
-      (
-        state: HomeState,
-        { phone }: { phone: string; },
-      ): HomeState => ({
-        ...state,
-        smsSignup: {
-          status: 'success',
-          phone,
-          error: null,
-        },
-      }),
-    ),
-    on(
-      HomeApiActions.smsSignupFailed,
-      (
-        state: HomeState,
-        { error }: { error: string; },
-      ): HomeState => ({
-        ...state,
-        smsSignup: {
-          ...state.smsSignup,
-          status: 'error',
-          error,
-        },
-      }),
-    ),
-  ),
+  reducer: homeReducer,
 });
 
 export const {
