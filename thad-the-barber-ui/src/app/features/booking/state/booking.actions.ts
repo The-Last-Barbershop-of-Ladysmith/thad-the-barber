@@ -23,6 +23,8 @@ export interface ErrorPayload { error: string; }
 export const BookingPageActions = createActionGroup({
   source: 'Booking Page',
   events: {
+    /** Clears the slice back to its initial state (also overwrites its saved copy). */
+    'State Reset': emptyProps(),
     'Month Viewed': props<MonthPayload>(),
     'Date Selected': props<DatePayload>(),
     'Time Selected': props<TimePayload>(),

@@ -22,6 +22,10 @@ const clearOutcome: Pick<BookingState, 'status' | 'confirmation' | 'error'> = {
 export const bookingReducer: ActionReducer<BookingState> = createReducer(
   initialBookingState,
   on(
+    BookingPageActions.stateReset,
+    (): BookingState => initialBookingState,
+  ),
+  on(
     BookingPageActions.monthViewed,
     (
       state: BookingState,

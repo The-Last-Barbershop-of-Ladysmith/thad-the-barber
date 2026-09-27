@@ -5,6 +5,8 @@ import { type HomeContent } from '../models/home.models';
 export const HomePageActions = createActionGroup({
   source: 'Home Page',
   events: {
+    /** Clears the slice back to its initial state (also overwrites its saved copy). */
+    'State Reset': emptyProps(),
     Opened: emptyProps(),
     'Sms Signup Submitted': props<{ phone: string; }>(),
   },

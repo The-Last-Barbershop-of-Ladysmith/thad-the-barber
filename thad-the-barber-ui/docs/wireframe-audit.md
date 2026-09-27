@@ -195,10 +195,11 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 | Slice | Files | Holds |
 | --- | --- | --- |
 | `layout` (root) | `store/app.*.ts` | `menuOpen` |
-| `home` | `features/home/state/home.{state,actions,feature,effects}.ts` | Announcements, testimonials, gallery, content status, SMS sign-up status |
-| `booking` | `features/booking/state/booking.{state,actions,feature,effects}.ts` | Visible month, unavailable dates, selected date/time, slots, submit status, confirmation |
+| `home` | `features/home/state/home.{state,actions,reducer,feature,effects}.ts` | Announcements, testimonials, gallery, content status, SMS sign-up status |
+| `booking` | `features/booking/state/booking.{state,actions,reducer,feature,effects}.ts` | Visible month, unavailable dates, selected date/time, slots, submit status, confirmation |
 
-- Each `*.feature.ts` uses `createFeature` for a scoped feature selector, and `extraSelectors` for derived values such as `selectOpenSlotCount`, `selectSelectedSlot` and `selectIsSubscribed`.
+- Each reducer lives in its own `*.reducer.ts`. Each `*.feature.ts` holds the feature key and uses `createFeature` for a scoped feature selector, with `extraSelectors` for derived values such as `selectOpenSlotCount`, `selectSelectedSlot` and `selectIsSubscribed`.
+- `home` and `booking` persist to localStorage through `ngrx-store-localstorage` (`store/meta/meta.reducers.ts`). They're stored base64-encoded as `ttb-home` and `ttb-booking` and restored when each slice loads. Each feature clears its slice, and the saved copy, with its own `stateReset` action.
 - Dates are stored as ISO strings to keep state serializable.
 - Stale responses (a month or date the user has already moved past) are ignored by the reducer, and unit tested.
 - Name and phone stay in a reactive form on the booking page; the store only gets them on confirm.
@@ -234,11 +235,27 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 
 ---
 
-## 9. Verification (2026-09-27)
+## 9. Tests
+
+> **Note:** These tests were written to the wireframe's spec: its mock data, booking rules, hours and flows. That behavior is a placeholder, not confirmed business rules. The functionality will likely change as business rules are decided later, for example booking windows, slot lengths, availability, the SMS sign-up and the content source, so these tests will likely need to change with it. A failing test after a business-rule change may mean the test needs updating, not that there's a bug. More tests will be added per component and feature as those rules are settled.
+
+| Spec | Covers | Tied to wireframe behavior? |
+| --- | --- | --- |
+| `core/services/shop-hours.service.spec.ts` | Hours rows, "Open now" / "Opens at" / "Closed" labels | Yes: wireframe hours and label wording |
+| `features/booking/state/booking.reducer.spec.ts` | Date/time selection, stale responses, submit → booked, reset on edit | Yes: wireframe booking flow |
+| `features/booking/state/booking.feature.spec.ts` | Open-slot count, selected slot | Yes: wireframe slot rules |
+| `store/app.reducer.spec.ts` | Menu toggle / close | Mostly stable |
+| `store/app.effects.spec.ts` | Menu closes after navigation | Mostly stable |
+| `store/meta/meta.reducers.spec.ts` | localStorage sync of `home` / `booking` (`ttb-` keys, base64, restore) | Mostly stable |
+| `shared/utils/{date,weekday,base64}.utils.spec.ts` | Date labels, weekday spans, Unicode-safe base64 | Stable |
+
+---
+
+## 10. Verification (2026-09-27)
 
 **Checks run:**
-- `ng build`: clean, 159 kB initial transfer. Home and booking load as separate chunks.
-- `ng test`: 12/12 passing (`shop-hours.service.spec.ts`, `booking.feature.spec.ts`).
+- `ng build`: clean, 166 kB initial transfer (159 kB before localStorage sync was added). Home and booking load as separate chunks.
+- `ng test`: 23/23 passing across 9 spec files (see §9).
 - Headless Chrome over the DevTools protocol:
   - Every home section and the footer render against the wireframe.
   - The lightbox opens.
@@ -250,6 +267,7 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 - Calendar columns had uneven widths (fixed with `table-layout: fixed`).
 - The disabled time-slot strike-through targeted `:disabled` instead of `.p-disabled`.
 
-**Still open (environment):**
-- Node 24.14.1 is below Angular 22's minimum (24.15).
-- The PrimeUI license key isn't set yet, so the "Invalid PrimeUI License" banner still shows. See the README.
+**Environment (resolved):**
+- Node is now 24.21, which meets Angular 22's minimum (24.15).
+- The PrimeUI license key is set in `core/config/primeui-license.ts`, so the license banner no longer shows.
+- Angular CLI analytics is disabled (`angular.json` `"analytics": false`).

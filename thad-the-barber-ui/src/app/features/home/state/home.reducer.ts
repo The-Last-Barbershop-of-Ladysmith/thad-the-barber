@@ -6,6 +6,10 @@ import { type HomeState, initialHomeState } from './home.state';
 export const homeReducer: ActionReducer<HomeState> = createReducer(
   initialHomeState,
   on(
+    HomePageActions.stateReset,
+    (): HomeState => initialHomeState,
+  ),
+  on(
     HomePageActions.opened,
     (state: HomeState): HomeState => ({
       ...state,

@@ -3,7 +3,7 @@
   "version": 1,
   "cli": {
     "packageManager": "npm",
-    "analytics": "c61d4917-1dd1-444e-9894-42a52c0f762c",
+    "analytics": false,
     "schematicCollections": ["angular-eslint"]
   },
   "newProjectRoot": "projects",
@@ -25,6 +25,9 @@
             "browser": "src/main.ts",
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
+            "allowedCommonJsDependencies": [
+              "deepmerge"
+            ],
             "assets": [
               {
                 "glob": "**/*",

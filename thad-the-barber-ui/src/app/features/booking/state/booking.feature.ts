@@ -16,6 +16,9 @@ export type BookingExtraSelectors = {
   selectIsBooked: MemoizedSelector<object, boolean>;
 };
 
+/** Store key for this slice; also names its localStorage entry (`ttb-booking`). */
+export const bookingFeatureKey: 'booking' = 'booking' as const;
+
 /**
  * `createFeature` scopes everything under the `booking` key: it generates `selectBookingState`
  * plus one selector per property, and `extraSelectors` adds the derived ones built on those.
@@ -23,7 +26,7 @@ export type BookingExtraSelectors = {
  */
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the Feature type.
 export const bookingFeature = createFeature({
-  name: 'booking',
+  name: bookingFeatureKey,
   reducer: bookingReducer,
   extraSelectors: ({
     selectUnavailableDates,

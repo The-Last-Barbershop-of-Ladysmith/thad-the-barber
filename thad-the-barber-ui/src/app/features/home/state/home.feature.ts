@@ -11,6 +11,9 @@ export type HomeExtraSelectors = {
   selectContentLoading: MemoizedSelector<object, boolean>;
 };
 
+/** Store key for this slice; also names its localStorage entry (`ttb-home`). */
+export const homeFeatureKey: 'home' = 'home' as const;
+
 /**
  * `createFeature` scopes everything under the `home` key: it generates `selectHomeState`
  * plus one selector per property, and `extraSelectors` adds the derived ones built on those.
@@ -18,7 +21,7 @@ export type HomeExtraSelectors = {
  */
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the Feature type.
 export const homeFeature = createFeature({
-  name: 'home',
+  name: homeFeatureKey,
   reducer: homeReducer,
   extraSelectors: ({
     selectSmsSignup,

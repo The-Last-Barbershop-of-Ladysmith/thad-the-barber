@@ -9,6 +9,8 @@ import { PRIMEUI_LICENSE } from './core/config/primeui-license';
 import { routes } from './app.routes';
 import * as appEffects from './store/app.effects';
 import { layoutFeature } from './store/app.feature';
+import { type AppState } from './store/app.state';
+import { metaReducers } from './store/meta/meta.reducers';
 import { ThadPreset, themeOptions } from './theme';
 
 export const appConfig: ApplicationConfig = {
@@ -23,7 +25,10 @@ export const appConfig: ApplicationConfig = {
         scrollPositionRestoration: 'enabled',
       }),
     ),
-    provideStore({ [layoutFeature.name]: layoutFeature.reducer }),
+    provideStore<AppState>(
+      { [layoutFeature.name]: layoutFeature.reducer },
+      { metaReducers },
+    ),
     provideEffects(appEffects),
     provideStoreDevtools({
       maxAge: 25,
