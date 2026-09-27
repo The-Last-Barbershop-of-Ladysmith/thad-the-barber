@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, type OnInit, type Signal, inject } 
 import { type AppState } from '../../store/app.state';
 import { type Announcement, type GalleryPhoto, type Testimonial } from './models/home.models';
 import { Store } from '@ngrx/store';
-import { Backdrop } from '../../shared/components/backdrop/backdrop';
+import { Backdrop, type BackdropAnchor } from '../../shared/components/backdrop/backdrop';
 import { Announcements } from './components/announcements/announcements';
 import { Gallery } from './components/gallery/gallery';
 import { Hero } from './components/hero/hero';
@@ -29,6 +29,18 @@ import { homeFeature } from './state/home.feature';
 })
 export class Home implements OnInit {
   private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
+
+  /** Where each backdrop keyframe lands, as in the wireframe. `null` is its removed "services" section. */
+  protected readonly backdropAnchors: readonly BackdropAnchor[] = [
+    'app-hero',
+    '#announcements',
+    null,
+    '#schedule',
+    '#visit',
+    '#testimonials',
+    '#gallery',
+    'app-footer',
+  ];
 
   protected readonly announcements: Signal<Announcement[]> = this.store.selectSignal(homeFeature.selectAnnouncements);
   protected readonly testimonials: Signal<Testimonial[]> = this.store.selectSignal(homeFeature.selectTestimonials);

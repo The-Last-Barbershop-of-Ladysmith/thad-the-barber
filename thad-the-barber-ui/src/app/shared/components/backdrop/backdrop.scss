@@ -6,21 +6,15 @@
   pointer-events: none;
   background: var(--p-surface-950);
 
-  .frame,
+  .canvas,
   .still {
     display: block;
     width: 100%;
     height: 100%;
-    object-fit: cover;
-  }
-
-  .frame {
-    position: absolute;
-    inset: 0;
-    transition: opacity 0.3s linear;
   }
 
   .still {
+    object-fit: cover;
     object-position: 30% 60%;
   }
 

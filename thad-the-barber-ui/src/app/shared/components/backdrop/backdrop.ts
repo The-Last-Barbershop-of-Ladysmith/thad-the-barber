@@ -2,38 +2,30 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  type ElementRef,
   type InputSignal,
   type Signal,
-  type WritableSignal,
   afterNextRender,
-  computed,
   inject,
   input,
-  signal,
+  viewChild,
 } from '@angular/core';
-import { clamp } from '../../utils/math.utils';
+import { CLIP_COUNT, KEYFRAME_URLS } from './backdrop.frames';
+import { FrameScrubber } from './frame-scrubber';
 
 export type BackdropMode = 'scroll' | 'still';
 
-/** Keyframes 1 → 7, then back to 1 so the footer loops to the opening shot. */
-const KEYFRAMES: readonly string[] = [
-  1,
-  2,
-  3,
-  4,
-  5,
-  6,
-  7,
-  1,
-].map((frame: number): string => `assets/keys/k${frame}.webp`);
+/**
+ * A CSS selector for the element whose top edge sits on a keyframe, or `null` for a keyframe placed halfway
+ * between its neighbours (the wireframe's removed "services" section).
+ */
+export type BackdropAnchor = string | null;
 
 /**
  * Fixed full-screen photo behind the page.
- * - `scroll`: crossfades the shop keyframe stills as the visitor scrolls (home page).
+ * - `scroll`: the wireframe's scroll-scrubbed video (see `FrameScrubber`). Keyframe k lands when `anchors[k]`
+ *   reaches the top of the viewport; the last anchor (the footer) sits at the bottom of the page.
  * - `still`:  one keyframe under a dark wash (booking page).
- *
- * The wireframe scrubs 847 extracted video frames on a canvas. This base version uses the
- * 7 keyframe stills; swapping in the frame scrubber later only touches this component.
  */
 @Component({
   selector: 'app-backdrop',
@@ -45,33 +37,40 @@ export class Backdrop {
   readonly mode: InputSignal<BackdropMode> = input<BackdropMode>('scroll');
   /** Keyframe index (0-6) shown in `still` mode. */
   readonly still: InputSignal<number> = input<number>(5);
+  /** One anchor per keyframe (`CLIP_COUNT + 1`), in page order. Required in `scroll` mode. */
+  readonly anchors: InputSignal<readonly BackdropAnchor[]> = input<readonly BackdropAnchor[]>([]);
 
-  protected readonly frames: readonly string[] = KEYFRAMES;
-  private readonly progress: WritableSignal<number> = signal(0);
-  private readonly position: Signal<number> = computed((): number => this.progress() * (this.frames.length - 1));
+  protected readonly keyframes: readonly string[] = KEYFRAME_URLS;
+  private readonly canvas: Signal<ElementRef<HTMLCanvasElement> | undefined> =
+    viewChild<ElementRef<HTMLCanvasElement>>('canvas');
 
   constructor() {
     const destroyRef: DestroyRef = inject(DestroyRef);
     afterNextRender((): void => {
-      if (this.mode() !== 'scroll') {
+      const canvas: HTMLCanvasElement | undefined = this.canvas()?.nativeElement;
+      if (this.mode() !== 'scroll' || !canvas) {
         return;
       }
 
+      const scrubber: FrameScrubber = new FrameScrubber(canvas);
       let frameRequest: number = 0;
-      const update: () => void = (): void => {
+      const update: (fromScroll: boolean) => void = (fromScroll: boolean): void => {
         frameRequest = 0;
-        const maxScroll: number = document.documentElement.scrollHeight - window.innerHeight;
-        this.progress.set(maxScroll > 0
-          ? Math.min(
-            1,
-            window.scrollY / maxScroll,
-          )
-          : 0);
+        scrubber.setTarget(
+          this.scrollPosition(),
+          fromScroll,
+        );
       };
       const onScroll: () => void = (): void => {
         if (frameRequest === 0) {
-          frameRequest = requestAnimationFrame(update);
+          frameRequest = requestAnimationFrame((): void => {
+            update(true);
+          });
         }
+      };
+      const onResize: () => void = (): void => {
+        scrubber.redraw();
+        update(false);
       };
 
       window.addEventListener(
@@ -81,9 +80,9 @@ export class Backdrop {
       );
       window.addEventListener(
         'resize',
-        onScroll,
+        onResize,
       );
-      update();
+      update(false);
 
       destroyRef.onDestroy((): void => {
         window.removeEventListener(
@@ -92,22 +91,54 @@ export class Backdrop {
         );
         window.removeEventListener(
           'resize',
-          onScroll,
+          onResize,
         );
         cancelAnimationFrame(frameRequest);
+        scrubber.destroy();
       });
     });
   }
 
-  /** The two keyframes nearest the scroll position blend; the rest stay hidden. */
-  protected opacityAt(index: number): number {
-    if (index === 0) {
-      return 1;
+  /** Scroll position in clips: 2.5 is halfway between the tops of anchors 2 and 3. */
+  private scrollPosition(): number {
+    const scrollY: number = window.scrollY;
+    const maxScroll: number = document.documentElement.scrollHeight - window.innerHeight;
+    const tops: number[] = this.anchors().map((anchor: BackdropAnchor): number => {
+      if (anchor === null) {
+        return Number.NaN;
+      }
+      // Component hosts are inline, so measure their first element (the section itself).
+      const host: Element | null = document.querySelector(anchor);
+      const box: Element | null = host?.firstElementChild ?? host;
+      return box
+        ? Math.min(
+          maxScroll,
+          box.getBoundingClientRect().top + scrollY,
+        )
+        : 0;
+    });
+    tops.forEach((
+      top: number,
+      index: number,
+    ): void => {
+      if (Number.isNaN(top)) {
+        tops[index] = ((tops[index - 1] ?? 0) + (tops[index + 1] ?? 0)) / 2;
+      }
+    });
+
+    for (let clip: number = 0; clip < CLIP_COUNT; clip++) {
+      const start: number = tops[clip] ?? 0;
+      const end: number = tops[clip + 1] ?? maxScroll;
+      if (scrollY < end) {
+        return clip + Math.max(
+          0,
+          (scrollY - start) / Math.max(
+            1,
+            end - start,
+          ),
+        );
+      }
     }
-    return clamp(
-      this.position() - index + 1,
-      0,
-      1,
-    );
+    return CLIP_COUNT;
   }
 }

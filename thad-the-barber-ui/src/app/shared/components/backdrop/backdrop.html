@@ -1,17 +1,8 @@
 <div class="backdrop" aria-hidden="true">
   @if (mode() === 'scroll') {
-    @for (src of frames; track $index) {
-      <img
-        [src]="src"
-        alt=""
-        class="frame"
-        [style.opacity]="opacityAt($index)"
-        [attr.fetchpriority]="$index === 0 ? 'high' : null"
-        [attr.loading]="$index === 0 ? null : 'lazy'"
-      />
-    }
+    <canvas #canvas class="canvas"></canvas>
   } @else {
-    <img [src]="frames[still()]" alt="" class="still" />
+    <img [src]="keyframes[still()]" alt="" class="still" />
     <div class="wash"></div>
   }
 </div>
