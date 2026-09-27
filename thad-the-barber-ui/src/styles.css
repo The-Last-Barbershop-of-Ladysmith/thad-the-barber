@@ -1,0 +1,6 @@
+/* Layer order: PrimeNG sits after Tailwind's base and before its utilities, so utilities win. */
+@layer theme, base, primeng, components, utilities;
+
+@import "tailwindcss";
+@import "tailwindcss-primeui";
+@import "./app/theme/tailwind/theme.css";

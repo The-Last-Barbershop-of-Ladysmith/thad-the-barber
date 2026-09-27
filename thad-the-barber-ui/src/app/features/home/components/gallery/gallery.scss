@@ -1,0 +1,44 @@
+// A framed print in the masonry columns; lifts slightly on hover.
+.print {
+  display: block;
+  width: 100%;
+  margin-bottom: 1.25rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: zoom-in;
+  break-inside: avoid;
+  transition:
+    transform 0.3s var(--p-brand-ease),
+    filter 0.3s ease;
+
+  &:hover {
+    transform: translateY(-0.25rem);
+    filter: brightness(1.05);
+  }
+
+  .print-img {
+    display: block;
+    width: 100%;
+    height: auto;
+    box-shadow: 0 0 0 1px rgb(0 0 0 / 0.15);
+  }
+}
+
+// Lightbox templates render inside Galleria's full-screen overlay, outside the section above,
+// so these stay top-level rather than nested under .print.
+.lightbox-img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: calc(100svh - 200px);
+}
+
+.lightbox-count {
+  padding-top: 1.25rem;
+  text-align: center;
+  font-size: 0.8125rem;
+  letter-spacing: 0.16em;
+  color: var(--p-surface-300);
+}

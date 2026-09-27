@@ -1,0 +1,33 @@
+<section class="page-section">
+  <p-card class="w-full max-w-300">
+    <div class="stack gap-8">
+      <div class="header">
+        <app-section-heading eyebrow="Testimonials" title="What folks are saying" />
+        <div class="score">
+          <span class="score-value">{{ reviews.score }}</span>
+          <span class="stack gap-0.5">
+            <p-rating [ngModel]="5" [readonly]="true" />
+            <span class="text-[13px] text-muted-color"
+              >{{ reviews.count }} {{ reviews.source }} reviews</span
+            >
+          </span>
+        </div>
+      </div>
+
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        @for (review of testimonials(); track review.id) {
+          <figure class="tile review">
+            <div class="stack gap-3.5">
+              <p-rating [ngModel]="review.rating" [readonly]="true" />
+              <blockquote class="quote">“{{ review.quote }}”</blockquote>
+            </div>
+            <figcaption class="stack gap-0.5">
+              <span class="text-[15px] font-bold">{{ review.author }}</span>
+              <span class="source">{{ review.source }}</span>
+            </figcaption>
+          </figure>
+        }
+      </div>
+    </div>
+  </p-card>
+</section>

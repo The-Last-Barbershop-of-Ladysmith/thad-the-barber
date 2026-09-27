@@ -1,0 +1,67 @@
+<section class="announcements px-4 md:px-24">
+  <p-carousel class="slider" [loop]="true" [spacing]="24" aria-label="Announcements">
+    <p-carousel-content>
+      @for (item of announcements(); track item.id) {
+        <p-carousel-item>
+          <p-card>
+            <div class="slide md:grid-cols-2">
+              <div class="slide-copy">
+                <div class="eyebrow meta">
+                  <span>{{ item.tag }}</span>
+                  <span class="meta-rule"></span>
+                  <span class="text-surface-300">{{ item.date }}</span>
+                </div>
+                <h2 class="section-title">{{ item.title }}</h2>
+                <p class="body-copy max-w-[34em]">{{ item.body }}</p>
+
+                @if (item.signup) {
+                  <app-sms-signup class="w-full" />
+                }
+                @if (item.link; as link) {
+                  <a pButton [outlined]="true" [routerLink]="link.route" [fragment]="link.fragment">
+                    <span pButtonLabel>{{ link.label }}</span>
+                    <i pButtonIcon class="pi pi-arrow-right"></i>
+                  </a>
+                }
+              </div>
+
+              @if (item.imageUrl) {
+                <img [src]="item.imageUrl" alt="" class="slide-media" />
+              } @else if (item.imageNote) {
+                <div class="media-placeholder slide-media placeholder">
+                  [ {{ item.imageNote }} ]
+                </div>
+              }
+            </div>
+          </p-card>
+        </p-carousel-item>
+      }
+    </p-carousel-content>
+
+    <div class="controls">
+      <button
+        pButton
+        pCarouselPrev
+        type="button"
+        severity="secondary"
+        [rounded]="true"
+        aria-label="Previous announcement"
+        class="md:absolute md:top-1/2 md:-left-20 md:-translate-y-1/2"
+      >
+        <i pButtonIcon class="pi pi-arrow-left"></i>
+      </button>
+      <p-carousel-indicators />
+      <button
+        pButton
+        pCarouselNext
+        type="button"
+        severity="secondary"
+        [rounded]="true"
+        aria-label="Next announcement"
+        class="md:absolute md:top-1/2 md:-right-20 md:-translate-y-1/2"
+      >
+        <i pButtonIcon class="pi pi-arrow-right"></i>
+      </button>
+    </div>
+  </p-carousel>
+</section>

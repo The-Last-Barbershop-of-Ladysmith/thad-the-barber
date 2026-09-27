@@ -1,0 +1,46 @@
+<section class="page-section">
+  <p-card class="w-full max-w-300">
+    <div class="stack gap-8">
+      <app-section-heading eyebrow="Gallery" title="Fresh out the chair" />
+
+      <div class="columns-2 gap-5 md:columns-3 lg:columns-4">
+        @for (photo of photos(); track photo.src; let i = $index) {
+          <button
+            type="button"
+            class="print"
+            [attr.aria-label]="'Open ' + photo.alt"
+            (click)="open(i)"
+          >
+            <div class="photo-frame">
+              <div class="photo-mat">
+                <img [src]="photo.src" [alt]="photo.alt" loading="lazy" class="print-img" />
+              </div>
+            </div>
+          </button>
+        }
+      </div>
+    </div>
+  </p-card>
+</section>
+
+<p-galleria
+  [value]="photos()"
+  [(visible)]="lightboxOpen"
+  [(activeIndex)]="activeIndex"
+  [fullScreen]="true"
+  [circular]="true"
+  [showItemNavigators]="true"
+  [showThumbnails]="false"
+  [containerStyle]="{ 'max-width': 'min(80vw, 1100px)' }"
+>
+  <ng-template #item let-photo>
+    <div class="photo-frame">
+      <div class="photo-mat">
+        <img [src]="photo.src" [alt]="photo.alt" class="lightbox-img" />
+      </div>
+    </div>
+  </ng-template>
+  <ng-template #footer>
+    <div class="lightbox-count">{{ activeIndex() + 1 }} / {{ photos().length }}</div>
+  </ng-template>
+</p-galleria>

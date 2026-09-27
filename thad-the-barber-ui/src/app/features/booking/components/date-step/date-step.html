@@ -1,0 +1,19 @@
+<section class="stack gap-3">
+  <span class="eyebrow">1 — Pick a date</span>
+  <p-datepicker
+    [inline]="true"
+    [ngModel]="value()"
+    [minDate]="minDate()"
+    [maxDate]="maxDate()"
+    [disabledDays]="disabledDays()"
+    [disabledDates]="disabledDates()"
+    [showOtherMonths]="false"
+    (onSelect)="dateSelect.emit($event)"
+    (onMonthChange)="monthChange.emit($event)"
+  />
+  <div class="legend">
+    <span class="legend-item"><span class="swatch open"></span>available</span>
+    <span class="legend-item"><span class="swatch closed"></span>closed / booked</span>
+    <span class="legend-item"><span class="swatch selected"></span>selected</span>
+  </div>
+</section>

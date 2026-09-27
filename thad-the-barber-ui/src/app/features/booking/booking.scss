@@ -1,0 +1,16 @@
+.page {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+  max-width: 75rem;
+  margin-inline: auto;
+  padding: 8rem 1.5rem 1.5rem;
+
+  // Steps and summary stack on mobile; lg:grid-cols-* in the template puts them side by side.
+  .layout {
+    display: grid;
+    align-items: start;
+    gap: 2rem;
+  }
+}

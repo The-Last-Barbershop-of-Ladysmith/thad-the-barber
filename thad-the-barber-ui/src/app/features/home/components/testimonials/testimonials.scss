@@ -1,0 +1,43 @@
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.25rem;
+
+  .score {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+
+    .score-value {
+      font-size: 3rem;
+      font-weight: 800;
+      line-height: 1;
+      color: var(--p-primary-hover-color);
+    }
+  }
+}
+
+.review {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1.25rem;
+  margin: 0;
+  padding: 1.75rem;
+
+  .quote {
+    margin: 0;
+    font-size: 1.125rem;
+    line-height: 1.5;
+    text-wrap: pretty;
+  }
+
+  .source {
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--p-text-muted-color);
+  }
+}

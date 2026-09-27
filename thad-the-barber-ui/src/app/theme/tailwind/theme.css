@@ -1,0 +1,191 @@
+/*
+ * Tailwind bridge for the PrimeNG theme.
+ * `tailwindcss-primeui` already maps primary-*, surface-*, text-color, text-muted-color,
+ * border-surface, rounded-border and bg-emphasis to the PrimeNG CSS variables.
+ * This file adds the brand tokens it doesn't cover, plus the repeated type and surface
+ * patterns from the wireframe as named utilities. Values live in ../tokens; here we only
+ * point at the CSS variables PrimeNG generates from them.
+ */
+
+@custom-variant dark (&:where(.app-dark, .app-dark *));
+
+@theme inline {
+  --font-sans: var(--p-font-family-sans);
+
+  --color-ink: var(--p-ink);
+  --color-mint: var(--p-brand-success);
+  --color-divider: var(--p-brand-divider);
+
+  --radius-control: var(--p-border-radius-md);
+  --radius-tile: var(--p-border-radius-lg);
+  --radius-panel: var(--p-border-radius-xl);
+
+  --ease-brand: var(--p-brand-ease);
+
+  --text-shadow-hero: 0 2px 24px rgb(0 0 0 / 0.55);
+  --text-shadow-nav: 0 1px 8px rgb(0 0 0 / 0.8);
+
+  --drop-shadow-logo: 0 1px 6px rgb(0 0 0 / 0.6);
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 5rem;
+  }
+
+  body {
+    margin: 0;
+    background: var(--p-surface-950);
+    color: var(--p-text-color);
+    font-family: var(--p-font-family-sans);
+  }
+}
+
+/* ---- Typography ---------------------------------------------------------- */
+
+/* Small copper label above headings: "VISIT US", "TESTIMONIALS" */
+@utility eyebrow {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--p-primary-color);
+}
+
+/* Hero wordmark */
+@utility display-title {
+  margin: 0;
+  font-size: clamp(3rem, 8vw, 6rem);
+  line-height: 0.95;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  text-wrap: balance;
+  color: var(--p-text-color);
+}
+
+/* Section headings */
+@utility section-title {
+  margin: 0;
+  font-size: clamp(2rem, 4.5vw, 3.25rem);
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  text-wrap: balance;
+  color: var(--p-text-color);
+}
+
+/* Muted uppercase label over a value: "LOCATION", "PHONE", form field labels */
+@utility field-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--p-text-muted-color);
+}
+
+/* Body paragraph inside panels */
+@utility body-copy {
+  margin: 0;
+  font-size: 1.125rem;
+  line-height: 1.5;
+  text-wrap: pretty;
+  color: var(--p-surface-100);
+}
+
+/* Intro paragraph under a heading */
+@utility lead {
+  margin: 0;
+  font-size: clamp(1.0625rem, 2vw, 1.3125rem);
+  line-height: 1.45;
+  text-wrap: pretty;
+  color: var(--p-surface-100);
+}
+
+/*
+ * Link that turns copper on hover. Set the resting color with `--link-color` (not `color`),
+ * because component SCSS is unlayered and a plain `color` there would also override the hover.
+ */
+@utility nav-link {
+  color: var(--link-color, var(--p-text-color));
+  transition: color 0.2s ease;
+  &:hover {
+    color: var(--p-primary-hover-color);
+  }
+}
+
+/* ---- Layout -------------------------------------------------------------- */
+
+/* Vertical flex column. Pair with a gap: `stack gap-3` */
+@utility stack {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Full-height home section that centers its panel below the fixed header */
+@utility page-section {
+  display: flex;
+  min-height: 100svh;
+  align-items: center;
+  justify-content: center;
+  padding: 7rem 1.5rem 4rem;
+}
+
+/* ---- Surfaces ------------------------------------------------------------ */
+
+/* Frosted panel for non-card containers (the p-card token override covers cards) */
+@utility glass {
+  background: var(--p-brand-glass-background);
+  border: 1px solid var(--p-content-border-color);
+  border-radius: var(--p-border-radius-xl);
+  backdrop-filter: blur(var(--p-brand-glass-blur));
+  -webkit-backdrop-filter: blur(var(--p-brand-glass-blur));
+}
+
+/* Denser frosted panel: footer */
+@utility glass-strong {
+  background: var(--p-brand-glass-strong-background);
+  border: 1px solid var(--p-content-border-color);
+  border-radius: var(--p-border-radius-xl);
+  backdrop-filter: blur(var(--p-brand-glass-blur));
+  -webkit-backdrop-filter: blur(var(--p-brand-glass-blur));
+}
+
+/* Quieter nested surface: testimonial tiles */
+@utility tile {
+  background: var(--p-brand-tile-background);
+  border: 1px solid var(--p-brand-tile-border-color);
+  border-radius: var(--p-border-radius-lg);
+}
+
+/* Fixed header gradient fade */
+@utility header-fade {
+  background: var(--p-brand-header-fade);
+}
+
+/* Gallery print: black frame around a cream mat */
+@utility photo-frame {
+  background: #000;
+  padding: 6px;
+  border-radius: var(--p-border-radius-xs);
+  box-shadow: 0 14px 30px -12px rgb(0 0 0 / 0.8), 0 2px 4px rgb(0 0 0 / 0.5);
+}
+
+@utility photo-mat {
+  background: #fbfaf6;
+  padding: clamp(6px, 1vw, 10px);
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.06), inset 0 2px 6px rgb(0 0 0 / 0.12);
+}
+
+/* Placeholder well for images that haven't been shot yet */
+@utility media-placeholder {
+  border-radius: var(--p-border-radius-lg);
+  border: 1px solid var(--p-content-border-color);
+  background: repeating-linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--p-surface-50) 5%, transparent) 0 10px,
+    color-mix(in srgb, var(--p-surface-50) 10%, transparent) 10px 20px
+  );
+}

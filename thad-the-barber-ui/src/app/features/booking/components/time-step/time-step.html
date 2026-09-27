@@ -1,0 +1,19 @@
+<section class="stack gap-3">
+  <span class="eyebrow">2 — Pick a time</span>
+  @if (!dayLabel()) {
+    <div class="empty">Select a day to see open times</div>
+  } @else if (loading()) {
+    <p-progress-spinner class="size-10" strokeWidth="4" ariaLabel="Loading times" />
+  } @else {
+    <span class="text-sm text-surface-200">{{ dayLabel() }} · {{ openCount() }} open</span>
+    <p-selectbutton
+      [options]="options()"
+      optionLabel="label"
+      optionValue="time"
+      optionDisabled="disabled"
+      [allowEmpty]="false"
+      [ngModel]="selected()"
+      (ngModelChange)="timeSelect.emit($event)"
+    />
+  }
+</section>

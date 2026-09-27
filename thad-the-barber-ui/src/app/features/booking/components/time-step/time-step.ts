@@ -1,0 +1,36 @@
+import { ChangeDetectionStrategy, Component, computed, input, type InputSignal, output, type OutputEmitterRef, type Signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { SelectButtonModule } from 'primeng/selectbutton';
+import { type TimeSlot } from '../../models/booking.models';
+
+/** A slot as a SelectButton option; PrimeNG reads the disabled flag through optionDisabled. */
+interface SlotOption extends TimeSlot { disabled: boolean; }
+
+/** Step 2: open times for the chosen day, as a wrapping PrimeNG SelectButton grid. */
+@Component({
+  selector: 'app-time-step',
+  imports: [
+    FormsModule,
+    SelectButtonModule,
+    ProgressSpinnerModule,
+  ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  templateUrl: './time-step.html',
+  styleUrl: './time-step.scss',
+})
+export class TimeStep {
+  readonly slots: InputSignal<TimeSlot[]> = input<TimeSlot[]>([]);
+  readonly selected: InputSignal<string | null> = input<string | null>(null);
+  readonly dayLabel: InputSignal<string | null> = input<string | null>(null);
+  readonly openCount: InputSignal<number> = input(0);
+  readonly loading: InputSignal<boolean> = input(false);
+
+  readonly timeSelect: OutputEmitterRef<string> = output<string>();
+
+  protected readonly options: Signal<SlotOption[]> = computed((): SlotOption[] =>
+    this.slots().map((slot: TimeSlot): SlotOption => ({
+      ...slot,
+      disabled: !slot.available,
+    })));
+}

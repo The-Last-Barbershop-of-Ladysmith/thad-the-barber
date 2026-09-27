@@ -1,0 +1,36 @@
+@if (signup().status === 'success') {
+  <p-message severity="info" icon="pi pi-check"
+    >You're on the list. We'll text {{ signup().phone }} when there's news.</p-message
+  >
+} @else {
+  <form class="form" (ngSubmit)="submit()">
+    <div class="row">
+      <p-inputmask
+        class="phone"
+        [fluid]="true"
+        mask="(999) 999-9999"
+        placeholder="(555) 123-4567"
+        type="tel"
+        autocomplete="tel"
+        ariaLabel="Mobile number"
+        [formControl]="phone"
+        [invalid]="phone.invalid && phone.touched"
+      />
+      <button pButton type="submit" [loading]="submitting()">
+        <span pButtonLabel>Text me</span>
+      </button>
+    </div>
+    <small
+      class="text-xs"
+      [class]="phone.invalid && phone.touched ? 'text-primary-300' : 'text-muted-color'"
+    >
+      @if (phone.invalid && phone.touched) {
+        Enter a 10-digit phone number.
+      } @else if (signup().status === 'error') {
+        {{ signup().error }}
+      } @else {
+        Msg &amp; data rates may apply. Reply STOP to opt out.
+      }
+    </small>
+  </form>
+}

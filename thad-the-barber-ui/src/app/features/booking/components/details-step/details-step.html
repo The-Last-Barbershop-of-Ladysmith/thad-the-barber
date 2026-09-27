@@ -1,0 +1,28 @@
+<section class="stack gap-3">
+  <span class="eyebrow">3 — Your details</span>
+  <div class="grid gap-2.5 sm:grid-cols-2" [formGroup]="form()">
+    <div class="stack gap-1.5">
+      <label class="field-label" for="booking-name">Name</label>
+      <input
+        id="booking-name"
+        pInputText
+        formControlName="name"
+        placeholder="First & last name"
+        autocomplete="name"
+        [fluid]="true"
+      />
+    </div>
+    <div class="stack gap-1.5">
+      <label class="field-label" for="booking-phone">Phone</label>
+      <p-inputmask
+        inputId="booking-phone"
+        formControlName="phone"
+        mask="(999) 999-9999"
+        placeholder="(555) 555-5555"
+        type="tel"
+        autocomplete="tel"
+        [fluid]="true"
+      />
+    </div>
+  </div>
+</section>
