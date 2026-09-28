@@ -37,5 +37,5 @@ body:
     attributes:
       label: Tests required
       value: |
-        - [ ] jest-axe component specs (Vitest):
+        - [ ] axe-core component specs (Vitest):
         - [ ] Playwright + axe scenarios:
