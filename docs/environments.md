@@ -57,18 +57,20 @@ release/1.2          ●──────●─────────●─�
                       \      ↑ merge   ↑ merge          → deploys TEST
 dev/1.2                ●──●──●────●────●  (deleted after release)   → deploys DEV
                          ↑ squash  ↑ squash
-topic/123-ticker-bar ────┘         topic/130-…   (one per issue, deleted on merge)
+Topic/123-ticker-bar ────┘         Topic/130-…   (one per issue, deleted on merge)
 ```
 
 | Step | Branch | Merge style | Result |
 | --- | --- | --- | --- |
 | Start a release | Cut `release/X.Y` from `main`, then `dev/X.Y` from it | n/a | n/a |
-| Work an issue | `topic/<issue#>-<slug>` off `dev/X.Y` | **Squash** into `dev/X.Y`, with `Closes #<issue>` | Dev deploy + smoke |
+| Work an issue | `Topic/<issue#>-<slug>` off `dev/X.Y` | **Squash** into `dev/X.Y`, with `Closes #<issue>` | Dev deploy + smoke |
 | Feature or epic done | PR `dev/X.Y` → `release/X.Y` | **Merge commit** | Test deploy + smoke + sandbox round trip |
 | Ship | Approve the `production` environment | Automated | Prod deploy, then merge to `main`, tag `vX.Y.0`, publish release notes, delete `dev/X.Y` |
 | Hotfix | `hotfix/X.Y.Z-<slug>` off `release/X.Y` | PR into `release/X.Y` | Test → approval → prod → `main` + tag, then an automatic PR into the active `dev/*` |
 
 **Rules:**
+- **Names in use:** `X.Y` stands for the release name. The active dev branch is **`dev/angry-apple-1.0.0.0`**, and its release branch will be `release/angry-apple-1.0.0.0`. Topic branches use a **capital `Topic/`**, because a lowercase `topic/` collides with the existing `Topic/` ref folder on Windows and the push fails.
+- Closing keywords (`Closes #N`) only close issues when the change reaches `main`. Until then, close finished issues by hand with a link to the PR.
 - Only one `dev/*` branch is active at a time, because there's one dev environment.
 - Never squash between long-lived branches. It rewrites history and causes false conflicts later.
 - Cut the next `dev/*` from `main` after a release. If it was cut earlier, the release workflow opens a `main` → `dev/*` PR.
