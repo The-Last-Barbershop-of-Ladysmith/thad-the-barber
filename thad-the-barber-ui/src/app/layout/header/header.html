@@ -1,0 +1,59 @@
+<header class="header-fade bar px-4 pt-3.5 pb-9 md:px-8 md:pt-5.5 md:pb-14">
+  <a routerLink="/" class="home-link" (click)="closeMenu()">
+    <img src="assets/logo.png" [alt]="shop.name" class="logo drop-shadow-logo h-9 md:h-12" />
+  </a>
+
+  @if (onBookingPage()) {
+    <a routerLink="/" class="nav-link bar-link back-link">
+      <i class="pi pi-arrow-left text-sm"></i> Back to site
+    </a>
+  } @else {
+    <nav class="section-nav hidden md:flex" aria-label="Page sections">
+      @for (item of sections; track item.fragment) {
+        <a routerLink="/" [fragment]="item.fragment" class="nav-link bar-link">{{ item.label }}</a>
+      }
+    </nav>
+    <button
+      pButton
+      type="button"
+      severity="secondary"
+      [rounded]="true"
+      class="menu-toggle md:hidden"
+      aria-label="Open menu"
+      [attr.aria-expanded]="menuOpen()"
+      (click)="toggleMenu()"
+    >
+      <i pButtonIcon class="pi pi-bars"></i>
+    </button>
+  }
+</header>
+
+<p-drawer
+  position="right"
+  [visible]="menuOpen()"
+  (visibleChange)="$event || closeMenu()"
+  [blockScroll]="true"
+  ariaCloseLabel="Close menu"
+  styleClass="w-[min(20rem,85vw)]"
+>
+  <nav class="stack gap-1" aria-label="Page sections">
+    @for (item of sections; track item.fragment) {
+      <a
+        routerLink="/"
+        [fragment]="item.fragment"
+        class="nav-link drawer-link"
+        (click)="closeMenu()"
+        >{{ item.label }}</a
+      >
+    }
+  </nav>
+  <div class="stack mt-8 gap-3">
+    <a pButton routerLink="/book" [fluid]="true" (click)="closeMenu()">
+      <span pButtonLabel>Book online</span>
+      <i pButtonIcon class="pi pi-arrow-right"></i>
+    </a>
+    <a pButton [outlined]="true" [fluid]="true" [href]="shop.phone.tel">
+      <span pButtonLabel>{{ shop.phone.display }}</span>
+    </a>
+  </div>
+</p-drawer>

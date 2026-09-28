@@ -1,0 +1,88 @@
+.footer {
+  position: relative;
+  display: block;
+  padding: 1.5rem 1.5rem 2rem;
+
+  .panel {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    width: 100%;
+    max-width: 75rem;
+    margin-inline: auto;
+    padding: clamp(1.5rem, 4vw, 2.75rem);
+  }
+
+  .columns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+
+    .column {
+      display: flex;
+      flex: 1 1 10rem;
+      flex-direction: column;
+      gap: 0.5rem;
+
+      &.brand {
+        flex-basis: 11.25rem;
+        align-items: flex-start;
+        gap: 0.875rem;
+      }
+
+      &.contact {
+        --link-color: var(--p-surface-100);
+        font-size: 0.9375rem;
+      }
+
+      &.social {
+        flex: none;
+        gap: 0.625rem;
+      }
+    }
+
+    .logo {
+      display: block;
+      width: auto;
+      height: 3.5rem;
+    }
+
+    .copy {
+      font-size: 0.9375rem;
+      line-height: 1.5;
+      color: var(--p-surface-100);
+    }
+
+    .directions {
+      align-self: flex-start;
+      text-decoration: underline;
+      text-underline-offset: 4px;
+    }
+  }
+
+  .bottom {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--p-brand-divider);
+
+    .bottom-nav {
+      --link-color: var(--p-surface-300);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.25rem;
+      font-size: 0.8125rem;
+
+      .to-top {
+        padding: 0;
+        border: 0;
+        background: transparent;
+        font: inherit;
+        cursor: pointer;
+      }
+    }
+  }
+}

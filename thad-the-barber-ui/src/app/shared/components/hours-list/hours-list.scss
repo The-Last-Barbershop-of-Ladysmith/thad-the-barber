@@ -1,0 +1,45 @@
+.table {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+
+  .table-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-block: 0.625rem;
+    border-bottom: 1px solid var(--p-brand-divider);
+
+    .day {
+      font-weight: 700;
+      color: var(--p-text-color);
+    }
+
+    .hours {
+      margin: 0;
+      font-weight: 700;
+      color: var(--p-primary-hover-color);
+    }
+
+    &.closed {
+      .day,
+      .hours {
+        font-weight: 500;
+        color: var(--p-text-muted-color);
+      }
+
+      .hours {
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+      }
+    }
+  }
+}
+
+.compact {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}

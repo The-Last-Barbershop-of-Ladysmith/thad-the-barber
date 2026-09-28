@@ -1,0 +1,35 @@
+<p-card>
+  <div class="stack gap-3.5">
+    <span class="eyebrow">Booking summary</span>
+    <dl class="rows">
+      @for (row of rows(); track row.label) {
+        <div class="row">
+          <dt class="text-surface-200">{{ row.label }}</dt>
+          <dd class="m-0 text-right">{{ row.value }}</dd>
+        </div>
+      }
+    </dl>
+
+    <button pButton type="button" [fluid]="true" [loading]="submitting()" (click)="confirm.emit()">
+      <span pButtonLabel>{{ booked() ? 'Booked' : 'Confirm booking' }}</span>
+      @if (booked()) {
+        <i pButtonIcon class="pi pi-check"></i>
+      }
+    </button>
+
+    @if (hint()) {
+      <small class="text-xs text-surface-200">{{ hint() }}</small>
+    }
+    @if (error()) {
+      <p-message severity="error">{{ error() }}</p-message>
+    }
+    @if (confirmation()) {
+      <p-message severity="info" icon="pi pi-check">
+        <div class="stack gap-1.5">
+          <strong>You're booked.</strong>
+          <span class="font-normal">{{ confirmation() }}</span>
+        </div>
+      </p-message>
+    }
+  </div>
+</p-card>

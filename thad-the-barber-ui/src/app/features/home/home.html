@@ -1,0 +1,10 @@
+<app-backdrop mode="scroll" [anchors]="backdropAnchors" />
+
+<div class="relative">
+  <app-hero />
+  <app-announcements id="announcements" [announcements]="announcements()" />
+  <app-schedule-cta id="schedule" />
+  <app-visit id="visit" />
+  <app-testimonials id="testimonials" [testimonials]="testimonials()" />
+  <app-gallery id="gallery" [photos]="gallery()" />
+</div>

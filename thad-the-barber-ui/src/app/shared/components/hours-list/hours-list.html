@@ -1,0 +1,34 @@
+@switch (variant()) {
+  @case ('table') {
+    <dl class="table">
+      @for (row of rows; track row.label) {
+        <div class="table-row" [class.closed]="row.closed">
+          <dt class="day">{{ row.label }}</dt>
+          <dd class="hours">{{ row.range }}</dd>
+        </div>
+      }
+    </dl>
+  }
+  @case ('stacked') {
+    <div class="stack gap-1">
+      @for (row of rows; track row.label) {
+        @if (row.closed) {
+          <span class="text-sm text-muted-color">Closed {{ row.label }}</span>
+        } @else {
+          <span class="font-semibold text-color">{{ row.label }} · {{ row.shortRange }}</span>
+        }
+      }
+    </div>
+  }
+  @case ('compact') {
+    <div class="compact">
+      @for (row of rows; track row.label) {
+        @if (row.closed) {
+          <span class="text-sm text-muted-color">Closed {{ row.shortLabel }}</span>
+        } @else {
+          <span class="text-surface-100">{{ row.shortLabel }} · {{ row.shortRange }}</span>
+        }
+      }
+    </div>
+  }
+}

@@ -1,0 +1,8 @@
+.empty {
+  padding: 1.25rem;
+  border: 1px dashed color-mix(in srgb, var(--p-surface-50) 35%, transparent);
+  border-radius: var(--p-border-radius-md);
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--p-text-muted-color);
+}

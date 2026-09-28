@@ -1,0 +1,59 @@
+// Padding, logo height and nav/menu visibility change per breakpoint, so they stay inline
+// as md: utilities; component SCSS would otherwise override them at every width.
+
+// Fixed bar. It ignores pointer events so the page underneath its fade stays clickable;
+// the logo, links and menu button opt back in.
+.bar {
+  position: fixed;
+  inset-inline: 0;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  pointer-events: none;
+
+  .home-link,
+  .bar-link,
+  .section-nav,
+  .menu-toggle {
+    pointer-events: auto;
+  }
+
+  .home-link {
+    display: block;
+    line-height: 0;
+
+    .logo {
+      display: block;
+      width: auto;
+    }
+  }
+
+  .bar-link {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    text-shadow: 0 1px 8px rgb(0 0 0 / 0.8);
+
+    &.back-link {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      white-space: nowrap;
+    }
+  }
+
+  .section-nav {
+    flex-wrap: wrap;
+    gap: 1.625rem;
+  }
+}
+
+// Drawer content renders in PrimeNG's overlay panel, outside .bar.
+.drawer-link {
+  padding-block: 0.875rem;
+  border-bottom: 1px solid var(--p-brand-divider);
+  font-size: 1.125rem;
+  font-weight: 600;
+}

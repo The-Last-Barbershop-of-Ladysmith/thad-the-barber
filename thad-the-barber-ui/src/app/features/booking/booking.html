@@ -1,0 +1,42 @@
+<app-backdrop mode="still" [still]="5" />
+
+<div class="page">
+  <header class="stack gap-2">
+    <span class="eyebrow">Book an appointment</span>
+    <h1 class="section-title">Schedule your cut</h1>
+  </header>
+
+  <div class="layout lg:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]">
+    <div class="stack gap-8">
+      <app-date-step
+        [value]="selectedDay()"
+        [minDate]="window.min"
+        [maxDate]="window.max"
+        [disabledDays]="closedDays"
+        [disabledDates]="disabledDates()"
+        (dateSelect)="onDateSelect($event)"
+        (monthChange)="onMonthChange($event)"
+      />
+      <app-time-step
+        [slots]="slots()"
+        [selected]="selectedTime()"
+        [day]="selectedDay()"
+        [openCount]="openSlotCount()"
+        [loading]="slotsLoading()"
+        (timeSelect)="onTimeSelect($event)"
+      />
+      <app-details-step [form]="form" />
+    </div>
+
+    <app-booking-summary
+      class="lg:sticky lg:top-24"
+      [rows]="summaryRows()"
+      [submitting]="submitting()"
+      [booked]="booked()"
+      [hint]="hint()"
+      [error]="error()"
+      [confirmation]="confirmationText()"
+      (confirm)="confirm()"
+    />
+  </div>
+</div>

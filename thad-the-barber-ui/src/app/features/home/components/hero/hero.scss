@@ -1,0 +1,14 @@
+.hero {
+  display: flex;
+  min-height: 100svh;
+  align-items: flex-end;
+  padding-block: 6rem 4rem;
+
+  .content {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.25rem;
+    max-width: 40rem;
+  }
+}
