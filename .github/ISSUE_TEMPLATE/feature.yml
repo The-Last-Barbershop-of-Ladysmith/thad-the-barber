@@ -1,0 +1,65 @@
+name: Feature / enhancement
+description: A focused piece of work with a user story, business rules, acceptance criteria and tests
+labels: ["feature"]
+body:
+  - type: textarea
+    id: story
+    attributes:
+      label: User story
+      placeholder: As a <customer | barber | developer>, I want <goal> so that <benefit>.
+    validations:
+      required: true
+  - type: textarea
+    id: rules
+    attributes:
+      label: Business rules
+      description: Cite rules by their BR- ID from docs/business-rules.md. Mark undecided rules as *placeholder* and link the business-rule issue.
+    validations:
+      required: true
+  - type: textarea
+    id: inventory
+    attributes:
+      label: Hardcoded values inventory
+      description: Every literal or config value this work touches, with its source of truth (Square / content / component / env / code). See docs/architecture-decisions.md §K.
+      value: |
+        | Value | Current location | Source of truth | Target |
+        | --- | --- | --- | --- |
+  - type: textarea
+    id: ac
+    attributes:
+      label: Acceptance criteria
+      description: Given / When / Then
+    validations:
+      required: true
+  - type: textarea
+    id: a11y
+    attributes:
+      label: Accessibility criteria (WCAG 2.2 AA)
+    validations:
+      required: true
+  - type: textarea
+    id: tests
+    attributes:
+      label: Tests required
+      value: |
+        - [ ] Component specs:
+        - [ ] Unit specs (services / reducers / selectors / effects / utils):
+        - [ ] API tests (xUnit):
+        - [ ] Playwright scenarios:
+    validations:
+      required: true
+  - type: textarea
+    id: dod
+    attributes:
+      label: Definition of Done
+      value: |
+        - [ ] Lint, build and all tests pass in CI (ui, api, e2e, lighthouse)
+        - [ ] axe reports zero violations for the affected pages/states
+        - [ ] No business fact hardcoded or duplicated
+        - [ ] Docs updated (wireframe audit / architecture decisions) if behavior changed
+        - [ ] Squash-merged into the active dev/* branch with "Closes #"
+  - type: input
+    id: wireframe
+    attributes:
+      label: Wireframe reference
+      placeholder: wireframe/site/index.html — section

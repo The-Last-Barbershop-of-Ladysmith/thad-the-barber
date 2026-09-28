@@ -1,0 +1,41 @@
+name: Accessibility (WCAG 2.2 AA)
+description: An accessibility audit or fix
+labels: ["a11y"]
+body:
+  - type: input
+    id: scope
+    attributes:
+      label: Page / component / pattern
+    validations:
+      required: true
+  - type: textarea
+    id: criteria
+    attributes:
+      label: WCAG success criteria
+      placeholder: e.g. 2.2.2 Pause, Stop, Hide; 1.4.3 Contrast (Minimum)
+    validations:
+      required: true
+  - type: textarea
+    id: findings
+    attributes:
+      label: Checks / findings
+      value: |
+        - [ ] axe (component spec + Playwright): zero violations
+        - [ ] Keyboard only: every control reachable, visible focus, logical order, no traps
+        - [ ] Screen reader (NVDA + Chrome): names, roles, states and announcements
+        - [ ] 200% zoom and 320px reflow without loss
+        - [ ] prefers-reduced-motion respected
+        - [ ] Contrast of text and non-text UI
+  - type: textarea
+    id: ac
+    attributes:
+      label: Acceptance criteria
+    validations:
+      required: true
+  - type: textarea
+    id: tests
+    attributes:
+      label: Tests required
+      value: |
+        - [ ] jest-axe component specs (Vitest):
+        - [ ] Playwright + axe scenarios:
