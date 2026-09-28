@@ -1,0 +1,66 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Repository layout
+
+- `wireframe/site/` — the original static HTML/JS wireframe (`index.html`, `mobile.html`, `book.html`, `support.js`). It is the design and behavior reference; don't edit it as part of app work.
+- `thad-the-barber-ui/` — the Angular 22 app built from the wireframe. All commands below run from this folder.
+- `thad-the-barber-ui/README.md` is the detailed source of truth for stack versions, theming tables and conventions. `docs/wireframe-audit.md` maps every wireframe element, token, and piece of logic to its place in the app.
+
+## Commands
+
+```bash
+cd thad-the-barber-ui
+npm start                     # ng serve → http://localhost:4200
+npm run build                 # production build to dist/
+npm test                      # Vitest via @angular/build:unit-test
+npx ng test --watch=false     # single run
+npx ng test --include src/app/store/app.reducer.spec.ts   # one spec file
+npm run lint                  # ESLint (TS + templates)
+npm run lint:fix              # ESLint also formats .ts files
+npm run format                # Prettier — HTML/SCSS/CSS only
+```
+
+Node must satisfy `^22.22.3 || ^24.15.0 || >=26` or the Angular CLI refuses to run.
+
+## Architecture
+
+- **Standalone, zoneless, signals.** Files use Angular 22 CLI naming (`home.ts` / class `Home`, no `.component` suffix). Bootstrap is `src/app/app.config.ts`.
+- **Lazy features own their state.** `app.routes.ts` lazy-loads `features/home` and `features/booking`; each `<feature>.routes.ts` registers its NgRx slice with `provideState` + `provideEffects`, so a slice only exists after its route loads. Only the root `layout` slice (mobile menu, `src/app/store/`) is registered at bootstrap.
+- **State folder pattern** (per feature `state/`): `*.state.ts` (interface + initial state), `*.actions.ts` (`createActionGroup`, page vs API sources), `*.feature.ts` (`createFeature` + reducer + `extraSelectors`/derived `MemoizedSelector`s), `*.effects.ts` (functional effects calling the feature's services). Put reusable helpers in `shared/utils`.
+- **Persistence.** `store/meta/meta.reducers.ts` uses `ngrx-store-localstorage` to sync the `home` and `booking` slices to localStorage under `ttb-<key>`, base64-encoded, rehydrating when a lazy slice registers. Each feature clears its persisted state with its own `State Reset` action. Add a slice to `syncKeys` to persist it.
+- **Mocked backend.** `HomeContentService`, `SmsSignupService`, `AvailabilityService`, `BookingService` return local data (`features/home/data`, pseudo-random booked slots). Each notes the endpoint it should eventually call; `environments/` holds `apiBaseUrl`.
+- **Shop data** (phone, address, hours, socials) lives in `core/config/shop-info.ts`; `core/services/shop-hours.service.ts` derives the hours table and the live "Open now" status.
+- **Backdrop.** `shared/components/backdrop` renders the fixed background. `scroll` mode is the wireframe's scroll-scrubbed video: `FrameScrubber` (`frame-scrubber.ts`) progressively loads 7 clips × 121 AVIF frames from `public/assets/frames3/c1..c7` onto a canvas, with keyframes anchored to page sections. `still` mode shows one keyframe (booking page). (The README's "not in this version yet" note about the backdrop predates the scrubber.)
+
+## Theming
+
+Rule: **if PrimeNG has a component for it, restyle it with tokens instead of building a custom component.**
+
+- `src/app/theme/`: `tokens/primitive.ts` (palette, radii, font) → `tokens/semantic.ts` (plus brand values under `semantic.extend.brand`, emitted as `--p-brand-*`) → `tokens/components/*.ts` (one file per PrimeNG component) → `thad-preset.ts` (`definePreset(Aura, …)`).
+- `theme/tailwind/theme.css` maps tokens to Tailwind colors/radii and defines named utilities (`glass`, `tile`, `eyebrow`, `section-title`, …).
+- `styles.css` sets the CSS layer order `theme, base, primeng, components, utilities` so Tailwind beats PrimeNG without `!important`. Dark scheme is on via `<html class="app-dark">`.
+- Tailwind 4 + `tailwindcss-primeui`. **Never PrimeFlex.** PrimeNG 22 needs the license key in `core/config/primeui-license.ts`.
+
+## Conventions (enforced or expected)
+
+Components:
+- Templates over 4 lines go in a `.html` file.
+- Style a wrapper element in the template, never the host (no `host: { class }`, no `:host`).
+- At most 2 plain Tailwind utilities per element; move the rest to a named class in the component `.scss`. Theme utilities and breakpoint prefixes (`md:`, `lg:`) don't count and stay inline.
+- SCSS nests to follow the DOM. PrimeNG overlay content (drawer, Galleria lightbox) stays top-level.
+- Component SCSS is unlayered and beats Tailwind, so never set in SCSS a property that an inline breakpoint class changes — keep the base value inline too (`px-6 md:px-8`).
+- For `nav-link`, set `--link-color`, not `color`.
+
+TypeScript (`eslint.config.js`, plus `eslint/one-item-per-line.js`):
+- Explicit types on every variable, property, parameter (including callbacks/destructuring) and return value. The only exceptions are the `createActionGroup`/`createFeature` declarations, which carry a one-line `eslint-disable` with a reason.
+- Semicolons everywhere, including interface/type members.
+- One item per line whenever there is more than one (array items, object props, call args, params, destructured props).
+- ESLint formats `.ts`; Prettier formats HTML/SCSS/CSS only (Prettier would undo the one-per-line wrapping).
+- NgRx typing: effects are `FunctionalEffect`; derived selectors are `MemoizedSelector<object, T>`; feature selectors are destructured with `: typeof xFeature`; action payloads are named interfaces; store is injected as `inject<Store<AppState>>(Store)`.
+- `tsconfig.json` is strict with `noUncheckedIndexedAccess`, `noUnused*`, and `strictTemplates`.
+
+## Tests
+
+The existing specs encode the wireframe's placeholder behavior (booking rules, hours, mock data), not confirmed business rules. When business rules change, a failing spec may need updating rather than indicating a bug. Keep the existing specs; add new ones per feature (see `docs/wireframe-audit.md` §9).

@@ -144,8 +144,8 @@ The decided rules are recorded in **[business-rules.md](business-rules.md)** wit
 The target is **WCAG 2.2 AA** (the "ADA" requirement).
 
 **Tooling:**
-- `jest-axe` (run under Vitest) in component specs
-- `@axe-core/playwright` in the end-to-end tests
+- `axe-core` directly in Vitest component specs, through a small `expectNoAxeViolations` helper (no `jest-axe`/`vitest-axe` wrapper). `color-contrast` and `region` are off there because jsdom doesn't render and components aren't whole pages.
+- `@axe-core/playwright` in the end-to-end tests, with every rule on. **Color contrast is checked only here**; `incomplete` results (text over the backdrop video, images or glass) are attached to the report and checked by hand.
 - Lighthouse CI with an accessibility score of at least 95
 - A manual keyboard and NVDA pass per page
 
@@ -165,7 +165,7 @@ Every change ships with its tests:
 
 | Layer | Tool | Where |
 | --- | --- | --- |
-| Components, services, reducers, selectors, effects, utils | Vitest (+ `jest-axe`) | Next to the file under test |
+| Components, services, reducers, selectors, effects, utils | Vitest (+ `axe-core`) | Next to the file under test |
 | API services, mappers, webhook signatures, endpoints | xUnit + `WebApplicationFactory` | `thad-the-barber-api.tests/` |
 | End-to-end, mocked API (every PR) | Playwright + `@axe-core/playwright`, Chromium + WebKit, desktop 1280 + mobile 390 | `thad-the-barber-ui/e2e/` |
 | Smoke tests after each deploy | Playwright against the deployed dev/test URL + Square sandbox | `thad-the-barber-ui/e2e/smoke/` |
