@@ -129,7 +129,7 @@ The decided rules are recorded in **[business-rules.md](business-rules.md)** wit
 - connecting the website
 
 **App decisions** have their own issues:
-- announcement wording, cadence and expiry
+- announcement wording, cadence and expiry ([#6](https://github.com/The-Last-Barbershop-of-Ladysmith/thad-the-barber/issues/6))
 
 ## G. Rendering and SEO
 
@@ -176,7 +176,7 @@ Every change ships with its tests:
 ## J. Confirmations and reminders
 
 - **Preferred:** Square's built-in confirmations and reminders, included in the Free plan and set in Square Dashboard → Appointments → Communications. They cost $0.
-- **Unknown:** Square's docs say seller-level API bookings send no email or SMS, but they don't say what happens for buyer-level bookings. The M2 spike checks this.
+- **Unknown:** Square's docs say seller-level API bookings send no email or SMS, but they don't say what happens for buyer-level bookings. The M2 spike ([#21](https://github.com/The-Last-Barbershop-of-Ladysmith/thad-the-barber/issues/21)) checks this.
 - **Fallback (only if Square doesn't send them):** our API sends its own.
   - Email via Azure Communication Services; SMS via Twilio (with A2P 10DLC registration).
   - A GitHub Actions cron job calls a secured `POST /api/jobs/reminders`, which works on F1.
