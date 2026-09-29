@@ -1,0 +1,42 @@
+{
+  "description": "Topic branch merged straight into main",
+  "input": {
+    "kind": "merge",
+    "pullNumber": 42,
+    "headBranch": "Topic/42-ticker-bar",
+    "baseBranch": "main",
+    "mergeCommitSha": "abc1234def5678",
+    "parentCount": 1,
+    "checkRuns": [
+      {
+        "name": "ui",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "api",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "e2e",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "lighthouse",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ],
+    "requiredChecks": [
+      "ui",
+      "api",
+      "e2e",
+      "lighthouse"
+    ]
+  },
+  "expected": [
+    "wrong-target"
+  ]
+}

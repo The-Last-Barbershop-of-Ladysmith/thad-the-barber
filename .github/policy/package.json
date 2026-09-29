@@ -1,0 +1,9 @@
+{
+  "name": "policy-check",
+  "private": true,
+  "type": "module",
+  "description": "Merge-policy alert for issue #3. Runs on Node 24 with no dependencies.",
+  "scripts": {
+    "test": "node --test policy.test.ts"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "description": "Before M1-07 the check list is empty, so checks aren't enforced",
+  "input": {
+    "kind": "merge",
+    "pullNumber": 42,
+    "headBranch": "Topic/42-ticker-bar",
+    "baseBranch": "dev/angry-apple-1.0.0.0",
+    "mergeCommitSha": "abc1234def5678",
+    "parentCount": 1,
+    "checkRuns": [],
+    "requiredChecks": []
+  },
+  "expected": []
+}

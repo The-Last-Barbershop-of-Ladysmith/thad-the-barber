@@ -1,0 +1,12 @@
+{
+  "description": "Cutting a new branch isn't a direct push",
+  "input": {
+    "kind": "push",
+    "branch": "release/angry-apple-1.0.0.0",
+    "sha": "f00dcafe1234567",
+    "created": true,
+    "deleted": false,
+    "linkedPullNumbers": []
+  },
+  "expected": []
+}

@@ -1,0 +1,14 @@
+{
+  "description": "Commit pushed straight to dev",
+  "input": {
+    "kind": "push",
+    "branch": "dev/angry-apple-1.0.0.0",
+    "sha": "f00dcafe1234567",
+    "created": false,
+    "deleted": false,
+    "linkedPullNumbers": []
+  },
+  "expected": [
+    "direct-push"
+  ]
+}
