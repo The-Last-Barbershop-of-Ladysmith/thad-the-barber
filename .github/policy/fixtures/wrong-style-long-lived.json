@@ -1,0 +1,42 @@
+{
+  "description": "dev \u2192 release squashed",
+  "input": {
+    "kind": "merge",
+    "pullNumber": 42,
+    "headBranch": "dev/angry-apple-1.0.0.0",
+    "baseBranch": "release/angry-apple-1.0.0.0",
+    "mergeCommitSha": "abc1234def5678",
+    "parentCount": 1,
+    "checkRuns": [
+      {
+        "name": "ui",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "api",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "e2e",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "lighthouse",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ],
+    "requiredChecks": [
+      "ui",
+      "api",
+      "e2e",
+      "lighthouse"
+    ]
+  },
+  "expected": [
+    "wrong-merge-style"
+  ]
+}

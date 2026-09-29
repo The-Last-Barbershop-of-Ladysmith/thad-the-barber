@@ -1,0 +1,37 @@
+{
+  "description": "PR merged without the api check ever running",
+  "input": {
+    "kind": "merge",
+    "pullNumber": 42,
+    "headBranch": "Topic/42-ticker-bar",
+    "baseBranch": "dev/angry-apple-1.0.0.0",
+    "mergeCommitSha": "abc1234def5678",
+    "parentCount": 1,
+    "checkRuns": [
+      {
+        "name": "ui",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "e2e",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "lighthouse",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ],
+    "requiredChecks": [
+      "ui",
+      "api",
+      "e2e",
+      "lighthouse"
+    ]
+  },
+  "expected": [
+    "check-missing"
+  ]
+}

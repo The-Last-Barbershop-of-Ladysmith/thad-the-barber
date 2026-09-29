@@ -1,0 +1,55 @@
+# Merge-policy alert (issue #3). The repo is private on GitHub's Free plan, so
+# rulesets can't block a bad merge. This flags one after the fact instead: a direct
+# push, a merge with failing or missing required checks, the wrong merge style, or
+# the wrong target. It opens (or updates) one `policy-violation` issue per branch,
+# assigned to POLICY_OWNER, and comments on the PR. Alert only: it never reverts.
+#
+# Repository variables:
+#   POLICY_OWNER     who the alert issue is assigned to (falls back to whoever pushed/merged)
+#   REQUIRED_CHECKS  comma-separated check names, e.g. "ui,api,e2e,lighthouse"; empty until CI exists (#15)
+name: policy-alert
+
+on:
+  push:
+    branches:
+      - main
+      - 'release/**'
+      - 'dev/**'
+  pull_request:
+    types:
+      - closed
+    branches:
+      - main
+      - 'release/**'
+      - 'dev/**'
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+  checks: read
+
+concurrency:
+  group: policy-alert-${{ github.event.pull_request.base.ref || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  policy:
+    if: github.event_name == 'push' || github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: .github/policy
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Check merge policy
+        run: node .github/policy/policy-check.ts
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          POLICY_OWNER: ${{ vars.POLICY_OWNER || github.actor }}
+          REQUIRED_CHECKS: ${{ vars.REQUIRED_CHECKS }}
