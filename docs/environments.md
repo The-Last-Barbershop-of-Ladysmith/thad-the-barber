@@ -16,10 +16,73 @@ How code moves from a topic branch to production. The decisions behind this are 
 | URL | `*.azurewebsites.net` | `*.azurewebsites.net` | Site on the custom domain, API on `api.<domain>`, managed certificates |
 | Cost | $0 | $0 | ~$13/mo |
 
-- **Infrastructure as code:** Bicep in `infra/` (`main.bicep`, `nonprod.bicepparam`, `prod.bicepparam`). Key Vault holds the Square OAuth refresh token.
+- **Infrastructure as code:** Bicep in `infra/` (`main.bicep`, `nonprod.bicepparam`, and `prod.bicepparam` at M5). See [Infrastructure](#infrastructure) below.
 - **Secrets:** every secret lives in **Key Vault** in every environment, and app settings hold only Key Vault references. See [architecture-decisions.md §M](architecture-decisions.md#m-security). GitHub signs in to Azure with **OIDC federated credentials**, so no Azure secrets are stored in GitHub.
 - **Monitoring:** Application Insights, fed by the **Azure Monitor OpenTelemetry Distro** in the .NET API and the Express server, plus the App Insights JavaScript SDK in the browser. W3C `traceparent` headers link browser → API → Square into one transaction (CORS allows `traceparent`/`tracestate`). PII is redacted before export, with sampling and a daily cap to stay within the 5 GB/month free allowance. There's also a $5 budget alert on the subscription.
-- **F1 limits:** no Always On (cold starts), 60 CPU-minutes per day, 1 GB RAM, and no deployment slots. The smoke tests warm the app up before they run.
+- **F1 limits:** no Always On (cold starts), 60 CPU-minutes per day, 165 MB outbound data per day, 1 GB RAM, and no deployment slots. All four nonprod apps share one plan's quota. The smoke tests warm the app up before they run. Because of the outbound cap, large media (backdrop frames, gallery) is served from Blob Storage, not the apps (M3-09, #47).
+
+## Infrastructure
+
+`infra/main.bicep` deploys at subscription scope. `nonprod.bicepparam` creates:
+
+| Resource | Name | Notes |
+| --- | --- | --- |
+| Resource group | `rg-ttb-nonprod` | East US |
+| App Service plan | `asp-ttb-nonprod` | F1 Free Linux, shared by all four apps |
+| Web apps (Express) | `app-ttb-web-dev`, `app-ttb-web-test` | Node 24 LTS |
+| API apps (.NET) | `app-ttb-api-dev`, `app-ttb-api-test` | .NET 10 LTS |
+| Key Vaults | `kv-ttb-dev-<suffix>`, `kv-ttb-test-<suffix>` | One per environment, because the secret names are the same in each. Standard, RBAC, soft delete + purge protection |
+| Application Insights | `appi-ttb-dev`, `appi-ttb-test` | Workspace-based, on `log-ttb-nonprod` (30-day retention, 0.15 GB/day cap ≈ 4.5 GB/month, under the 5 GB free allowance) |
+| Storage | `stttbnonprod<suffix>` | Standard LRS, hot. Public-read containers `media-dev` and `media-test`. HTTPS only, TLS 1.2, **shared-key access off** (uploads use Entra ID). Blob CORS allows GET from the web origins |
+| Budget | `budget-ttb-monthly` | $5/month on the subscription; emails at 80% and 100% actual and 100% forecast |
+
+Every app: system-assigned identity, HTTPS only, minimum TLS 1.2, FTP and basic-auth publishing disabled, platform CORS **unset** (the API does CORS itself). `<suffix>` is a stable 6-character hash of the subscription, so re-runs reuse the same names.
+
+**App settings** (none sensitive):
+
+| App | Settings |
+| --- | --- |
+| web | `APPLICATIONINSIGHTS_CONNECTION_STRING`, `API_ORIGIN`, `MEDIA_BASE_URL`, `NOINDEX` (`true` outside prod) |
+| api | `APPLICATIONINSIGHTS_CONNECTION_STRING`, `ASPNETCORE_ENVIRONMENT` (`Dev`/`Test`), `KeyVault__Uri` |
+
+The API reads all its secrets through the Key Vault configuration provider, so the vault URI is its only Key Vault setting (M1-03, #11). If an app ever needs a secret as a setting, use a `@Microsoft.KeyVault(SecretUri=…)` reference; `keyVaultReferenceIdentity` is already the app's own identity.
+
+**Key Vault contents:**
+
+| Name | Kind | Set by |
+| --- | --- | --- |
+| `Cors--AllowedOrigins--0…N` | secret | Bicep: the environment's web origin, then `extraCorsOrigins`. If you remove an origin, delete its leftover secret by hand |
+| `session-jwt-signing` | EC P-256 key (ES256) | Bicep. Generated in the vault and never exported; re-runs don't rotate it |
+| `Square--ApplicationSecret`, `Square--RefreshToken`, `Square--WebhookSignatureKey`, `ManageLink--HmacKey`, `Recaptcha--ApiKey`, `Google--ClientSecret`, `Google--RefreshToken` | secrets | You, with `infra/scripts/Set-TtbSecrets.ps1`. Bicep never writes them, so a re-run can't overwrite a real value |
+
+**Role assignments:**
+
+| Who | Role | Scope |
+| --- | --- | --- |
+| web + api identities | Key Vault Secrets User | their environment's vault |
+| api identity | Key Vault Secrets Officer, with an ABAC condition allowing writes to `Square--RefreshToken` only (it rotates) | vault |
+| api identity | Key Vault Crypto User | the `session-jwt-signing` key only |
+| you (`TTB_ADMIN_OBJECT_ID`) | Key Vault Secrets Officer | each vault |
+| GitHub OIDC principal (`TTB_DEPLOY_PRINCIPAL_ID`, #10) | Storage Blob Data Contributor | the storage account |
+
+Key Vault ABAC conditions are in **preview**. If Azure rejects the condition, fall back to Secrets Officer on the vault without the condition and note it here.
+
+### Deploying
+
+You need the Azure CLI and **Owner** (or Contributor + User Access Administrator) on the subscription.
+
+```powershell
+az login
+$env:TTB_BUDGET_EMAIL    = '<your email>'
+$env:TTB_ADMIN_OBJECT_ID = az ad signed-in-user show --query id -o tsv
+az deployment sub what-if --location eastus --parameters infra/nonprod.bicepparam
+az deployment sub create  --location eastus --parameters infra/nonprod.bicepparam
+./infra/scripts/Set-TtbSecrets.ps1 -Environment dev    # then -Environment test
+```
+
+Personal values come from environment variables, so they never land in this public repo. A second `create` should report no changes in `what-if`. `budgetStartDate` is fixed in the param file; Azure rejects a monthly budget whose start date is before the current month, so if the first deploy happens after October 2026, move it to the first of that month.
+
+CI (`.github/workflows/infra.yml`) builds and lints the Bicep on every PR that touches `infra/`. Its what-if job is skipped until #10 adds the OIDC login and the `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID` and `TTB_BUDGET_EMAIL` repo variables. That identity needs a `pull_request` federated credential and enough rights to run what-if on the subscription.
 
 ## CI (every pull request)
 
