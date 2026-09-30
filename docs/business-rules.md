@@ -24,7 +24,7 @@ This is the single record of how the shop's booking and website behave. Each rul
 | BR-08 | Changing a booking requires the **signed manage link** from the confirmation; a booking ID alone isn't enough. | ✅ | API (signed token) |
 | BR-09 | Booking requires a name (at least 2 characters) and a 10-digit US phone number. | ✅ | UI + API validation |
 | BR-10 | A slot taken by someone else before confirming can't be double-booked; the customer is asked to pick another time. | ✅ | Square availability re-check + API |
-| BR-11 | The site shows **no price** anywhere, because the service is variable-priced in Square. The booking summary and confirmation show the service's name and duration. | ✅ 2026-09-29 | Square Catalog → `/api/shop` → booking summary |
+| BR-11 | The site never shows the **service's price**, because the service is variable-priced in Square. The booking summary and confirmation show the service's name and duration. Announcements may still mention prices or discounts (BR-33). | ✅ 2026-09-29 | Square Catalog → `/api/shop` → booking summary |
 | BR-12 | Confirmations and reminders are sent by Square. | ⚠ reminders turned on in Square 2026-09-29; spike verifies they fire for website bookings ([#21](https://github.com/The-Last-Barbershop-of-Ladysmith/thad-the-barber/issues/21)) | Square → Appointments → Communications |
 | BR-13 | A phone number can hold at most **5 upcoming appointments**; past or cancelled ones don't count, and only bookings made on the website are counted (Square doesn't show the site other bookings on the Free plan). Beyond that, the customer is asked to call or text. Booking attempts are limited to **5 per device/IP per 10 minutes**. | ✅ 2026-09-28 | App config (`Booking:MaxUpcomingPerPhone`, `RateLimits:Booking`) + API |
 
@@ -42,10 +42,10 @@ This is the single record of how the shop's booking and website behave. Each rul
 
 | ID | Rule | Status | Where it's enforced |
 | --- | --- | --- | --- |
-| BR-30 | An announcement is **active** from its `publishedAt` date until its `expiresAt` date (inclusive); it has no end if there's no `expiresAt`. | ✅ | Content file + UI selectors |
+| BR-30 | An announcement is **active** from its `publishedAt` date until its `expiresAt` date (inclusive); with no `expiresAt`, it ends 30 days after `publishedAt`, or never if it's marked `noExpiry` (BR-33). | ✅ | Content file + UI selectors |
 | BR-31 | The ticker bar shows active announcements **published within the last `tickerWindowDays`** (30). | ✅ | Content file (`tickerWindowDays`) |
 | BR-32 | With no active announcements, the Announcements section, its menu links and the ticker bar are **all hidden**. | ✅ | UI |
-| BR-33 | Announcement wording, tone, ticker text length and default expiry. | ⚠ [#6](https://github.com/The-Last-Barbershop-of-Ladysmith/thad-the-barber/issues/6) | Content file |
+| BR-33 | Announcements are written in Thad's own words, with no style rules: prices, discounts, emoji and any characters are allowed. Each has a **title** (at most 60 characters), which is also the ticker text, and a **body** (at most 200 characters). The tag is one of **Hours, Special, New, News**. With no `expiresAt`, an announcement expires **30 days after `publishedAt`**, unless it's marked `noExpiry`. The date label on the card is generated from the dates, not typed. The ticker has a pause control. | ✅ 2026-09-29 | Content file (JSON schema) + UI |
 | BR-34 | Announcements are edited in `content/announcements.json`, and gallery photos by adding the original to `media/gallery/` plus an entry (with alt text) in `content/gallery.json`, until the admin portal exists. | ✅ | Content files + media pipeline |
 | BR-35 | Text-alert sign-up is **not offered** for now. | ⏸ M7 | n/a |
 | BR-36 | Reviews on the site are **Google reviews**: the **latest 5-star reviews with written text**, newest first, up to `reviewsToShow` (6). The rating and review count are Google's. Review text is never edited. If Google is unavailable, the hand-kept fallback in `content/reviews.json` is shown. | ✅ 2026-09-28 | Google Business Profile API → `/api/content/reviews`; `reviewsToShow` in the content file |
@@ -71,3 +71,4 @@ This is the single record of how the shop's booking and website behave. Each rul
 | 2026-09-28 | BR-24 added: Google reCAPTCHA v3 bot check before booking (instead of Cloudflare Turnstile). |
 | 2026-09-29 | Square setup checklist done ([#5](https://github.com/The-Last-Barbershop-of-Ladysmith/thad-the-barber/issues/5)): BR-03, BR-04 and BR-07 configured in Square, BR-06 confirmed (no deposits or fees set), BR-12 reminders on (still pending the #21 spike). Values stay in Square. |
 | 2026-09-29 | BR-11 changed: no price shown (the service is variable-priced). BR-40: tagline is site content, and unset social links are hidden. BR-42 added: the Square description is shown as a notice on the booking page and home page. |
+| 2026-09-29 | BR-33 decided ([#6](https://github.com/The-Last-Barbershop-of-Ladysmith/thad-the-barber/issues/6)): free wording, title is the ticker text (60 chars max), body 200 chars max, fixed tags, 30-day default expiry, generated date label. BR-11 clarified: announcements may mention prices. BR-30 updated for the default expiry. |
