@@ -22,6 +22,7 @@ type environmentConfig = {
 ])
 param stage string
 
+@description('Region. Also the last part of every resource name, so keep it short enough for the storage account (24 characters).')
 param location string = 'eastus'
 
 @description('App Service plan SKU. F1 is free and has no Always On; B1 turns Always On on.')
@@ -61,10 +62,9 @@ param tags object = {
   stage: stage
 }
 
-var suffix = take(uniqueString(subscription().id, 'rg-ttb-${stage}'), 6)
-
+// Naming: <type>-ttb-<env>-<region>, e.g. kv-ttb-dev-eastus (storage drops the hyphens).
 resource rg 'Microsoft.Resources/resourceGroups@2024-03-01' = {
-  name: 'rg-ttb-${stage}'
+  name: 'rg-ttb-${stage}-${location}'
   location: location
   tags: tags
 }
@@ -75,7 +75,6 @@ module shared 'modules/shared.bicep' = {
   params: {
     stage: stage
     location: location
-    suffix: suffix
     planSku: planSku
     logDailyCapGb: logDailyCapGb
     environments: environments
@@ -91,7 +90,6 @@ module env 'modules/environment.bicep' = [
     params: {
       envName: e.name
       location: location
-      suffix: suffix
       planId: shared.outputs.planId
       workspaceId: shared.outputs.workspaceId
       storageName: shared.outputs.storageName

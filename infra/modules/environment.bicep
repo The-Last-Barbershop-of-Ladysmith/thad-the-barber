@@ -3,7 +3,6 @@
 
 param envName string
 param location string
-param suffix string
 param planId string
 param workspaceId string
 param storageName string
@@ -24,8 +23,8 @@ var keyVaultSecretsUser = '4633458b-17de-408a-b874-0445c86b69e6'
 var keyVaultSecretsOfficer = 'b86a8fe4-44ce-4948-aee5-eccb2c155cd7'
 var keyVaultCryptoUser = '12338af0-0e69-4776-bea7-57ae8d297424'
 
-var webAppName = 'app-ttb-web-${envName}'
-var apiAppName = 'app-ttb-api-${envName}'
+var webAppName = 'as-ttb-web-${envName}-${location}'
+var apiAppName = 'as-ttb-api-${envName}-${location}'
 var webOrigin = 'https://${webAppName}.azurewebsites.net'
 var corsOrigins = concat([
   webOrigin
@@ -68,7 +67,7 @@ AND
 '''
 
 resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
-  name: 'appi-ttb-${envName}'
+  name: 'ai-ttb-${envName}-${location}'
   location: location
   tags: tags
   kind: 'web'
@@ -80,7 +79,7 @@ resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
 }
 
 resource keyVault 'Microsoft.KeyVault/vaults@2024-11-01' = {
-  name: 'kv-ttb-${envName}-${suffix}'
+  name: 'kv-ttb-${envName}-${location}'
   location: location
   tags: tags
   properties: {

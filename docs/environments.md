@@ -6,10 +6,10 @@ How code moves from a topic branch to production. The decisions behind this are 
 
 | | dev | test | prod (later) |
 | --- | --- | --- | --- |
-| Resource group | `rg-ttb-nonprod` | `rg-ttb-nonprod` | `rg-ttb-prod` |
-| App Service plan | `asp-ttb-nonprod` (**F1 Free Linux**, shared) | `asp-ttb-nonprod` | `asp-ttb-prod` (**B1 Linux, Always On**) |
-| Web app (Express) | `app-ttb-web-dev` | `app-ttb-web-test` | `app-ttb-web-prod` |
-| API app (.NET) | `app-ttb-api-dev` | `app-ttb-api-test` | `app-ttb-api-prod` |
+| Resource group | `rg-ttb-nonprod-eastus` | `rg-ttb-nonprod-eastus` | `rg-ttb-prod-eastus` |
+| App Service plan | `asp-ttb-nonprod-eastus` (**F1 Free Linux**, shared) | `asp-ttb-nonprod-eastus` | `asp-ttb-prod-eastus` (**B1 Linux, Always On**) |
+| Web app (Express) | `as-ttb-web-dev-eastus` | `as-ttb-web-test-eastus` | `as-ttb-web-prod-eastus` |
+| API app (.NET) | `as-ttb-api-dev-eastus` | `as-ttb-api-test-eastus` | `as-ttb-api-prod-eastus` |
 | Deploys when | a PR merges into `dev/*` | a PR merges into `release/*` or `hotfix/*` | a person approves the tested `release/*` artifact |
 | Square | Sandbox | Sandbox (seeded test data) | Production |
 | Frontend config | `environment.dev.ts` (`-c dev`) | `environment.test.ts` (`-c test`) | `environment.ts` (`-c production`) |
@@ -23,20 +23,20 @@ How code moves from a topic branch to production. The decisions behind this are 
 
 ## Infrastructure
 
-`infra/main.bicep` deploys at subscription scope. `nonprod.bicepparam` creates:
+`infra/main.bicep` deploys at subscription scope. Names follow **`<type>-ttb-<env>-<region>`** (`rg`, `asp`, `as`, `kv`, `ai`, `log`; storage can't have hyphens, so it's `stttb<env><region>`). `<env>` is `nonprod`/`prod` for shared resources and `dev`/`test`/`prod` for per-environment ones. `nonprod.bicepparam` creates:
 
 | Resource | Name | Notes |
 | --- | --- | --- |
-| Resource group | `rg-ttb-nonprod` | East US |
-| App Service plan | `asp-ttb-nonprod` | F1 Free Linux, shared by all four apps |
-| Web apps (Express) | `app-ttb-web-dev`, `app-ttb-web-test` | Node 24 LTS |
-| API apps (.NET) | `app-ttb-api-dev`, `app-ttb-api-test` | .NET 10 LTS |
-| Key Vaults | `kv-ttb-dev-<suffix>`, `kv-ttb-test-<suffix>` | One per environment, because the secret names are the same in each. Standard, RBAC, soft delete + purge protection |
-| Application Insights | `appi-ttb-dev`, `appi-ttb-test` | Workspace-based, on `log-ttb-nonprod` (30-day retention, 0.15 GB/day cap ≈ 4.5 GB/month, under the 5 GB free allowance) |
-| Storage | `stttbnonprod<suffix>` | Standard LRS, hot. Public-read containers `media-dev` and `media-test`. HTTPS only, TLS 1.2, **shared-key access off** (uploads use Entra ID). Blob CORS allows GET from the web origins |
+| Resource group | `rg-ttb-nonprod-eastus` | East US |
+| App Service plan | `asp-ttb-nonprod-eastus` | F1 Free Linux, shared by all four apps |
+| Web apps (Express) | `as-ttb-web-dev-eastus`, `as-ttb-web-test-eastus` | Node 24 LTS |
+| API apps (.NET) | `as-ttb-api-dev-eastus`, `as-ttb-api-test-eastus` | .NET 10 LTS |
+| Key Vaults | `kv-ttb-dev-eastus`, `kv-ttb-test-eastus` | One per environment, because the secret names are the same in each. Standard, RBAC, soft delete + purge protection |
+| Application Insights | `ai-ttb-dev-eastus`, `ai-ttb-test-eastus` | Workspace-based, on `log-ttb-nonprod-eastus` (30-day retention, 0.15 GB/day cap ≈ 4.5 GB/month, under the 5 GB free allowance) |
+| Storage | `stttbnonprodeastus` | Standard LRS, hot. Public-read containers `media-dev` and `media-test`. HTTPS only, TLS 1.2, **shared-key access off** (uploads use Entra ID). Blob CORS allows GET from the web origins |
 | Budget | `budget-ttb-monthly` | $5/month on the subscription; emails at 80% and 100% actual and 100% forecast |
 
-Every app: system-assigned identity, HTTPS only, minimum TLS 1.2, FTP and basic-auth publishing disabled, platform CORS **unset** (the API does CORS itself). `<suffix>` is a stable 6-character hash of the subscription, so re-runs reuse the same names.
+Every app: system-assigned identity, HTTPS only, minimum TLS 1.2, FTP and basic-auth publishing disabled, platform CORS **unset** (the API does CORS itself). App, Key Vault and storage names are globally unique in Azure, so a deploy fails if someone else already has one. Because of purge protection, a deleted vault keeps its name for 90 days; recover it instead of redeploying.
 
 **App settings** (none sensitive):
 

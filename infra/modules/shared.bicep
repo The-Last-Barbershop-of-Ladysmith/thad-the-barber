@@ -2,7 +2,6 @@
 
 param stage string
 param location string
-param suffix string
 param planSku string
 param logDailyCapGb string
 
@@ -16,11 +15,11 @@ var storageBlobDataContributor = 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
 
 // Origins are built from the app names (not defaultHostName) so what-if stays deterministic.
 var webOrigins = flatten(map(environments, e => concat([
-  'https://app-ttb-web-${e.name}.azurewebsites.net'
+  'https://as-ttb-web-${e.name}-${location}.azurewebsites.net'
 ], e.extraCorsOrigins)))
 
 resource plan 'Microsoft.Web/serverfarms@2024-11-01' = {
-  name: 'asp-ttb-${stage}'
+  name: 'asp-ttb-${stage}-${location}'
   location: location
   tags: tags
   kind: 'linux'
@@ -33,7 +32,7 @@ resource plan 'Microsoft.Web/serverfarms@2024-11-01' = {
 }
 
 resource workspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
-  name: 'log-ttb-${stage}'
+  name: 'log-ttb-${stage}-${location}'
   location: location
   tags: tags
   properties: {
@@ -48,7 +47,8 @@ resource workspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
 }
 
 resource storage 'Microsoft.Storage/storageAccounts@2024-01-01' = {
-  name: 'stttb${stage}${suffix}'
+  // Storage names allow only lowercase letters and digits (3–24).
+  name: 'stttb${stage}${location}'
   location: location
   tags: tags
   kind: 'StorageV2'

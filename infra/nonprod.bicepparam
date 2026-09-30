@@ -1,4 +1,4 @@
-// dev + test on one F1 Free Linux plan in rg-ttb-nonprod (issue #9).
+// dev + test on one F1 Free Linux plan in rg-ttb-nonprod-eastus (issue #9).
 // Personal values come from environment variables so they stay out of this public repo:
 //   TTB_BUDGET_EMAIL         (required) who gets the $5 budget alerts
 //   TTB_ADMIN_OBJECT_ID      (optional) your Entra object ID, for Key Vault Secrets Officer

@@ -21,7 +21,10 @@ param(
     [string] $Environment,
 
     # Set only these secrets instead of prompting for all of them.
-    [string[]] $Name
+    [string[]] $Name,
+
+    # Region in the vault name (kv-ttb-<env>-<region>).
+    [string] $Location = 'eastus'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -44,10 +47,10 @@ if ($Name) {
     }
 }
 
-$resourceGroup = if ($Environment -eq 'prod') { 'rg-ttb-prod' } else { 'rg-ttb-nonprod' }
-$vault = az keyvault list --resource-group $resourceGroup --query "[?starts_with(name, 'kv-ttb-$Environment-')].name | [0]" --output tsv
-if (-not $vault) {
-    throw "No kv-ttb-$Environment-* vault in $resourceGroup. Deploy infra/main.bicep first."
+$vault = "kv-ttb-$Environment-$Location"
+az keyvault show --name $vault --query name --output none
+if ($LASTEXITCODE -ne 0) {
+    throw "Vault $vault not found. Deploy infra/main.bicep first."
 }
 Write-Host "Vault: $vault"
 
