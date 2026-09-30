@@ -1,5 +1,5 @@
 // Thad the Barber infrastructure (issue #9). Deploy at subscription scope:
-//   az deployment sub create --location eastus --parameters infra/nonprod.bicepparam
+//   az deployment sub create --location centralus --parameters infra/nonprod.bicepparam
 // See docs/environments.md for the one-time setup and the secrets to add after the first deploy.
 targetScope = 'subscription'
 
@@ -71,7 +71,7 @@ param tags object = {
   stage: stage
 }
 
-// Naming: <type>-ttb-<env>-<region>, e.g. kv-ttb-dev-eastus (storage drops the hyphens).
+// Naming: <type>-ttb-<env>-<region>, e.g. kv-ttb-prod-eastus (storage drops the hyphens).
 resource rg 'Microsoft.Resources/resourceGroups@2024-03-01' = {
   name: 'rg-ttb-${stage}-${location}'
   location: location

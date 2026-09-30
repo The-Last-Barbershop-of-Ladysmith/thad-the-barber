@@ -48,7 +48,7 @@ jobs:
       - name: What-if (nonprod)
         run: |
           az deployment sub what-if \
-            --location eastus \
+            --location centralus \
             --parameters infra/nonprod.bicepparam
         env:
           TTB_BUDGET_EMAIL: ${{ vars.TTB_BUDGET_EMAIL }}

@@ -42,7 +42,7 @@ See [environments.md](environments.md) for the deploy setup and the branching an
 | dev + test | One shared **F1 Free Linux** plan, four apps (web + api × dev/test) | $0 | No Always On (slow first request after idle), and the four apps share F1's CPU and bandwidth quota. Accepted outside prod |
 | prod (later) | **B1 Linux**, Always On, web + api | ~$13/mo | Site on the custom domain, API on `api.<domain>`, free managed certificates |
 
-- Region: East US.
+- Region: prod in East US (closest to the shop and its DMV customers); dev + test in Central US, because East US had no F1 quota (2026-09-29).
 - Before go-live, scale test to B1 for about an hour (billed hourly) for a realistic performance check.
 
 **Considered:**

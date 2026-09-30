@@ -23,11 +23,15 @@ param(
     # Set only these secrets instead of prompting for all of them.
     [string[]] $Name,
 
-    # Region in the vault name (kv-ttb-<env>-<region>).
-    [string] $Location = 'eastus'
+    # Region in the vault name (kv-ttb-<env>-<region>). Defaults to centralus for dev/test, eastus for prod.
+    [string] $Location
 )
 
 $ErrorActionPreference = 'Stop'
+
+if (-not $Location) {
+    $Location = if ($Environment -eq 'prod') { 'eastus' } else { 'centralus' }
+}
 
 # Key Vault names map to .NET configuration keys ('--' becomes ':').
 $secrets = [ordered]@{

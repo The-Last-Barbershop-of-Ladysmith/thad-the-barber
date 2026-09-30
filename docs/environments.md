@@ -6,10 +6,10 @@ How code moves from a topic branch to production. The decisions behind this are 
 
 | | dev | test | prod (later) |
 | --- | --- | --- | --- |
-| Resource group | `rg-ttb-nonprod-eastus` | `rg-ttb-nonprod-eastus` | `rg-ttb-prod-eastus` |
-| App Service plan | `asp-ttb-nonprod-eastus` (**F1 Free Linux**, shared) | `asp-ttb-nonprod-eastus` | `asp-ttb-prod-eastus` (**B1 Linux, Always On**) |
-| Web app (Express) | `as-ttb-ui-dev-eastus` | `as-ttb-ui-test-eastus` | `as-ttb-ui-prod-eastus` |
-| API app (.NET) | `as-ttb-api-dev-eastus` | `as-ttb-api-test-eastus` | `as-ttb-api-prod-eastus` |
+| Resource group | `rg-ttb-nonprod-centralus` | `rg-ttb-nonprod-centralus` | `rg-ttb-prod-eastus` |
+| App Service plan | `asp-ttb-nonprod-centralus` (**F1 Free Linux**, shared) | `asp-ttb-nonprod-centralus` | `asp-ttb-prod-eastus` (**B1 Linux, Always On**) |
+| Web app (Express) | `as-ttb-ui-dev-centralus` | `as-ttb-ui-test-centralus` | `as-ttb-ui-prod-eastus` |
+| API app (.NET) | `as-ttb-api-dev-centralus` | `as-ttb-api-test-centralus` | `as-ttb-api-prod-eastus` |
 | Deploys when | a PR merges into `dev/*` | a PR merges into `release/*` or `hotfix/*` | a person approves the tested `release/*` artifact |
 | Square | Sandbox | Sandbox (seeded test data) | Production |
 | Frontend config | `environment.dev.ts` (`-c dev`) | `environment.test.ts` (`-c test`) | `environment.ts` (`-c production`) |
@@ -27,13 +27,13 @@ How code moves from a topic branch to production. The decisions behind this are 
 
 | Resource | Name | Notes |
 | --- | --- | --- |
-| Resource group | `rg-ttb-nonprod-eastus` | East US |
-| App Service plan | `asp-ttb-nonprod-eastus` | F1 Free Linux, shared by all four apps |
-| Web apps (Express) | `as-ttb-ui-dev-eastus`, `as-ttb-ui-test-eastus` | Node 24 LTS |
-| API apps (.NET) | `as-ttb-api-dev-eastus`, `as-ttb-api-test-eastus` | .NET 10 LTS |
-| Key Vaults | `kv-ttb-dev-eastus`, `kv-ttb-test-eastus` | One per environment, because the secret names are the same in each. Standard, RBAC, soft delete + purge protection |
-| Application Insights | `ai-ttb-dev-eastus`, `ai-ttb-test-eastus` | Workspace-based, on `log-ttb-nonprod-eastus` (30-day retention, 0.15 GB/day cap ≈ 4.5 GB/month, under the 5 GB free allowance) |
-| Storage | `storttbnonprodeastus` | Standard LRS, hot. Public-read containers `media-dev` and `media-test`. HTTPS only, TLS 1.2, **shared-key access off** (uploads use Entra ID). Blob CORS allows GET from the web origins |
+| Resource group | `rg-ttb-nonprod-centralus` | Central US (East US had no F1 quota; prod stays in East US) |
+| App Service plan | `asp-ttb-nonprod-centralus` | F1 Free Linux, shared by all four apps |
+| Web apps (Express) | `as-ttb-ui-dev-centralus`, `as-ttb-ui-test-centralus` | Node 24 LTS |
+| API apps (.NET) | `as-ttb-api-dev-centralus`, `as-ttb-api-test-centralus` | .NET 10 LTS |
+| Key Vaults | `kv-ttb-dev-centralus`, `kv-ttb-test-centralus` | One per environment, because the secret names are the same in each. Standard, RBAC, soft delete + purge protection |
+| Application Insights | `ai-ttb-dev-centralus`, `ai-ttb-test-centralus` | Workspace-based, on `log-ttb-nonprod-centralus` (30-day retention, 0.15 GB/day cap ≈ 4.5 GB/month, under the 5 GB free allowance) |
+| Storage | `storttbnonprodcentralus` | Standard LRS, hot. Public-read containers `media-dev` and `media-test`. HTTPS only, TLS 1.2, **shared-key access off** (uploads use Entra ID). Blob CORS allows GET from the web origins |
 | Budget | `budget-ttb-monthly` | $5/month on the subscription; emails at 80% and 100% actual and 100% forecast |
 
 Every app: system-assigned identity, HTTPS only, minimum TLS 1.2, FTP and basic-auth publishing disabled, platform CORS **unset** (the API does CORS itself). App, Key Vault and storage names are globally unique in Azure, so a deploy fails if someone else already has one. Because of purge protection, a deleted vault keeps its name for 90 days; recover it instead of redeploying.
@@ -75,7 +75,7 @@ Key Vault ABAC conditions are in **preview**. If Azure rejects the condition, fa
 | App access restrictions: deny by default, allow `TTB_ALLOWED_IPS` + the `AzureCloud` service tag (GitHub runners, for smoke tests) | On (`restrictAppAccess = true`) | Off: the site is public. Geo-filtering to DC/MD/VA is a separate M5 decision |
 | Key Vault firewall: deny by default, allow the apps' outbound IPs + `TTB_ALLOWED_IPS` | On | On |
 
-- The **lock** blocks deletes, not changes. To tear nonprod down, delete the lock first (`az lock delete --name lock-ttb-nonprod-eastus --resource-group rg-ttb-nonprod-eastus`).
+- The **lock** blocks deletes, not changes. To tear nonprod down, delete the lock first (`az lock delete --name lock-ttb-nonprod-centralus --resource-group rg-ttb-nonprod-centralus`).
 - The **Kudu deploy endpoint** (`*.scm.azurewebsites.net`) keeps its own open rules so CI can deploy; basic auth is off there, so it needs an Entra sign-in.
 - `AzureCloud` covers every Azure IP, so anyone running a VM in Azure can reach dev/test too. That's the price of letting GitHub-hosted runners in; the apps still need a session token for anything useful.
 - **Your IP changes** (home internet, phone hotspot): when dev/test or the vault start returning 403, set `TTB_ALLOWED_IPS` to the new IP and re-run `create`.
@@ -91,8 +91,8 @@ az login
 $env:TTB_BUDGET_EMAIL    = '<your email>'
 $env:TTB_ADMIN_OBJECT_ID = az ad signed-in-user show --query id -o tsv
 $env:TTB_ALLOWED_IPS     = (Invoke-RestMethod https://api.ipify.org)   # comma-separate more than one
-az deployment sub what-if --location eastus --parameters infra/nonprod.bicepparam
-az deployment sub create  --location eastus --parameters infra/nonprod.bicepparam
+az deployment sub what-if --location centralus --parameters infra/nonprod.bicepparam
+az deployment sub create  --location centralus --parameters infra/nonprod.bicepparam
 ./infra/scripts/Set-TtbSecrets.ps1 -Environment dev    # then -Environment test
 ```
 
