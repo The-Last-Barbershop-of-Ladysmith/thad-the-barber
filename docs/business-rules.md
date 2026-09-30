@@ -16,16 +16,16 @@ This is the single record of how the shop's booking and website behave. Each rul
 | --- | --- | --- | --- |
 | BR-01 | The shop offers **one service**. Customers never choose a service; there's no services page and no service step. | ✅ | Square Catalog (the one service), resolved by the API |
 | BR-02 | Slot length equals the service's duration. | ✅ | Square Catalog → service duration |
-| BR-03 | How far ahead customers can book (booking window). | ✅ rule / value set in Square | Square → Appointments → online booking settings (max lead time) |
-| BR-04 | Minimum notice before a slot; this is also the same-day cutoff. | ✅ rule / value set in Square | Square → Appointments → online booking settings (min lead time) |
+| BR-03 | How far ahead customers can book (booking window). | ✅ set in Square 2026-09-29 ([#5](https://github.com/The-Last-Barbershop-of-Ladysmith/thad-the-barber/issues/5)) | Square → Appointments → online booking settings (max lead time) |
+| BR-04 | Minimum notice before a slot; this is also the same-day cutoff. | ✅ set in Square 2026-09-29 ([#5](https://github.com/The-Last-Barbershop-of-Ladysmith/thad-the-barber/issues/5)) | Square → Appointments → online booking settings (min lead time) |
 | BR-05 | Available days and times are whatever Square reports as open, which accounts for **every booking on Thad's calendar**, including ones made in the Square app or by hand. Regular hours come from the location's business hours; time off and holidays are blocked in the Square calendar. | ✅ | Square location hours + Square calendar |
-| BR-06 | **No deposits, prepayment or no-show fees.** | ✅ 2026-09-28 | Square service and booking policy (none set) |
-| BR-07 | Customers can **cancel or reschedule any time until the appointment's start time**, with no fee. After the start time, the actions aren't offered. | ✅ | Square cancellation policy (no window, no fee) + API start-time guard |
+| BR-06 | **No deposits, prepayment or no-show fees.** | ✅ 2026-09-28; confirmed none set in Square 2026-09-29 | Square service and booking policy (none set) |
+| BR-07 | Customers can **cancel or reschedule any time until the appointment's start time**, with no fee. After the start time, the actions aren't offered. | ✅ set in Square 2026-09-29 | Square cancellation policy (no window, no fee) + API start-time guard |
 | BR-08 | Changing a booking requires the **signed manage link** from the confirmation; a booking ID alone isn't enough. | ✅ | API (signed token) |
 | BR-09 | Booking requires a name (at least 2 characters) and a 10-digit US phone number. | ✅ | UI + API validation |
 | BR-10 | A slot taken by someone else before confirming can't be double-booked; the customer is asked to pick another time. | ✅ | Square availability re-check + API |
-| BR-11 | The booking summary and confirmation show the service's name, duration and price. The price appears nowhere else on the site. | ✅ 2026-09-28 | Square Catalog → `/api/shop` → booking summary |
-| BR-12 | Confirmations and reminders are sent by Square. | ⚠ Square settings, spike verifies ([#21](https://github.com/The-Last-Barbershop-of-Ladysmith/thad-the-barber/issues/21)) | Square → Appointments → Communications |
+| BR-11 | The site shows **no price** anywhere, because the service is variable-priced in Square. The booking summary and confirmation show the service's name and duration. | ✅ 2026-09-29 | Square Catalog → `/api/shop` → booking summary |
+| BR-12 | Confirmations and reminders are sent by Square. | ⚠ reminders turned on in Square 2026-09-29; spike verifies they fire for website bookings ([#21](https://github.com/The-Last-Barbershop-of-Ladysmith/thad-the-barber/issues/21)) | Square → Appointments → Communications |
 | BR-13 | A phone number can hold at most **5 upcoming appointments**; past or cancelled ones don't count, and only bookings made on the website are counted (Square doesn't show the site other bookings on the Free plan). Beyond that, the customer is asked to call or text. Booking attempts are limited to **5 per device/IP per 10 minutes**. | ✅ 2026-09-28 | App config (`Booking:MaxUpcomingPerPhone`, `RateLimits:Booking`) + API |
 
 ## Customer data and privacy
@@ -54,7 +54,8 @@ This is the single record of how the shop's booking and website behave. Each rul
 
 | ID | Rule | Status | Where it's enforced |
 | --- | --- | --- | --- |
-| BR-40 | Shop name, phone, address, hours, description and social links shown on the site come from the Square location profile. | ✅ | Square location profile |
+| BR-40 | Shop name, phone, address, hours and social links shown on the site come from the Square location profile. Social links that aren't set in Square are hidden. The **tagline** is site content, not the Square description. | ✅ 2026-09-29 | Square location profile; tagline in `content/shop.json` |
+| BR-42 | The Square location **description** is shown as a notice at the top of the booking page (before the time picker) and in the home page's location and hours area. It's shown as plain text with line breaks kept, and hidden when empty. | ✅ 2026-09-29 | Square location profile → `/api/shop` → UI |
 | BR-41 | "Open now" status is calculated in the shop's timezone. | ✅ | Square location timezone + UI |
 
 ---
@@ -68,3 +69,5 @@ This is the single record of how the shop's booking and website behave. Each rul
 | 2026-09-28 | BR-36 decided: Google Business Profile reviews, latest 5-star with text. |
 | 2026-09-28 | BR-13 decided: 5 upcoming appointments per phone; 5 booking attempts per device/IP per 10 minutes. |
 | 2026-09-28 | BR-24 added: Google reCAPTCHA v3 bot check before booking (instead of Cloudflare Turnstile). |
+| 2026-09-29 | Square setup checklist done ([#5](https://github.com/The-Last-Barbershop-of-Ladysmith/thad-the-barber/issues/5)): BR-03, BR-04 and BR-07 configured in Square, BR-06 confirmed (no deposits or fees set), BR-12 reminders on (still pending the #21 spike). Values stay in Square. |
+| 2026-09-29 | BR-11 changed: no price shown (the service is variable-priced). BR-40: tagline is site content, and unset social links are hidden. BR-42 added: the Square description is shown as a notice on the booking page and home page. |
