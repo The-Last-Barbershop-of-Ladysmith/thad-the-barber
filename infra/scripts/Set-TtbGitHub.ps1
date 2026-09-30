@@ -49,7 +49,9 @@ if (-not $Reviewer) { $Reviewer = gh api user --jq .login }
 $reviewerId = [int](gh api "users/$Reviewer" --jq .id)
 
 foreach ($e in $environments) {
-    $reviewers = if ($e.Reviewed) { @(@{ type = 'User'; id = $reviewerId }) } else { @() }
+    # Typed so PowerShell keeps a 0- or 1-item array as an array; GitHub rejects anything else.
+    [object[]] $reviewers = @()
+    if ($e.Reviewed) { $reviewers += @{ type = 'User'; id = $reviewerId } }
     $body = @{
         reviewers                = $reviewers
         deployment_branch_policy = @{ protected_branches = $false; custom_branch_policies = $true }
