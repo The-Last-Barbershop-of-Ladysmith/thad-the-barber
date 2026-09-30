@@ -31,7 +31,7 @@ See [environments.md](environments.md) for the deploy setup and the branching an
 
 | App | What it runs | Serves |
 | --- | --- | --- |
-| **web** (`as-ttb-web-*`) | Node LTS + **Express 5** (TypeScript), static only: no SSR, no proxy | The Angular build (prerendered pages + SPA), with a per-request CSP nonce, themed EJS error pages, and a correct 404 status |
+| **web** (`as-ttb-ui-*`) | Node LTS + **Express 5** (TypeScript), static only: no SSR, no proxy | The Angular build (prerendered pages + SPA), with a per-request CSP nonce, themed EJS error pages, and a correct 404 status |
 | **api** (`as-ttb-api-*`) | ASP.NET Core (.NET LTS) | `/api/*` only |
 
 - The browser calls the API **cross-origin**. **CORS is configured only in the .NET app** (ASP.NET Core middleware) and allows exactly the origins in **`Cors:AllowedOrigins`, an array stored in Key Vault** (`Cors--AllowedOrigins--0`, `--1`, …). App Service's built-in CORS stays empty, because when it's enabled it overrides the app's own CORS handling.

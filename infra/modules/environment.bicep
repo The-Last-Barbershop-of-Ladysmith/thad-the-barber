@@ -23,7 +23,7 @@ var keyVaultSecretsUser = '4633458b-17de-408a-b874-0445c86b69e6'
 var keyVaultSecretsOfficer = 'b86a8fe4-44ce-4948-aee5-eccb2c155cd7'
 var keyVaultCryptoUser = '12338af0-0e69-4776-bea7-57ae8d297424'
 
-var webAppName = 'as-ttb-web-${envName}-${location}'
+var webAppName = 'as-ttb-ui-${envName}-${location}'
 var apiAppName = 'as-ttb-api-${envName}-${location}'
 var webOrigin = 'https://${webAppName}.azurewebsites.net'
 var corsOrigins = concat([
@@ -130,7 +130,7 @@ resource mediaContainer 'Microsoft.Storage/storageAccounts/blobServices/containe
 }
 
 module web 'app-service.bicep' = {
-  name: '${envName}-web'
+  name: '${envName}-ui'
   params: {
     name: webAppName
     location: location

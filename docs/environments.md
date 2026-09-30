@@ -8,7 +8,7 @@ How code moves from a topic branch to production. The decisions behind this are 
 | --- | --- | --- | --- |
 | Resource group | `rg-ttb-nonprod-eastus` | `rg-ttb-nonprod-eastus` | `rg-ttb-prod-eastus` |
 | App Service plan | `asp-ttb-nonprod-eastus` (**F1 Free Linux**, shared) | `asp-ttb-nonprod-eastus` | `asp-ttb-prod-eastus` (**B1 Linux, Always On**) |
-| Web app (Express) | `as-ttb-web-dev-eastus` | `as-ttb-web-test-eastus` | `as-ttb-web-prod-eastus` |
+| Web app (Express) | `as-ttb-ui-dev-eastus` | `as-ttb-ui-test-eastus` | `as-ttb-ui-prod-eastus` |
 | API app (.NET) | `as-ttb-api-dev-eastus` | `as-ttb-api-test-eastus` | `as-ttb-api-prod-eastus` |
 | Deploys when | a PR merges into `dev/*` | a PR merges into `release/*` or `hotfix/*` | a person approves the tested `release/*` artifact |
 | Square | Sandbox | Sandbox (seeded test data) | Production |
@@ -29,7 +29,7 @@ How code moves from a topic branch to production. The decisions behind this are 
 | --- | --- | --- |
 | Resource group | `rg-ttb-nonprod-eastus` | East US |
 | App Service plan | `asp-ttb-nonprod-eastus` | F1 Free Linux, shared by all four apps |
-| Web apps (Express) | `as-ttb-web-dev-eastus`, `as-ttb-web-test-eastus` | Node 24 LTS |
+| Web apps (Express) | `as-ttb-ui-dev-eastus`, `as-ttb-ui-test-eastus` | Node 24 LTS |
 | API apps (.NET) | `as-ttb-api-dev-eastus`, `as-ttb-api-test-eastus` | .NET 10 LTS |
 | Key Vaults | `kv-ttb-dev-eastus`, `kv-ttb-test-eastus` | One per environment, because the secret names are the same in each. Standard, RBAC, soft delete + purge protection |
 | Application Insights | `ai-ttb-dev-eastus`, `ai-ttb-test-eastus` | Workspace-based, on `log-ttb-nonprod-eastus` (30-day retention, 0.15 GB/day cap ≈ 4.5 GB/month, under the 5 GB free allowance) |

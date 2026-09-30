@@ -15,7 +15,7 @@ var storageBlobDataContributor = 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
 
 // Origins are built from the app names (not defaultHostName) so what-if stays deterministic.
 var webOrigins = flatten(map(environments, e => concat([
-  'https://as-ttb-web-${e.name}-${location}.azurewebsites.net'
+  'https://as-ttb-ui-${e.name}-${location}.azurewebsites.net'
 ], e.extraCorsOrigins)))
 
 resource plan 'Microsoft.Web/serverfarms@2024-11-01' = {
