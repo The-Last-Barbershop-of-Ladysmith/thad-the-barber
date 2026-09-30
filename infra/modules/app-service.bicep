@@ -13,7 +13,31 @@ param alwaysOn bool
 @description('App settings as name/value pairs. Nothing sensitive: secrets stay in Key Vault.')
 param appSettings object
 
+@description('Deny traffic except allowedIpRanges and the AzureCloud service tag (GitHub runners, for smoke tests). The Kudu deploy endpoint keeps its own open rules: basic auth is off, so it needs an Entra sign-in.')
+param restrictAccess bool
+
+param allowedIpRanges string[]
+
 param tags object
+
+var allowedIpRules = [
+  for (ip, i) in allowedIpRanges: {
+    name: 'allowed-${i}'
+    action: 'Allow'
+    priority: 100 + i
+    ipAddress: contains(ip, '/') ? ip : '${ip}/32'
+  }
+]
+
+var azureCloudRule = [
+  {
+    name: 'azure-cloud'
+    action: 'Allow'
+    priority: 300
+    tag: 'ServiceTag'
+    ipAddress: 'AzureCloud'
+  }
+]
 
 resource app 'Microsoft.Web/sites@2024-11-01' = {
   name: name
@@ -35,6 +59,10 @@ resource app 'Microsoft.Web/sites@2024-11-01' = {
       minTlsVersion: '1.2'
       scmMinTlsVersion: '1.2'
       http20Enabled: true
+      ipSecurityRestrictionsDefaultAction: restrictAccess ? 'Deny' : 'Allow'
+      ipSecurityRestrictions: restrictAccess ? concat(allowedIpRules, azureCloudRule) : []
+      scmIpSecurityRestrictionsUseMain: false
+      scmIpSecurityRestrictionsDefaultAction: 'Allow'
       appSettings: [
         for setting in items(appSettings): {
           name: setting.key
@@ -61,3 +89,6 @@ resource app 'Microsoft.Web/sites@2024-11-01' = {
 
 output principalId string = app.identity.principalId
 output url string = 'https://${app.properties.defaultHostName}'
+
+@description('Comma-separated IPv4 addresses the app may call out from; used by the Key Vault firewall.')
+output possibleOutboundIps string = app.properties.possibleOutboundIpAddresses

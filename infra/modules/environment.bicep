@@ -17,6 +17,8 @@ param noIndex bool
 param aspnetEnvironment string
 param extraCorsOrigins string[]
 param adminPrincipalId string
+param restrictAppAccess bool
+param allowedIpRanges string[]
 param tags object
 
 var keyVaultSecretsUser = '4633458b-17de-408a-b874-0445c86b69e6'
@@ -29,6 +31,13 @@ var webOrigin = 'https://${webAppName}.azurewebsites.net'
 var corsOrigins = concat([
   webOrigin
 ], extraCorsOrigins)
+
+// Built from the name so the apps (which need the URI) can be created before the vault (whose firewall needs their IPs).
+var keyVaultName = 'kv-ttb-${envName}-${location}'
+var keyVaultUri = 'https://${keyVaultName}${environment().suffixes.keyvaultDns}/'
+
+// Key Vault IP rules take a bare address for a single host.
+var yourIps = map(allowedIpRanges, ip => endsWith(ip, '/32') ? replace(ip, '/32', '') : ip)
 
 // The API rotates the Square refresh token, so it may write that one secret and nothing else.
 // ABAC conditions (preview) match lowercase names; @Request covers setSecret before the secret exists.
@@ -79,7 +88,7 @@ resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
 }
 
 resource keyVault 'Microsoft.KeyVault/vaults@2024-11-01' = {
-  name: 'kv-ttb-${envName}-${location}'
+  name: keyVaultName
   location: location
   tags: tags
   properties: {
@@ -92,6 +101,15 @@ resource keyVault 'Microsoft.KeyVault/vaults@2024-11-01' = {
     enableSoftDelete: true
     softDeleteRetentionInDays: 90
     enablePurgeProtection: true
+    // Firewall: only the apps' outbound IPs and yours. ARM deployments (the CORS secrets, the JWT key) aren't affected.
+    // On F1 the outbound IPs are shared and can change if Azure moves the app; re-deploy to refresh them.
+    networkAcls: {
+      defaultAction: 'Deny'
+      bypass: 'AzureServices'
+      ipRules: map(union(split(web.outputs.possibleOutboundIps, ','), split(api.outputs.possibleOutboundIps, ','), yourIps), ip => {
+        value: ip
+      })
+    }
   }
 }
 
@@ -137,6 +155,8 @@ module web 'app-service.bicep' = {
     planId: planId
     runtime: nodeRuntime
     alwaysOn: alwaysOn
+    restrictAccess: restrictAppAccess
+    allowedIpRanges: allowedIpRanges
     tags: tags
     appSettings: {
       APPLICATIONINSIGHTS_CONNECTION_STRING: appInsights.properties.ConnectionString
@@ -155,12 +175,14 @@ module api 'app-service.bicep' = {
     planId: planId
     runtime: dotnetRuntime
     alwaysOn: alwaysOn
+    restrictAccess: restrictAppAccess
+    allowedIpRanges: allowedIpRanges
     tags: tags
     appSettings: {
       APPLICATIONINSIGHTS_CONNECTION_STRING: appInsights.properties.ConnectionString
       ASPNETCORE_ENVIRONMENT: aspnetEnvironment
       // The API loads every secret (and the CORS origins) through the Key Vault configuration provider (issue #11).
-      KeyVault__Uri: keyVault.properties.vaultUri
+      KeyVault__Uri: keyVaultUri
     }
   }
 }

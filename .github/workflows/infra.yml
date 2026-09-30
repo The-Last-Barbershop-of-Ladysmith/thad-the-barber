@@ -54,3 +54,4 @@ jobs:
           TTB_BUDGET_EMAIL: ${{ vars.TTB_BUDGET_EMAIL }}
           TTB_ADMIN_OBJECT_ID: ${{ vars.TTB_ADMIN_OBJECT_ID }}
           TTB_DEPLOY_PRINCIPAL_ID: ${{ vars.TTB_DEPLOY_PRINCIPAL_ID }}
+          TTB_ALLOWED_IPS: ${{ vars.TTB_ALLOWED_IPS }}

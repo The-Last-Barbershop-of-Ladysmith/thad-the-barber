@@ -67,6 +67,21 @@ The API reads all its secrets through the Key Vault configuration provider, so t
 
 Key Vault ABAC conditions are in **preview**. If Azure rejects the condition, fall back to Secrets Officer on the vault without the condition and note it here.
 
+**Lockdown:**
+
+| Control | Nonprod | Prod (M5) |
+| --- | --- | --- |
+| `CanNotDelete` lock on the resource group (`lock-ttb-<stage>-<region>`) | On | On |
+| App access restrictions: deny by default, allow `TTB_ALLOWED_IPS` + the `AzureCloud` service tag (GitHub runners, for smoke tests) | On (`restrictAppAccess = true`) | Off: the site is public. Geo-filtering to DC/MD/VA is a separate M5 decision |
+| Key Vault firewall: deny by default, allow the apps' outbound IPs + `TTB_ALLOWED_IPS` | On | On |
+
+- The **lock** blocks deletes, not changes. To tear nonprod down, delete the lock first (`az lock delete --name lock-ttb-nonprod-eastus --resource-group rg-ttb-nonprod-eastus`).
+- The **Kudu deploy endpoint** (`*.scm.azurewebsites.net`) keeps its own open rules so CI can deploy; basic auth is off there, so it needs an Entra sign-in.
+- `AzureCloud` covers every Azure IP, so anyone running a VM in Azure can reach dev/test too. That's the price of letting GitHub-hosted runners in; the apps still need a session token for anything useful.
+- **Your IP changes** (home internet, phone hotspot): when dev/test or the vault start returning 403, set `TTB_ALLOWED_IPS` to the new IP and re-run `create`.
+- **Square sandbox webhooks** (M2) come from Square's servers and will be blocked by the dev/test restrictions. When webhooks land, add Square's published IP ranges to `allowedIpRanges`, or send sandbox webhooks to a test tool instead.
+- On F1 the apps' **outbound IPs** are shared and can change if Azure moves the app. If the API suddenly can't read Key Vault, re-run `create` to refresh the firewall.
+
 ### Deploying
 
 You need the Azure CLI and **Owner** (or Contributor + User Access Administrator) on the subscription.
@@ -75,6 +90,7 @@ You need the Azure CLI and **Owner** (or Contributor + User Access Administrator
 az login
 $env:TTB_BUDGET_EMAIL    = '<your email>'
 $env:TTB_ADMIN_OBJECT_ID = az ad signed-in-user show --query id -o tsv
+$env:TTB_ALLOWED_IPS     = (Invoke-RestMethod https://api.ipify.org)   # comma-separate more than one
 az deployment sub what-if --location eastus --parameters infra/nonprod.bicepparam
 az deployment sub create  --location eastus --parameters infra/nonprod.bicepparam
 ./infra/scripts/Set-TtbSecrets.ps1 -Environment dev    # then -Environment test

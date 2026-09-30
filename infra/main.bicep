@@ -57,6 +57,15 @@ param adminPrincipalId string = ''
 @description('Object ID of the GitHub OIDC service principal (issue #10). Gets Storage Blob Data Contributor for media uploads. Empty skips it.')
 param deployPrincipalId string = ''
 
+@description('Put a CanNotDelete lock on the resource group. Remove the lock first to tear the stage down.')
+param lockResourceGroup bool = true
+
+@description('Deny public traffic to the apps except allowedIpRanges and Azure IPs (CI smoke tests). For nonprod; prod stays public.')
+param restrictAppAccess bool
+
+@description('Your public IPs or CIDRs. Allowed through the app restrictions and the Key Vault firewall.')
+param allowedIpRanges string[] = []
+
 param tags object = {
   app: 'thad-the-barber'
   stage: stage
@@ -79,6 +88,7 @@ module shared 'modules/shared.bicep' = {
     logDailyCapGb: logDailyCapGb
     environments: environments
     deployPrincipalId: deployPrincipalId
+    lockResourceGroup: lockResourceGroup
     tags: tags
   }
 }
@@ -97,6 +107,8 @@ module env 'modules/environment.bicep' = [
       nodeRuntime: nodeRuntime
       dotnetRuntime: dotnetRuntime
       alwaysOn: planSku != 'F1'
+      restrictAppAccess: restrictAppAccess
+      allowedIpRanges: allowedIpRanges
       noIndex: stage != 'prod'
       aspnetEnvironment: e.aspnetEnvironment
       extraCorsOrigins: e.extraCorsOrigins

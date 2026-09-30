@@ -9,6 +9,7 @@ param logDailyCapGb string
 param environments array
 
 param deployPrincipalId string
+param lockResourceGroup bool
 param tags object
 
 var storageBlobDataContributor = 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
@@ -96,6 +97,15 @@ resource deployBlobRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = i
     principalId: deployPrincipalId
     principalType: 'ServicePrincipal'
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageBlobDataContributor)
+  }
+}
+
+// Blocks deletes (not changes) of everything in the group, including by a compromised sign-in.
+resource lock 'Microsoft.Authorization/locks@2020-05-01' = if (lockResourceGroup) {
+  name: 'lock-ttb-${stage}-${location}'
+  properties: {
+    level: 'CanNotDelete'
+    notes: 'Protects the ${stage} environment. Remove this lock before deleting anything on purpose.'
   }
 }
 
