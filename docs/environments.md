@@ -23,7 +23,7 @@ How code moves from a topic branch to production. The decisions behind this are 
 
 ## Infrastructure
 
-`infra/main.bicep` deploys at subscription scope. Names follow **`<type>-ttb-<env>-<region>`** (`rg`, `asp`, `as`, `kv`, `ai`, `log`; storage can't have hyphens, so it's `stttb<env><region>`). `<env>` is `nonprod`/`prod` for shared resources and `dev`/`test`/`prod` for per-environment ones. `nonprod.bicepparam` creates:
+`infra/main.bicep` deploys at subscription scope. Names follow **`<type>-ttb-<env>-<region>`** (`rg`, `asp`, `as`, `kv`, `ai`, `log`; storage can't have hyphens, so it's `storttb<env><region>`). `<env>` is `nonprod`/`prod` for shared resources and `dev`/`test`/`prod` for per-environment ones. `nonprod.bicepparam` creates:
 
 | Resource | Name | Notes |
 | --- | --- | --- |
@@ -33,7 +33,7 @@ How code moves from a topic branch to production. The decisions behind this are 
 | API apps (.NET) | `as-ttb-api-dev-eastus`, `as-ttb-api-test-eastus` | .NET 10 LTS |
 | Key Vaults | `kv-ttb-dev-eastus`, `kv-ttb-test-eastus` | One per environment, because the secret names are the same in each. Standard, RBAC, soft delete + purge protection |
 | Application Insights | `ai-ttb-dev-eastus`, `ai-ttb-test-eastus` | Workspace-based, on `log-ttb-nonprod-eastus` (30-day retention, 0.15 GB/day cap ≈ 4.5 GB/month, under the 5 GB free allowance) |
-| Storage | `stttbnonprodeastus` | Standard LRS, hot. Public-read containers `media-dev` and `media-test`. HTTPS only, TLS 1.2, **shared-key access off** (uploads use Entra ID). Blob CORS allows GET from the web origins |
+| Storage | `storttbnonprodeastus` | Standard LRS, hot. Public-read containers `media-dev` and `media-test`. HTTPS only, TLS 1.2, **shared-key access off** (uploads use Entra ID). Blob CORS allows GET from the web origins |
 | Budget | `budget-ttb-monthly` | $5/month on the subscription; emails at 80% and 100% actual and 100% forecast |
 
 Every app: system-assigned identity, HTTPS only, minimum TLS 1.2, FTP and basic-auth publishing disabled, platform CORS **unset** (the API does CORS itself). App, Key Vault and storage names are globally unique in Azure, so a deploy fails if someone else already has one. Because of purge protection, a deleted vault keeps its name for 90 days; recover it instead of redeploying.

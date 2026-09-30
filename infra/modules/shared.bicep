@@ -48,7 +48,7 @@ resource workspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
 
 resource storage 'Microsoft.Storage/storageAccounts@2024-01-01' = {
   // Storage names allow only lowercase letters and digits (3–24).
-  name: 'stttb${stage}${location}'
+  name: 'storttb${stage}${location}'
   location: location
   tags: tags
   kind: 'StorageV2'
