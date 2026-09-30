@@ -1,0 +1,53 @@
+# Checks the GitHub → Azure OIDC sign-in (issue #10). Signs in as the environment the branch deploys to
+# (dev/* → dev, release/* or hotfix/* → test), then checks the identity sees its own two apps and not the
+# other environment's. The GitHub environments only let those branches in, so it can't run anywhere else.
+name: azure-login
+
+on:
+  push:
+    branches:
+      - 'dev/**'
+      - 'release/**'
+      - 'hotfix/**'
+    paths:
+      - '.github/workflows/azure-login.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  login:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: ${{ startsWith(github.ref_name, 'dev/') && 'dev' || 'test' }}
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      ENV_NAME: ${{ startsWith(github.ref_name, 'dev/') && 'dev' || 'test' }}
+      OTHER_ENV: ${{ startsWith(github.ref_name, 'dev/') && 'test' || 'dev' }}
+      RESOURCE_GROUP: rg-ttb-nonprod-centralus
+      REGION: centralus
+    steps:
+      - uses: azure/login@v3
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Sees its own apps
+        run: |
+          for app in ui api; do
+            az webapp show --resource-group "$RESOURCE_GROUP" --name "as-ttb-$app-$ENV_NAME-$REGION" --query name -o tsv
+          done
+
+      - name: Can't see the other environment's apps
+        run: |
+          for app in ui api; do
+            if az webapp show --resource-group "$RESOURCE_GROUP" --name "as-ttb-$app-$OTHER_ENV-$REGION" --only-show-errors > /dev/null 2>&1; then
+              echo "::error::The $ENV_NAME identity can read as-ttb-$app-$OTHER_ENV-$REGION; its roles are too broad."
+              exit 1
+            fi
+          done
+          echo "The $ENV_NAME identity has no access to the $OTHER_ENV apps."

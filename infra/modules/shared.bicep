@@ -1,4 +1,5 @@
-// Resources shared by every environment in a stage: the App Service plan, Log Analytics and the media storage account.
+// Resources shared by every environment in a stage: the App Service plan, Log Analytics, the media storage account
+// and (optionally) the identity pull requests use to preview infra changes.
 
 param stage string
 param location string
@@ -8,11 +9,10 @@ param logDailyCapGb string
 @description('Used for the blob CORS rule, so the web apps can fetch media (e.g. backdrop frames) cross-origin.')
 param environments array
 
-param deployPrincipalId string
+param githubSubjectPrefix string
+param createPreviewIdentity bool
 param lockResourceGroup bool
 param tags object
-
-var storageBlobDataContributor = 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
 
 // Origins are built from the app names (not defaultHostName) so what-if stays deterministic.
 var webOrigins = flatten(map(environments, e => concat([
@@ -90,13 +90,22 @@ resource storage 'Microsoft.Storage/storageAccounts@2024-01-01' = {
   }
 }
 
-resource deployBlobRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(deployPrincipalId)) {
-  name: guid(storage.id, 'github-deploy', storageBlobDataContributor)
-  scope: storage
-  properties: {
-    principalId: deployPrincipalId
-    principalType: 'ServicePrincipal'
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageBlobDataContributor)
+// Pull-request what-if (issue #10). Its subscription roles are assigned in main.bicep.
+// Any pull request from a branch in this repo can use it; fork PRs get no OIDC token.
+resource previewIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2024-11-30' = if (createPreviewIdentity) {
+  name: 'id-ttb-preview-${stage}-${location}'
+  location: location
+  tags: tags
+
+  resource github 'federatedIdentityCredentials' = {
+    name: 'github-pull-request'
+    properties: {
+      issuer: 'https://token.actions.githubusercontent.com'
+      subject: '${githubSubjectPrefix}:pull_request'
+      audiences: [
+        'api://AzureADTokenExchange'
+      ]
+    }
   }
 }
 
@@ -113,3 +122,5 @@ output planId string = plan.id
 output workspaceId string = workspace.id
 output storageName string = storage.name
 output blobEndpoint string = storage.properties.primaryEndpoints.blob
+output previewPrincipalId string = createPreviewIdentity ? previewIdentity!.properties.principalId : ''
+output previewClientId string = createPreviewIdentity ? previewIdentity!.properties.clientId : ''

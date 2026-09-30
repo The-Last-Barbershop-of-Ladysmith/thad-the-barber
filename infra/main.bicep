@@ -11,6 +11,9 @@ type environmentConfig = {
   @description('ASPNETCORE_ENVIRONMENT for the API app.')
   aspnetEnvironment: string
 
+  @description('GitHub environment whose jobs may deploy here (dev, test or production). The deploy identity trusts only that environment.')
+  githubEnvironment: string
+
   @description('Browser origins the API allows besides its own web app (custom domains in prod). Seeded into Key Vault as Cors--AllowedOrigins--N.')
   extraCorsOrigins: string[]
 }
@@ -54,8 +57,11 @@ param budgetEmail string
 @description('Object ID of the owner. Gets Key Vault Secrets Officer on each vault so they can add the secrets. Empty skips it.')
 param adminPrincipalId string = ''
 
-@description('Object ID of the GitHub OIDC service principal (issue #10). Gets Storage Blob Data Contributor for media uploads. Empty skips it.')
-param deployPrincipalId string = ''
+@description('Start of the GitHub OIDC subject claim. The repo uses immutable subjects (owner and repo IDs), so a renamed or re-created repo can\'t inherit the trust.')
+param githubSubjectPrefix string = 'repo:The-Last-Barbershop-of-Ladysmith@118852654/thad-the-barber@1391006695'
+
+@description('Create the identity that pull requests use to run what-if (Reader on the subscription). One stage is enough.')
+param createPreviewIdentity bool = false
 
 @description('Put a CanNotDelete lock on the resource group. Remove the lock first to tear the stage down.')
 param lockResourceGroup bool = true
@@ -87,7 +93,8 @@ module shared 'modules/shared.bicep' = {
     planSku: planSku
     logDailyCapGb: logDailyCapGb
     environments: environments
-    deployPrincipalId: deployPrincipalId
+    githubSubjectPrefix: githubSubjectPrefix
+    createPreviewIdentity: createPreviewIdentity
     lockResourceGroup: lockResourceGroup
     tags: tags
   }
@@ -111,12 +118,57 @@ module env 'modules/environment.bicep' = [
       allowedIpRanges: allowedIpRanges
       noIndex: stage != 'prod'
       aspnetEnvironment: e.aspnetEnvironment
+      githubSubjectPrefix: githubSubjectPrefix
+      githubEnvironment: e.githubEnvironment
       extraCorsOrigins: e.extraCorsOrigins
       adminPrincipalId: adminPrincipalId
       tags: tags
     }
   }
 ]
+
+// Pull requests preview infra changes with what-if (issue #10). Reader sees the current state; the custom role adds
+// only the what-if and validate actions, so the preview identity can't create or change anything.
+var reader = 'acdd72a7-3385-48ef-bd42-f606fba81ae7'
+
+resource whatIfRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' = if (createPreviewIdentity) {
+  name: guid(subscription().id, 'ttb-what-if')
+  properties: {
+    roleName: 'TTB What-If Previewer'
+    description: 'Runs ARM what-if and validate only. Pair with Reader and use --validation-level ProviderNoRbac.'
+    type: 'CustomRole'
+    assignableScopes: [
+      subscription().id
+    ]
+    permissions: [
+      {
+        actions: [
+          'Microsoft.Resources/deployments/whatIf/action'
+          'Microsoft.Resources/deployments/validate/action'
+        ]
+        notActions: []
+      }
+    ]
+  }
+}
+
+resource previewReader 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (createPreviewIdentity) {
+  name: guid(subscription().id, 'github-preview', reader)
+  properties: {
+    principalId: shared.outputs.previewPrincipalId
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', reader)
+  }
+}
+
+resource previewWhatIf 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (createPreviewIdentity) {
+  name: guid(subscription().id, 'github-preview', 'ttb-what-if')
+  properties: {
+    principalId: shared.outputs.previewPrincipalId
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: whatIfRole.id
+  }
+}
 
 resource budget 'Microsoft.Consumption/budgets@2023-11-01' = {
   name: 'budget-ttb-monthly'
@@ -161,11 +213,17 @@ resource budget 'Microsoft.Consumption/budgets@2023-11-01' = {
 
 output resourceGroup string = rg.name
 output storageAccount string = shared.outputs.storageName
+
+@description('AZURE_CLIENT_ID repo variable, for the pull-request what-if. Empty when createPreviewIdentity is off.')
+output previewClientId string = shared.outputs.previewClientId
+
 output environments array = [
   for (e, i) in environments: {
     name: e.name
     webUrl: env[i].outputs.webUrl
     apiUrl: env[i].outputs.apiUrl
     keyVault: env[i].outputs.keyVaultName
+    githubEnvironment: e.githubEnvironment
+    deployClientId: env[i].outputs.deployClientId
   }
 ]

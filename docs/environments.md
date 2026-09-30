@@ -17,7 +17,7 @@ How code moves from a topic branch to production. The decisions behind this are 
 | Cost | $0 | $0 | ~$13/mo |
 
 - **Infrastructure as code:** Bicep in `infra/` (`main.bicep`, `nonprod.bicepparam`, and `prod.bicepparam` at M5). See [Infrastructure](#infrastructure) below.
-- **Secrets:** every secret lives in **Key Vault** in every environment, and app settings hold only Key Vault references. See [architecture-decisions.md §M](architecture-decisions.md#m-security). GitHub signs in to Azure with **OIDC federated credentials**, so no Azure secrets are stored in GitHub.
+- **Secrets:** every secret lives in **Key Vault** in every environment, and app settings hold only Key Vault references. See [architecture-decisions.md §M](architecture-decisions.md#m-security). GitHub signs in to Azure with **OIDC federated credentials**, so no Azure secrets are stored in GitHub. See [GitHub → Azure sign-in](#github--azure-sign-in-oidc).
 - **Monitoring:** Application Insights, fed by the **Azure Monitor OpenTelemetry Distro** in the .NET API and the Express server, plus the App Insights JavaScript SDK in the browser. W3C `traceparent` headers link browser → API → Square into one transaction (CORS allows `traceparent`/`tracestate`). PII is redacted before export, with sampling and a daily cap to stay within the 5 GB/month free allowance. There's also a $5 budget alert on the subscription.
 - **F1 limits:** no Always On (cold starts), 60 CPU-minutes per day, 165 MB outbound data per day, 1 GB RAM, and no deployment slots. All four nonprod apps share one plan's quota. The smoke tests warm the app up before they run. Because of the outbound cap, large media (backdrop frames, gallery) is served from Blob Storage, not the apps (M3-09, #47).
 
@@ -63,7 +63,9 @@ The API reads all its secrets through the Key Vault configuration provider, so t
 | api identity | Key Vault Secrets Officer, with an ABAC condition allowing writes to `Square--RefreshToken` only (it rotates) | vault |
 | api identity | Key Vault Crypto User | the `session-jwt-signing` key only |
 | you (`TTB_ADMIN_OBJECT_ID`) | Key Vault Secrets Officer | each vault |
-| GitHub OIDC principal (`TTB_DEPLOY_PRINCIPAL_ID`, #10) | Storage Blob Data Contributor | the storage account |
+| `id-ttb-deploy-<env>-<region>` (GitHub, #10) | Website Contributor | its environment's web and API apps only |
+| `id-ttb-deploy-<env>-<region>` (GitHub, #10) | Storage Blob Data Contributor | its environment's media container only |
+| `id-ttb-preview-nonprod-<region>` (GitHub PRs, #10) | Reader + `TTB What-If Previewer` (custom: what-if and validate only) | the subscription |
 
 Key Vault ABAC conditions are in **preview**. If Azure rejects the condition, fall back to Secrets Officer on the vault without the condition and note it here.
 
@@ -98,7 +100,38 @@ az deployment sub create  --location centralus --parameters infra/nonprod.bicepp
 
 Personal values come from environment variables, so they never land in this public repo. A second `create` should report no changes in `what-if`. `budgetStartDate` is fixed in the param file; Azure rejects a monthly budget whose start date is before the current month, so if the first deploy happens after October 2026, move it to the first of that month.
 
-CI (`.github/workflows/infra.yml`) builds and lints the Bicep on every PR that touches `infra/`. Its what-if job is skipped until #10 adds the OIDC login and the `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID` and `TTB_BUDGET_EMAIL` repo variables. That identity needs a `pull_request` federated credential and enough rights to run what-if on the subscription.
+CI (`.github/workflows/infra.yml`) builds and lints the Bicep on every PR that touches `infra/`, then runs what-if as the read-only preview identity (below). It never deploys: `create` is still run by hand.
+
+### GitHub → Azure sign-in (OIDC)
+
+GitHub Actions signs in with **user-assigned managed identities** that trust GitHub's OIDC tokens (federated credentials), so there's no client secret or publish profile anywhere. Bicep creates them with the rest of the stage; they're free.
+
+| Identity | Trusts (OIDC subject) | Can do |
+| --- | --- | --- |
+| `id-ttb-deploy-dev-centralus` | jobs in GitHub environment `dev` | deploy `as-ttb-ui-dev-centralus` + `as-ttb-api-dev-centralus`, upload to `media-dev` |
+| `id-ttb-deploy-test-centralus` | jobs in GitHub environment `test` | the same for the test apps and `media-test` |
+| `id-ttb-preview-nonprod-centralus` | `pull_request` jobs | read the subscription and run what-if (no writes) |
+| prod (M5) | jobs in GitHub environment `production` | created by `prod.bicepparam` |
+
+- One identity per environment, rather than one app registration for all of them, so the `dev` sign-in can't touch test (they share a resource group).
+- The subjects use the repo's **immutable** form, `repo:The-Last-Barbershop-of-Ladysmith@118852654/thad-the-barber@1391006695:environment:dev` (owner and repo IDs, GitHub's default for this repo). A renamed or re-created repo won't match. If GitHub's subject format ever changes, update `githubSubjectPrefix` in `main.bicep`.
+- Fork pull requests get no OIDC token, so they can't use any identity.
+
+**GitHub environments** (created by `infra/scripts/Set-TtbGitHub.ps1`):
+
+| Environment | Deploys from | Approval | `AZURE_CLIENT_ID` variable |
+| --- | --- | --- | --- |
+| `dev` | `dev/*` | none | `id-ttb-deploy-dev-centralus` |
+| `test` | `release/*`, `hotfix/*` | none | `id-ttb-deploy-test-centralus` |
+| `production` | `release/*`, `hotfix/*` | required reviewer (you) | added at M5 |
+
+Repo variables `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID` and `AZURE_PREVIEW_CLIENT_ID` (IDs, not secrets). The what-if job also needs the `TTB_BUDGET_EMAIL`, `TTB_ADMIN_OBJECT_ID` and `TTB_ALLOWED_IPS` values; they're repo **secrets** so the public workflow logs mask them. After deploying, set up GitHub with the same `TTB_*` variables still set in your shell:
+
+```powershell
+./infra/scripts/Set-TtbGitHub.ps1    # safe to re-run, e.g. after your IP changes
+```
+
+`.github/workflows/azure-login.yml` checks the sign-in: on a push to `dev/*` it signs in as dev (on `release/*` or `hotfix/*`, as test), confirms it can see its own two apps, and fails if it can see the other environment's.
 
 ## CI (every pull request)
 
