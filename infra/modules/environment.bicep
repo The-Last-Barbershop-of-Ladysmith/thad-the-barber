@@ -1,5 +1,5 @@
 // One environment (dev, test or prod): Key Vault, App Insights, the web and API apps, their role assignments,
-// the CORS origin secrets and the environment's public media container.
+// the CORS origin secrets, the environment's public media container and the identity GitHub deploys it with.
 
 param envName string
 param location string
@@ -15,6 +15,13 @@ param alwaysOn bool
 param noIndex bool
 
 param aspnetEnvironment string
+
+@description('Start of the GitHub OIDC subject claim, e.g. repo:<owner>@<id>/<repo>@<id>.')
+param githubSubjectPrefix string
+
+@description('GitHub environment (dev, test or production) whose jobs may sign in as this environment\'s deploy identity.')
+param githubEnvironment string
+
 param extraCorsOrigins string[]
 param adminPrincipalId string
 param restrictAppAccess bool
@@ -24,6 +31,8 @@ param tags object
 var keyVaultSecretsUser = '4633458b-17de-408a-b874-0445c86b69e6'
 var keyVaultSecretsOfficer = 'b86a8fe4-44ce-4948-aee5-eccb2c155cd7'
 var keyVaultCryptoUser = '12338af0-0e69-4776-bea7-57ae8d297424'
+var websiteContributor = 'de139f84-1756-47ae-9be6-808fbbe84772'
+var storageBlobDataContributor = 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
 
 var webAppName = 'as-ttb-ui-${envName}-${location}'
 var apiAppName = 'as-ttb-api-${envName}-${location}'
@@ -240,6 +249,73 @@ resource adminSecretsOfficer 'Microsoft.Authorization/roleAssignments@2022-04-01
   }
 }
 
+// GitHub Actions deploys with this identity (issue #10): OIDC, no stored secret. It trusts only jobs that run in
+// this environment's GitHub environment, and can deploy only this environment's two apps and media container.
+resource deployIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2024-11-30' = {
+  name: 'id-ttb-deploy-${envName}-${location}'
+  location: location
+  tags: tags
+
+  resource github 'federatedIdentityCredentials' = {
+    name: 'github-${githubEnvironment}'
+    properties: {
+      issuer: 'https://token.actions.githubusercontent.com'
+      subject: '${githubSubjectPrefix}:environment:${githubEnvironment}'
+      audiences: [
+        'api://AzureADTokenExchange'
+      ]
+    }
+  }
+}
+
+resource webSite 'Microsoft.Web/sites@2024-11-01' existing = {
+  name: webAppName
+}
+
+resource apiSite 'Microsoft.Web/sites@2024-11-01' existing = {
+  name: apiAppName
+}
+
+resource deployWeb 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(webAppName, 'github-deploy', websiteContributor)
+  scope: webSite
+  dependsOn: [
+    web
+  ]
+  properties: {
+    principalId: deployIdentity.properties.principalId
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', websiteContributor)
+  }
+}
+
+resource deployApi 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(apiAppName, 'github-deploy', websiteContributor)
+  scope: apiSite
+  dependsOn: [
+    api
+  ]
+  properties: {
+    principalId: deployIdentity.properties.principalId
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', websiteContributor)
+  }
+}
+
+// Uploads media (backdrop frames, gallery) to this environment's container only.
+resource deployMedia 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(mediaContainer.id, 'github-deploy', storageBlobDataContributor)
+  scope: mediaContainer
+  properties: {
+    principalId: deployIdentity.properties.principalId
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageBlobDataContributor)
+  }
+}
+
 output webUrl string = web.outputs.url
 output apiUrl string = api.outputs.url
 output keyVaultName string = keyVault.name
+
+@description('AZURE_CLIENT_ID variable of the matching GitHub environment.')
+output deployClientId string = deployIdentity.properties.clientId

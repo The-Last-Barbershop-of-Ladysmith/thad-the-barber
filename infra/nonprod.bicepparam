@@ -2,7 +2,6 @@
 // Personal values come from environment variables so they stay out of this public repo:
 //   TTB_BUDGET_EMAIL         (required) who gets the $5 budget alerts
 //   TTB_ADMIN_OBJECT_ID      (optional) your Entra object ID, for Key Vault Secrets Officer
-//   TTB_DEPLOY_PRINCIPAL_ID  (optional) the GitHub OIDC service principal from issue #10
 //   TTB_ALLOWED_IPS          your public IP(s), comma-separated. Without it the dev/test apps and vaults refuse you.
 using 'main.bicep'
 
@@ -21,11 +20,13 @@ param environments = [
   {
     name: 'dev'
     aspnetEnvironment: 'Dev'
+    githubEnvironment: 'dev'
     extraCorsOrigins: []
   }
   {
     name: 'test'
     aspnetEnvironment: 'Test'
+    githubEnvironment: 'test'
     extraCorsOrigins: []
   }
 ]
@@ -36,4 +37,5 @@ param budgetEmail = readEnvironmentVariable('TTB_BUDGET_EMAIL')
 
 param adminPrincipalId = readEnvironmentVariable('TTB_ADMIN_OBJECT_ID', '')
 
-param deployPrincipalId = readEnvironmentVariable('TTB_DEPLOY_PRINCIPAL_ID', '')
+// Pull requests run what-if on the subscription with this stage's preview identity.
+param createPreviewIdentity = true

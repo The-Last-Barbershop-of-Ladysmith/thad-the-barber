@@ -1,6 +1,6 @@
 # Compiles and lints the Bicep in infra/, then previews the nonprod deployment with what-if (issue #9).
-# The what-if job runs once the OIDC login from issue #10 exists (repo variables AZURE_CLIENT_ID,
-# AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID and TTB_BUDGET_EMAIL); until then it is skipped.
+# What-if signs in with OIDC as the read-only preview identity (issue #10), set up by infra/scripts/Set-TtbGitHub.ps1.
+# It's skipped until the AZURE_PREVIEW_CLIENT_ID variable exists, and on fork PRs (no OIDC token, no secrets).
 name: infra
 
 on:
@@ -30,7 +30,7 @@ jobs:
 
   what-if:
     needs: bicep
-    if: vars.AZURE_CLIENT_ID != ''
+    if: vars.AZURE_PREVIEW_CLIENT_ID != '' && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -41,17 +41,21 @@ jobs:
 
       - uses: azure/login@v3
         with:
-          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          client-id: ${{ vars.AZURE_PREVIEW_CLIENT_ID }}
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
+      # The personal values are secrets so the public logs mask them. GitHub masks a secret only as a whole
+      # string, so each IP in the list is masked on its own too. ProviderNoRbac checks read access only,
+      # which is all the preview identity has.
       - name: What-if (nonprod)
         run: |
+          for ip in ${TTB_ALLOWED_IPS//,/ }; do echo "::add-mask::${ip%/32}"; done
           az deployment sub what-if \
             --location centralus \
+            --validation-level ProviderNoRbac \
             --parameters infra/nonprod.bicepparam
         env:
-          TTB_BUDGET_EMAIL: ${{ vars.TTB_BUDGET_EMAIL }}
-          TTB_ADMIN_OBJECT_ID: ${{ vars.TTB_ADMIN_OBJECT_ID }}
-          TTB_DEPLOY_PRINCIPAL_ID: ${{ vars.TTB_DEPLOY_PRINCIPAL_ID }}
-          TTB_ALLOWED_IPS: ${{ vars.TTB_ALLOWED_IPS }}
+          TTB_BUDGET_EMAIL: ${{ secrets.TTB_BUDGET_EMAIL }}
+          TTB_ADMIN_OBJECT_ID: ${{ secrets.TTB_ADMIN_OBJECT_ID }}
+          TTB_ALLOWED_IPS: ${{ secrets.TTB_ALLOWED_IPS }}
