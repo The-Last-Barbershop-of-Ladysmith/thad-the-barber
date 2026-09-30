@@ -31,8 +31,8 @@ See [environments.md](environments.md) for the deploy setup and the branching an
 
 | App | What it runs | Serves |
 | --- | --- | --- |
-| **web** (`app-ttb-web-*`) | Node LTS + **Express 5** (TypeScript), static only: no SSR, no proxy | The Angular build (prerendered pages + SPA), with a per-request CSP nonce, themed EJS error pages, and a correct 404 status |
-| **api** (`app-ttb-api-*`) | ASP.NET Core (.NET LTS) | `/api/*` only |
+| **web** (`as-ttb-ui-*`) | Node LTS + **Express 5** (TypeScript), static only: no SSR, no proxy | The Angular build (prerendered pages + SPA), with a per-request CSP nonce, themed EJS error pages, and a correct 404 status |
+| **api** (`as-ttb-api-*`) | ASP.NET Core (.NET LTS) | `/api/*` only |
 
 - The browser calls the API **cross-origin**. **CORS is configured only in the .NET app** (ASP.NET Core middleware) and allows exactly the origins in **`Cors:AllowedOrigins`, an array stored in Key Vault** (`Cors--AllowedOrigins--0`, `--1`, …). App Service's built-in CORS stays empty, because when it's enabled it overrides the app's own CORS handling.
 - **Frontend settings:** ✅ `environment.ts` per environment (`apiBaseUrl`, `siteUrl`, `recaptchaSiteKey`; nothing secret), chosen 2026-09-28. The frontend is built per environment; the release run builds the `test` and `production` web bundles from the same commit. The **API** is built once and promoted.
@@ -42,7 +42,7 @@ See [environments.md](environments.md) for the deploy setup and the branching an
 | dev + test | One shared **F1 Free Linux** plan, four apps (web + api × dev/test) | $0 | No Always On (slow first request after idle), and the four apps share F1's CPU and bandwidth quota. Accepted outside prod |
 | prod (later) | **B1 Linux**, Always On, web + api | ~$13/mo | Site on the custom domain, API on `api.<domain>`, free managed certificates |
 
-- Region: East US.
+- Region: prod in East US (closest to the shop and its DMV customers); dev + test in Central US, because East US had no F1 quota (2026-09-29).
 - Before go-live, scale test to B1 for about an hour (billed hourly) for a realistic performance check.
 
 **Considered:**
