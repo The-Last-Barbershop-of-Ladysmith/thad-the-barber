@@ -1,0 +1,6 @@
+@thad_the_barber_api_HostAddress = http://localhost:5078
+
+GET {{thad_the_barber_api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

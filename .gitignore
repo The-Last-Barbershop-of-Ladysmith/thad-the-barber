@@ -1,2 +1,5 @@
 *.vscode
 *.angular
+*.vs
+*/bin
+*/obj
