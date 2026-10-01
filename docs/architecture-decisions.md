@@ -225,7 +225,7 @@ The design for when it's picked up needs no database:
 
 **Secrets: Azure Key Vault in every environment (✅ required).**
 - These live in Key Vault: the Square application secret, the Square OAuth refresh token, the Square webhook signature key, the manage-link HMAC key, and the session-JWT signing key.
-- The .NET API loads Key Vault straight into configuration with the **Azure Key Vault configuration provider** and its managed identity; the vault URI is its only Key Vault-related app setting. That includes the **CORS allowed-origins array** (`Cors--AllowedOrigins--N` → `Cors:AllowedOrigins`), which the session endpoint's Origin check also uses. Other apps use `@Microsoft.KeyVault(...)` references.
+- The .NET API loads Key Vault straight into configuration with the **Azure Key Vault configuration provider** and its managed identity; the vault **name** (`KeyVault:Name`, in `appsettings.{Env}.json` and the `KeyVault__Name` app setting) is its only Key Vault-related setting. That includes the **CORS allowed-origins array** (`Cors--AllowedOrigins--N` → `Cors:AllowedOrigins`), which the session endpoint's Origin check also uses. Other apps use `@Microsoft.KeyVault(...)` references.
 - Nothing sensitive goes in the repo, app settings, or GitHub. GitHub reaches Azure through OIDC, with no stored credentials.
 - Key Vault uses RBAC, with soft delete and purge protection on.
 

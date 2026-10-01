@@ -43,9 +43,9 @@ Every app: system-assigned identity, HTTPS only, minimum TLS 1.2, FTP and basic-
 | App | Settings |
 | --- | --- |
 | web | `APPLICATIONINSIGHTS_CONNECTION_STRING`, `API_ORIGIN`, `MEDIA_BASE_URL`, `NOINDEX` (`true` outside prod) |
-| api | `APPLICATIONINSIGHTS_CONNECTION_STRING`, `ASPNETCORE_ENVIRONMENT` (`Dev`/`Test`), `KeyVault__Uri` |
+| api | `APPLICATIONINSIGHTS_CONNECTION_STRING`, `ASPNETCORE_ENVIRONMENT` (`Dev`/`Test`), `ASPNETCORE_FORWARDEDHEADERS_ENABLED`, `KeyVault__Name` |
 
-The API reads all its secrets through the Key Vault configuration provider, so the vault URI is its only Key Vault setting (M1-03, #11). If an app ever needs a secret as a setting, use a `@Microsoft.KeyVault(SecretUri=…)` reference; `keyVaultReferenceIdentity` is already the app's own identity.
+The API reads all its secrets through the Key Vault configuration provider, so the vault name is its only Key Vault setting (M1-03, #11). `appsettings.Dev.json` and `appsettings.Test.json` carry the same names; the app setting wins if they differ. If an app ever needs a secret as a setting, use a `@Microsoft.KeyVault(SecretUri=…)` reference; `keyVaultReferenceIdentity` is already the app's own identity.
 
 **Key Vault contents:**
 

@@ -43,7 +43,6 @@ var corsOrigins = concat([
 
 // Built from the name so the apps (which need the URI) can be created before the vault (whose firewall needs their IPs).
 var keyVaultName = 'kv-ttb-${envName}-${location}'
-var keyVaultUri = 'https://${keyVaultName}${environment().suffixes.keyvaultDns}/'
 
 // Key Vault IP rules take a bare address for a single host.
 var yourIps = map(allowedIpRanges, ip => endsWith(ip, '/32') ? replace(ip, '/32', '') : ip)
@@ -193,7 +192,8 @@ module api 'app-service.bicep' = {
       // App Service terminates TLS; this lets the API see X-Forwarded-Proto so HSTS is sent on HTTPS requests.
       ASPNETCORE_FORWARDEDHEADERS_ENABLED: 'true'
       // The API loads every secret (and the CORS origins) through the Key Vault configuration provider (issue #11).
-      KeyVault__Uri: keyVaultUri
+      // appsettings.{Dev,Test}.json carry the same name; this app setting wins if they ever differ.
+      KeyVault__Name: keyVaultName
     }
   }
 }
