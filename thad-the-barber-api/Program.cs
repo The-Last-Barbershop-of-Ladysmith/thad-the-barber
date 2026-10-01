@@ -1,44 +1,52 @@
-var builder = WebApplication.CreateBuilder(args);
+using Azure.Identity;
+using Azure.Monitor.OpenTelemetry.AspNetCore;
+using ThadTheBarber.Api.Features.Health;
+using ThadTheBarber.Api.Infrastructure;
+using ThadTheBarber.Api.Infrastructure.Cors;
+using ThadTheBarber.Api.Square;
 
-// Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
-var app = builder.Build();
+// In Azure the vault URI (KeyVault__Uri) is the only setting; every secret and the CORS origins load from the vault,
+// with "--" in secret names mapping to ":". Locally, use user-secrets instead.
+if (builder.Configuration["KeyVault:Uri"] is { Length: > 0 } vaultUri)
+{
+    builder.Configuration.AddAzureKeyVault(new Uri(vaultUri), new DefaultAzureCredential());
+}
 
-// Configure the HTTP request pipeline.
+// Requests, outgoing HTTP, logs and metrics go to App Insights. Off when no connection string is set (local runs, tests).
+if (builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"] is { Length: > 0 })
+{
+    builder.Services.AddOpenTelemetry().UseAzureMonitor();
+}
+
+builder.Services.AddProblemDetails();
+builder.Services.AddHsts(options => options.MaxAge = TimeSpan.FromDays(365));
+builder.Services.AddFrontendCors(builder.Configuration);
+builder.Services.AddSquareService(builder.Configuration);
+builder.Services.AddHealth();
+builder.Services.AddOpenApi();
+
+WebApplication app = builder.Build();
+
+if (!app.Environment.IsDevelopment())
+{
+    // RFC 7807 ProblemDetails without stack traces. Development keeps the developer exception page.
+    app.UseExceptionHandler();
+    app.UseHsts();
+}
+
+// Unmatched routes (and other bodiless 4xx/5xx) become ProblemDetails.
+app.UseStatusCodePages();
+app.UseNoSniff();
+app.UseCors();
+
+RouteGroupBuilder api = app.MapGroup("/api");
+api.MapHealthEndpoints();
+
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    app.MapOpenApi("/api/openapi/{documentName}.json");
 }
 
-app.UseHttpsRedirection();
-
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast = Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast")
-.WithOpenApi();
-
-app.Run();
-
-internal record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
+await app.RunAsync();

@@ -58,7 +58,7 @@ See [environments.md](environments.md) for the deploy setup and the branching an
 
 ## C. Square integration
 
-**Decision:** only our API talks to Square, through the official .NET SDK wrapped in an `ISquareGateway` interface, so tests can mock it. The browser never holds a Square token.
+**Decision:** only our API talks to Square, through the official .NET SDK wrapped in an `ISquareService` interface, so tests can mock it. The browser never holds a Square token.
 
 Endpoints (each replaces a mocked Angular service without changing its NgRx effect):
 

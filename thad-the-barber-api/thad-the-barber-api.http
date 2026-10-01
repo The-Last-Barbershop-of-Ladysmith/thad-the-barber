@@ -1,6 +1,25 @@
-@thad_the_barber_api_HostAddress = http://localhost:5078
+@api = http://localhost:5078
 
-GET {{thad_the_barber_api_HostAddress}}/weatherforecast/
+GET {{api}}/api/health
+Accept: application/json
+
+###
+
+GET {{api}}/api/health?deep=true
+Accept: application/json
+
+###
+
+# CORS preflight from the local Angular app
+OPTIONS {{api}}/api/health
+Origin: http://localhost:4200
+Access-Control-Request-Method: GET
+Access-Control-Request-Headers: authorization
+
+###
+
+# Unknown route: 404 ProblemDetails
+GET {{api}}/api/nope
 Accept: application/json
 
 ###

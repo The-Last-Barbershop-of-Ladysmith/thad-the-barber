@@ -190,6 +190,8 @@ module api 'app-service.bicep' = {
     appSettings: {
       APPLICATIONINSIGHTS_CONNECTION_STRING: appInsights.properties.ConnectionString
       ASPNETCORE_ENVIRONMENT: aspnetEnvironment
+      // App Service terminates TLS; this lets the API see X-Forwarded-Proto so HSTS is sent on HTTPS requests.
+      ASPNETCORE_FORWARDEDHEADERS_ENABLED: 'true'
       // The API loads every secret (and the CORS origins) through the Key Vault configuration provider (issue #11).
       KeyVault__Uri: keyVaultUri
     }
