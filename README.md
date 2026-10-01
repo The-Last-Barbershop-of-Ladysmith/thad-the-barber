@@ -9,6 +9,7 @@ The website for Thad The Barber (The Last Barbershop of Ladysmith): a one-page h
 | Folder | What it is |
 | --- | --- |
 | [`thad-the-barber-ui/`](thad-the-barber-ui/) | The Angular 22 site (PrimeNG, NgRx, Tailwind). Its [README](thad-the-barber-ui/README.md) covers the stack, theming and conventions. |
+| [`thad-the-barber-api/`](thad-the-barber-api/) | The ASP.NET Core (.NET 10) API, serving only `/api/*`. Tests are in [`thad-the-barber-api.tests/`](thad-the-barber-api.tests/). |
 | [`wireframe/site/`](wireframe/site/) | The original static HTML/JS wireframe, kept as the design and behavior reference. |
 | [`docs/`](docs/) | Architecture decisions, business rules and environments. |
 | [`.github/`](.github/) | Issue and PR templates, plus the branch-policy alert workflow. |
@@ -32,6 +33,13 @@ cd thad-the-barber-ui
 npm ci
 npm start        # http://localhost:4200
 npm test         # unit tests (Vitest)
+```
+
+The API needs the .NET 10 SDK (pinned in `global.json`):
+
+```bash
+dotnet run --project thad-the-barber-api      # http://localhost:5078/api/health, allows http://localhost:4200
+dotnet test --solution thad-the-barber-api/thad-the-barber-api.sln
 ```
 
 ## Roadmap
