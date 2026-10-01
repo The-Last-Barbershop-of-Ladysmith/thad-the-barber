@@ -31,10 +31,11 @@ public static class HealthEndpoints
         }
 
         bool reachable = await square.IsReachableAsync(cancellationToken);
+        HealthResponse body = reachable
+            ? new HealthResponse("ok", build.Version, build.Commit, "reachable")
+            : new HealthResponse("degraded", build.Version, build.Commit, "unreachable");
         return reachable
-            ? TypedResults.Ok(new HealthResponse("ok", build.Version, build.Commit, "reachable"))
-            : TypedResults.Json(
-                new HealthResponse("degraded", build.Version, build.Commit, "unreachable"),
-                statusCode: StatusCodes.Status503ServiceUnavailable);
+            ? TypedResults.Ok(body)
+            : TypedResults.Json(body, statusCode: StatusCodes.Status503ServiceUnavailable);
     }
 }

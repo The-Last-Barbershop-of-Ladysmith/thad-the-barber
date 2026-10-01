@@ -20,9 +20,9 @@ public static class SecurityHeaders
     /// <summary>Marks responses <c>Cache-Control: no-store</c>. Use on booking and session endpoints (and health).</summary>
     public static TBuilder NoStore<TBuilder>(this TBuilder builder)
         where TBuilder : IEndpointConventionBuilder =>
-        builder.AddEndpointFilter(async (context, next) =>
+        builder.AddEndpointFilter((context, next) =>
         {
             context.HttpContext.Response.Headers.CacheControl = "no-store";
-            return await next(context);
+            return next(context);
         });
 }
