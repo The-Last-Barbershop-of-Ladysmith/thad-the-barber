@@ -27,16 +27,12 @@ public static class CorsSetup
         services.AddSingleton<IValidateOptions<CorsSettings>, CorsSettingsValidator>();
 
         services.AddCors();
-        services.AddSingleton<IConfigureOptions<CorsOptions>, ConfigureFrontendPolicy>();
+        services.AddOptions<CorsOptions>()
+            .Configure<IOptions<CorsSettings>>((options, settings) =>
+                options.AddDefaultPolicy(policy => policy
+                    .WithOrigins(settings.Value.AllowedOrigins)
+                    .WithMethods(HttpMethods.Get, HttpMethods.Post)
+                    .WithHeaders(AllowedHeaders)));
         return services;
-    }
-
-    private sealed class ConfigureFrontendPolicy(IOptions<CorsSettings> settings) : IConfigureOptions<CorsOptions>
-    {
-        public void Configure(CorsOptions options) =>
-            options.AddDefaultPolicy(policy => policy
-                .WithOrigins(settings.Value.AllowedOrigins)
-                .WithMethods(HttpMethods.Get, HttpMethods.Post)
-                .WithHeaders(AllowedHeaders));
     }
 }
