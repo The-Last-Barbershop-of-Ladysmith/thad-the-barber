@@ -12,7 +12,6 @@ public sealed record BuildInfo(string Version, string Commit)
     public static BuildInfo FromAssembly(Assembly assembly)
     {
         string informational = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
-            ?? assembly.GetName().Version?.ToString()
             ?? "0.0.0";
         int plus = informational.IndexOf('+', StringComparison.Ordinal);
         return plus < 0
