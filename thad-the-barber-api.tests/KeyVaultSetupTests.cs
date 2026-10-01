@@ -26,13 +26,7 @@ public sealed class KeyVaultSetupTests
     [InlineData("Test", "kv-ttb-test-centralus")]
     public void EachAzureEnvironmentNamesItsVault(string environment, string expected)
     {
-        IConfiguration configuration = new ConfigurationBuilder()
-            .SetBasePath(ApiContentRoot())
-            .AddJsonFile("appsettings.json")
-            .AddJsonFile($"appsettings.{environment}.json")
-            .Build();
-
-        Assert.Equal(expected, configuration["KeyVault:Name"]);
+        Assert.Equal(expected, AppSettings(environment)["KeyVault:Name"]);
     }
 
     [Theory]
@@ -40,13 +34,7 @@ public sealed class KeyVaultSetupTests
     [InlineData("Testing")]
     public void LocalRunsAndTestsHaveNoVault(string environment)
     {
-        IConfiguration configuration = new ConfigurationBuilder()
-            .SetBasePath(ApiContentRoot())
-            .AddJsonFile("appsettings.json")
-            .AddJsonFile($"appsettings.{environment}.json", optional: true)
-            .Build();
-
-        Assert.Null(KeyVaultSetup.GetVaultUri(configuration));
+        Assert.Null(KeyVaultSetup.GetVaultUri(AppSettings(environment)));
     }
 
     private static IConfiguration Configuration(string? name) =>
@@ -54,6 +42,14 @@ public sealed class KeyVaultSetupTests
             .AddInMemoryCollection(new Dictionary<string, string?> { ["KeyVault:Name"] = name })
             .Build();
 
-    private static string ApiContentRoot() =>
-        Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "thad-the-barber-api"));
+    /// <summary>
+    /// Loads the API's appsettings the way the host would for <paramref name="environment"/>. The project reference
+    /// copies them into the test output folder, so these are the files that ship with the build.
+    /// </summary>
+    private static IConfiguration AppSettings(string environment) =>
+        new ConfigurationBuilder()
+            .SetBasePath(AppContext.BaseDirectory)
+            .AddJsonFile("appsettings.json")
+            .AddJsonFile($"appsettings.{environment}.json", optional: true)
+            .Build();
 }

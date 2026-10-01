@@ -30,8 +30,6 @@ public sealed class HealthTests(ApiFactory factory) : IClassFixture<ApiFactory>
     [Fact]
     public async Task DeepHealthReportsSquareReachable()
     {
-        factory.Square.Reachable = true;
-
         using HttpResponseMessage response = await factory.CreateClient().GetAsync("/api/health?deep=true", TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -42,8 +40,7 @@ public sealed class HealthTests(ApiFactory factory) : IClassFixture<ApiFactory>
     [Fact]
     public async Task DeepHealthIs503WhenSquareIsUnreachable()
     {
-        using ApiFactory unreachable = new();
-        unreachable.Square.Reachable = false;
+        using ApiFactory unreachable = new(squareReachable: false);
 
         using HttpResponseMessage response = await unreachable.CreateClient().GetAsync("/api/health?deep=true", TestContext.Current.CancellationToken);
 
