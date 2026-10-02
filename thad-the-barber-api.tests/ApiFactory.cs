@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using ThadTheBarber.Api.Square;
+using ThadTheBarber.Api.Tests.Fakes;
 
 namespace ThadTheBarber.Api.Tests;
 
@@ -17,22 +18,19 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
     public const string CustomDomainOrigin = "https://www.example.com";
 
     private readonly string[] _origins;
-    private readonly FakeSquareService _square;
+    private readonly ISquareService _square;
 
     public ApiFactory()
-        : this([FrontendOrigin, CustomDomainOrigin])
+        : this(null, null)
     {
     }
 
-    internal ApiFactory(string[] origins, bool squareReachable = true)
+    /// <param name="origins">The CORS allow-list; defaults to <see cref="FrontendOrigin"/> and <see cref="CustomDomainOrigin"/>.</param>
+    /// <param name="square">Replaces Square for this host; defaults to a reachable <see cref="FakeSquareService"/>.</param>
+    internal ApiFactory(string[]? origins = null, ISquareService? square = null)
     {
-        _origins = origins;
-        _square = new FakeSquareService(squareReachable);
-    }
-
-    internal ApiFactory(bool squareReachable)
-        : this([FrontendOrigin, CustomDomainOrigin], squareReachable)
-    {
+        _origins = origins ?? [FrontendOrigin, CustomDomainOrigin];
+        _square = square ?? new FakeSquareService();
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -45,9 +43,4 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
 
         builder.ConfigureTestServices(services => services.AddSingleton<ISquareService>(_square));
     }
-}
-
-public sealed class FakeSquareService(bool reachable) : ISquareService
-{
-    public Task<bool> IsReachableAsync(CancellationToken cancellationToken) => Task.FromResult(reachable);
 }
