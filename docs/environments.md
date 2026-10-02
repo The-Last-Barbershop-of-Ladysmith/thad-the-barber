@@ -12,7 +12,7 @@ How code moves from a topic branch to production. The decisions behind this are 
 | API app (.NET) | `as-ttb-api-dev-centralus` | `as-ttb-api-test-centralus` | `as-ttb-api-prod-eastus` |
 | Deploys when | a PR merges into `dev/*` | a PR merges into `release/*` or `hotfix/*` | a person approves the tested `release/*` artifact |
 | Square | Sandbox | Sandbox (seeded test data) | Production |
-| Frontend config | `environment.dev.ts` (`-c dev`) | `environment.test.ts` (`-c test`) | `environment.ts` (`-c production`) |
+| Frontend config | `environment.dev-cloud.ts` (`-c devCloud`) | `environment.test.ts` (`-c test`) | `environment.ts` (`-c production`) |
 | URL | `*.azurewebsites.net` | `*.azurewebsites.net` | Site on the custom domain, API on `api.<domain>`, managed certificates |
 | Cost | $0 | $0 | ~$13/mo |
 
@@ -147,7 +147,7 @@ All four checks must pass before a merge. On failure, traces, screenshots and vi
 ## CD (deploy pipeline)
 
 ```
-merge → dev/X.Y      build web (-c dev, prerender vs dev API) + api → deploy dev apps → smoke (dev)
+merge → dev/X.Y      build web (-c devCloud, prerender vs dev API) + api → deploy dev apps → smoke (dev)
 merge → release/X.Y  build API ARTIFACT once + web (-c test) + web (-c production), same commit
                      → deploy api + web-test to test → smoke + sandbox booking round trip (test)
 approve production   deploy SAME API ARTIFACT + the prod web build → prod → smoke (read-only)
