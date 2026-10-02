@@ -160,6 +160,13 @@ nightly              smoke (test)
 - **CORS** is set only in the .NET app, from the `Cors--AllowedOrigins--N` array in Key Vault. App Service's platform CORS stays empty.
 - **Rollback:** re-run the deploy with the previous release artifact.
 
+Workflows: [`cd-dev.yml`](../.github/workflows/cd-dev.yml) (push to `dev/**`) calls the reusable [`build.yml`](../.github/workflows/build.yml), then [`deploy.yml`](../.github/workflows/deploy.yml).
+
+- `build.yml` names artifacts `ttb-ui-<env>-<version>-<sha7>` and `ttb-api-<version>-<sha7>`, where `<version>` is the branch name after its first slash.
+- `deploy.yml` signs in as the environment's identity, zip-deploys each given artifact, waits until `/api/health` reports the deployed commit, then runs the smoke suite against that environment's URLs.
+- On dev, only the app(s) a push changed are rebuilt and redeployed. A docs-only push deploys nothing, and a manual run deploys both. Dev has no rollback: a red run emails the owner and the fix rolls forward.
+- Until the Express server (#19) exists, the UI zip carries a `package.json` whose `start` script runs `pm2 serve --spa` (pm2 ships with App Service's Node images), so client routes fall back to `index.html`.
+
 ## Branching and release flow
 
 ```

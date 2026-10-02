@@ -1,0 +1,109 @@
+# Builds the deployable zips (issues #16, #17); cd-dev.yml and cd-test.yml call it, and deploy.yml deploys what it uploads.
+# Artifact names: ttb-ui-<env>-<version>-<sha7> and ttb-api-<version>-<sha7>, where <version> is the branch name after
+# its first slash (dev/angry-apple-1.0.0.0 → angry-apple-1.0.0.0).
+name: build
+
+on:
+  workflow_call:
+    inputs:
+      ui-builds:
+        description: 'JSON list of {"env": ..., "configuration": ...} Angular builds, or [] for none.'
+        type: string
+        default: '[]'
+      api:
+        type: boolean
+        default: false
+      retention-days:
+        type: number
+        default: 7
+    outputs:
+      suffix:
+        description: The <version>-<sha7> every artifact name ends with.
+        value: ${{ jobs.name.outputs.suffix }}
+
+permissions:
+  contents: read
+
+jobs:
+  name:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      suffix: ${{ steps.suffix.outputs.suffix }}
+    steps:
+      - id: suffix
+        run: echo "suffix=${REF_NAME#*/}-${SHA::7}" >> "$GITHUB_OUTPUT"
+        env:
+          REF_NAME: ${{ github.ref_name }}
+          SHA: ${{ github.sha }}
+
+  ui:
+    needs: name
+    if: inputs.ui-builds != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        build: ${{ fromJSON(inputs.ui-builds) }}
+    defaults:
+      run:
+        working-directory: thad-the-barber-ui
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: thad-the-barber-ui/package-lock.json
+
+      - run: npm ci
+      - run: npx ng build --configuration "${{ matrix.build.configuration }}"
+
+      # Until the Express server (#19) exists, App Service runs `npm start`, which serves the build with the pm2
+      # preinstalled in its Node images, falling back to index.html for client routes.
+      - name: Add the start script
+        working-directory: thad-the-barber-ui/dist/thad-the-barber-ui/browser
+        run: |
+          cat > package.json <<'EOF'
+          {
+            "private": true,
+            "scripts": {
+              "start": "pm2 serve /home/site/wwwroot ${PORT:-8080} --no-daemon --spa"
+            }
+          }
+          EOF
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ttb-ui-${{ matrix.build.env }}-${{ needs.name.outputs.suffix }}
+          path: thad-the-barber-ui/dist/thad-the-barber-ui/browser/
+          retention-days: ${{ inputs.retention-days }}
+          if-no-files-found: error
+
+  api:
+    needs: name
+    if: inputs.api
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', 'Directory.Build.props', 'global.json') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - run: dotnet publish thad-the-barber-api/thad-the-barber-api.csproj --configuration Release --output publish
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ttb-api-${{ needs.name.outputs.suffix }}
+          path: publish/
+          retention-days: ${{ inputs.retention-days }}
+          if-no-files-found: error
