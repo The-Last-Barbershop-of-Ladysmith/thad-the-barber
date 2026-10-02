@@ -1,0 +1,38 @@
+# Weekly grouped dependency PRs (issue #18). They target the active dev branch, so update target-branch
+# when a new dev/* branch is cut. Major versions get their own PRs.
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /thad-the-barber-ui
+    target-branch: dev/angry-apple-1.0.0.0
+    schedule:
+      interval: weekly
+    groups:
+      npm-minor-and-patch:
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: nuget
+    directories:
+      - /thad-the-barber-api
+      - /thad-the-barber-api.tests
+    target-branch: dev/angry-apple-1.0.0.0
+    schedule:
+      interval: weekly
+    groups:
+      nuget-minor-and-patch:
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: dev/angry-apple-1.0.0.0
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns:
+          - '*'

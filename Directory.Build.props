@@ -7,6 +7,8 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <AnalysisLevel>latest-recommended</AnalysisLevel>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <!-- With TreatWarningsAsErrors, a high or critical advisory on any package (transitive too, the .NET 10 default) fails restore. -->
+    <NuGetAuditLevel>high</NuGetAuditLevel>
   </PropertyGroup>
 
 </Project>
