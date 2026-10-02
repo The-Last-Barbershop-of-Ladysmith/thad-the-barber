@@ -77,7 +77,14 @@ npx ng test --include src/app/store/app.reducer.spec.ts   # one spec
 npm run build                              # production build
 ```
 
-Coming with their issues: the .NET API tests (`dotnet test`, #12), the Playwright end-to-end suite (#14), and the CI workflow that runs all four checks on every PR (#15).
+API (.NET 10 SDK, from the repo root):
+
+```bash
+dotnet run --project thad-the-barber-api                            # http://localhost:5078
+dotnet test --solution thad-the-barber-api/thad-the-barber-api.sln  # xUnit v3 on Microsoft.Testing.Platform
+```
+
+Warnings fail the build (`Directory.Build.props`). Coming with their issues: the fake Square gateway and coverage for the API tests (#12), the Playwright end-to-end suite (#14), and the CI workflow that runs all four checks on every PR (#15).
 
 ## Pull requests
 

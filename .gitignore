@@ -1,2 +1,7 @@
 *.vscode
 *.angular
+*.vs
+*/bin
+*/obj
+*.user
+*/TestResults
