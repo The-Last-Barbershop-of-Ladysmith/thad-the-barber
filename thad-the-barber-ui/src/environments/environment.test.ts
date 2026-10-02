@@ -1,6 +1,5 @@
 import { type Environment } from './environment.model';
 
-/** Azure test (`ng build -c test`), built by the release workflow. */
 export const environment: Environment = {
   production: false,
   apiBaseUrl: 'https://as-ttb-api-test-centralus.azurewebsites.net/api',

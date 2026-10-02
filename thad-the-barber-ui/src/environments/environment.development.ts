@@ -1,6 +1,5 @@
 import { type Environment } from './environment.model';
 
-/** Local `ng serve`: the API from `dotnet run` (http profile), media from the dev container. */
 export const environment: Environment = {
   production: false,
   apiBaseUrl: 'http://localhost:5078/api',
