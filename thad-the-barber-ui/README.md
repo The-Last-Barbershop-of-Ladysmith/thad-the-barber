@@ -42,7 +42,7 @@ Each build configuration swaps `src/environments/environment.ts` for its own fil
 | `test` | `environment.test.ts` | Azure test (`as-ttb-ui-test-centralus`) |
 | `production` (`ng build` default) | `environment.ts` | Prod |
 
-Fields: `production`, `apiBaseUrl` (absolute, includes `/api`), `siteUrl`, `mediaBaseUrl`, `recaptchaSiteKey` and `appInsightsConnectionString`. Build request URLs with `apiUrl('/path')` from `shared/utils`. Unit tests run with the `development` replacement, and Vitest only picks up `*.spec.ts` files, because `environment.test.ts` would otherwise match its `*.test.ts` pattern.
+Fields: `production`, `apiBaseUrl` (absolute, includes `/api`), `siteUrl`, `mediaBaseUrl`, `recaptchaSiteKey` and `appInsightsConnectionString`. Build request URLs as `${environment.apiBaseUrl}/path`. Unit tests run with the `development` replacement, and Vitest only picks up `*.spec.ts` files, because `environment.test.ts` would otherwise match its `*.test.ts` pattern.
 
 ## Folder structure
 

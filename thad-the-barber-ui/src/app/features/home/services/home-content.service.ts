@@ -6,7 +6,7 @@ import { type HomeContent } from '../models/home.models';
 /**
  * Announcements, testimonials and gallery photos.
  * Returns the bundled seed data for now; swap the body for an HttpClient call
- * (`apiUrl('/content/home')`) when the content API exists.
+ * (`${environment.apiBaseUrl}/content/home`) when the content API exists.
  */
 @Injectable({ providedIn: 'root' })
 export class HomeContentService {
