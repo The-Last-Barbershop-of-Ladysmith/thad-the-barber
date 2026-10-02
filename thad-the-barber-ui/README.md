@@ -48,7 +48,9 @@ npm run e2e:smoke  # smoke tests against the local site and API; set BASE_URL an
 
 `.github/workflows/ci.yml` runs four checks on every PR into `dev/**`, `release/**`, `hotfix/**` and `main`: `ui` (lint, unit tests, production build), `api` (build, tests, at least 80% line coverage), `e2e` (the mocked suite against `ng serve --configuration test`, the optimized build with test URLs) and `lighthouse`. Failed runs upload the Playwright report and traces; the API coverage file and the Lighthouse reports are always uploaded.
 
-The `lighthouse` check runs Lighthouse (mobile) on `/` and `/book`, then `npm run lighthouse:check` fails it when accessibility is under 95, or best practices or SEO under 90. Performance is reported but not enforced until the backdrop frames are fixed (#47, #38); #91 sets its budgets. To run it locally, serve the site, write `lighthouse-results/<name>.report.json` with `npx lighthouse <url> --output=json --output-path=lighthouse-results/<name>`, then run the check.
+Each run writes a job summary (API coverage, Playwright totals with any failed or flaky tests, the Lighthouse score table), and a `report` job posts the same summary as one PR comment, which later runs update. `npm run e2e:summary` (`ci/e2e-summary.ts`) builds the Playwright part from the JSON report CI writes to `test-results/results.json`.
+
+The `lighthouse` check runs Lighthouse (mobile) on `/` and `/book`, then `npm run lighthouse:check` (`ci/lighthouse-check.ts`) fails it when accessibility is under 95, or best practices or SEO under 90. Performance is reported but not enforced until the backdrop frames are fixed (#47, #38); #91 sets its budgets. To run it locally, serve the site, write `lighthouse-results/<name>.report.json` with `npx lighthouse <url> --output=json --output-path=lighthouse-results/<name>`, then run the check.
 
 ### Environments
 

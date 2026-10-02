@@ -39,7 +39,7 @@
       "path": "./e2e/tsconfig.json"
     },
     {
-      "path": "./lighthouse/tsconfig.json"
+      "path": "./ci/tsconfig.json"
     }
   ]
 }
