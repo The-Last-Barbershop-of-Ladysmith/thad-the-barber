@@ -19,9 +19,12 @@ param planSku = 'F1'
 param environments = [
   {
     name: 'dev'
-    aspnetEnvironment: 'Dev'
+    aspnetEnvironment: 'Development'
     githubEnvironment: 'dev'
-    extraCorsOrigins: []
+    // Local runs (ng serve) also use the dev vault, so its CORS list includes the local Angular origin.
+    extraCorsOrigins: [
+      'http://localhost:4200'
+    ]
   }
   {
     name: 'test'

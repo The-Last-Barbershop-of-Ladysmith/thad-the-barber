@@ -43,15 +43,15 @@ Every app: system-assigned identity, HTTPS only, minimum TLS 1.2, FTP and basic-
 | App | Settings |
 | --- | --- |
 | web | `APPLICATIONINSIGHTS_CONNECTION_STRING`, `API_ORIGIN`, `MEDIA_BASE_URL`, `NOINDEX` (`true` outside prod) |
-| api | `APPLICATIONINSIGHTS_CONNECTION_STRING`, `ASPNETCORE_ENVIRONMENT` (`Dev`/`Test`), `ASPNETCORE_FORWARDEDHEADERS_ENABLED`, `KeyVault__Name` |
+| api | `APPLICATIONINSIGHTS_CONNECTION_STRING`, `ASPNETCORE_ENVIRONMENT` (`Development`/`Test`), `ASPNETCORE_FORWARDEDHEADERS_ENABLED` |
 
-The API reads all its secrets through the Key Vault configuration provider, so the vault name is its only Key Vault setting (M1-03, #11). `appsettings.Dev.json` and `appsettings.Test.json` carry the same names; the app setting wins if they differ. If an app ever needs a secret as a setting, use a `@Microsoft.KeyVault(SecretUri=…)` reference; `keyVaultReferenceIdentity` is already the app's own identity.
+The API reads all its secrets through the Key Vault configuration provider, so the vault name is its only Key Vault setting (M1-03, #11). The name lives only in `appsettings.Development.json` and `appsettings.Test.json`, picked by `ASPNETCORE_ENVIRONMENT`. Dev runs as `Development` (debug behavior included, same as local runs, which also use the dev vault). If an app ever needs a secret as a setting, use a `@Microsoft.KeyVault(SecretUri=…)` reference; `keyVaultReferenceIdentity` is already the app's own identity.
 
 **Key Vault contents:**
 
 | Name | Kind | Set by |
 | --- | --- | --- |
-| `Cors--AllowedOrigins--0…N` | secret | Bicep: the environment's web origin, then `extraCorsOrigins`. If you remove an origin, delete its leftover secret by hand |
+| `Cors--AllowedOrigins--0…N` | secret | Bicep: the environment's web origin, then `extraCorsOrigins` (dev adds `http://localhost:4200` for local runs). If you remove an origin, delete its leftover secret by hand |
 | `session-jwt-signing` | EC P-256 key (ES256) | Bicep. Generated in the vault and never exported; re-runs don't rotate it |
 | `Square--ApplicationSecret`, `Square--RefreshToken`, `Square--WebhookSignatureKey`, `ManageLink--HmacKey`, `Recaptcha--ApiKey`, `Google--ClientSecret`, `Google--RefreshToken` | secrets | You, with `infra/scripts/Set-TtbSecrets.ps1`. Bicep never writes them, so a re-run can't overwrite a real value |
 

@@ -8,8 +8,8 @@ namespace ThadTheBarber.Api.Tests;
 
 /// <summary>
 /// Hosts the API in a "Testing" environment with made-up origins and a fake Square service, so tests never touch Azure
-/// or Square. "Testing" is not Development (so production middleware like HSTS runs) and not the Azure "Dev"/"Test"
-/// environments (so appsettings.Dev.json / appsettings.Test.json, and their Key Vault names, never load).
+/// or Square. "Testing" is not Development (so production middleware like HSTS runs) and not an Azure environment
+/// (so appsettings.Development.json / appsettings.Test.json, and their Key Vault names, never load).
 /// </summary>
 public sealed class ApiFactory : WebApplicationFactory<Program>
 {

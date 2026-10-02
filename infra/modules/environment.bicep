@@ -191,9 +191,6 @@ module api 'app-service.bicep' = {
       ASPNETCORE_ENVIRONMENT: aspnetEnvironment
       // App Service terminates TLS; this lets the API see X-Forwarded-Proto so HSTS is sent on HTTPS requests.
       ASPNETCORE_FORWARDEDHEADERS_ENABLED: 'true'
-      // The API loads every secret (and the CORS origins) through the Key Vault configuration provider (issue #11).
-      // appsettings.{Dev,Test}.json carry the same name; this app setting wins if they ever differ.
-      KeyVault__Name: keyVaultName
     }
   }
 }

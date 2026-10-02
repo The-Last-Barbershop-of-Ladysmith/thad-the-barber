@@ -13,10 +13,10 @@ public sealed class HealthTests(ApiFactory factory) : IClassFixture<ApiFactory>
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         JsonElement body = await response.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken);
-        Assert.Equal("ok", body.GetProperty("status").GetString());
+        Assert.Equal("healthy", body.GetProperty("status").GetString());
         Assert.Equal("1.0.0", body.GetProperty("version").GetString());
         Assert.False(string.IsNullOrEmpty(body.GetProperty("commit").GetString()));
-        Assert.False(body.TryGetProperty("square", out _));
+        Assert.False(body.TryGetProperty("checks", out _));
     }
 
     [Fact]
@@ -34,7 +34,8 @@ public sealed class HealthTests(ApiFactory factory) : IClassFixture<ApiFactory>
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         JsonElement body = await response.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken);
-        Assert.Equal("reachable", body.GetProperty("square").GetString());
+        Assert.Equal("healthy", body.GetProperty("status").GetString());
+        Assert.Equal("healthy", body.GetProperty("checks").GetProperty("square").GetString());
     }
 
     [Fact]
@@ -46,7 +47,7 @@ public sealed class HealthTests(ApiFactory factory) : IClassFixture<ApiFactory>
 
         Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
         JsonElement body = await response.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken);
-        Assert.Equal("degraded", body.GetProperty("status").GetString());
-        Assert.Equal("unreachable", body.GetProperty("square").GetString());
+        Assert.Equal("unhealthy", body.GetProperty("status").GetString());
+        Assert.Equal("unhealthy", body.GetProperty("checks").GetProperty("square").GetString());
     }
 }

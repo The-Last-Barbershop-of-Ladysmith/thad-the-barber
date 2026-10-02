@@ -4,9 +4,9 @@ namespace ThadTheBarber.Api.Infrastructure;
 
 /// <summary>
 /// Loads every Key Vault secret into configuration ("--" in secret names maps to ":", so <c>Cors--AllowedOrigins--0</c>
-/// becomes <c>Cors:AllowedOrigins:0</c>). The vault is named by <c>KeyVault:Name</c>, set per environment in
-/// <c>appsettings.{Environment}.json</c> or by the <c>KeyVault__Name</c> app setting, which wins.
-/// Empty (local runs, tests) skips Key Vault; use user-secrets locally instead.
+/// becomes <c>Cors:AllowedOrigins:0</c>). The vault is named by <c>KeyVault:Name</c> in
+/// <c>appsettings.{Environment}.json</c>, picked by <c>ASPNETCORE_ENVIRONMENT</c>. Development (local runs and the Azure
+/// dev app) uses the dev vault; empty (tests) skips Key Vault.
 /// </summary>
 public static class KeyVaultSetup
 {

@@ -1,10 +1,14 @@
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace ThadTheBarber.Api.Features.Health;
 
-/// <summary>Body of <c>GET /api/health</c>. <see cref="Square"/> is only present on a deep check.</summary>
+/// <summary>
+/// Body of <c>GET /api/health</c>. <see cref="Checks"/> maps each health check's name to its status and is only present
+/// on a deep check.
+/// </summary>
 public sealed record HealthResponse(
-    string Status,
+    HealthStatus Status,
     string Version,
     string Commit,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Square = null);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyDictionary<string, HealthStatus>? Checks = null);

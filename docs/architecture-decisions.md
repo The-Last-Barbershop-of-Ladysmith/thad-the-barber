@@ -42,7 +42,7 @@ See [environments.md](environments.md) for the deploy setup and the branching an
 | dev + test | One shared **F1 Free Linux** plan, four apps (web + api × dev/test) | $0 | No Always On (slow first request after idle), and the four apps share F1's CPU and bandwidth quota. Accepted outside prod |
 | prod (later) | **B1 Linux**, Always On, web + api | ~$13/mo | Site on the custom domain, API on `api.<domain>`, free managed certificates |
 
-- Region: prod in East US (closest to the shop and its DMV customers); dev + test in Central US, because East US had no F1 quota (2026-09-29).
+- Region: prod in East US (closest to the shop and its DMV customers); dev + test in Central US, because East US had no F1 quota (2026-09-29). East US B1 quota for prod was granted on 2026-10-01.
 - Before go-live, scale test to B1 for about an hour (billed hourly) for a realistic performance check.
 
 **Considered:**
@@ -225,7 +225,7 @@ The design for when it's picked up needs no database:
 
 **Secrets: Azure Key Vault in every environment (✅ required).**
 - These live in Key Vault: the Square application secret, the Square OAuth refresh token, the Square webhook signature key, the manage-link HMAC key, and the session-JWT signing key.
-- The .NET API loads Key Vault straight into configuration with the **Azure Key Vault configuration provider** and its managed identity; the vault **name** (`KeyVault:Name`, in `appsettings.{Env}.json` and the `KeyVault__Name` app setting) is its only Key Vault-related setting. That includes the **CORS allowed-origins array** (`Cors--AllowedOrigins--N` → `Cors:AllowedOrigins`), which the session endpoint's Origin check also uses. Other apps use `@Microsoft.KeyVault(...)` references.
+- The .NET API loads Key Vault straight into configuration with the **Azure Key Vault configuration provider** and its managed identity; the vault **name** (`KeyVault:Name`, only in `appsettings.{Env}.json`, picked by `ASPNETCORE_ENVIRONMENT`; no app setting) is its only Key Vault-related setting. That includes the **CORS allowed-origins array** (`Cors--AllowedOrigins--N` → `Cors:AllowedOrigins`), which the session endpoint's Origin check also uses. Other apps use `@Microsoft.KeyVault(...)` references.
 - Nothing sensitive goes in the repo, app settings, or GitHub. GitHub reaches Azure through OIDC, with no stored credentials.
 - Key Vault uses RBAC, with soft delete and purge protection on.
 

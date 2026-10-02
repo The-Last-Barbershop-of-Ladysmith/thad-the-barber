@@ -22,19 +22,17 @@ public sealed class KeyVaultSetupTests
     }
 
     [Theory]
-    [InlineData("Dev", "kv-ttb-dev-centralus")]
+    [InlineData("Development", "kv-ttb-dev-centralus")]
     [InlineData("Test", "kv-ttb-test-centralus")]
     public void EachAzureEnvironmentNamesItsVault(string environment, string expected)
     {
         Assert.Equal(expected, AppSettings(environment)["KeyVault:Name"]);
     }
 
-    [Theory]
-    [InlineData("Development")]
-    [InlineData("Testing")]
-    public void LocalRunsAndTestsHaveNoVault(string environment)
+    [Fact]
+    public void TestsHaveNoVault()
     {
-        Assert.Null(KeyVaultSetup.GetVaultUri(AppSettings(environment)));
+        Assert.Null(KeyVaultSetup.GetVaultUri(AppSettings("Testing")));
     }
 
     private static IConfiguration Configuration(string? name) =>
