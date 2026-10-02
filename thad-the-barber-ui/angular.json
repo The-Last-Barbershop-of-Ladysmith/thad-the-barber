@@ -59,6 +59,18 @@
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true,
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "3MB",
+                  "maximumError": "5MB"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "8kB",
+                  "maximumError": "16kB"
+                }
+              ],
               "fileReplacements": [
                 {
                   "replace": "src/environments/environment.ts",
@@ -70,6 +82,18 @@
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true,
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "3MB",
+                  "maximumError": "5MB"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "8kB",
+                  "maximumError": "16kB"
+                }
+              ],
               "fileReplacements": [
                 {
                   "replace": "src/environments/environment.ts",
