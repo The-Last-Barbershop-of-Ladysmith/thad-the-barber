@@ -3,7 +3,7 @@ import { type Observable, delay, of } from 'rxjs';
 
 /**
  * Text-alert sign-ups. Mocked until an SMS provider is chosen.
- * The real version should POST to `${environment.apiBaseUrl}/sms/subscribe`.
+ * The real version should POST to `apiUrl('/sms/subscribe')`.
  */
 @Injectable({ providedIn: 'root' })
 export class SmsSignupService {

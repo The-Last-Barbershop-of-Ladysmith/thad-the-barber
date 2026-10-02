@@ -4,7 +4,7 @@ import { type BookingConfirmation, type BookingRequest } from '../models/booking
 
 /**
  * Creates appointments. Mocked until the booking API exists;
- * the real version should POST to `${environment.apiBaseUrl}/bookings`.
+ * the real version should POST to `apiUrl('/bookings')`.
  */
 @Injectable({ providedIn: 'root' })
 export class BookingService {
