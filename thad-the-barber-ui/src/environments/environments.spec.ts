@@ -3,10 +3,7 @@ import { environment as development } from './environment.development';
 import { type Environment } from './environment.model';
 import { environment as test } from './environment.test';
 
-/*
- * environment.ts (production) can't be imported here: unit tests build with the development file
- * replacement, so './environment' resolves to environment.development.ts. `ng build` type-checks it.
- */
+
 const environments: Record<string, Environment> = {
   development,
   devCloud,
