@@ -18,9 +18,9 @@
   </ItemGroup>
 
   <PropertyGroup>
-    <!-- testconfig.json turns coverage on for every run. The settings path goes here instead, because testconfig.json
-         resolves paths from wherever dotnet test was started. -->
-    <TestingPlatformCommandLineArguments>$(TestingPlatformCommandLineArguments) --coverage-settings &quot;$(MSBuildProjectDirectory)/coverage.config&quot;</TestingPlatformCommandLineArguments>
+    <!-- Collect coverage on every run. Paths are anchored to this project, because Microsoft.Testing.Platform resolves
+         relative paths from wherever dotnet test was started. -->
+    <TestingPlatformCommandLineArguments>$(TestingPlatformCommandLineArguments) --results-directory &quot;$(MSBuildProjectDirectory)/TestResults&quot; --coverage --coverage-output-format cobertura --coverage-output coverage.cobertura.xml --coverage-settings &quot;$(MSBuildProjectDirectory)/coverage.config&quot;</TestingPlatformCommandLineArguments>
   </PropertyGroup>
 
 </Project>
