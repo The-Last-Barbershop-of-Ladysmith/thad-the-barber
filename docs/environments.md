@@ -166,6 +166,9 @@ Workflows: [`cd-dev.yml`](../.github/workflows/cd-dev.yml) (push to `dev/**`) ca
 - `deploy.yml` signs in as the environment's identity, zip-deploys each given artifact, waits until `/api/health` reports the deployed commit, then runs the smoke suite against that environment's URLs.
 - On dev, only the app(s) a push changed are rebuilt and redeployed. A docs-only push deploys nothing, and a manual run deploys both. Dev has no rollback: a red run emails the owner and the fix rolls forward.
 - Until the Express server (#19) exists, the UI zip carries a `package.json` whose `start` script runs `pm2 serve --spa` (pm2 ships with App Service's Node images), so client routes fall back to `index.html`.
+- [`cd-test.yml`](../.github/workflows/cd-test.yml) runs on pushes to `release/**` and `hotfix/**`. It builds the API and two UI builds (`-c test`, `-c production`) once, keeps them for 90 days, deploys the API and the test UI to test, then runs smoke. The prod UI build and the same API artifact wait for the production job (#92). The sandbox booking round trip joins the smoke suite with #28/#29.
+- **Rollback (test):** run `cd-test` by hand on the release branch with the run ID of the last good build. It redeploys that run's artifacts without rebuilding. The `test` environment only admits `release/*` and `hotfix/*`, so pick the release branch in the run dialog.
+- **Nightly:** `cd-test` smoke-tests test every day at 09:17 UTC. Scheduled runs only fire from the default branch, so this starts once the workflow reaches `main` with the first release.
 
 ## Branching and release flow
 
