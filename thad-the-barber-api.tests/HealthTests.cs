@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using ThadTheBarber.Api.Tests.Fakes;
 
 namespace ThadTheBarber.Api.Tests;
 
@@ -41,7 +42,7 @@ public sealed class HealthTests(ApiFactory factory) : IClassFixture<ApiFactory>
     [Fact]
     public async Task DeepHealthIs503WhenSquareIsUnreachable()
     {
-        using ApiFactory unreachable = new(squareReachable: false);
+        using ApiFactory unreachable = new(square: new FakeSquareService { Reachable = false });
 
         using HttpResponseMessage response = await unreachable.CreateClient().GetAsync("/api/health?deep=true", TestContext.Current.CancellationToken);
 
