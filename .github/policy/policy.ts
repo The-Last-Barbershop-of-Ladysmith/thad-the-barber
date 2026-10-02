@@ -5,7 +5,7 @@
  * rules only raise an alert.
  */
 
-export type BranchKind = 'main' | 'release' | 'dev' | 'topic' | 'hotfix' | 'other';
+export type BranchKind = 'main' | 'release' | 'dev' | 'topic' | 'dependabot' | 'hotfix' | 'other';
 
 export type ViolationKind = 'direct-push' | 'check-failed' | 'check-missing' | 'wrong-merge-style' | 'wrong-target';
 
@@ -51,6 +51,7 @@ const PASSING_CONCLUSIONS: string[] = [
 /** Allowed head → base pairs for merged PRs. */
 const ALLOWED_TARGETS: Record<BranchKind, BranchKind[]> = {
   topic: ['dev'],
+  dependabot: ['dev'],
   hotfix: ['release'],
   dev: ['release'],
   release: [
@@ -73,7 +74,7 @@ export function branchKind(name: string): BranchKind {
     return 'main';
   }
   const prefix: string = name.split('/')[0]?.toLowerCase() ?? '';
-  if (prefix === 'release' || prefix === 'dev' || prefix === 'topic' || prefix === 'hotfix') {
+  if (prefix === 'release' || prefix === 'dev' || prefix === 'topic' || prefix === 'dependabot' || prefix === 'hotfix') {
     return prefix;
   }
   return 'other';
@@ -140,10 +141,10 @@ function evaluateMerge(input: MergeInput): Violation[] {
   }
 
   const isMergeCommit: boolean = input.parentCount > 1;
-  if (head === 'topic' && base === 'dev' && isMergeCommit) {
+  if ((head === 'topic' || head === 'dependabot') && base === 'dev' && isMergeCommit) {
     violations.push({
       kind: 'wrong-merge-style',
-      message: 'A topic branch was merged into dev with a merge commit; topic → dev must be a squash merge.',
+      message: `\`${input.headBranch}\` was merged into dev with a merge commit; topic and Dependabot branches must squash into dev.`,
     });
   }
   if (LONG_LIVED.includes(head) && LONG_LIVED.includes(base) && !isMergeCommit) {

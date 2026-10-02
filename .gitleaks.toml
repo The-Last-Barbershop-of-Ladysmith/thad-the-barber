@@ -1,0 +1,10 @@
+# Scanned by the gitleaks job in ci.yml (issue #18). Built on gitleaks' default rules.
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Azure built-in role definition IDs are public GUIDs, not keys"
+condition = "AND"
+paths = ['''^infra/.*\.bicep$''']
+regexTarget = "line"
+regexes = ['''^\s*var\s+\w+\s*=\s*'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'\s*$''']
