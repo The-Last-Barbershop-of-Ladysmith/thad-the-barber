@@ -89,10 +89,26 @@ jobs:
           python3 - <<'EOF'
           import sys
           import xml.etree.ElementTree as ET
-          rate = float(ET.parse('thad-the-barber-api.tests/TestResults/coverage.cobertura.xml').getroot().get('line-rate'))
-          print(f'Line coverage: {rate:.1%}')
-          sys.exit(0 if rate >= 0.8 else 'Line coverage is below 80%')
+          root = ET.parse('thad-the-barber-api.tests/TestResults/coverage.cobertura.xml').getroot()
+          line, branch = float(root.get('line-rate')), float(root.get('branch-rate'))
+          passed = line >= 0.8
+          with open('coverage-summary.md', 'w') as summary:
+              summary.write('### API coverage\n\n| Lines | Branches |\n| --- | --- |\n')
+              summary.write(f"| {'✅' if passed else '❌'} {line:.1%} (min 80%) | {branch:.1%} |\n")
+          print(f'Line coverage: {line:.1%}, branch coverage: {branch:.1%}')
+          sys.exit(0 if passed else 'Line coverage is below 80%')
           EOF
+
+      - name: Job summary
+        if: ${{ !cancelled() }}
+        run: cat coverage-summary.md >> "$GITHUB_STEP_SUMMARY" || true
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: ${{ !cancelled() }}
+        with:
+          name: summary-api
+          path: coverage-summary.md
+          if-no-files-found: ignore
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: ${{ !cancelled() }}
@@ -134,6 +150,21 @@ jobs:
         run: npx playwright install-deps chromium webkit
 
       - run: npm run e2e
+
+      - name: Summarize
+        if: ${{ !cancelled() }}
+        run: npm run e2e:summary
+
+      - name: Job summary
+        if: ${{ !cancelled() }}
+        run: cat test-results/summary.md >> "$GITHUB_STEP_SUMMARY" || true
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: ${{ !cancelled() }}
+        with:
+          name: summary-e2e
+          path: thad-the-barber-ui/test-results/summary.md
+          if-no-files-found: ignore
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: failure()
@@ -181,8 +212,72 @@ jobs:
 
       - run: npm run lighthouse:check
 
+      - name: Job summary
+        if: ${{ !cancelled() }}
+        run: cat lighthouse-results/summary.md >> "$GITHUB_STEP_SUMMARY" || true
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: ${{ !cancelled() }}
+        with:
+          name: summary-lighthouse
+          path: thad-the-barber-ui/lighthouse-results/summary.md
+          if-no-files-found: ignore
+
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: ${{ !cancelled() }}
         with:
           name: lighthouse-reports
           path: thad-the-barber-ui/lighthouse-results/
+
+  # One comment per PR, updated on every run. Skipped on fork and Dependabot PRs, whose token can't comment.
+  report:
+    needs:
+      - gitleaks
+      - ui
+      - api
+      - e2e
+      - lighthouse
+    if: ${{ !cancelled() && github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: summary-*
+          path: summaries
+
+      - name: Build the comment
+        run: |
+          {
+            echo '<!-- ci-report -->'
+            echo "## CI for ${HEAD_SHA::7}"
+            echo
+            echo '| Check | Result |'
+            echo '| --- | --- |'
+            jq -r 'to_entries[] | "| `\(.key)` | \(if .value.result == "success" then "✅" elif .value.result == "skipped" then "⏭️" else "❌" end) \(.value.result) |"' <<< "$NEEDS"
+            for job in api e2e lighthouse; do
+              file=$(find "summaries/summary-$job" -name '*.md' 2>/dev/null | head -n 1)
+              if [[ -n "$file" ]]; then echo; cat "$file"; fi
+            done
+            echo
+            echo "[Run details and reports]($RUN_URL)"
+          } > comment.md
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+      - name: Post or update the comment
+        run: |
+          id=$(gh api "repos/$REPO/issues/$PR/comments" --paginate --jq '.[] | select(.body | startswith("<!-- ci-report -->")) | .id' | head -n 1)
+          if [[ -n "$id" ]]; then
+            gh api -X PATCH "repos/$REPO/issues/comments/$id" -F body=@comment.md > /dev/null
+          else
+            gh api "repos/$REPO/issues/$PR/comments" -F body=@comment.md > /dev/null
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
