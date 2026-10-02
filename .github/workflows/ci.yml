@@ -1,0 +1,162 @@
+# Pull-request checks (issue #15). The job names are the required checks listed in the REQUIRED_CHECKS repo
+# variable, which the merge-policy alert (#3) reads, so rename a job only together with that variable.
+name: ci
+
+on:
+  pull_request:
+    branches:
+      - 'dev/**'
+      - 'release/**'
+      - 'hotfix/**'
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: thad-the-barber-ui
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: thad-the-barber-ui/package-lock.json
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npx ng test --watch=false
+      - run: npm run build
+
+  api:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - uses: actions/cache@v6
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', 'Directory.Build.props', 'global.json') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - run: dotnet build thad-the-barber-api/thad-the-barber-api.sln
+      - run: dotnet test --solution thad-the-barber-api/thad-the-barber-api.sln --no-build
+
+      # Microsoft's coverage extension can't fail a run below a threshold, so the gate reads the Cobertura root.
+      - name: Line coverage at least 80%
+        run: |
+          python3 - <<'EOF'
+          import sys
+          import xml.etree.ElementTree as ET
+          rate = float(ET.parse('thad-the-barber-api.tests/TestResults/coverage.cobertura.xml').getroot().get('line-rate'))
+          print(f'Line coverage: {rate:.1%}')
+          sys.exit(0 if rate >= 0.8 else 'Line coverage is below 80%')
+          EOF
+
+      - uses: actions/upload-artifact@v7
+        if: ${{ !cancelled() }}
+        with:
+          name: api-coverage
+          path: thad-the-barber-api.tests/TestResults/coverage.cobertura.xml
+
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: thad-the-barber-ui
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: thad-the-barber-ui/package-lock.json
+
+      - run: npm ci
+
+      - name: Playwright version
+        id: playwright
+        run: echo "version=$(npx playwright --version | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/cache@v6
+        id: browsers
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+
+      # The cache holds the browsers only; their system libraries are installed on every run.
+      - if: steps.browsers.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium webkit
+      - if: steps.browsers.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium webkit
+
+      - run: npm run e2e
+
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            thad-the-barber-ui/playwright-report/
+            thad-the-barber-ui/test-results/
+
+  lighthouse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: thad-the-barber-ui
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: thad-the-barber-ui/package-lock.json
+
+      - run: npm ci
+
+      # Serves the optimized build until the Express server (#19) exists.
+      - name: Start the site
+        run: |
+          npx ng serve --configuration test --port 4200 > serve.log 2>&1 &
+          timeout 180 bash -c 'until curl -sf http://localhost:4200 > /dev/null; do sleep 2; done' || { cat serve.log; exit 1; }
+
+      # Mobile emulation, Lighthouse's default. Uses the runner's preinstalled Chrome.
+      - name: Lighthouse
+        run: |
+          mkdir -p lighthouse-results
+          for page in home:/ book:/book; do
+            npx lighthouse "http://localhost:4200${page#*:}" \
+              --quiet \
+              --chrome-flags="--headless=new --no-sandbox" \
+              --only-categories=performance,accessibility,best-practices,seo \
+              --output=json --output=html \
+              --output-path="lighthouse-results/${page%%:*}"
+          done
+
+      - run: npm run lighthouse:check
+
+      - uses: actions/upload-artifact@v7
+        if: ${{ !cancelled() }}
+        with:
+          name: lighthouse-reports
+          path: thad-the-barber-ui/lighthouse-results/
