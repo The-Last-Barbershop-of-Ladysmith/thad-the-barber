@@ -8,7 +8,7 @@
       <i class="pi pi-arrow-left text-sm"></i> Back to site
     </a>
   } @else {
-    <nav class="section-nav hidden md:flex" aria-label="Page sections">
+    <nav class="section-nav hidden md:flex" aria-label="Page sections" data-testid="header-nav">
       @for (item of sections; track item.fragment) {
         <a routerLink="/" [fragment]="item.fragment" class="nav-link bar-link">{{ item.label }}</a>
       }
@@ -19,6 +19,7 @@
       severity="secondary"
       [rounded]="true"
       class="menu-toggle md:hidden"
+      data-testid="menu-toggle"
       aria-label="Open menu"
       [attr.aria-expanded]="menuOpen()"
       (click)="toggleMenu()"
@@ -36,7 +37,7 @@
   ariaCloseLabel="Close menu"
   styleClass="w-[min(20rem,85vw)]"
 >
-  <nav class="stack gap-1" aria-label="Page sections">
+  <nav class="stack gap-1" aria-label="Page sections" data-testid="drawer-nav">
     @for (item of sections; track item.fragment) {
       <a
         routerLink="/"
