@@ -1,0 +1,68 @@
+# Deploys every merge into dev/* to the dev environment, then runs the smoke tests (issue #16).
+# Only the app(s) the push changed are built and deployed; a manual run deploys both.
+# No rollback: a red run notifies the owner and the fix rolls forward with the next merge.
+name: cd-dev
+
+on:
+  push:
+    branches:
+      - 'dev/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cd-dev
+  cancel-in-progress: false
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      ui: ${{ steps.diff.outputs.ui }}
+      api: ${{ steps.diff.outputs.api }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      # A new branch or a manual run has no usable "before" commit, so both apps deploy.
+      - id: diff
+        run: |
+          if [[ "$EVENT" != push || "$BEFORE" =~ ^0+$ ]] || ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            echo "ui=true" >> "$GITHUB_OUTPUT"
+            echo "api=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          changed=$(git diff --name-only "$BEFORE" "$GITHUB_SHA")
+          shared='^(\.github/workflows/(cd-dev|build|deploy)\.yml)$'
+          grep -qE "^thad-the-barber-ui/|$shared" <<< "$changed" && echo "ui=true" >> "$GITHUB_OUTPUT"
+          grep -qE "^thad-the-barber-api/|^(Directory\.Build\.props|global\.json)$|$shared" <<< "$changed" && echo "api=true" >> "$GITHUB_OUTPUT"
+          true
+        env:
+          EVENT: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+
+  build:
+    needs: changes
+    if: needs.changes.outputs.ui == 'true' || needs.changes.outputs.api == 'true'
+    uses: ./.github/workflows/build.yml
+    with:
+      ui-builds: ${{ needs.changes.outputs.ui == 'true' && '[{"env":"dev","configuration":"devCloud"}]' || '[]' }}
+      api: ${{ needs.changes.outputs.api == 'true' }}
+
+  deploy:
+    needs:
+      - changes
+      - build
+    permissions:
+      actions: read
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: dev
+      ui-artifact: ${{ needs.changes.outputs.ui == 'true' && format('ttb-ui-dev-{0}', needs.build.outputs.suffix) || '' }}
+      api-artifact: ${{ needs.changes.outputs.api == 'true' && format('ttb-api-{0}', needs.build.outputs.suffix) || '' }}

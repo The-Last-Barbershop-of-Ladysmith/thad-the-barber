@@ -1,0 +1,138 @@
+# Deploys build.yml's artifacts to one environment, then runs the smoke suite against it (issues #16, #17).
+# Each deploy job signs in as that environment's own managed identity (#10), which can only reach its two apps.
+# Leave an artifact input empty to skip that app; with both empty it only runs the smoke tests.
+# Nonprod only for now: production (M5, #92) lives in its own resource group and region.
+name: deploy
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: dev, test or production (the GitHub environment and the app name segment).
+        type: string
+        required: true
+      region:
+        type: string
+        default: centralus
+      ui-artifact:
+        type: string
+        default: ''
+      api-artifact:
+        type: string
+        default: ''
+      artifact-run-id:
+        description: The run that uploaded the artifacts, to redeploy an earlier build. Empty means this run.
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+env:
+  RESOURCE_GROUP: rg-ttb-nonprod-${{ inputs.region }}
+  UI_APP: as-ttb-ui-${{ inputs.environment }}-${{ inputs.region }}
+  API_APP: as-ttb-api-${{ inputs.environment }}-${{ inputs.region }}
+
+jobs:
+  ui:
+    if: inputs.ui-artifact != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: ${{ inputs.environment }}
+    permissions:
+      actions: read
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: ${{ inputs.ui-artifact }}
+          path: site
+          run-id: ${{ inputs.artifact-run-id || github.run_id }}
+          github-token: ${{ github.token }}
+
+      - run: cd site && zip -qr ../ui.zip .
+
+      - uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - run: az webapp deploy --resource-group "$RESOURCE_GROUP" --name "$UI_APP" --src-path ui.zip --type zip
+
+  api:
+    if: inputs.api-artifact != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: ${{ inputs.environment }}
+    permissions:
+      actions: read
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: ${{ inputs.api-artifact }}
+          path: api
+          run-id: ${{ inputs.artifact-run-id || github.run_id }}
+          github-token: ${{ github.token }}
+
+      - run: cd api && zip -qr ../api.zip .
+
+      - uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - run: az webapp deploy --resource-group "$RESOURCE_GROUP" --name "$API_APP" --src-path api.zip --type zip
+
+      # The artifact name ends in the short SHA it was built from; /api/health reports the full one.
+      - name: The API reports the deployed commit
+        run: |
+          expected="${ARTIFACT##*-}"
+          for _ in $(seq 1 36); do
+            commit=$(curl -sf "https://$API_APP.azurewebsites.net/api/health" | jq -r .commit || true)
+            if [[ "$commit" == "$expected"* ]]; then echo "API is on $commit"; exit 0; fi
+            sleep 5
+          done
+          echo "::error::/api/health reports '${commit:-no response}', expected $expected"
+          exit 1
+        env:
+          ARTIFACT: ${{ inputs.api-artifact }}
+
+  smoke:
+    needs:
+      - ui
+      - api
+    if: ${{ !failure() && !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: thad-the-barber-ui
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: thad-the-barber-ui/package-lock.json
+
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+
+      - run: npm run e2e:smoke
+        env:
+          BASE_URL: https://${{ env.UI_APP }}.azurewebsites.net
+          API_BASE_URL: https://${{ env.API_APP }}.azurewebsites.net/api
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: failure()
+        with:
+          name: smoke-report-${{ inputs.environment }}
+          path: |
+            thad-the-barber-ui/playwright-report/smoke/
+            thad-the-barber-ui/test-results/smoke/
