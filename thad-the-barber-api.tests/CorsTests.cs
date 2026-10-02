@@ -2,6 +2,7 @@ using System.Net;
 using Azure.Extensions.AspNetCore.Configuration.Secrets;
 using Azure.Security.KeyVault.Secrets;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using ThadTheBarber.Api.Infrastructure.Cors;
 
@@ -63,9 +64,19 @@ public sealed class CorsTests(ApiFactory factory) : IClassFixture<ApiFactory>
     [InlineData("example.com")]
     public void StartupFailsOnAnEmptyWildcardOrMalformedOriginList(string commaSeparatedOrigins)
     {
-        using ApiFactory badFactory = new(commaSeparatedOrigins.Split(',', StringSplitOptions.RemoveEmptyEntries));
+        // Runs the validation the host runs on start (IStartupValidator) without starting a host: when a
+        // WebApplicationFactory host fails to start, Program's RunAsync disposes the services while the factory still
+        // uses them, so the test sometimes saw ObjectDisposedException instead.
+        IConfiguration configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(commaSeparatedOrigins
+                .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select((origin, i) => KeyValuePair.Create<string, string?>($"Cors:AllowedOrigins:{i}", origin)))
+            .Build();
+        using ServiceProvider services = new ServiceCollection()
+            .AddFrontendCors(configuration)
+            .BuildServiceProvider();
 
-        Assert.Throws<OptionsValidationException>(() => badFactory.CreateClient());
+        Assert.Throws<OptionsValidationException>(() => services.GetRequiredService<IStartupValidator>().Validate());
     }
 
     [Fact]
