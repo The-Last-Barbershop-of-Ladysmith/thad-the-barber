@@ -13,6 +13,14 @@ updates:
         update-types:
           - minor
           - patch
+    # TypeScript follows the range Angular supports; @types/node follows the Node major the apps run on (24).
+    ignore:
+      - dependency-name: typescript
+        update-types:
+          - version-update:semver-major
+      - dependency-name: '@types/node'
+        update-types:
+          - version-update:semver-major
 
   - package-ecosystem: nuget
     directories:

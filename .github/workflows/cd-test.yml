@@ -1,0 +1,101 @@
+# Builds each push to release/* or hotfix/* once, deploys it to test and smoke-tests it (issue #17).
+# The run keeps three artifacts for 90 days: the API (promoted to prod as-is by #92) and two UI builds from the same
+# commit, -c test (deployed now) and -c production (deployed on prod approval).
+# Rollback: run this workflow by hand on the release branch with the run ID of the last good build; it redeploys
+# that run's artifacts without rebuilding.
+# Nightly: smoke-tests test to catch Square sandbox drift. Scheduled runs only fire from the default branch, so the
+# schedule starts once this file reaches main with the first release.
+name: cd-test
+
+on:
+  push:
+    branches:
+      - 'release/**'
+      - 'hotfix/**'
+  schedule:
+    - cron: '17 9 * * *'
+  workflow_dispatch:
+    inputs:
+      run-id:
+        description: Run ID of an earlier cd-test build to redeploy (rollback). Empty rebuilds this commit.
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cd-test
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.run-id == '')
+    uses: ./.github/workflows/build.yml
+    with:
+      ui-builds: '[{"env":"test","configuration":"test"},{"env":"prod","configuration":"production"}]'
+      api: true
+      retention-days: 90
+
+  deploy:
+    needs: build
+    permissions:
+      actions: read
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: test
+      ui-artifact: ttb-ui-test-${{ needs.build.outputs.suffix }}
+      api-artifact: ttb-api-${{ needs.build.outputs.suffix }}
+
+  # Finds the earlier run's artifact names, which end in that build's version and SHA.
+  rollback-artifacts:
+    if: github.event_name == 'workflow_dispatch' && inputs.run-id != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: read
+    outputs:
+      ui: ${{ steps.find.outputs.ui }}
+      api: ${{ steps.find.outputs.api }}
+    steps:
+      - id: find
+        run: |
+          names=$(gh api "repos/$REPO/actions/runs/$RUN_ID/artifacts" --paginate --jq '.artifacts[] | select(.expired | not) | .name')
+          ui=$(grep -m1 '^ttb-ui-test-' <<< "$names" || true)
+          api=$(grep -m1 '^ttb-api-' <<< "$names" || true)
+          if [[ -z "$ui" || -z "$api" ]]; then
+            echo "::error::Run $RUN_ID has no unexpired ttb-ui-test-* and ttb-api-* artifacts."
+            exit 1
+          fi
+          echo "ui=$ui" >> "$GITHUB_OUTPUT"
+          echo "api=$api" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ inputs.run-id }}
+
+  rollback:
+    needs: rollback-artifacts
+    permissions:
+      actions: read
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: test
+      ui-artifact: ${{ needs.rollback-artifacts.outputs.ui }}
+      api-artifact: ${{ needs.rollback-artifacts.outputs.api }}
+      artifact-run-id: ${{ inputs.run-id }}
+
+  # deploy.yml's deploy jobs are skipped here, but GitHub still checks their permissions.
+  nightly-smoke:
+    if: github.event_name == 'schedule'
+    permissions:
+      actions: read
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: test
