@@ -248,6 +248,9 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 | `store/app.effects.spec.ts` | Menu closes after navigation | Mostly stable |
 | `store/meta/meta.reducers.spec.ts` | localStorage sync of `home` / `booking` (`ttb-` keys, base64, restore) | Mostly stable |
 | `shared/utils/{date,weekday,base64}.utils.spec.ts` | Date labels, weekday spans, Unicode-safe base64 | Stable |
+| `e2e/mocked/home.spec.ts` (Playwright) | Every section renders, header and drawer nav links scroll to their section, axe | Mostly stable |
+| `e2e/mocked/booking.spec.ts` (Playwright) | First open date → first open time → details → confirm → confirmation, axe | Yes: wireframe booking flow and mock availability |
+| `e2e/smoke/health.spec.ts` (Playwright) | Deployed site loads, `GET /api/health` returns 200 | Stable |
 
 ---
 

@@ -10,7 +10,14 @@
       }
     </dl>
 
-    <button pButton type="button" [fluid]="true" [loading]="submitting()" (click)="confirm.emit()">
+    <button
+      pButton
+      type="button"
+      data-testid="confirm-booking"
+      [fluid]="true"
+      [loading]="submitting()"
+      (click)="confirm.emit()"
+    >
       <span pButtonLabel>{{ booked() ? 'Booked' : 'Confirm booking' }}</span>
       @if (booked()) {
         <i pButtonIcon class="pi pi-check"></i>
@@ -21,10 +28,10 @@
       <small class="text-xs text-surface-200">{{ hint() }}</small>
     }
     @if (error()) {
-      <p-message severity="error">{{ error() }}</p-message>
+      <p-message data-testid="booking-error" severity="error">{{ error() }}</p-message>
     }
     @if (confirmation()) {
-      <p-message severity="info" icon="pi pi-check">
+      <p-message data-testid="booking-confirmation" severity="info" icon="pi pi-check">
         <div class="stack gap-1.5">
           <strong>You're booked.</strong>
           <span class="font-normal">{{ confirmation() }}</span>

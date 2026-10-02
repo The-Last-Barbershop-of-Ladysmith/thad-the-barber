@@ -18,6 +18,8 @@ npm run build                 # production build to dist/
 npm test                      # Vitest via @angular/build:unit-test
 npx ng test --watch=false     # single run
 npx ng test --include src/app/store/app.reducer.spec.ts   # one spec file
+npm run e2e                   # Playwright against mocks (Chromium + WebKit, desktop + mobile); see README
+npm run e2e:smoke             # Playwright smoke; needs BASE_URL and API_BASE_URL
 npm run lint                  # ESLint (TS + templates)
 npm run lint:fix              # ESLint also formats .ts files
 npm run format                # Prettier — HTML/SCSS/CSS only

@@ -15,6 +15,8 @@ Angular 22 site for Thad The Barber: a one-page home with announcements, hours, 
 | PrimeIcons | 8.0 | Icons |
 | TypeScript | 6.0 | |
 | Vitest | 5.0 | Unit tests (`ng test`) |
+| Playwright | 1.63 | End-to-end and smoke tests (`e2e/`) |
+| @axe-core/playwright | 4.13 | Accessibility checks in the end-to-end tests |
 
 ## Requirements
 
@@ -29,7 +31,18 @@ npm start          # dev server at http://localhost:4200
 npm run build      # production build to dist/
 npx ng build -c devCloud   # Azure dev build (also -c test)
 npm test           # unit tests (Vitest)
+npx playwright install chromium webkit   # once, for the end-to-end tests
+npm run e2e        # end-to-end tests against mocks (starts ng serve unless it's already running)
+BASE_URL=… API_BASE_URL=… npm run e2e:smoke   # smoke tests against a deployed site
 ```
+
+### End-to-end tests
+
+- `e2e/mocked/*.spec.ts` run on Chromium and WebKit, each at desktop (1280×800) and mobile (390×844), against `ng serve`. Each test gets a fresh browser context, so localStorage starts empty.
+- Import `test` and `expect` from `e2e/support/fixtures.ts`, not `@playwright/test`. Its `page` fails the test on any `/api/*` call the test hasn't mocked with `page.route`.
+- `expectNoA11yViolations(page)` in `e2e/support/axe.ts` runs axe with the WCAG 2.0–2.2 A/AA tags plus `region`, contrast included. `incomplete` results are attached to the report for a manual check. Violations already tracked in M4 are listed in `e2e/support/known-a11y-issues.ts` with their issue number; they're attached instead of failing. Remove an entry when its issue is fixed.
+- `e2e/smoke/` has its own config (`playwright.smoke.config.ts`). `BASE_URL` is the web app and `API_BASE_URL` the API, including `/api`, because the web app doesn't proxy the API. Each check retries for up to 3 minutes to ride out F1 cold starts.
+- Traces, screenshots and video are kept for failed tests in `test-results/`. `npx playwright show-report` opens the HTML report.
 
 ### Environments
 
