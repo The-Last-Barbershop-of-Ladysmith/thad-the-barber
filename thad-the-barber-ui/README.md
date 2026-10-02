@@ -27,8 +27,22 @@ Angular 22 site for Thad The Barber: a one-page home with announcements, hours, 
 npm install
 npm start          # dev server at http://localhost:4200
 npm run build      # production build to dist/
+npx ng build -c devCloud   # Azure dev build (also -c test)
 npm test           # unit tests (Vitest)
 ```
+
+### Environments
+
+Each build configuration swaps `src/environments/environment.ts` for its own file (`fileReplacements` in `angular.json`). Every file is typed by `environment.model.ts`, so a missing field fails any build. Everything in them ships in the public bundle, so never put a secret there.
+
+| Configuration | File | Used for |
+| --- | --- | --- |
+| `development` (`ng serve` default) | `environment.development.ts` | Local; calls the API from `dotnet run` at `http://localhost:5078/api` |
+| `devCloud` | `environment.dev-cloud.ts` | Azure dev (`as-ttb-ui-dev-centralus`) |
+| `test` | `environment.test.ts` | Azure test (`as-ttb-ui-test-centralus`) |
+| `production` (`ng build` default) | `environment.ts` | Prod |
+
+Fields: `production`, `apiBaseUrl` (absolute, includes `/api`), `siteUrl`, `mediaBaseUrl`, `recaptchaSiteKey` and `appInsightsConnectionString`. Build request URLs as `${environment.apiBaseUrl}/path`. Unit tests run with the `development` replacement, and Vitest only picks up `*.spec.ts` files, because `environment.test.ts` would otherwise match its `*.test.ts` pattern.
 
 ## Folder structure
 
@@ -36,7 +50,7 @@ npm test           # unit tests (Vitest)
 src/
 ├── index.html                      # <html class="app-dark"> turns on the dark scheme
 ├── styles.css                      # CSS layer order + Tailwind + tailwindcss-primeui + theme bridge
-├── environments/                   # apiBaseUrl
+├── environments/                   # one file per build configuration (see Environments)
 └── app/
     ├── app.ts / app.config.ts / app.routes.ts
     ├── theme/                      # All design tokens
