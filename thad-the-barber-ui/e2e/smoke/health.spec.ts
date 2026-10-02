@@ -5,6 +5,7 @@ import {
   expect,
   test,
 } from '@playwright/test';
+import { environment } from '../../src/environments/environment.development';
 
 const COLD_START: {
   intervals: number[];
@@ -18,13 +19,7 @@ const COLD_START: {
   timeout: 180_000,
 };
 
-function requiredEnv(name: string): string {
-  const value: string | undefined = process.env[name];
-  if (!value) {
-    throw new Error(`Set ${name} to run the smoke suite.`);
-  }
-  return value;
-}
+const apiBaseUrl: string = process.env['API_BASE_URL'] ?? environment.apiBaseUrl;
 
 test.describe(
   'smoke',
@@ -32,7 +27,7 @@ test.describe(
     test(
       'the API reports healthy',
       async ({ request }: { request: APIRequestContext; }): Promise<void> => {
-        const healthUrl: string = `${requiredEnv('API_BASE_URL')}/health`;
+        const healthUrl: string = `${apiBaseUrl}/health`;
         await expect(async (): Promise<void> => {
           const response: APIResponse = await request.get(healthUrl);
           expect(
@@ -46,7 +41,6 @@ test.describe(
     test(
       'the site loads',
       async ({ page }: { page: Page; }): Promise<void> => {
-        requiredEnv('BASE_URL');
         await expect(async (): Promise<void> => {
           await page.goto('/');
           await expect(page.getByRole(

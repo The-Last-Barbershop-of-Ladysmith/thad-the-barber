@@ -2,10 +2,11 @@ import {
   type PlaywrightTestConfig,
   defineConfig,
 } from '@playwright/test';
+import { environment } from './src/environments/environment.development';
 
 /**
  * Smoke suite against a deployed site: `BASE_URL` is the web app and `API_BASE_URL` the API
- * (the web app doesn't proxy `/api`).
+ * (the web app doesn't proxy `/api`). Unset, they fall back to the local development URLs.
  */
 const config: PlaywrightTestConfig = defineConfig({
   testDir: './e2e/smoke',
@@ -25,7 +26,7 @@ const config: PlaywrightTestConfig = defineConfig({
   ],
   outputDir: 'test-results/smoke',
   use: {
-    baseURL: process.env['BASE_URL'],
+    baseURL: process.env['BASE_URL'] ?? environment.siteUrl,
     browserName: 'chromium',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',

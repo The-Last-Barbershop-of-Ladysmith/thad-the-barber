@@ -3,9 +3,10 @@ import {
   type Project,
   defineConfig,
 } from '@playwright/test';
+import { environment } from './src/environments/environment.development';
 
 const isCi: boolean = !!process.env['CI'];
-const baseURL: string = 'http://localhost:4200';
+const baseURL: string = environment.siteUrl;
 
 const desktop: Project['use'] = {
   viewport: {
