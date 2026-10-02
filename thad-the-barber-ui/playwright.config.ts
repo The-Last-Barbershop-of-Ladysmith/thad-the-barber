@@ -41,6 +41,11 @@ const config: PlaywrightTestConfig = defineConfig({
       'html',
       { open: 'never' },
     ],
+    // Read by `npm run e2e:summary` for the CI job summary and PR comment.
+    [
+      'json',
+      { outputFile: 'test-results/results.json' },
+    ],
   ],
   use: {
     baseURL,

@@ -13,7 +13,8 @@
     "test": "ng test",
     "e2e": "playwright test",
     "e2e:smoke": "playwright test --config playwright.smoke.config.ts",
-    "lighthouse:check": "node lighthouse/check-scores.ts",
+    "lighthouse:check": "node ci/lighthouse-check.ts",
+    "e2e:summary": "node ci/e2e-summary.ts",
     "lint": "ng lint",
     "lint:fix": "ng lint --fix",
     "format": "prettier --write \"src/**/*.{html,scss,css}\""
