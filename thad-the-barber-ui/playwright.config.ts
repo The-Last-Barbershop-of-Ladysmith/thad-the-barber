@@ -79,7 +79,8 @@ const config: PlaywrightTestConfig = defineConfig({
     },
   ],
   webServer: {
-    command: 'npm start',
+    // CI tests the optimized build; the Express server (#19) will serve it once it exists.
+    command: isCi ? 'npx ng serve --configuration production' : 'npm start',
     url: baseURL,
     reuseExistingServer: !isCi,
     timeout: 180_000,
