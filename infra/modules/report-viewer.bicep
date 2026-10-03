@@ -42,15 +42,16 @@ resource entraApp 'Microsoft.Graph/applications@v1.0' = {
       enableIdTokenIssuance: true
     }
   }
+}
 
-  resource managedIdentityCredential 'federatedIdentityCredentials@v1.0' = {
-    name: 'viewer-managed-identity'
-    issuer: openIdIssuer
-    subject: authIdentity.properties.principalId
-    audiences: [
-      'api://AzureADTokenExchange'
-    ]
-  }
+// Graph names a credential '<app uniqueName>/<credential>', even when it's declared inside the app.
+resource managedIdentityCredential 'Microsoft.Graph/applications/federatedIdentityCredentials@v1.0' = {
+  name: '${entraApp.uniqueName}/viewer-managed-identity'
+  issuer: openIdIssuer
+  subject: authIdentity.properties.principalId
+  audiences: [
+    'api://AzureADTokenExchange'
+  ]
 }
 
 resource servicePrincipal 'Microsoft.Graph/servicePrincipals@v1.0' = {
@@ -66,7 +67,7 @@ resource ownerAssignment 'Microsoft.Graph/appRoleAssignedTo@v1.0' = {
 }
 
 module app 'app-service.bicep' = {
-  name: 'reports-viewer'
+  name: 'reports-viewer-app'
   params: {
     name: appName
     location: location
