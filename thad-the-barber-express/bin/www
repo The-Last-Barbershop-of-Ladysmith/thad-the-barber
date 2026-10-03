@@ -4,6 +4,8 @@
  * Module dependencies.
  */
 
+require('../lib/telemetry').startTelemetry(process.env);
+
 var app = require('../app');
 var debug = require('debug')('thad-the-barber-express:server');
 var http = require('http');

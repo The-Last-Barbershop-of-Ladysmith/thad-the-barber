@@ -3,6 +3,7 @@ var express = require('express');
 var path = require('path');
 
 var { securityHeaders } = require('./lib/security-headers');
+var { recordException } = require('./lib/telemetry');
 var healthRouter = require('./routes/health');
 var indexRouter = require('./routes/index');
 
@@ -26,6 +27,8 @@ app.use(function(req, res) {
 
 // error handler
 app.use(function(err, req, res, next) {
+  recordException(err);
+
   // set locals, only providing error in development
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
