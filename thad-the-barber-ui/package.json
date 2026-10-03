@@ -23,9 +23,9 @@
     "build:express:test": "ng build -c test,express",
     "build:express:production": "ng build -c production,express",
     "start:express:dev": "npm run build:express:dev && npm --prefix ../thad-the-barber-express run start:dev",
-    "start:express:dev-cloud": "npm run build:express:dev-cloud && npm --prefix ../thad-the-barber-express run start:dev-cloud",
-    "start:express:test": "npm run build:express:test && npm --prefix ../thad-the-barber-express run start:test",
-    "start:express:production": "npm run build:express:production && npm --prefix ../thad-the-barber-express run start:production"
+    "start:express:dev-cloud": "npm run build:express:dev-cloud && npm --prefix ../thad-the-barber-express run start:dev",
+    "start:express:test": "npm run build:express:test && npm --prefix ../thad-the-barber-express run start:dev",
+    "start:express:production": "npm run build:express:production && npm --prefix ../thad-the-barber-express run start:dev"
   },
   "private": true,
   "packageManager": "npm@11.11.0",

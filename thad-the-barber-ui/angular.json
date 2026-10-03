@@ -34,10 +34,9 @@
             ],
             "styles": ["node_modules/primeicons/primeicons.css", "src/styles.css"],
             "server": "src/main.server.ts",
-            "outputMode": "static", 
-            "outputPath": {
-              "base": "dist/thad-the-barber-ui",
-              "browser": ""
+            "outputMode": "server",
+            "ssr": {
+              "entry": "src/server.ts"
             }
           },
           "configurations": {
@@ -130,10 +129,7 @@
               ]
             },
             "express": {
-              "outputPath": {
-                "base": "../thad-the-barber-express/public/app",
-                "browser": ""
-              }
+              "outputPath": "../thad-the-barber-express/public/app"
             }
           },
           "defaultConfiguration": "production"

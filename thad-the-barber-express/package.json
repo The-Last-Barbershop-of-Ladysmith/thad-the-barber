@@ -6,9 +6,10 @@
     "start": "node ./bin/www",
     "start:dev": "cross-env NODE_ENV=development DEBUG=thad-the-barber-express:* node --watch ./bin/www",
     "start:app:dev": "npm --prefix ../thad-the-barber-ui run build:express:dev && npm run start:dev",
-    "start:app:dev-cloud": "npm --prefix ../thad-the-barber-ui run build:express:dev-cloud && npm run start:dev-cloud",
-    "start:app:test": "npm --prefix ../thad-the-barber-ui run build:express:test && npm run start:test",
-    "start:app:production": "npm --prefix ../thad-the-barber-ui run build:express:production && npm run start:production"
+    "start:app:dev-cloud": "npm --prefix ../thad-the-barber-ui run build:express:dev-cloud && npm run start:dev",
+    "start:app:test": "npm --prefix ../thad-the-barber-ui run build:express:test && npm run start:dev",
+    "start:app:production": "npm --prefix ../thad-the-barber-ui run build:express:production && npm run start:dev",
+    "test": "vitest run"
   },
   "dependencies": {
     "@azure/monitor-opentelemetry": "^1.20.0",
