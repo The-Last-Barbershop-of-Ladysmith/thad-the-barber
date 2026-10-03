@@ -1,3 +1,4 @@
+var crypto = require('crypto');
 var { trace } = require('@opentelemetry/api');
 
 var URL_ATTRIBUTES = ['url.full', 'http.url', 'http.target', 'url.original'];
@@ -55,4 +56,9 @@ function recordException(err) {
   trace.getActiveSpan()?.recordException(err);
 }
 
-module.exports = { redactUrls, startTelemetry, recordException };
+// Shown on the error page for support. With telemetry on it's the trace ID, which App Insights calls the operation ID.
+function requestId() {
+  return trace.getActiveSpan()?.spanContext().traceId ?? crypto.randomBytes(16).toString('hex');
+}
+
+module.exports = { redactUrls, startTelemetry, recordException, requestId };

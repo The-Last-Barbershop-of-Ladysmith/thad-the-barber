@@ -1,1 +1,16 @@
-<p>Error: <%= message %></p>
+<%- include('partials/page-start', { title: 'Something went wrong' }) %>
+    <p class="eyebrow">Error <%= status %></p>
+    <h1>Something went wrong</h1>
+    <p class="lead">Sorry, this page didn't load. Please try again in a moment.</p>
+    <div class="actions">
+      <a class="button" href="<%= retryUrl %>" data-testid="error-retry">Try again</a>
+      <a class="text-link" href="/" data-testid="error-home">Back to home</a>
+    </div>
+    <p class="request-id">Request ID <code data-testid="error-request-id"><%= requestId %></code></p>
+<% if (stack) { -%>
+    <details class="details" open data-testid="error-details">
+      <summary>Error details</summary>
+      <pre><%= stack %></pre>
+    </details>
+<% } -%>
+<%- include('partials/page-end') %>

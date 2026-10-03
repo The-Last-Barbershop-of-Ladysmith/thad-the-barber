@@ -44,7 +44,8 @@ describe('pages', function() {
     expect(response.text).toContain('shell');
   });
 
-  it.each(['/nope', '/book/extra', '/404', '/../../etc'])('serves the not-found page with a 404 for %s', async function(path) {
+  // /_test/error only exists with ERROR_TEST_ROUTE=true (error-page.test.mjs).
+  it.each(['/nope', '/book/extra', '/404', '/../../etc', '/_test/error'])('serves the not-found page with a 404 for %s', async function(path) {
     var response = await request(app).get(path);
     expect(response.status).toBe(404);
     expect(response.text).toContain('not found');

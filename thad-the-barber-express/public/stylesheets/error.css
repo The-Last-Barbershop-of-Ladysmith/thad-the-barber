@@ -1,0 +1,137 @@
+/* Error pages. Colors, fonts, radii and the focus ring come from /brand.css, the Angular theme's variables (#68). */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  padding: 1.5rem 1rem 3rem;
+  background: var(--p-surface-950);
+  color: var(--p-text-color);
+  font-family: var(--p-typography-font-family);
+  line-height: 1.5;
+}
+
+.site-header {
+  max-width: 40rem;
+  margin: 0 auto 2.5rem;
+}
+
+.logo {
+  display: block;
+  width: auto;
+  height: 3rem;
+}
+
+.panel {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+  background: var(--p-brand-glass-background);
+  border: 1px solid var(--p-content-border-color);
+  border-radius: var(--p-border-radius-xl);
+}
+
+.eyebrow {
+  margin: 0 0 0.75rem;
+  color: var(--p-primary-color);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0 0 1rem;
+  font-size: clamp(2rem, 6vw, 2.75rem);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+
+.lead {
+  margin: 0 0 2rem;
+  color: var(--p-surface-100);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem 1.5rem;
+}
+
+.button {
+  display: inline-block;
+  padding: 1rem 1.75rem;
+  background: var(--p-primary-color);
+  color: var(--p-primary-contrast-color);
+  border-radius: var(--p-border-radius-md);
+  font-weight: 700;
+  text-decoration: none;
+  transition: background-color var(--p-transition-duration) var(--p-brand-ease);
+}
+
+.button:hover {
+  background: var(--p-primary-hover-color);
+}
+
+.text-link {
+  color: var(--p-highlight-color);
+  font-weight: 700;
+}
+
+.text-link:hover {
+  color: var(--p-text-hover-color);
+}
+
+a:focus-visible,
+summary:focus-visible {
+  outline: var(--p-focus-ring-width) var(--p-focus-ring-style) var(--p-focus-ring-color);
+  outline-offset: var(--p-focus-ring-offset);
+}
+
+.request-id {
+  margin: 2rem 0 0;
+  color: var(--p-text-muted-color);
+  font-size: 0.875rem;
+}
+
+.request-id code {
+  color: var(--p-text-color);
+  overflow-wrap: anywhere;
+}
+
+.details {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--p-brand-divider);
+}
+
+.details pre {
+  overflow-x: auto;
+  font-size: 0.8125rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 768px) {
+  body {
+    padding-top: 2.5rem;
+  }
+
+  .panel {
+    padding: 3rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button {
+    transition: none;
+  }
+}

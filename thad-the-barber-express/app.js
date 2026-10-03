@@ -2,8 +2,8 @@ var compression = require('compression');
 var express = require('express');
 var path = require('path');
 
+var { errorPage } = require('./lib/error-page');
 var { securityHeaders } = require('./lib/security-headers');
-var { recordException } = require('./lib/telemetry');
 var healthRouter = require('./routes/health');
 var indexRouter = require('./routes/index');
 
@@ -18,24 +18,25 @@ app.set('view engine', 'ejs');
 
 app.use(compression());
 app.use(securityHeaders(process.env.NOINDEX !== 'false'));
+app.use('/stylesheets', express.static(path.join(__dirname, 'public', 'stylesheets')));
 app.use('/', healthRouter);
+
+// Playwright's CI run turns this on to check the error page against a real thrown error.
+if (process.env.ERROR_TEST_ROUTE === 'true') {
+  app.get('/_test/error', function(req) {
+    var err = new Error('Forced test error');
+    err.status = Number(req.query.status) || 500;
+    throw err;
+  });
+}
+
 app.use('/', indexRouter);
 
 app.use(function(req, res) {
   res.sendStatus(404);
 });
 
-// error handler
-app.use(function(err, req, res, next) {
-  recordException(err);
-
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
-
-  // render the error page
-  res.status(err.status || 500);
-  res.render('error');
-});
+// Express treats an unset NODE_ENV as development, and App Service doesn't set it, so details need it set on purpose.
+app.use(errorPage(process.env.NODE_ENV === 'development'));
 
 module.exports = app;
