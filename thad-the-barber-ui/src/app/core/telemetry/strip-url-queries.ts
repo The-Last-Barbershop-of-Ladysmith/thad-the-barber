@@ -8,6 +8,8 @@ const URL_FIELDS: readonly string[] = [
   'url',
   'target',
 ];
+// A dependency's name is "<METHOD> <full URL>"; other items' names are titles, which may contain "?".
+const DEPENDENCY_FIELDS: readonly string[] = [...URL_FIELDS, 'name'];
 
 /** Telemetry initializer: drops query strings and fragments from every URL field before export (BR-23). */
 export function stripUrlQueries(item: ITelemetryItem): void {
@@ -15,8 +17,7 @@ export function stripUrlQueries(item: ITelemetryItem): void {
   if (!baseData) {
     return;
   }
-  // A dependency's name is "<METHOD> <full URL>"; other items' names are titles, which may contain "?".
-  const fields: readonly string[] = item.baseType === DEPENDENCY_TYPE ? [...URL_FIELDS, 'name'] : URL_FIELDS;
+  const fields: readonly string[] = item.baseType === DEPENDENCY_TYPE ? DEPENDENCY_FIELDS : URL_FIELDS;
   fields.forEach((field: string): void => {
     const value: unknown = baseData[field];
     if (typeof value === 'string') {

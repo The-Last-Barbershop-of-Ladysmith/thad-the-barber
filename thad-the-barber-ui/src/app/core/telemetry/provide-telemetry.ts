@@ -21,8 +21,6 @@ import { Environment } from '../../../environments/environment.model';
 import { filter } from 'rxjs';
 import { stripUrlQueries } from './strip-url-queries';
 
-const CFG_SYNC_PLUGIN: string = 'AppInsightsCfgSyncPlugin';
-
 export type TelemetrySettings = Pick<Environment, 'appInsightsConnectionString' | 'apiBaseUrl'>;
 
 export function telemetryConfig(settings: TelemetrySettings, angularPlugin: AngularPlugin): IConfiguration & IConfig {
@@ -45,9 +43,25 @@ export function telemetryConfig(settings: TelemetrySettings, angularPlugin: Angu
         useInjector: true,
       },
       // The SDK otherwise downloads feature flags from Microsoft's CDN, which the CSP blocks.
-      [CFG_SYNC_PLUGIN]: { blkCdnCfg: true },
+      AppInsightsCfgSyncPlugin: { blkCdnCfg: true },
     },
   };
+}
+
+// Not the plugin's router tracking: it reads router.url before the first navigation ends, so it reports "/".
+function trackPageViews(router: Router, appInsights: ApplicationInsights): void {
+  router.events
+    .pipe(filter((event: unknown): event is NavigationEnd => event instanceof NavigationEnd))
+    .subscribe((event: NavigationEnd): void => {
+      const url: URL = new URL(event.urlAfterRedirects, window.location.origin);
+      // A new trace per page, as the plugin does, so each page's API calls form their own operation.
+      const trace: ReturnType<ApplicationInsights['getTraceCtx']> = appInsights.getTraceCtx();
+      if (trace) {
+        trace.traceId = crypto.randomUUID().replaceAll('-', '');
+        trace.pageName = url.pathname;
+      }
+      appInsights.trackPageView({ uri: url.href });
+    });
 }
 
 /** App Insights in the browser: page views, exceptions and API dependencies. No-op without a connection string. */
@@ -63,19 +77,7 @@ export function provideTelemetry(settings: TelemetrySettings): EnvironmentProvid
       const appInsights: ApplicationInsights = new ApplicationInsights({ config });
       appInsights.loadAppInsights();
       appInsights.addTelemetryInitializer(stripUrlQueries);
-      // Not the plugin's router tracking: it reads router.url before the first navigation ends, so it reports "/".
-      inject(Router).events
-        .pipe(filter((event: unknown): event is NavigationEnd => event instanceof NavigationEnd))
-        .subscribe((event: NavigationEnd): void => {
-          const url: URL = new URL(event.urlAfterRedirects, window.location.origin);
-          // A new trace per page, as the plugin does, so each page's API calls form their own operation.
-          const trace: ReturnType<ApplicationInsights['getTraceCtx']> = appInsights.getTraceCtx();
-          if (trace) {
-            trace.traceId = crypto.randomUUID().replaceAll('-', '');
-            trace.pageName = url.pathname;
-          }
-          appInsights.trackPageView({ uri: url.href });
-        });
+      trackPageViews(inject(Router), appInsights);
     }),
   ]);
 }

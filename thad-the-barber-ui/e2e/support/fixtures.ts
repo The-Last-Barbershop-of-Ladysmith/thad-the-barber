@@ -7,6 +7,10 @@ import {
 
 interface CspReporter { reportCspViolation: (violation: string) => void; }
 
+export function isTelemetryIngestion(url: URL): boolean {
+  return url.pathname === '/v2/track';
+}
+
 /**
  * The mocked suite's `page`: any `/api/*` call a test hasn't routed fails the test, and so does any CSP violation.
  * Telemetry is accepted and dropped, so test runs never reach App Insights.
@@ -25,10 +29,7 @@ export const test: typeof base = base.extend({
       },
     );
 
-    await page.route(
-      (url: URL): boolean => url.pathname === '/v2/track',
-      (route: Route): Promise<void> => route.fulfill({ status: 200, json: {} }),
-    );
+    await page.route(isTelemetryIngestion, (route: Route): Promise<void> => route.fulfill({ status: 200, json: {} }));
 
     const cspViolations: string[] = [];
     await page.exposeFunction('reportCspViolation', (violation: string): void => {
