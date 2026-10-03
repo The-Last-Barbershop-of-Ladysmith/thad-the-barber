@@ -69,6 +69,12 @@ describe('error page', function() {
     expect(response.text).toContain('href="/boom?x=%22%3E%3Cscript%3E"');
   });
 
+  it.each(['//evil.example/%E0', '/\\evil.example/%E0'])('never retries %s, which points at another site', async function(path) {
+    var response = await request(app).get(path);
+    expect(response.status).toBe(400);
+    expect(response.text).toContain('href="/" data-testid="error-retry"');
+  });
+
   it('serves its stylesheet', async function() {
     var response = await request(app).get('/stylesheets/error.css');
     expect(response.status).toBe(200);

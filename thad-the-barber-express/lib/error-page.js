@@ -2,6 +2,8 @@ var { errorPagePolicy } = require('./content-security-policy');
 var { recordException, requestId } = require('./telemetry');
 
 var policy = errorPagePolicy();
+// "//host" and "/\host" are links to another site, which would make "Try again" an open redirect.
+var SAME_ORIGIN_PATH = /^\/(?![/\\])/;
 
 function errorPage(showDetails) {
   return function(err, req, res, next) {
@@ -16,7 +18,7 @@ function errorPage(showDetails) {
       .render('error', {
         status: status,
         requestId: requestId(),
-        retryUrl: req.method === 'GET' ? req.originalUrl : '/',
+        retryUrl: req.method === 'GET' && SAME_ORIGIN_PATH.test(req.originalUrl) ? req.originalUrl : '/',
         stack: showDetails ? err.stack : null,
       });
   };
