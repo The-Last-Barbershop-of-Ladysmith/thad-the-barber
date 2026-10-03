@@ -2,6 +2,8 @@
 *.angular
 *.vs
 */bin
+!thad-the-barber-express/bin
+*/node_modules
 */obj
 *.user
 */TestResults
