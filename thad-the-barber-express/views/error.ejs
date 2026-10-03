@@ -1,4 +1,18 @@
-<%- include('partials/page-start', { title: 'Something went wrong' }) %>
+<!doctype html>
+<html lang="en" class="app-dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Something went wrong</title>
+  <link rel="stylesheet" href="/brand.css">
+  <link rel="stylesheet" href="/stylesheets/error.css">
+</head>
+<body>
+  <header class="site-header">
+    <a href="/" class="home-link"><img src="/assets/logo.png" alt="Home" class="logo" width="830" height="366"></a>
+  </header>
+  <main class="panel">
     <p class="eyebrow">Error <%= status %></p>
     <h1>Something went wrong</h1>
     <p class="lead">Sorry, this page didn't load. Please try again in a moment.</p>
@@ -13,4 +27,6 @@
       <pre><%= stack %></pre>
     </details>
 <% } -%>
-<%- include('partials/page-end') %>
+  </main>
+</body>
+</html>

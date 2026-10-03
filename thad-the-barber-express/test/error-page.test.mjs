@@ -36,25 +36,25 @@ afterAll(function() {
 });
 
 describe('error page', function() {
-  it('renders the themed page with the status and a request ID for a thrown error', async function() {
+  it('renders the themed page with the status and a request ID, no details, a strict CSP and no caching', async function() {
     var response = await request(app).get('/_test/error');
     expect(response.status).toBe(500);
     expect(response.type).toBe('text/html');
     expect(response.text).toContain('<h1>Something went wrong</h1>');
     expect(response.text).toContain('href="/brand.css"');
     expect(response.text).toMatch(/data-testid="error-request-id">[0-9a-f]{32}</);
+    expect(response.text).not.toContain('Forced test error');
+    expect(response.text).not.toContain('error-details');
+    expect(response.headers['content-security-policy']).toBe(
+      "default-src 'none'; style-src 'self'; img-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
+    );
+    expect(response.headers['cache-control']).toBe('no-store');
   });
 
   it.each([502, 503])('keeps a %s status', async function(status) {
     var response = await request(app).get('/_test/error?status=' + status);
     expect(response.status).toBe(status);
     expect(response.text).toContain('Error ' + status);
-  });
-
-  it('never shows the error or its stack outside development', async function() {
-    var response = await request(app).get('/_test/error');
-    expect(response.text).not.toContain('Forced test error');
-    expect(response.text).not.toContain('error-details');
   });
 
   it('shows the error details with the stack trace in development', async function() {
@@ -67,14 +67,6 @@ describe('error page', function() {
   it('retries the same URL, escaped', async function() {
     var response = await request(appThatThrows(false)).get('/boom?x="><script>');
     expect(response.text).toContain('href="/boom?x=%22%3E%3Cscript%3E"');
-  });
-
-  it('sends a CSP that only allows its own stylesheets and images, and is never cached', async function() {
-    var response = await request(app).get('/_test/error');
-    expect(response.headers['content-security-policy']).toBe(
-      "default-src 'none'; style-src 'self'; img-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
-    );
-    expect(response.headers['cache-control']).toBe('no-store');
   });
 
   it('serves its stylesheet', async function() {

@@ -12,9 +12,12 @@ var app = express();
 // Pages carry a per-request CSP nonce, so an ETag would only invite a cached copy with a stale one.
 app.set('etag', false);
 
-// view engine setup
+// Express treats an unset NODE_ENV as development, and App Service doesn't set it, so development has to be explicit.
+var isDevelopment = process.env.NODE_ENV === 'development';
+
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
+app.set('view cache', !isDevelopment);
 
 app.use(compression());
 app.use(securityHeaders(process.env.NOINDEX !== 'false'));
@@ -36,7 +39,6 @@ app.use(function(req, res) {
   res.sendStatus(404);
 });
 
-// Express treats an unset NODE_ENV as development, and App Service doesn't set it, so details need it set on purpose.
-app.use(errorPage(process.env.NODE_ENV === 'development'));
+app.use(errorPage(isDevelopment));
 
 module.exports = app;

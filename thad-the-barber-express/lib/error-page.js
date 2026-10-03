@@ -1,9 +1,8 @@
+var { errorPagePolicy } = require('./content-security-policy');
 var { recordException, requestId } = require('./telemetry');
 
-// The page has no inline code: its stylesheet, brand.css from the Angular build and the logo are all same-origin.
-var ERROR_PAGE_POLICY = "default-src 'none'; style-src 'self'; img-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'";
+var policy = errorPagePolicy();
 
-// showDetails adds the stack trace; app.js passes it only when NODE_ENV is "development".
 function errorPage(showDetails) {
   return function(err, req, res, next) {
     if (res.headersSent) {
@@ -12,7 +11,7 @@ function errorPage(showDetails) {
     recordException(err);
     var status = err.status >= 400 && err.status < 600 ? err.status : 500;
     res.status(status)
-      .set('Content-Security-Policy', ERROR_PAGE_POLICY)
+      .set('Content-Security-Policy', policy)
       .set('Cache-Control', 'no-store')
       .render('error', {
         status: status,
