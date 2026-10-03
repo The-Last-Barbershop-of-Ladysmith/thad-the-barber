@@ -32,7 +32,7 @@ Node must satisfy `^22.22.3 || ^24.15.0 || >=26` or the Angular CLI refuses to r
 
 ## Architecture
 
-- **Standalone, zoneless, signals.** Files use Angular 22 CLI naming (`home.ts` / class `Home`, no `.component` suffix). Bootstrap is `src/app/app.config.ts`.
+- **Standalone, zoneless, signals.** Files use Angular 22 CLI naming (`home.ts` / class `Home`, no `.component` suffix). Bootstrap is `src/app/app.config.ts`, which `app.config.browser.ts` (adds browser telemetry, `core/telemetry/`) and `app.config.server.ts` (prerender) each merge.
 - **Features own their state.** `app.routes.ts` loads `features/home` eagerly (it's the prerendered landing page, so a click shouldn't wait on a second download) and lazy-loads `features/booking`; each `<feature>.routes.ts` registers its NgRx slice with `provideState` + `provideEffects`, so a slice only exists after its route loads. Only the root `layout` slice (mobile menu, `src/app/store/`) is registered at bootstrap.
 - **State folder pattern** (per feature `state/`): `*.state.ts` (interface + initial state), `*.actions.ts` (`createActionGroup`, page vs API sources), `*.feature.ts` (`createFeature` + reducer + `extraSelectors`/derived `MemoizedSelector`s), `*.effects.ts` (functional effects calling the feature's services). Put reusable helpers in `shared/utils`.
 - **Persistence.** `store/meta/meta.reducers.ts` uses `ngrx-store-localstorage` to sync the `home` and `booking` slices to localStorage under `ttb-<key>`, base64-encoded, rehydrating when a lazy slice registers. Each feature clears its persisted state with its own `State Reset` action. Add a slice to `syncKeys` to persist it.

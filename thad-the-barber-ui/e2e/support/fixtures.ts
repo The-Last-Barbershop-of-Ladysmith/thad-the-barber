@@ -9,6 +9,7 @@ interface CspReporter { reportCspViolation: (violation: string) => void; }
 
 /**
  * The mocked suite's `page`: any `/api/*` call a test hasn't routed fails the test, and so does any CSP violation.
+ * Telemetry is accepted and dropped, so test runs never reach App Insights.
  * Tests mock endpoints with their own `page.route`, which takes precedence over the catch-all.
  * Each test already gets a fresh browser context, so localStorage starts empty.
  * No fake clock: `page.clock` stalls PrimeNG's drawer animation.
@@ -22,6 +23,11 @@ export const test: typeof base = base.extend({
         unmocked.push(`${route.request().method()} ${route.request().url()}`);
         await route.fulfill({ status: 501 });
       },
+    );
+
+    await page.route(
+      (url: URL): boolean => url.pathname === '/v2/track',
+      (route: Route): Promise<void> => route.fulfill({ status: 200, json: {} }),
     );
 
     const cspViolations: string[] = [];

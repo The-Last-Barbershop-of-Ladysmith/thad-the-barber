@@ -259,7 +259,7 @@ The design for when it's picked up needs no database:
 - Actions pinned to commit SHAs, with least-privilege workflow permissions.
 - `CODEOWNERS` for infra and the API.
 
-**Telemetry:** OpenTelemetry (Azure Monitor Distro) in the API and Express, the App Insights JS SDK in the browser, and end-to-end traces via `traceparent`. A redaction processor strips names and phones before export (BR-23). Code-based, not App Service auto-instrumentation, so redaction is possible.
+**Telemetry:** OpenTelemetry (Azure Monitor Distro) in the API and Express, the App Insights JS SDK in the browser, and end-to-end traces via `traceparent`. A redaction processor strips names and phones before export (BR-23). Code-based, not App Service auto-instrumentation, so redaction is possible. In the browser (#121), the Angular plugin supplies the `ErrorHandler`, but page views are tracked on `NavigationEnd` by our own code (the plugin's router tracking reads `router.url` before the first navigation ends and reports "/"), with a new trace per page. Telemetry loads only in the browser config, never during prerender.
 
 **Later (admin portal):**
 - Google sign-in verified by the API (allowlist in Key Vault), and an `Admin` policy checked server-side on every `/api/admin/*` route.

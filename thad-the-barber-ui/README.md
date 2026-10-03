@@ -67,6 +67,8 @@ Each build configuration swaps `src/environments/environment.ts` for its own fil
 
 Fields: `production`, `apiBaseUrl` (absolute, includes `/api`), `siteUrl`, `mediaBaseUrl`, `recaptchaSiteKey` and `appInsightsConnectionString`. Build request URLs as `${environment.apiBaseUrl}/path`. Unit tests run with the `development` replacement, and Vitest only picks up `*.spec.ts` files, because `environment.test.ts` would otherwise match its `*.test.ts` pattern.
 
+**Browser telemetry** (`core/telemetry/`, #121): `app.config.browser.ts` adds `provideTelemetry(environment)`, so prerendering never loads the SDK. With an empty `appInsightsConnectionString` it does nothing. Otherwise it loads the App Insights SDK (`@microsoft/applicationinsights-web`) with the Angular plugin's `ErrorHandler` (uncaught errors become exceptions and still log to the console; extra handlers go in the plugin's `errorServices`), tracks a page view on each `NavigationEnd`, and sends `traceparent` to the API host only. No cookies, no CDN config fetch, and query strings and fragments are stripped from telemetry URLs (BR-23). The mocked e2e fixture answers the ingestion endpoint itself, so test runs never reach App Insights.
+
 ## Folder structure
 
 ```
@@ -75,7 +77,7 @@ src/
 ├── styles.css                      # CSS layer order + Tailwind + tailwindcss-primeui + theme bridge
 ├── environments/                   # one file per build configuration (see Environments)
 └── app/
-    ├── app.ts / app.config.ts / app.routes.ts
+    ├── app.ts / app.config.ts (+ .browser / .server) / app.routes.ts
     ├── theme/                      # All design tokens
     │   ├── tokens/primitive.ts     #   raw palette (copper, espresso, ink), radii, font
     │   ├── tokens/semantic.ts      #   primary, surface, text, content, formField, overlay + brand `extend`
@@ -86,7 +88,8 @@ src/
     │   ├── config/shop-info.ts     # phone, address, hours, socials, home sections
     │   ├── config/primeui-license.ts  # PrimeNG license key (all environments)
     │   ├── models/
-    │   └── services/shop-hours.service.ts   # hours table + live "Open now" status
+    │   ├── services/shop-hours.service.ts   # hours table + live "Open now" status
+    │   └── telemetry/              # provideTelemetry (App Insights in the browser) + URL-stripping initializer
     ├── shared/
     │   ├── components/             # backdrop, section-heading, hours-list
     │   └── utils/date.utils.ts
