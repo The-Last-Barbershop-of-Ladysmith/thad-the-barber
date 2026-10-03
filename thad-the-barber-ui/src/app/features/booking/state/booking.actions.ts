@@ -1,5 +1,13 @@
-import { createActionGroup, emptyProps, props } from '@ngrx/store';
-import { type BookingConfirmation, type BookingRequest, type TimeSlot } from '../models/booking.models';
+import {
+  createActionGroup,
+  emptyProps,
+  props,
+} from '@ngrx/store';
+import {
+  BookingConfirmation,
+  BookingRequest,
+  TimeSlot,
+} from '../models/booking.models';
 
 /** month: "2026-10" */
 export interface MonthPayload { month: string; }

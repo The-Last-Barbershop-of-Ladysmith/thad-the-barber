@@ -1,7 +1,12 @@
 import { TestBed } from '@angular/core/testing';
-import { type Event, NavigationEnd, NavigationStart, Router } from '@angular/router';
-import { type Action } from '@ngrx/store';
-import { type Observable, Subject } from 'rxjs';
+import {
+  Event,
+  NavigationEnd,
+  NavigationStart,
+  Router,
+} from '@angular/router';
+import { Action } from '@ngrx/store';
+import { Observable, Subject } from 'rxjs';
 import { LayoutActions } from './app.actions';
 import { closeMenuOnNavigation } from './app.effects';
 
@@ -12,14 +17,7 @@ describe(
       'closes the menu when navigation ends, not when it starts',
       (): void => {
         const events: Subject<Event> = new Subject<Event>();
-        TestBed.configureTestingModule({
-          providers: [
-            {
-              provide: Router,
-              useValue: { events },
-            },
-          ],
-        });
+        TestBed.configureTestingModule({ providers: [{ provide: Router, useValue: { events } }] });
         const emitted: Action[] = [];
 
         const runEffect: () => Observable<Action> = (): Observable<Action> =>
@@ -29,10 +27,7 @@ describe(
           emitted.push(action);
         });
 
-        events.next(new NavigationStart(
-          1,
-          '/book',
-        ));
+        events.next(new NavigationStart(1, '/book'));
         expect(emitted).toEqual([]);
 
         events.next(new NavigationEnd(

@@ -1,6 +1,11 @@
-import { ChangeDetectionStrategy, Component, type Signal, inject } from '@angular/core';
-import { type AppState } from '../../../../store/app.state';
-import { type SmsSignupState } from '../../state/home.state';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  Signal,
+  inject,
+} from '@angular/core';
+import { AppState } from '../../../../store/app.state';
+import { SmsSignupState } from '../../state/home.state';
 import { phoneValidators } from '../../../../shared/validators/form.validators';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Store } from '@ngrx/store';
@@ -30,10 +35,7 @@ export class SmsSignup {
   protected readonly submitting: Signal<boolean> = this.store.selectSignal(homeFeature.selectIsSubscribing);
   protected readonly phone: FormControl<string> = new FormControl(
     '',
-    {
-      nonNullable: true,
-      validators: phoneValidators,
-    },
+    { nonNullable: true, validators: phoneValidators },
   );
 
   protected submit(): void {

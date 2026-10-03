@@ -1,4 +1,10 @@
-import { CLIP_COUNT, FRAMES_PER_CLIP, KEYFRAME_URLS, frameInClip, frameUrl } from './backdrop.frames';
+import {
+  CLIP_COUNT,
+  FRAMES_PER_CLIP,
+  KEYFRAME_URLS,
+  frameInClip,
+  frameUrl,
+} from './backdrop.frames';
 
 const TOTAL_FRAMES: number = CLIP_COUNT * FRAMES_PER_CLIP;
 
@@ -40,10 +46,7 @@ function buildBuckets(): LoadBucket[] {
   const seen: Uint8Array = new Uint8Array(TOTAL_FRAMES);
   const buckets: LoadBucket[] = [];
   for (let clip: number = 0; clip < CLIP_COUNT; clip++) {
-    PASS_STEPS.forEach((
-      step: number,
-      pass: number,
-    ): void => {
+    PASS_STEPS.forEach((step: number, pass: number): void => {
       const frames: number[] = [];
       for (let frame: number = 0; frame < FRAMES_PER_CLIP; frame += step) {
         const index: number = clip * FRAMES_PER_CLIP + frame;
@@ -97,10 +100,7 @@ export class FrameScrubber {
   }
 
   /** Moves toward `target` (in clips). `fromScroll` marks the first real scroll, which unlocks full loading. */
-  setTarget(
-    target: number,
-    fromScroll: boolean,
-  ): void {
+  setTarget(target: number, fromScroll: boolean): void {
     this.target = target;
     this.scrolled ||= fromScroll;
     const key: number = Math.floor(target);
@@ -136,10 +136,7 @@ export class FrameScrubber {
 
   /** How many passes of `clip` may load right now; -1 means none. */
   private passLimit(clip: number): number {
-    const current: number = Math.min(
-      CLIP_COUNT - 1,
-      Math.floor(this.target),
-    );
+    const current: number = Math.min(CLIP_COUNT - 1, Math.floor(this.target));
     if (!this.scrolled) {
       return clip === 0 ? IDLE_PASS_LIMIT : -1;
     }
@@ -183,10 +180,7 @@ export class FrameScrubber {
       this.inFlight++;
       const image: HTMLImageElement = new Image();
       image.decoding = 'async';
-      image.src = frameUrl(
-        Math.floor(index / FRAMES_PER_CLIP),
-        index % FRAMES_PER_CLIP,
-      );
+      image.src = frameUrl(Math.floor(index / FRAMES_PER_CLIP), index % FRAMES_PER_CLIP);
       this.frames[index] = image;
       const done: () => void = (): void => {
         this.inFlight--;
@@ -196,10 +190,7 @@ export class FrameScrubber {
         this.draw(false);
         this.loadFrames();
       };
-      image.decode().then(
-        done,
-        done,
-      );
+      image.decode().then(done, done);
     }
   }
 
@@ -234,10 +225,7 @@ export class FrameScrubber {
 
   private draw(force: boolean): void {
     const canvas: HTMLCanvasElement = this.canvas;
-    const pixelRatio: number = Math.min(
-      2,
-      window.devicePixelRatio || 1,
-    );
+    const pixelRatio: number = Math.min(2, window.devicePixelRatio || 1);
     const width: number = Math.round(canvas.clientWidth * pixelRatio);
     const height: number = Math.round(canvas.clientHeight * pixelRatio);
     if (canvas.width !== width || canvas.height !== height) {
@@ -247,28 +235,16 @@ export class FrameScrubber {
     }
 
     const position: number = this.position ?? this.target;
-    const clip: number = Math.min(
-      CLIP_COUNT - 1,
-      Math.floor(position),
-    );
+    const clip: number = Math.min(CLIP_COUNT - 1, Math.floor(position));
     const exact: number = Math.min(
       TOTAL_FRAMES - 1,
-      clip * FRAMES_PER_CLIP + frameInClip(
-        clip,
-        Math.min(
-          1,
-          position - clip,
-        ),
-      ),
+      clip * FRAMES_PER_CLIP + frameInClip(clip, Math.min(1, position - clip)),
     );
     const wanted: number = Math.floor(exact);
     const blend: number = exact - wanted;
     const shown: number = this.nearestReady(wanted);
     const frame: HTMLImageElement | undefined = this.frames[shown];
-    const next: HTMLImageElement | undefined = this.frames[Math.min(
-      TOTAL_FRAMES - 1,
-      wanted + 1,
-    )];
+    const next: HTMLImageElement | undefined = this.frames[Math.min(TOTAL_FRAMES - 1, wanted + 1)];
     const blendNext: boolean = shown === wanted && next !== frame && isDrawable(next);
 
     const keyIndex: number = Math.round(position);
@@ -282,10 +258,7 @@ export class FrameScrubber {
     const keyframeAlpha: number = !frameOk
       ? 1
       : keyframeOk
-        ? Math.max(
-          0,
-          1 - keyDistance / KEYFRAME_FADE_FRAMES,
-        )
+        ? Math.max(0, 1 - keyDistance / KEYFRAME_FADE_FRAMES)
         : 0;
 
     const signature: string = `${frameOk ? shown : `k${keyIndex}`}:${keyframeAlpha.toFixed(2)}:${blendNext ? blend.toFixed(2) : '0'}`;
@@ -300,10 +273,7 @@ export class FrameScrubber {
     }
     context.imageSmoothingQuality = 'high';
     const cover: (image: HTMLImageElement) => void = (image: HTMLImageElement): void => {
-      const scale: number = Math.max(
-        width / image.naturalWidth,
-        height / image.naturalHeight,
-      );
+      const scale: number = Math.max(width / image.naturalWidth, height / image.naturalHeight);
       const drawWidth: number = image.naturalWidth * scale;
       const drawHeight: number = image.naturalHeight * scale;
       context.drawImage(

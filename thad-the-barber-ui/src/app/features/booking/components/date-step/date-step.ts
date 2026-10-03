@@ -1,15 +1,19 @@
-import { ChangeDetectionStrategy, Component, input, type InputSignal, output, type OutputEmitterRef } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  input,
+  InputSignal,
+  output,
+  OutputEmitterRef,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DatePickerModule } from 'primeng/datepicker';
-import { type DatePickerMonthChangeEvent } from 'primeng/types/datepicker';
+import { DatePickerMonthChangeEvent } from 'primeng/types/datepicker';
 
 /** Step 1: inline PrimeNG date picker. Closed weekdays, full days and out-of-window dates are disabled. */
 @Component({
   selector: 'app-date-step',
-  imports: [
-    FormsModule,
-    DatePickerModule,
-  ],
+  imports: [FormsModule, DatePickerModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './date-step.html',
   styleUrl: './date-step.scss',

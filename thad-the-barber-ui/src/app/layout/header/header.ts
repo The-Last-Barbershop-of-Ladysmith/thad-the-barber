@@ -1,15 +1,25 @@
-import { ChangeDetectionStrategy, Component, type Signal, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  Signal,
+  inject,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { type Event, NavigationEnd, Router, RouterLink } from '@angular/router';
+import {
+  Event,
+  NavigationEnd,
+  Router,
+  RouterLink,
+} from '@angular/router';
 import { Store } from '@ngrx/store';
 import { ButtonModule } from 'primeng/button';
 import { DrawerModule } from 'primeng/drawer';
 import { filter, map } from 'rxjs';
 import { HOME_SECTIONS, SHOP_INFO } from '../../core/config/shop-info';
-import { type NavItem, type ShopInfo } from '../../core/models/shop.models';
+import { NavItem, ShopInfo } from '../../core/models/shop.models';
 import { LayoutActions } from '../../store/app.actions';
 import { layoutFeature } from '../../store/app.feature';
-import { type AppState } from '../../store/app.state';
+import { AppState } from '../../store/app.state';
 
 /** Fixed top bar: section links on desktop, a drawer menu on mobile, "Back to site" on the booking page. */
 @Component({

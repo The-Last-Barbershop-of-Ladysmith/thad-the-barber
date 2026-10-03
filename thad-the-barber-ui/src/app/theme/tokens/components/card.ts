@@ -1,4 +1,4 @@
-import type { CardDesignTokens } from '@primeuix/themes/types/card';
+import { CardDesignTokens } from '@primeuix/themes/types/card';
 
 /** p-card is the frosted "glass panel" that wraps every section in the wireframe. */
 export const card: CardDesignTokens = {
@@ -8,10 +8,7 @@ export const card: CardDesignTokens = {
     color: '{text.color}',
     shadow: 'none',
   },
-  body: {
-    padding: 'clamp(1.25rem, 4vw, 3rem)',
-    gap: '2rem',
-  },
+  body: { padding: 'clamp(1.25rem, 4vw, 3rem)', gap: '2rem' },
   css: `
     .p-card {
       border: 1px solid var(--p-content-border-color);

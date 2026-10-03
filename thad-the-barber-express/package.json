@@ -1,0 +1,31 @@
+{
+  "name": "thad-the-barber-express",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node ./bin/www",
+    "start:dev": "cross-env NODE_ENV=development DEBUG=thad-the-barber-express:* node --watch ./bin/www",
+    "start:app:dev": "npm --prefix ../thad-the-barber-ui run build:express:dev && npm run start:dev",
+    "start:app:dev-cloud": "npm --prefix ../thad-the-barber-ui run build:express:dev-cloud && npm run start:dev",
+    "start:app:test": "npm --prefix ../thad-the-barber-ui run build:express:test && npm run start:dev",
+    "start:app:production": "npm --prefix ../thad-the-barber-ui run build:express:production && npm run start:dev",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@azure/monitor-opentelemetry": "^1.20.0",
+    "@opentelemetry/api": "^1.9.1",
+    "compression": "^1.8.2",
+    "debug": "^4.4.3",
+    "ejs": "^6.0.1",
+    "express": "^5.2.1",
+    "helmet": "^8.3.0"
+  },
+  "devDependencies": {
+    "cross-env": "^10.1.0",
+    "supertest": "^7.3.1",
+    "vitest": "^5.0.3"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

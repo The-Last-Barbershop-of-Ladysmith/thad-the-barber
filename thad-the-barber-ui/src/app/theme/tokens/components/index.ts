@@ -1,4 +1,4 @@
-import { type ComponentsDesignTokens } from '@primeuix/themes';
+import { ComponentsDesignTokens } from '@primeuix/themes';
 import { button } from './button';
 import { card } from './card';
 import { carousel } from './carousel';

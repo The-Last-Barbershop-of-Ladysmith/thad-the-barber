@@ -1,6 +1,6 @@
 import { environment as devCloud } from './environment.dev-cloud';
 import { environment as development } from './environment.development';
-import { type Environment } from './environment.model';
+import { Environment } from './environment.model';
 import { environment as test } from './environment.test';
 
 
@@ -15,24 +15,15 @@ describe(
   (): void => {
     it.each(Object.entries(environments))(
       '%s: apiBaseUrl is absolute and ends in /api',
-      (
-        _name: string,
-        env: Environment,
-      ): void => {
+      (_name: string, env: Environment): void => {
         expect(env.apiBaseUrl).toMatch(/^https?:\/\/[^/]+\/api$/);
       },
     );
 
     it.each(Object.entries(environments))(
       '%s: URLs have no trailing slash',
-      (
-        _name: string,
-        env: Environment,
-      ): void => {
-        [
-          env.siteUrl,
-          env.mediaBaseUrl,
-        ].forEach((url: string): void => {
+      (_name: string, env: Environment): void => {
+        [env.siteUrl, env.mediaBaseUrl].forEach((url: string): void => {
           expect(url).not.toMatch(/\/$/);
         });
       },
@@ -41,10 +32,7 @@ describe(
     it(
       'cloud builds use https',
       (): void => {
-        [
-          devCloud,
-          test,
-        ].forEach((env: Environment): void => {
+        [devCloud, test].forEach((env: Environment): void => {
           [
             env.apiBaseUrl,
             env.siteUrl,

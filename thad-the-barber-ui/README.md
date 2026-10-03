@@ -30,27 +30,29 @@ npm install
 npm start          # dev server at http://localhost:4200
 npm run build      # production build to dist/
 npx ng build -c devCloud   # Azure dev build (also -c test)
+npm run build:express:dev  # build into ../thad-the-barber-express/public/app/thad-the-barber-ui (also :dev-cloud, :test, :production)
+npm run start:express:dev  # that build, served by Express at http://localhost:3000
 npm test           # unit tests (Vitest)
 npx playwright install chromium webkit   # once, for the end-to-end tests
-npm run e2e        # end-to-end tests against mocks (starts ng serve unless it's already running)
+npm run e2e        # end-to-end tests against mocks (starts ng serve unless it's already running; CI=1 uses Express and needs `npm run build:express:test` first)
 npm run e2e:smoke  # smoke tests against the local site and API; set BASE_URL and API_BASE_URL for a deployed site
 ```
 
 ### End-to-end tests
 
-- `e2e/mocked/*.spec.ts` run on Chromium and WebKit, each at desktop (1280×800) and mobile (390×844), against `ng serve`. Each test gets a fresh browser context, so localStorage starts empty.
-- Import `test` and `expect` from `e2e/support/fixtures.ts`, not `@playwright/test`. Its `page` fails the test on any `/api/*` call the test hasn't mocked with `page.route`.
+- `e2e/mocked/*.spec.ts` run on Chromium and WebKit, each at desktop (1280×800) and mobile (390×844), against `ng serve` locally and, with `CI` set, against the `test` build served by Express on port 4200. Only Express sends the CSP header and real 404s, so the 404-status test runs in CI only. Each test gets a fresh browser context, so localStorage starts empty.
+- Import `test` and `expect` from `e2e/support/fixtures.ts`, not `@playwright/test`. Its `page` fails the test on any `/api/*` call the test hasn't mocked with `page.route`, and on any CSP violation.
 - `expectNoA11yViolations(page)` in `e2e/support/axe.ts` runs axe with the WCAG 2.0–2.2 A/AA tags plus `region`, contrast included. `incomplete` results are attached to the report for a manual check. Violations already tracked in M4 are listed in `e2e/support/known-a11y-issues.ts` with their issue number; they're attached instead of failing. Remove an entry when its issue is fixed.
 - `e2e/smoke/` has its own config (`playwright.smoke.config.ts`). `BASE_URL` is the web app and `API_BASE_URL` the API, including `/api`, because the web app doesn't proxy the API. Unset, they default to `siteUrl` and `apiBaseUrl` from `environment.development.ts`, so the suite also runs from the Testing explorer (tick `playwright.smoke.config.ts` in the Playwright section). Each check retries for up to 3 minutes to ride out F1 cold starts.
 - Traces, screenshots and video are kept for failed tests in `test-results/`. `npx playwright show-report` opens the HTML report.
 
 ### CI
 
-`.github/workflows/ci.yml` runs four checks on every PR into `dev/**`, `release/**`, `hotfix/**` and `main`: `ui` (lint, unit tests, production build), `api` (build, tests, at least 80% line coverage), `e2e` (the mocked suite against `ng serve --configuration test`, the optimized build with test URLs) and `lighthouse`. Failed runs upload the Playwright report and traces; the API coverage file and the Lighthouse reports are always uploaded.
+`.github/workflows/ci.yml` runs five checks on every PR into `dev/**`, `release/**`, `hotfix/**` and `main`: `ui` (lint, unit tests, and the `test` build, the optimized build with test URLs), `express` (the Express app's audit and tests), `api` (build, tests, at least 80% line coverage), `e2e` (the mocked suite against the `ui` check's build served by Express) and `lighthouse` (the same build). `e2e` and `lighthouse` wait for `ui` and download its build instead of building again. Failed runs upload the Playwright report and traces; the API coverage file and the Lighthouse reports are always uploaded.
 
 Each run writes a job summary (API coverage, Playwright totals with any failed or flaky tests, the Lighthouse score table), and a `report` job posts the same summary as one PR comment, which later runs update. `npm run e2e:summary` (`ci/e2e-summary.ts`) builds the Playwright part from the JSON report CI writes to `test-results/results.json`.
 
-The `lighthouse` check runs Lighthouse (mobile) on `/` and `/book`, then `npm run lighthouse:check` (`ci/lighthouse-check.ts`) fails it when accessibility is under 95, or best practices or SEO under 90. Performance is reported but not enforced until the backdrop frames are fixed (#47, #38); #91 sets its budgets. To run it locally, serve the site, write `lighthouse-results/<name>.report.json` with `npx lighthouse <url> --output=json --output-path=lighthouse-results/<name>`, then run the check.
+The `lighthouse` check runs Lighthouse (mobile) on `/` and `/book`, then `npm run lighthouse:check` (`ci/lighthouse-check.ts`) fails it when accessibility is under 95, or best practices or SEO under 90. Performance is reported but not enforced until the backdrop frames are fixed (#47, #38); #91 sets its budgets. CI serves the `test` build with Express and `NOINDEX=false`, since the noindex header dev and test send would fail SEO. To run it locally, serve the site the same way (`npm run build:express:test`, then `NOINDEX=false PORT=4200 npm --prefix ../thad-the-barber-express start`), write `lighthouse-results/<name>.report.json` with `npx lighthouse <url> --output=json --output-path=lighthouse-results/<name>`, then run the check.
 
 ### Environments
 
@@ -168,7 +170,7 @@ Lint config lives in `eslint.config.js`; `npm run lint` checks and `npm run lint
   - `@typescript-eslint/typedef` enforces the variable and parameter annotations. typescript-eslint marks this rule deprecated because its guidance is to let TypeScript infer local variables. It still works in v8; replace it if a future major version removes it.
   - **One exception:** NgRx doesn't export the types returned by `createActionGroup` and `createFeature`, so those 8 declarations carry a one-line `eslint-disable` with that reason.
 - **Semicolons** end every statement and every interface/type member.
-- **One item per line** when there is more than one, for array items, object properties, call arguments, function parameters and destructured properties. `eslint/one-item-per-line.js` is a small local rule covering the two cases no published rule handles (parameters and destructuring).
+- **One item per line from 3 items**, and 1–2 items on one line (unless that passes 120 characters), for array items, object properties, call arguments, function parameters and destructured properties. `@stylistic` has no item threshold for properties, arguments, parameters or destructuring, so `eslint/items-per-line.js` covers those; `eslint-plugin-import-newlines` does the same for imports.
 - **Stricter compiler:** `tsconfig.json` adds `strict`, `noUncheckedIndexedAccess`, `noUnusedLocals`/`noUnusedParameters`, and Angular `strictTemplates`, with extended diagnostics treated as errors.
 - **Formatting ownership:** ESLint formats `.ts` files. Prettier formats HTML/SCSS/CSS only (`npm run format`), because Prettier would collapse the one-per-line wrapping. `.vscode/settings.json` applies both on save.
 - **NgRx typing patterns:**

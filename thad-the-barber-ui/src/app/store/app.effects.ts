@@ -1,8 +1,16 @@
 import { inject } from '@angular/core';
-import { type Event, NavigationEnd, Router } from '@angular/router';
-import { type FunctionalEffect, createEffect } from '@ngrx/effects';
-import { type Action } from '@ngrx/store';
-import { type Observable, filter, map } from 'rxjs';
+import {
+  Event,
+  NavigationEnd,
+  Router,
+} from '@angular/router';
+import { FunctionalEffect, createEffect } from '@ngrx/effects';
+import { Action } from '@ngrx/store';
+import {
+  Observable,
+  filter,
+  map,
+} from 'rxjs';
 import { LayoutActions } from './app.actions';
 
 /** Close the mobile menu whenever navigation finishes (including in-page fragment jumps). */

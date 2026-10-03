@@ -1,23 +1,30 @@
-import { type Routes } from '@angular/router';
-import type * as bookingRoutes from './features/booking/booking.routes';
-import type * as homeRoutes from './features/home/home.routes';
+import { Route, Routes } from '@angular/router';
+import * as bookingRoutes from './features/booking/booking.routes';
+import { HOME_ROUTES } from './features/home/home.routes';
+import * as notFound from './pages/not-found/not-found';
 
-/** Each feature lazy-loads its own routes, which also register that feature's store slice. */
+const notFoundRoute: Route = {
+  title: 'Page not found · Thad The Barber',
+  loadComponent: (): Promise<typeof notFound.NotFound> =>
+    import('./pages/not-found/not-found').then((m: typeof notFound): typeof notFound.NotFound => m.NotFound),
+};
+
+/**
+ * Home is the prerendered landing page, so its code ships with the app instead of a second download before a click
+ * can navigate. Other features lazy-load. Each feature's routes register its store slice.
+ */
 export const routes: Routes = [
   {
     path: '',
     pathMatch: 'full',
     title: 'Thad The Barber · Fredericksburg, VA',
-    loadChildren: (): Promise<Routes> =>
-      import('./features/home/home.routes').then((m: typeof homeRoutes): Routes => m.HOME_ROUTES),
+    children: HOME_ROUTES,
   },
   {
     path: 'book',
     loadChildren: (): Promise<Routes> =>
       import('./features/booking/booking.routes').then((m: typeof bookingRoutes): Routes => m.BOOKING_ROUTES),
   },
-  {
-    path: '**',
-    redirectTo: '',
-  },
+  { path: '404', ...notFoundRoute },
+  { path: '**', ...notFoundRoute },
 ];

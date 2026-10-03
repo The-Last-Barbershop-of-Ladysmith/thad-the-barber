@@ -18,7 +18,7 @@ How code moves from a topic branch to production. The decisions behind this are 
 
 - **Infrastructure as code:** Bicep in `infra/` (`main.bicep`, `nonprod.bicepparam`, and `prod.bicepparam` at M5). See [Infrastructure](#infrastructure) below.
 - **Secrets:** every secret lives in **Key Vault** in every environment, and app settings hold only Key Vault references. See [architecture-decisions.md §M](architecture-decisions.md#m-security). GitHub signs in to Azure with **OIDC federated credentials**, so no Azure secrets are stored in GitHub. See [GitHub → Azure sign-in](#github--azure-sign-in-oidc).
-- **Monitoring:** Application Insights, fed by the **Azure Monitor OpenTelemetry Distro** in the .NET API and the Express server, plus the App Insights JavaScript SDK in the browser. W3C `traceparent` headers link browser → API → Square into one transaction (CORS allows `traceparent`/`tracestate`). PII is redacted before export, with sampling and a daily cap to stay within the 5 GB/month free allowance. There's also a $5 budget alert on the subscription.
+- **Monitoring:** Application Insights, fed by the **Azure Monitor OpenTelemetry Distro** in the .NET API and the Express server (requests, 404s and errors; query strings dropped before export), plus the App Insights JavaScript SDK in the browser. W3C `traceparent` headers link browser → API → Square into one transaction (CORS allows `traceparent`/`tracestate`). PII is redacted before export, with sampling and a daily cap to stay within the 5 GB/month free allowance. There's also a $5 budget alert on the subscription.
 - **F1 limits:** no Always On (cold starts), 60 CPU-minutes per day, 165 MB outbound data per day, 1 GB RAM, and no deployment slots. All four nonprod apps share one plan's quota. The smoke tests warm the app up before they run. Because of the outbound cap, large media (backdrop frames, gallery) is served from Blob Storage, not the apps (M3-09, #47).
 
 ## Infrastructure
@@ -137,12 +137,13 @@ Repo variables `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID` and `AZURE_PREVIEW_CLI
 
 | Check | What runs |
 | --- | --- |
-| `ui` | `npm ci` → `ng lint` → `ng test` (Vitest) → `ng build` → Express server lint + tests (Vitest + supertest) |
+| `ui` | `npm ci` → `npm audit` → `ng lint` → `ng test` (Vitest) → `build:express:test`, uploaded for `e2e` and `lighthouse` |
+| `express` | Express `npm ci` → `npm audit` → `npm test` (Vitest + supertest) |
 | `api` | `dotnet build` → `dotnet test` (xUnit) |
-| `e2e` | Playwright with a mocked API and `@axe-core/playwright`, on Chromium + WebKit, desktop + mobile |
-| `lighthouse` | Lighthouse CI budgets (performance, SEO, accessibility ≥ 95) on `/` and `/book` |
+| `e2e` | Playwright with a mocked API and `@axe-core/playwright`, on Chromium + WebKit, desktop + mobile, against the `ui` job's `test` build served by Express (real CSP header and 404s) |
+| `lighthouse` | Lighthouse on `/` and `/book` of the `ui` job's build, served by Express with prod's headers (`NOINDEX=false`): accessibility ≥ 95, best practices and SEO ≥ 90, performance reported only |
 
-All four checks must pass before a merge. On failure, traces, screenshots and video are uploaded as artifacts.
+All five checks must pass before a merge. On failure, traces, screenshots and video are uploaded as artifacts.
 
 ## CD (deploy pipeline)
 
@@ -163,9 +164,9 @@ nightly              smoke (test)
 Workflows: [`cd-dev.yml`](../.github/workflows/cd-dev.yml) (push to `dev/**`) calls the reusable [`build.yml`](../.github/workflows/build.yml), then [`deploy.yml`](../.github/workflows/deploy.yml).
 
 - `build.yml` names artifacts `ttb-ui-<env>-<version>-<sha7>` and `ttb-api-<version>-<sha7>`, where `<version>` is the branch name after its first slash.
-- `deploy.yml` signs in as the environment's identity, zip-deploys each given artifact, waits until `/api/health` reports the deployed commit, then runs the smoke suite against that environment's URLs.
+- `deploy.yml` signs in as the environment's identity, zip-deploys each given artifact, waits until the site's `/healthz` and the API's `/api/health` report the deployed commit, then runs the smoke suite against that environment's URLs.
 - On dev, only the app(s) a push changed are rebuilt and redeployed. A docs-only push deploys nothing, and a manual run deploys both. Dev has no rollback: a red run emails the owner and the fix rolls forward.
-- Until the Express server (#19) exists, the UI zip carries a `package.json` whose `start` script runs `pm2 serve --spa` (pm2 ships with App Service's Node images), so client routes fall back to `index.html`.
+- The UI zip is the whole Express app (`thad-the-barber-express/`, production packages only) with the Angular build in `public/app/thad-the-barber-ui` and a `build-info.json` (version and commit) for `/healthz`. App Service runs its `npm start`. `build.yml`'s `ui-builds` entries name the UI script to run, `build:express:<build>`, whose post-build hook writes `csp-sources.json`.
 - [`cd-test.yml`](../.github/workflows/cd-test.yml) runs on pushes to `release/**` and `hotfix/**`. It builds the API and two UI builds (`-c test`, `-c production`) once, keeps them for 90 days, deploys the API and the test UI to test, then runs smoke. The prod UI build and the same API artifact wait for the production job (#92). The sandbox booking round trip joins the smoke suite with #28/#29.
 - **Rollback (test):** run `cd-test` by hand on the release branch with the run ID of the last good build. It redeploys that run's artifacts without rebuilding. The `test` environment only admits `release/*` and `hotfix/*`, so pick the release branch in the run dialog.
 - **Nightly:** `cd-test` smoke-tests test every day at 09:17 UTC. Scheduled runs only fire from the default branch, so this starts once the workflow reaches `main` with the first release.

@@ -1,6 +1,10 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { type ShopInfo } from '../../../../core/models/shop.models';
-import { DomSanitizer, type SafeResourceUrl } from '@angular/platform-browser';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+} from '@angular/core';
+import { ShopInfo } from '../../../../core/models/shop.models';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { SHOP_INFO } from '../../../../core/config/shop-info';

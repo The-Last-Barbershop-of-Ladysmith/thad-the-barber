@@ -1,4 +1,4 @@
-import type { MessageDesignTokens } from '@primeuix/themes/types/message';
+import { MessageDesignTokens } from '@primeuix/themes/types/message';
 
 /**
  * Inline notices ("You're on the list", "You're booked"). The app has no blue "info" state,
@@ -6,10 +6,7 @@ import type { MessageDesignTokens } from '@primeuix/themes/types/message';
  */
 export const message: MessageDesignTokens = {
   root: { borderRadius: '{border.radius.md}' },
-  content: {
-    padding: '0.875rem 1.125rem',
-    gap: '0.625rem',
-  },
+  content: { padding: '0.875rem 1.125rem', gap: '0.625rem' },
   text: { fontWeight: '600' },
   info: {
     background: 'color-mix(in srgb, {primary.color} 14%, transparent)',

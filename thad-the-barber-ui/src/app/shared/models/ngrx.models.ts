@@ -1,4 +1,4 @@
-import { type MemoizedSelector } from '@ngrx/store';
+import { MemoizedSelector } from '@ngrx/store';
 
 /**
  * The per-property selectors `createFeature` generates (`selectSlots`, `selectStatus`, ...), which it

@@ -1,18 +1,15 @@
 import AxeBuilder from '@axe-core/playwright';
 import {
-  type Page,
+  Page,
   expect,
   test,
 } from '@playwright/test';
 import {
-  type AxeResults,
-  type NodeResult,
-  type Result,
+  AxeResults,
+  NodeResult,
+  Result,
 } from 'axe-core';
-import {
-  KNOWN_A11Y_ISSUES,
-  type KnownA11yIssue,
-} from './known-a11y-issues';
+import { KNOWN_A11Y_ISSUES, KnownA11yIssue } from './known-a11y-issues';
 
 interface ViolationSummary {
   id: string;
@@ -66,15 +63,9 @@ export async function expectNoA11yViolations(page: Page): Promise<void> {
       help: violation.help,
       targets: violation.nodes.map((node: NodeResult): string => node.target.join(' ')),
     };
-    const issue: KnownA11yIssue | undefined = await findKnownIssue(
-      page,
-      summary,
-    );
+    const issue: KnownA11yIssue | undefined = await findKnownIssue(page, summary);
     if (issue) {
-      known.push({
-        ...summary,
-        issue: issue.issue,
-      });
+      known.push({ ...summary, issue: issue.issue });
     } else {
       unknown.push(summary);
     }
@@ -94,29 +85,15 @@ export async function expectNoA11yViolations(page: Page): Promise<void> {
     );
   }
 
-  expect(
-    unknown,
-    `axe violations on ${page.url()}`,
-  ).toEqual([]);
+  expect(unknown, `axe violations on ${page.url()}`).toEqual([]);
 }
 
-async function findKnownIssue(
-  page: Page,
-  violation: ViolationSummary,
-): Promise<KnownA11yIssue | undefined> {
+async function findKnownIssue(page: Page, violation: ViolationSummary): Promise<KnownA11yIssue | undefined> {
   for (const known of KNOWN_A11Y_ISSUES.filter((issue: KnownA11yIssue): boolean => issue.rule === violation.id)) {
     const allMatch: boolean = await page.evaluate(
-      ({
-        targets,
-        selector,
-      }: {
-        targets: string[];
-        selector: string;
-      }): boolean => targets.every((target: string): boolean => !!document.querySelector(target)?.matches(selector)),
-      {
-        targets: violation.targets,
-        selector: known.selector,
-      },
+      ({ targets, selector }: { targets: string[]; selector: string; }): boolean =>
+        targets.every((target: string): boolean => !!document.querySelector(target)?.matches(selector)),
+      { targets: violation.targets, selector: known.selector },
     );
     if (allMatch) {
       return known;

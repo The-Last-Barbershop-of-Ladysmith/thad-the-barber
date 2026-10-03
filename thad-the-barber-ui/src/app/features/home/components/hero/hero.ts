@@ -5,10 +5,7 @@ import { SHOP_INFO } from '../../../../core/config/shop-info';
 
 @Component({
   selector: 'app-hero',
-  imports: [
-    RouterLink,
-    ButtonModule,
-  ],
+  imports: [RouterLink, ButtonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './hero.html',
   styleUrl: './hero.scss',

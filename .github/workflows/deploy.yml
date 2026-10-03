@@ -61,6 +61,18 @@ jobs:
 
       - run: az webapp deploy --resource-group "$RESOURCE_GROUP" --name "$UI_APP" --src-path ui.zip --type zip
 
+      # /healthz reports the build-info.json that build.yml put in the artifact.
+      - name: The site reports the deployed commit
+        run: |
+          expected=$(jq -r .commit site/build-info.json)
+          for _ in $(seq 1 36); do
+            commit=$(curl -sf "https://$UI_APP.azurewebsites.net/healthz" | jq -r .commit || true)
+            if [[ "$commit" == "$expected" ]]; then echo "Site is on $commit"; exit 0; fi
+            sleep 5
+          done
+          echo "::error::/healthz reports '${commit:-no response}', expected $expected"
+          exit 1
+
   api:
     if: inputs.api-artifact != ''
     runs-on: ubuntu-latest

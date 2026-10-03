@@ -1,6 +1,6 @@
 import {
-  type PlaywrightTestConfig,
-  type Project,
+  PlaywrightTestConfig,
+  Project,
   defineConfig,
 } from '@playwright/test';
 import { environment } from './src/environments/environment.development';
@@ -8,18 +8,10 @@ import { environment } from './src/environments/environment.development';
 const isCi: boolean = !!process.env['CI'];
 const baseURL: string = environment.siteUrl;
 
-const desktop: Project['use'] = {
-  viewport: {
-    width: 1280,
-    height: 800,
-  },
-};
+const desktop: Project['use'] = { viewport: { width: 1280, height: 800 } };
 
 const mobile: Project['use'] = {
-  viewport: {
-    width: 390,
-    height: 844,
-  },
+  viewport: { width: 390, height: 844 },
   isMobile: true,
   hasTouch: true,
   deviceScaleFactor: 3,
@@ -37,15 +29,9 @@ const config: PlaywrightTestConfig = defineConfig({
   expect: { timeout: 10_000 },
   reporter: [
     [isCi ? 'github' : 'list'],
-    [
-      'html',
-      { open: 'never' },
-    ],
+    ['html', { open: 'never' }],
     // Read by `npm run e2e:summary` for the CI job summary and PR comment.
-    [
-      'json',
-      { outputFile: 'test-results/results.json' },
-    ],
+    ['json', { outputFile: 'test-results/results.json' }],
   ],
   use: {
     baseURL,
@@ -54,38 +40,16 @@ const config: PlaywrightTestConfig = defineConfig({
     video: 'retain-on-failure',
   },
   projects: [
-    {
-      name: 'chromium-desktop',
-      use: {
-        browserName: 'chromium',
-        ...desktop,
-      },
-    },
-    {
-      name: 'chromium-mobile',
-      use: {
-        browserName: 'chromium',
-        ...mobile,
-      },
-    },
-    {
-      name: 'webkit-desktop',
-      use: {
-        browserName: 'webkit',
-        ...desktop,
-      },
-    },
-    {
-      name: 'webkit-mobile',
-      use: {
-        browserName: 'webkit',
-        ...mobile,
-      },
-    },
+    { name: 'chromium-desktop', use: { browserName: 'chromium', ...desktop } },
+    { name: 'chromium-mobile', use: { browserName: 'chromium', ...mobile } },
+    { name: 'webkit-desktop', use: { browserName: 'webkit', ...desktop } },
+    { name: 'webkit-mobile', use: { browserName: 'webkit', ...mobile } },
   ],
   webServer: {
-    // CI tests the optimized build; the Express server (#19) will serve it once it exists.
-    command: isCi ? 'npx ng serve --configuration test' : 'npm start',
+    // CI tests what deploys: the optimized build served by Express, with its CSP header and real 404s. The ui job
+    // builds it (locally, run `npm run build:express:test` first).
+    command: isCi ? 'npm --prefix ../thad-the-barber-express start' : 'npm start',
+    env: { PORT: new URL(baseURL).port },
     url: baseURL,
     reuseExistingServer: !isCi,
     timeout: 180_000,

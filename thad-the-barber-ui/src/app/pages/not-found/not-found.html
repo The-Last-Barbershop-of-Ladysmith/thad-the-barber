@@ -1,0 +1,32 @@
+<div class="backdrop" aria-hidden="true">
+  <img src="assets/keys/404.avif" alt="" class="photo" />
+  <div class="wash"></div>
+</div>
+
+<section class="not-found px-6 md:px-8" data-testid="not-found">
+  <div class="content stack gap-6">
+    <span class="eyebrow">Error 404 · Page not found</span>
+    <h1 class="display-title text-shadow-hero">This chair's empty.</h1>
+    <p class="lead text-shadow-hero">
+      The page you're looking for moved, got trimmed, or never existed. Your next cut is still a
+      click away.
+    </p>
+
+    <div class="actions">
+      <a pButton size="large" routerLink="/book" data-testid="not-found-book">
+        <span pButtonLabel>Book an appointment</span>
+        <i pButtonIcon class="pi pi-arrow-right"></i>
+      </a>
+      <a pButton size="large" [outlined]="true" routerLink="/" data-testid="not-found-home">
+        <span pButtonLabel>Go to homepage</span>
+      </a>
+    </div>
+
+    <nav class="links border-divider" aria-label="Page sections">
+      @for (item of sections; track item.fragment) {
+        <a routerLink="/" [fragment]="item.fragment" class="nav-link">{{ item.label }}</a>
+      }
+      <a [href]="shop.phone.tel" class="nav-link">{{ shop.phone.display }}</a>
+    </nav>
+  </div>
+</section>

@@ -1,4 +1,4 @@
-# ESLint formats TypeScript (npm run lint:fix). Prettier would undo its one-item-per-line wrapping.
+# ESLint formats TypeScript (npm run lint:fix). Prettier would undo its items-per-line wrapping.
 **/*.ts
 dist/
 .angular/

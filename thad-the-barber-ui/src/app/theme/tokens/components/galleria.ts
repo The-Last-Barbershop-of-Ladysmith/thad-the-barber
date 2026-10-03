@@ -1,4 +1,4 @@
-import type { GalleriaDesignTokens } from '@primeuix/themes/types/galleria';
+import { GalleriaDesignTokens } from '@primeuix/themes/types/galleria';
 
 /** Full-screen gallery lightbox: glass circle nav/close buttons that fill copper on hover. */
 const glassButton: Record<string, string> = {
@@ -9,10 +9,7 @@ const glassButton: Record<string, string> = {
 };
 
 export const galleria: GalleriaDesignTokens = {
-  root: {
-    borderWidth: '0',
-    borderRadius: '{border.radius.xs}',
-  },
+  root: { borderWidth: '0', borderRadius: '{border.radius.xs}' },
   navButton: {
     ...glassButton,
     size: '3.25rem',

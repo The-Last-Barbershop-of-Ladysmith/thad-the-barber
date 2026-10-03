@@ -1,9 +1,13 @@
-import { type MemoizedSelector, createFeature, createSelector } from '@ngrx/store';
-import { type FeatureSelectors } from '../../../shared/models/ngrx.models';
+import {
+  MemoizedSelector,
+  createFeature,
+  createSelector,
+} from '@ngrx/store';
+import { FeatureSelectors } from '../../../shared/models/ngrx.models';
 import { fromIsoDate } from '../../../shared/utils/date.utils';
-import { type TimeSlot } from '../models/booking.models';
+import { TimeSlot } from '../models/booking.models';
 import { bookingReducer } from './booking.reducer';
-import { type BookingState, type BookingStatus } from './booking.state';
+import { BookingState, BookingStatus } from './booking.state';
 
 /** Selectors derived from the generated ones; exposed on `bookingFeature` alongside them. */
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- extraSelectors needs a type alias.
@@ -55,13 +59,7 @@ export const bookingFeature = createFeature({
         time: string | null,
       ): TimeSlot | null => slots.find((slot: TimeSlot): boolean => slot.time === time) ?? null,
     ),
-    selectIsSubmitting: createSelector(
-      selectStatus,
-      (status: BookingStatus): boolean => status === 'submitting',
-    ),
-    selectIsBooked: createSelector(
-      selectStatus,
-      (status: BookingStatus): boolean => status === 'booked',
-    ),
+    selectIsSubmitting: createSelector(selectStatus, (status: BookingStatus): boolean => status === 'submitting'),
+    selectIsBooked: createSelector(selectStatus, (status: BookingStatus): boolean => status === 'booked'),
   }),
 });

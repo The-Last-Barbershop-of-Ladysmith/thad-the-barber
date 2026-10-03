@@ -1,12 +1,9 @@
-import type { CarouselDesignTokens } from '@primeuix/themes/types/carousel';
+import { CarouselDesignTokens } from '@primeuix/themes/types/carousel';
 
 /** Announcements slider: copper ring dots, filled when active. */
 export const carousel: CarouselDesignTokens = {
   root: { transitionDuration: '0.7s' },
-  indicatorList: {
-    padding: '1.5rem 0 0',
-    gap: '0.75rem',
-  },
+  indicatorList: { padding: '1.5rem 0 0', gap: '0.75rem' },
   indicator: {
     width: '0.75rem',
     height: '0.75rem',

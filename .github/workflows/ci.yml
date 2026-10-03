@@ -56,13 +56,44 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: thad-the-barber-ui/package-lock.json
+          cache-dependency-path: |
+            thad-the-barber-ui/package-lock.json
+            thad-the-barber-express/package-lock.json
 
       - run: npm ci
       - run: npm audit --audit-level=high
       - run: npm run lint
       - run: npx ng test --watch=false
-      - run: npm run build
+
+      # The test build Express serves, built once for the e2e and lighthouse jobs. Its post-build hook writes
+      # csp-sources.json into the same folder.
+      - run: npm run build:express:test
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: site-test
+          path: thad-the-barber-express/public/app/thad-the-barber-ui/
+          retention-days: 1
+          if-no-files-found: error
+
+  express:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: thad-the-barber-express
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: thad-the-barber-express/package-lock.json
+
+      - run: npm ci
+      - run: npm audit --audit-level=high
+      - run: npm test
 
   api:
     runs-on: ubuntu-latest
@@ -117,6 +148,7 @@ jobs:
           path: thad-the-barber-api.tests/TestResults/coverage.cobertura.xml
 
   e2e:
+    needs: ui
     runs-on: ubuntu-latest
     timeout-minutes: 30
     defaults:
@@ -129,9 +161,17 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: thad-the-barber-ui/package-lock.json
+          cache-dependency-path: |
+            thad-the-barber-ui/package-lock.json
+            thad-the-barber-express/package-lock.json
 
       - run: npm ci
+      - run: npm ci --omit=dev
+        working-directory: thad-the-barber-express
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: site-test
+          path: thad-the-barber-express/public/app/thad-the-barber-ui
 
       - name: Playwright version
         id: playwright
@@ -175,6 +215,7 @@ jobs:
             thad-the-barber-ui/test-results/
 
   lighthouse:
+    needs: ui
     runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:
@@ -187,15 +228,24 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: thad-the-barber-ui/package-lock.json
+          cache-dependency-path: |
+            thad-the-barber-ui/package-lock.json
+            thad-the-barber-express/package-lock.json
 
       - run: npm ci
+      - run: npm ci --omit=dev
+        working-directory: thad-the-barber-express
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: site-test
+          path: thad-the-barber-express/public/app/thad-the-barber-ui
 
-      # Serves the optimized build until the Express server (#19) exists.
+      # Scores what deploys: the optimized build served by Express. NOINDEX=false sends prod's headers, since the
+      # noindex that dev and test send would fail the SEO category.
       - name: Start the site
         run: |
-          npx ng serve --configuration test --port 4200 > serve.log 2>&1 &
-          timeout 180 bash -c 'until curl -sf http://localhost:4200 > /dev/null; do sleep 2; done' || { cat serve.log; exit 1; }
+          PORT=4200 NOINDEX=false npm --prefix ../thad-the-barber-express start > serve.log 2>&1 &
+          timeout 60 bash -c 'until curl -sf http://localhost:4200 > /dev/null; do sleep 2; done' || { cat serve.log; exit 1; }
 
       # Mobile emulation, Lighthouse's default. Uses the runner's preinstalled Chrome.
       - name: Lighthouse
@@ -234,6 +284,7 @@ jobs:
     needs:
       - gitleaks
       - ui
+      - express
       - api
       - e2e
       - lighthouse

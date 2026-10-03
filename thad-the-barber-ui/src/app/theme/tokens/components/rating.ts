@@ -1,4 +1,4 @@
-import type { RatingDesignTokens } from '@primeuix/themes/types/rating';
+import { RatingDesignTokens } from '@primeuix/themes/types/rating';
 
 /** Read-only review stars in copper. */
 export const rating: RatingDesignTokens = {

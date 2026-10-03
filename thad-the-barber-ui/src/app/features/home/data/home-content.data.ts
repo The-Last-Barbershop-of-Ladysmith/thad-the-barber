@@ -1,4 +1,4 @@
-import { type GalleryPhoto, type HomeContent } from '../models/home.models';
+import { GalleryPhoto, HomeContent } from '../models/home.models';
 
 /** Seed content from the wireframe. HomeContentService serves this until a CMS/API exists. */
 export const HOME_CONTENT: HomeContent = {
@@ -18,10 +18,7 @@ export const HOME_CONTENT: HomeContent = {
       title: 'Back-to-school cuts',
       body: '$5 off every kids cut through the end of September. Bring the whole crew in before the first bell.',
       imageNote: 'photo — kid in the chair',
-      link: {
-        label: 'Book a kids cut',
-        route: '/book',
-      },
+      link: { label: 'Book a kids cut', route: '/book' },
     },
     {
       id: 'thanksgiving',
@@ -37,10 +34,7 @@ export const HOME_CONTENT: HomeContent = {
       title: 'Hot towel beard trims',
       body: 'Now on the menu: a full hot towel beard trim with a straight-razor line-up. Add it to any cut.',
       imageNote: 'photo — hot towel beard trim',
-      link: {
-        label: 'Book a trim',
-        route: '/book',
-      },
+      link: { label: 'Book a trim', route: '/book' },
     },
   ],
   testimonials: [
@@ -76,18 +70,9 @@ export const HOME_CONTENT: HomeContent = {
   ],
   gallery: Array.from(
     { length: 15 },
-    (
-      _: unknown,
-      i: number,
-    ): GalleryPhoto => {
-      const n: string = String(i + 1).padStart(
-        2,
-        '0',
-      );
-      return {
-        src: `assets/gallery/cut-${n}.webp`,
-        alt: `Haircut ${i + 1}`,
-      };
+    (_: unknown, i: number): GalleryPhoto => {
+      const n: string = String(i + 1).padStart(2, '0');
+      return { src: `assets/gallery/cut-${n}.webp`, alt: `Haircut ${i + 1}` };
     },
   ),
 };

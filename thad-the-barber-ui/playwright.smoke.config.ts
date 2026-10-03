@@ -1,7 +1,4 @@
-import {
-  type PlaywrightTestConfig,
-  defineConfig,
-} from '@playwright/test';
+import { PlaywrightTestConfig, defineConfig } from '@playwright/test';
 import { environment } from './src/environments/environment.development';
 
 /**
@@ -14,16 +11,7 @@ const config: PlaywrightTestConfig = defineConfig({
   timeout: 240_000,
   expect: { timeout: 10_000 },
   retries: 1,
-  reporter: [
-    [process.env['CI'] ? 'github' : 'list'],
-    [
-      'html',
-      {
-        open: 'never',
-        outputFolder: 'playwright-report/smoke',
-      },
-    ],
-  ],
+  reporter: [[process.env['CI'] ? 'github' : 'list'], ['html', { open: 'never', outputFolder: 'playwright-report/smoke' }]],
   outputDir: 'test-results/smoke',
   use: {
     baseURL: process.env['BASE_URL'] ?? environment.siteUrl,

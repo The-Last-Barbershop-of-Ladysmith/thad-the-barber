@@ -1,4 +1,4 @@
-import { type Weekday } from '../../core/models/shop.models';
+import { Weekday } from '../../core/models/shop.models';
 
 export const WEEKDAY_NAMES: Record<Weekday, string> = {
   0: 'Sunday',

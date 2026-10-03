@@ -35,13 +35,7 @@ if (reportFiles.length === 0) {
 }
 
 for (const file of reportFiles) {
-  const report: Report = JSON.parse(readFileSync(
-    join(
-      reportDir,
-      file,
-    ),
-    'utf8',
-  )) as Report;
+  const report: Report = JSON.parse(readFileSync(join(reportDir, file), 'utf8')) as Report;
   const path: string = new URL(report.finalDisplayedUrl).pathname;
   const cells: string[] = [];
   header = Object.values(report.categories).map((category: Category): string => category.title);
@@ -61,10 +55,7 @@ for (const file of reportFiles) {
 }
 
 writeFileSync(
-  join(
-    reportDir,
-    'summary.md',
-  ),
+  join(reportDir, 'summary.md'),
   [
     '### Lighthouse (mobile)',
     '',

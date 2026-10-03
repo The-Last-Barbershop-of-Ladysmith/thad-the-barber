@@ -3,8 +3,13 @@ const eslint = require('@eslint/js');
 const { defineConfig } = require('eslint/config');
 const tseslint = require('typescript-eslint');
 const angular = require('angular-eslint');
-const stylistic = require('@stylistic/eslint-plugin');
-const oneItemPerLine = require('./eslint/one-item-per-line');
+// The package's types describe its ESM build (a `default` export); `require` returns the plugin itself.
+const stylistic = /** @type {import('eslint').ESLint.Plugin} */ (require('@stylistic/eslint-plugin'));
+// The plugin's rule metadata is loosely typed (`type: string`), so cast it to the ESLint plugin type.
+const importNewlines = /** @type {import('eslint').ESLint.Plugin} */ (
+  /** @type {unknown} */ (require('eslint-plugin-import-newlines'))
+);
+const itemsPerLine = require('./eslint/items-per-line');
 
 /**
  * Lint + formatting standard for TypeScript.
@@ -13,10 +18,10 @@ const oneItemPerLine = require('./eslint/one-item-per-line');
  * House rules on top:
  *   1. Explicit types on every variable, property, parameter and return value.
  *   2. Every statement ends with a semicolon.
- *   3. Arrays, objects, call arguments and parameters with more than one item go one per line.
+ *   3. Arrays, objects, call arguments and parameters with 3 or more items go one per line; 1–2 items stay on one line.
  *
  * ESLint owns TypeScript formatting (`npm run lint:fix`). Prettier formats HTML/SCSS/CSS only
- * (see .prettierignore) because it would collapse the one-item-per-line wrapping.
+ * (see .prettierignore) because it would collapse the items-per-line wrapping.
  */
 module.exports = defineConfig([
   {
@@ -44,9 +49,10 @@ module.exports = defineConfig([
     processor: angular.processInlineTemplates,
     plugins: {
       '@stylistic': stylistic,
+      'import-newlines': importNewlines,
       local: {
         rules: {
-          'one-item-per-line': oneItemPerLine,
+          'items-per-line': itemsPerLine,
         },
       },
     },
@@ -114,7 +120,7 @@ module.exports = defineConfig([
       '@typescript-eslint/consistent-type-imports': [
         'error',
         {
-          fixStyle: 'inline-type-imports',
+          prefer: 'no-type-imports',
         },
       ],
 
@@ -165,19 +171,19 @@ module.exports = defineConfig([
         },
       ],
 
-      // ---- 3. One item per line when there is more than one ----------------------------------------
+      // ---- 3. One item per line from 3 items ------------------------------------------------------
       '@stylistic/array-bracket-newline': [
         'error',
         {
           multiline: true,
-          minItems: 2,
+          minItems: 3,
         },
       ],
       '@stylistic/array-element-newline': [
         'error',
         {
           multiline: true,
-          minItems: 2,
+          minItems: 3,
         },
       ],
       '@stylistic/object-curly-newline': [
@@ -185,19 +191,19 @@ module.exports = defineConfig([
         {
           ObjectExpression: {
             multiline: true,
-            minProperties: 2,
+            minProperties: 3,
           },
           ObjectPattern: {
             multiline: true,
-            minProperties: 2,
+            minProperties: 3,
           },
           TSTypeLiteral: {
             multiline: true,
-            minProperties: 2,
+            minProperties: 3,
           },
           TSInterfaceBody: {
             multiline: true,
-            minProperties: 2,
+            minProperties: 3,
           },
           ImportDeclaration: {
             multiline: true,
@@ -209,23 +215,20 @@ module.exports = defineConfig([
           },
         },
       ],
-      '@stylistic/object-property-newline': [
-        'error',
-        {
-          allowAllPropertiesOnSameLine: false,
-        },
-      ],
       '@stylistic/function-paren-newline': [
         'error',
+        'multiline-arguments',
+      ],
+      'local/items-per-line': 'error',
+      'import-newlines/enforce': [
+        'error',
         {
-          minItems: 2,
+          // The most items allowed on one line, so 2 wraps from 3.
+          items: 2,
+          'max-len': 120,
+          semi: true,
         },
       ],
-      '@stylistic/function-call-argument-newline': [
-        'error',
-        'always',
-      ],
-      'local/one-item-per-line': 'error',
 
       // ---- General layout ----------------------------------------------------------------------------
       '@stylistic/indent': [

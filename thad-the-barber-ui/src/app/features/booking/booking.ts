@@ -1,9 +1,9 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  type OnInit,
-  type Signal,
-  type WritableSignal,
+  OnInit,
+  Signal,
+  WritableSignal,
   computed,
   inject,
   signal,
@@ -11,8 +11,8 @@ import {
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
-import { type DatePickerMonthChangeEvent } from 'primeng/types/datepicker';
-import { type Weekday } from '../../core/models/shop.models';
+import { DatePickerMonthChangeEvent } from 'primeng/types/datepicker';
+import { Weekday } from '../../core/models/shop.models';
 import { ShopHoursService } from '../../core/services/shop-hours.service';
 import { Backdrop } from '../../shared/components/backdrop/backdrop';
 import {
@@ -22,17 +22,21 @@ import {
   toIsoDate,
   toMonthKey,
 } from '../../shared/utils/date.utils';
-import { PHONE_PATTERN, nameValidators, phoneValidators } from '../../shared/validators/form.validators';
-import { type AppState } from '../../store/app.state';
-import { BookingSummary, type SummaryRow } from './components/booking-summary/booking-summary';
+import {
+  PHONE_PATTERN,
+  nameValidators,
+  phoneValidators,
+} from '../../shared/validators/form.validators';
+import { AppState } from '../../store/app.state';
+import { BookingSummary, SummaryRow } from './components/booking-summary/booking-summary';
 import { DateStep } from './components/date-step/date-step';
-import { type BookingDetailsForm, DetailsStep } from './components/details-step/details-step';
+import { BookingDetailsForm, DetailsStep } from './components/details-step/details-step';
 import { TimeStep } from './components/time-step/time-step';
 import {
-  type BookingConfirmation,
-  type BookingDetails,
-  type DateRange,
-  type TimeSlot,
+  BookingConfirmation,
+  BookingDetails,
+  DateRange,
+  TimeSlot,
 } from './models/booking.models';
 import { AvailabilityService } from './services/availability.service';
 import { BookingPageActions } from './state/booking.actions';
@@ -72,20 +76,8 @@ export class Booking implements OnInit {
     this.store.selectSignal(bookingFeature.selectConfirmation);
 
   protected readonly form: BookingDetailsForm = new FormGroup({
-    name: new FormControl(
-      '',
-      {
-        nonNullable: true,
-        validators: nameValidators,
-      },
-    ),
-    phone: new FormControl(
-      '',
-      {
-        nonNullable: true,
-        validators: phoneValidators,
-      },
-    ),
+    name: new FormControl('', { nonNullable: true, validators: nameValidators }),
+    phone: new FormControl('', { nonNullable: true, validators: phoneValidators }),
   });
 
   private readonly details: Signal<Partial<BookingDetails>> = toSignal(
@@ -124,22 +116,10 @@ export class Booking implements OnInit {
     const name: string = details.name?.trim() ?? '';
     const phone: string = details.phone ?? '';
     return [
-      {
-        label: 'Date',
-        value: day ? formatShortDate(day) : '—',
-      },
-      {
-        label: 'Time',
-        value: this.selectedSlot()?.label ?? '—',
-      },
-      {
-        label: 'Name',
-        value: name || '—',
-      },
-      {
-        label: 'Phone',
-        value: phone || '—',
-      },
+      { label: 'Date', value: day ? formatShortDate(day) : '—' },
+      { label: 'Time', value: this.selectedSlot()?.label ?? '—' },
+      { label: 'Name', value: name || '—' },
+      { label: 'Phone', value: phone || '—' },
     ];
   });
 

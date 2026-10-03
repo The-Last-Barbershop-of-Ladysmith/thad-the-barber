@@ -1,4 +1,9 @@
-import { type NavItem, type OpeningHours, type ShopInfo, type SocialLink } from '../models/shop.models';
+import {
+  NavItem,
+  OpeningHours,
+  ShopInfo,
+  SocialLink,
+} from '../models/shop.models';
 
 /**
  * Business facts that appear across the header, home sections, booking page and footer.
@@ -59,24 +64,9 @@ export const SOCIAL_LINKS: readonly SocialLink[] = [
 
 /** In-page sections of the home feature, used by the header, mobile drawer and footer. */
 export const HOME_SECTIONS: readonly NavItem[] = [
-  {
-    label: 'Announcements',
-    fragment: 'announcements',
-  },
-  {
-    label: 'Schedule',
-    fragment: 'schedule',
-  },
-  {
-    label: 'Visit',
-    fragment: 'visit',
-  },
-  {
-    label: 'Testimonials',
-    fragment: 'testimonials',
-  },
-  {
-    label: 'Gallery',
-    fragment: 'gallery',
-  },
+  { label: 'Announcements', fragment: 'announcements' },
+  { label: 'Schedule', fragment: 'schedule' },
+  { label: 'Visit', fragment: 'visit' },
+  { label: 'Testimonials', fragment: 'testimonials' },
+  { label: 'Gallery', fragment: 'gallery' },
 ];

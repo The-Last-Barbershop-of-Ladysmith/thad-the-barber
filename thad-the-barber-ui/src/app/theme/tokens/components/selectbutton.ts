@@ -1,5 +1,5 @@
-import type { SelectButtonDesignTokens } from '@primeuix/themes/types/selectbutton';
-import type { ToggleButtonDesignTokens } from '@primeuix/themes/types/togglebutton';
+import { SelectButtonDesignTokens } from '@primeuix/themes/types/selectbutton';
+import { ToggleButtonDesignTokens } from '@primeuix/themes/types/togglebutton';
 
 /**
  * Time-slot picker. SelectButton renders ToggleButtons, so both token sets are tuned here.

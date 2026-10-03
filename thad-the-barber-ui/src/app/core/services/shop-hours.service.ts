@@ -1,6 +1,19 @@
-import { DestroyRef, Injectable, type Signal, type WritableSignal, computed, inject, signal } from '@angular/core';
+import {
+  DestroyRef,
+  Injectable,
+  Signal,
+  WritableSignal,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { OPENING_HOURS } from '../config/shop-info';
-import { type HoursRow, type OpenStatus, type OpeningHours, type Weekday } from '../models/shop.models';
+import {
+  HoursRow,
+  OpenStatus,
+  OpeningHours,
+  Weekday,
+} from '../models/shop.models';
 import { formatMinutes } from '../../shared/utils/date.utils';
 import {
   WEEKDAY_NAMES,
@@ -45,10 +58,7 @@ export class ShopHoursService {
   closedWeekdays(): Weekday[] {
     return WEEK_FROM_MONDAY
       .filter((day: Weekday): boolean => !this.isOpenDay(day))
-      .sort((
-        a: Weekday,
-        b: Weekday,
-      ): number => a - b);
+      .sort((a: Weekday, b: Weekday): number => a - b);
   }
 
   statusAt(now: Date): OpenStatus {
@@ -56,19 +66,10 @@ export class ShopHoursService {
     const today: OpeningHours | undefined = this.hoursFor(now);
 
     if (today && minutes >= today.opensAt && minutes < today.closesAt) {
-      return {
-        isOpen: true,
-        label: 'Open now',
-      };
+      return { isOpen: true, label: 'Open now' };
     }
     if (today && minutes < today.opensAt) {
-      return {
-        isOpen: false,
-        label: `Opens today at ${formatMinutes(
-          today.opensAt,
-          true,
-        )}`,
-      };
+      return { isOpen: false, label: `Opens today at ${formatMinutes(today.opensAt, true)}` };
     }
     for (let offset: number = 1; offset <= 7; offset++) {
       const day: Weekday = toWeekday(now.getDay() + offset);
@@ -76,17 +77,11 @@ export class ShopHoursService {
       if (next) {
         return {
           isOpen: false,
-          label: `Closed · Opens ${WEEKDAY_SHORT_NAMES[day]} ${formatMinutes(
-            next.opensAt,
-            true,
-          )}`,
+          label: `Closed · Opens ${WEEKDAY_SHORT_NAMES[day]} ${formatMinutes(next.opensAt, true)}`,
         };
       }
     }
-    return {
-      isOpen: false,
-      label: 'Closed',
-    };
+    return { isOpen: false, label: 'Closed' };
   }
 
   private buildRows(): HoursRow[] {
@@ -94,13 +89,7 @@ export class ShopHoursService {
       label: WEEKDAY_NAMES[entry.day],
       shortLabel: WEEKDAY_SHORT_NAMES[entry.day],
       range: `${formatMinutes(entry.opensAt)} – ${formatMinutes(entry.closesAt)}`,
-      shortRange: `${formatMinutes(
-        entry.opensAt,
-        true,
-      )} – ${formatMinutes(
-        entry.closesAt,
-        true,
-      )}`,
+      shortRange: `${formatMinutes(entry.opensAt, true)} – ${formatMinutes(entry.closesAt, true)}`,
       closed: false,
     }));
 

@@ -1,4 +1,9 @@
-import { ChangeDetectionStrategy, Component, type InputSignal, input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  InputSignal,
+  input,
+} from '@angular/core';
 
 /** Eyebrow label + uppercase section title, repeated at the top of every home section. */
 @Component({

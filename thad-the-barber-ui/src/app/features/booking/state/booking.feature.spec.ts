@@ -1,6 +1,6 @@
-import { type TimeSlot } from '../models/booking.models';
+import { TimeSlot } from '../models/booking.models';
 import { bookingFeature } from './booking.feature';
-import { type BookingState, initialBookingState } from './booking.state';
+import { BookingState, initialBookingState } from './booking.state';
 
 const slots: TimeSlot[] = [
   {

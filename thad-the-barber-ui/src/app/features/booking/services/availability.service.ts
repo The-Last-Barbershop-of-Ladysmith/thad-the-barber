@@ -1,6 +1,10 @@
 import { Injectable, inject } from '@angular/core';
-import { type Observable, delay, of } from 'rxjs';
-import { type OpeningHours } from '../../../core/models/shop.models';
+import {
+  Observable,
+  delay,
+  of,
+} from 'rxjs';
+import { OpeningHours } from '../../../core/models/shop.models';
 import { ShopHoursService } from '../../../core/services/shop-hours.service';
 import {
   addDays,
@@ -12,12 +16,13 @@ import {
   toTimeKey,
 } from '../../../shared/utils/date.utils';
 import { hashToUnit } from '../../../shared/utils/math.utils';
-import { type BookingRules, type DateRange, type TimeSlot } from '../models/booking.models';
+import {
+  BookingRules,
+  DateRange,
+  TimeSlot,
+} from '../models/booking.models';
 
-export const BOOKING_RULES: BookingRules = {
-  daysAhead: 60,
-  slotMinutes: 30,
-};
+export const BOOKING_RULES: BookingRules = { daysAhead: 60, slotMinutes: 30 };
 
 /**
  * Open dates and time slots.
@@ -30,13 +35,7 @@ export class AvailabilityService {
 
   bookingWindow(now: Date = new Date()): DateRange {
     const min: Date = startOfToday(now);
-    return {
-      min,
-      max: addDays(
-        min,
-        BOOKING_RULES.daysAhead,
-      ),
-    };
+    return { min, max: addDays(min, BOOKING_RULES.daysAhead) };
   }
 
   /** ISO dates in the month ("2026-10") that can't be booked: past, closed, beyond the window, or full. */
@@ -46,10 +45,7 @@ export class AvailabilityService {
     for (
       let date: Date = first;
       date.getMonth() === first.getMonth();
-      date = addDays(
-        date,
-        1,
-      )
+      date = addDays(date, 1)
     ) {
       if (!this.isBookable(date)) {
         unavailable.push(toIsoDate(date));
