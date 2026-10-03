@@ -1,4 +1,4 @@
-import type { DrawerDesignTokens } from '@primeuix/themes/types/drawer';
+import { DrawerDesignTokens } from '@primeuix/themes/types/drawer';
 
 /** Mobile navigation sheet. */
 export const drawer: DrawerDesignTokens = {

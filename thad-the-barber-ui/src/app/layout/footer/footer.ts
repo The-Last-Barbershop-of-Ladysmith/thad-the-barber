@@ -1,8 +1,16 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
-import { HOME_SECTIONS, SHOP_INFO, SOCIAL_LINKS } from '../../core/config/shop-info';
-import { type NavItem, type ShopInfo, type SocialLink } from '../../core/models/shop.models';
+import {
+  HOME_SECTIONS,
+  SHOP_INFO,
+  SOCIAL_LINKS,
+} from '../../core/config/shop-info';
+import {
+  NavItem,
+  ShopInfo,
+  SocialLink,
+} from '../../core/models/shop.models';
 import { HoursList } from '../../shared/components/hours-list/hours-list';
 
 @Component({
@@ -23,9 +31,6 @@ export class Footer {
   protected readonly year: number = new Date().getFullYear();
 
   protected scrollToTop(): void {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth',
-    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 }

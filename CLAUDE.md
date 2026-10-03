@@ -56,10 +56,10 @@ Components:
 - Component SCSS is unlayered and beats Tailwind, so never set in SCSS a property that an inline breakpoint class changes — keep the base value inline too (`px-6 md:px-8`).
 - For `nav-link`, set `--link-color`, not `color`.
 
-TypeScript (`eslint.config.js`, plus `eslint/one-item-per-line.js`):
+TypeScript (`eslint.config.js`, plus `eslint/items-per-line.js`):
 - Explicit types on every variable, property, parameter (including callbacks/destructuring) and return value. The only exceptions are the `createActionGroup`/`createFeature` declarations, which carry a one-line `eslint-disable` with a reason.
 - Semicolons everywhere, including interface/type members.
-- One item per line whenever there is more than one (array items, object props, call args, params, destructured props).
+- One item per line from 3 items; 1-2 items stay on one line (array items, object props, call args, params, destructured props, import specifiers).
 - ESLint formats `.ts`; Prettier formats HTML/SCSS/CSS only (Prettier would undo the one-per-line wrapping).
 - NgRx typing: effects are `FunctionalEffect`; derived selectors are `MemoizedSelector<object, T>`; feature selectors are destructured with `: typeof xFeature`; action payloads are named interfaces; store is injected as `inject<Store<AppState>>(Store)`.
 - `tsconfig.json` is strict with `noUncheckedIndexedAccess`, `noUnused*`, and `strictTemplates`.

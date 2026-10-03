@@ -1,4 +1,4 @@
-import type { ButtonDesignTokens } from '@primeuix/themes/types/button';
+import { ButtonDesignTokens } from '@primeuix/themes/types/button';
 
 /**
  * Every button in the wireframe maps to a PrimeNG button variant, so no custom button component:
@@ -50,10 +50,7 @@ export const button: ButtonDesignTokens = {
       color: '{text.color}',
       hoverColor: '{primary.contrast.color}',
       activeColor: '{primary.contrast.color}',
-      focusRing: {
-        color: '{primary.color}',
-        shadow: 'none',
-      },
+      focusRing: { color: '{primary.color}', shadow: 'none' },
     },
   },
   outlined: {

@@ -1,8 +1,20 @@
 import { inject } from '@angular/core';
-import { Actions, type FunctionalEffect, createEffect, ofType } from '@ngrx/effects';
-import { type Action } from '@ngrx/store';
-import { type Observable, catchError, exhaustMap, map, of, switchMap } from 'rxjs';
-import { type HomeContent } from '../models/home.models';
+import {
+  Actions,
+  FunctionalEffect,
+  createEffect,
+  ofType,
+} from '@ngrx/effects';
+import { Action } from '@ngrx/store';
+import {
+  Observable,
+  catchError,
+  exhaustMap,
+  map,
+  of,
+  switchMap,
+} from 'rxjs';
+import { HomeContent } from '../models/home.models';
 import { HomeContentService } from '../services/home-content.service';
 import { SmsSignupService } from '../services/sms-signup.service';
 import { HomeApiActions, HomePageActions } from './home.actions';

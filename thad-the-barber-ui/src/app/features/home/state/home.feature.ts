@@ -1,7 +1,15 @@
-import { type MemoizedSelector, createFeature, createSelector } from '@ngrx/store';
-import { type FeatureSelectors } from '../../../shared/models/ngrx.models';
+import {
+  MemoizedSelector,
+  createFeature,
+  createSelector,
+} from '@ngrx/store';
+import { FeatureSelectors } from '../../../shared/models/ngrx.models';
 import { homeReducer } from './home.reducer';
-import { type HomeState, type RequestStatus, type SmsSignupState } from './home.state';
+import {
+  HomeState,
+  RequestStatus,
+  SmsSignupState,
+} from './home.state';
 
 /** Selectors derived from the generated ones; exposed on `homeFeature` alongside them. */
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- extraSelectors needs a type alias.
@@ -23,10 +31,7 @@ export const homeFeatureKey: 'home' = 'home' as const;
 export const homeFeature = createFeature({
   name: homeFeatureKey,
   reducer: homeReducer,
-  extraSelectors: ({
-    selectSmsSignup,
-    selectContentStatus,
-  }: FeatureSelectors<HomeState>): HomeExtraSelectors => ({
+  extraSelectors: ({ selectSmsSignup, selectContentStatus }: FeatureSelectors<HomeState>): HomeExtraSelectors => ({
     selectIsSubscribed: createSelector(
       selectSmsSignup,
       (signup: SmsSignupState): boolean => signup.status === 'success',
@@ -35,9 +40,6 @@ export const homeFeature = createFeature({
       selectSmsSignup,
       (signup: SmsSignupState): boolean => signup.status === 'pending',
     ),
-    selectContentLoading: createSelector(
-      selectContentStatus,
-      (status: RequestStatus): boolean => status === 'pending',
-    ),
+    selectContentLoading: createSelector(selectContentStatus, (status: RequestStatus): boolean => status === 'pending'),
   }),
 });

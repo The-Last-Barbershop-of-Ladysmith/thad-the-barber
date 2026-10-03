@@ -1,9 +1,18 @@
-import { ChangeDetectionStrategy, Component, computed, input, type InputSignal, output, type OutputEmitterRef, type Signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  input,
+  InputSignal,
+  output,
+  OutputEmitterRef,
+  Signal,
+} from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { SelectButtonModule } from 'primeng/selectbutton';
-import { type TimeSlot } from '../../models/booking.models';
+import { TimeSlot } from '../../models/booking.models';
 
 /** A slot as a SelectButton option; PrimeNG reads the disabled flag through optionDisabled. */
 interface SlotOption extends TimeSlot { disabled: boolean; }
@@ -31,8 +40,5 @@ export class TimeStep {
   readonly timeSelect: OutputEmitterRef<string> = output<string>();
 
   protected readonly options: Signal<SlotOption[]> = computed((): SlotOption[] =>
-    this.slots().map((slot: TimeSlot): SlotOption => ({
-      ...slot,
-      disabled: !slot.available,
-    })));
+    this.slots().map((slot: TimeSlot): SlotOption => ({ ...slot, disabled: !slot.available })));
 }

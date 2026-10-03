@@ -1,4 +1,4 @@
-import { type Environment } from './environment.model';
+import { Environment } from './environment.model';
 
 // Prod resources come at M5; these follow the planned names until the custom domain replaces them.
 export const environment: Environment = {

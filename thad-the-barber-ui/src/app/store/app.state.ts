@@ -1,5 +1,5 @@
-import type { BookingState } from '../features/booking/state/booking.state';
-import type { HomeState } from '../features/home/state/home.state';
+import { BookingState } from '../features/booking/state/booking.state';
+import { HomeState } from '../features/home/state/home.state';
 
 /** App-wide UI state shared by layout components. Feature data lives in each feature's own state folder. */
 export interface LayoutState { menuOpen: boolean; }

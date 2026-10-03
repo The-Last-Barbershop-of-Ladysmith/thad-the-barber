@@ -1,6 +1,6 @@
 import {
-  type PlaywrightTestConfig,
-  type Project,
+  PlaywrightTestConfig,
+  Project,
   defineConfig,
 } from '@playwright/test';
 import { environment } from './src/environments/environment.development';
@@ -8,18 +8,10 @@ import { environment } from './src/environments/environment.development';
 const isCi: boolean = !!process.env['CI'];
 const baseURL: string = environment.siteUrl;
 
-const desktop: Project['use'] = {
-  viewport: {
-    width: 1280,
-    height: 800,
-  },
-};
+const desktop: Project['use'] = { viewport: { width: 1280, height: 800 } };
 
 const mobile: Project['use'] = {
-  viewport: {
-    width: 390,
-    height: 844,
-  },
+  viewport: { width: 390, height: 844 },
   isMobile: true,
   hasTouch: true,
   deviceScaleFactor: 3,
@@ -37,15 +29,9 @@ const config: PlaywrightTestConfig = defineConfig({
   expect: { timeout: 10_000 },
   reporter: [
     [isCi ? 'github' : 'list'],
-    [
-      'html',
-      { open: 'never' },
-    ],
+    ['html', { open: 'never' }],
     // Read by `npm run e2e:summary` for the CI job summary and PR comment.
-    [
-      'json',
-      { outputFile: 'test-results/results.json' },
-    ],
+    ['json', { outputFile: 'test-results/results.json' }],
   ],
   use: {
     baseURL,
@@ -54,34 +40,10 @@ const config: PlaywrightTestConfig = defineConfig({
     video: 'retain-on-failure',
   },
   projects: [
-    {
-      name: 'chromium-desktop',
-      use: {
-        browserName: 'chromium',
-        ...desktop,
-      },
-    },
-    {
-      name: 'chromium-mobile',
-      use: {
-        browserName: 'chromium',
-        ...mobile,
-      },
-    },
-    {
-      name: 'webkit-desktop',
-      use: {
-        browserName: 'webkit',
-        ...desktop,
-      },
-    },
-    {
-      name: 'webkit-mobile',
-      use: {
-        browserName: 'webkit',
-        ...mobile,
-      },
-    },
+    { name: 'chromium-desktop', use: { browserName: 'chromium', ...desktop } },
+    { name: 'chromium-mobile', use: { browserName: 'chromium', ...mobile } },
+    { name: 'webkit-desktop', use: { browserName: 'webkit', ...desktop } },
+    { name: 'webkit-mobile', use: { browserName: 'webkit', ...mobile } },
   ],
   webServer: {
     // CI tests the optimized build; the Express server (#19) will serve it once it exists.

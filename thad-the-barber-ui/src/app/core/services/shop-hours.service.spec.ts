@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { type HoursRow } from '../models/shop.models';
+import { HoursRow } from '../models/shop.models';
 import { ShopHoursService } from './shop-hours.service';
 
 describe(
@@ -21,10 +21,7 @@ describe(
           26,
           12,
           0,
-        ))).toEqual({
-          isOpen: true,
-          label: 'Open now',
-        });
+        ))).toEqual({ isOpen: true, label: 'Open now' });
       },
     );
 
@@ -63,10 +60,7 @@ describe(
           28,
           12,
           0,
-        ))).toEqual({
-          isOpen: false,
-          label: 'Closed · Opens Sat 10 AM',
-        });
+        ))).toEqual({ isOpen: false, label: 'Closed · Opens Sat 10 AM' });
       },
     );
 

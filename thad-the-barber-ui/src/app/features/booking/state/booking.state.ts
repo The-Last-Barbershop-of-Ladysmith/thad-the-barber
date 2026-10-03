@@ -1,4 +1,4 @@
-import { type BookingConfirmation, type TimeSlot } from '../models/booking.models';
+import { BookingConfirmation, TimeSlot } from '../models/booking.models';
 
 export type BookingStatus = 'idle' | 'submitting' | 'booked' | 'error';
 

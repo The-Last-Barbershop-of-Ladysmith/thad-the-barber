@@ -2,9 +2,9 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
-  type ElementRef,
-  type InputSignal,
-  type Signal,
+  ElementRef,
+  InputSignal,
+  Signal,
   afterNextRender,
   inject,
   input,
@@ -56,10 +56,7 @@ export class Backdrop {
       let frameRequest: number = 0;
       const update: (fromScroll: boolean) => void = (fromScroll: boolean): void => {
         frameRequest = 0;
-        scrubber.setTarget(
-          this.scrollPosition(),
-          fromScroll,
-        );
+        scrubber.setTarget(this.scrollPosition(), fromScroll);
       };
       const onScroll: () => void = (): void => {
         if (frameRequest === 0) {
@@ -78,21 +75,12 @@ export class Backdrop {
         onScroll,
         { passive: true },
       );
-      window.addEventListener(
-        'resize',
-        onResize,
-      );
+      window.addEventListener('resize', onResize);
       update(false);
 
       destroyRef.onDestroy((): void => {
-        window.removeEventListener(
-          'scroll',
-          onScroll,
-        );
-        window.removeEventListener(
-          'resize',
-          onResize,
-        );
+        window.removeEventListener('scroll', onScroll);
+        window.removeEventListener('resize', onResize);
         cancelAnimationFrame(frameRequest);
         scrubber.destroy();
       });
@@ -111,16 +99,10 @@ export class Backdrop {
       const host: Element | null = document.querySelector(anchor);
       const box: Element | null = host?.firstElementChild ?? host;
       return box
-        ? Math.min(
-          maxScroll,
-          box.getBoundingClientRect().top + scrollY,
-        )
+        ? Math.min(maxScroll, box.getBoundingClientRect().top + scrollY)
         : 0;
     });
-    tops.forEach((
-      top: number,
-      index: number,
-    ): void => {
+    tops.forEach((top: number, index: number): void => {
       if (Number.isNaN(top)) {
         tops[index] = ((tops[index - 1] ?? 0) + (tops[index + 1] ?? 0)) / 2;
       }
@@ -130,13 +112,7 @@ export class Backdrop {
       const start: number = tops[clip] ?? 0;
       const end: number = tops[clip + 1] ?? maxScroll;
       if (scrollY < end) {
-        return clip + Math.max(
-          0,
-          (scrollY - start) / Math.max(
-            1,
-            end - start,
-          ),
-        );
+        return clip + Math.max(0, (scrollY - start) / Math.max(1, end - start));
       }
     }
     return CLIP_COUNT;

@@ -1,7 +1,7 @@
 import {
-  type APIRequestContext,
-  type APIResponse,
-  type Page,
+  APIRequestContext,
+  APIResponse,
+  Page,
   expect,
   test,
 } from '@playwright/test';
@@ -30,10 +30,7 @@ test.describe(
         const healthUrl: string = `${apiBaseUrl}/health`;
         await expect(async (): Promise<void> => {
           const response: APIResponse = await request.get(healthUrl);
-          expect(
-            response.status(),
-            healthUrl,
-          ).toBe(200);
+          expect(response.status(), healthUrl).toBe(200);
         }).toPass(COLD_START);
       },
     );
@@ -43,10 +40,7 @@ test.describe(
       async ({ page }: { page: Page; }): Promise<void> => {
         await expect(async (): Promise<void> => {
           await page.goto('/');
-          await expect(page.getByRole(
-            'heading',
-            { level: 1 },
-          )).toBeVisible();
+          await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
         }).toPass(COLD_START);
       },
     );

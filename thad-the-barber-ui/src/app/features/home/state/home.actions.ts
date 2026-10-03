@@ -1,5 +1,9 @@
-import { createActionGroup, emptyProps, props } from '@ngrx/store';
-import { type HomeContent } from '../models/home.models';
+import {
+  createActionGroup,
+  emptyProps,
+  props,
+} from '@ngrx/store';
+import { HomeContent } from '../models/home.models';
 
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionGroup type.
 export const HomePageActions = createActionGroup({

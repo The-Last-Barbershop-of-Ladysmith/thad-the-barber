@@ -1,5 +1,10 @@
-import { ChangeDetectionStrategy, Component, type Signal, inject } from '@angular/core';
-import { type OpenStatus, type ShopInfo } from '../../../../core/models/shop.models';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  Signal,
+  inject,
+} from '@angular/core';
+import { OpenStatus, ShopInfo } from '../../../../core/models/shop.models';
 import { RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';

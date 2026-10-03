@@ -1,4 +1,4 @@
-import { type TokenSection } from '@primeuix/themes';
+import { TokenSection } from '@primeuix/themes';
 
 /**
  * Semantic tokens: give primitives a job (primary, surface, text, form fields...).
@@ -6,18 +6,12 @@ import { type TokenSection } from '@primeuix/themes';
  * `extend` holds brand-only tokens PrimeNG has no slot for; they become CSS variables
  * (for example `--p-brand-glass-background`) that `tailwind/theme.css` exposes as utilities.
  */
-function alpha(
-  token: string,
-  percent: number,
-): string {
+function alpha(token: string, percent: number): string {
   return `color-mix(in srgb, ${token} ${percent}%, transparent)`;
 }
 
 export const semantic: TokenSection = {
-  typography: {
-    fontFamily: '{font.family.sans}',
-    fontSize: '1rem',
-  },
+  typography: { fontFamily: '{font.family.sans}', fontSize: '1rem' },
 
   transitionDuration: '0.25s',
 
@@ -70,18 +64,9 @@ export const semantic: TokenSection = {
   },
 
   content: {
-    background: alpha(
-      '{ink}',
-      76,
-    ),
-    hoverBackground: alpha(
-      '{espresso.50}',
-      6,
-    ),
-    borderColor: alpha(
-      '{copper.500}',
-      22,
-    ),
+    background: alpha('{ink}', 76),
+    hoverBackground: alpha('{espresso.50}', 6),
+    borderColor: alpha('{copper.500}', 22),
     color: '{text.color}',
     hoverColor: '{text.hover.color}',
     borderRadius: '{border.radius.md}',
@@ -92,34 +77,13 @@ export const semantic: TokenSection = {
     paddingY: '0.875rem',
     fontSize: '1rem',
     borderRadius: '{border.radius.md}',
-    background: alpha(
-      '{espresso.50}',
-      6,
-    ),
-    filledBackground: alpha(
-      '{espresso.50}',
-      6,
-    ),
-    filledHoverBackground: alpha(
-      '{espresso.50}',
-      8,
-    ),
-    filledFocusBackground: alpha(
-      '{espresso.50}',
-      8,
-    ),
-    disabledBackground: alpha(
-      '{espresso.50}',
-      4,
-    ),
-    borderColor: alpha(
-      '{copper.500}',
-      45,
-    ),
-    hoverBorderColor: alpha(
-      '{copper.500}',
-      70,
-    ),
+    background: alpha('{espresso.50}', 6),
+    filledBackground: alpha('{espresso.50}', 6),
+    filledHoverBackground: alpha('{espresso.50}', 8),
+    filledFocusBackground: alpha('{espresso.50}', 8),
+    disabledBackground: alpha('{espresso.50}', 4),
+    borderColor: alpha('{copper.500}', 45),
+    hoverBorderColor: alpha('{copper.500}', 70),
     focusBorderColor: '{primary.color}',
     color: '{text.color}',
     disabledColor: '{espresso.600}',
@@ -132,22 +96,13 @@ export const semantic: TokenSection = {
   },
 
   highlight: {
-    background: alpha(
-      '{copper.500}',
-      14,
-    ),
-    focusBackground: alpha(
-      '{copper.500}',
-      24,
-    ),
+    background: alpha('{copper.500}', 14),
+    focusBackground: alpha('{copper.500}', 24),
     color: '{copper.300}',
     focusColor: '{copper.200}',
   },
 
-  mask: {
-    background: 'rgba(8, 5, 3, 0.92)',
-    color: '{espresso.200}',
-  },
+  mask: { background: 'rgba(8, 5, 3, 0.92)', color: '{espresso.200}' },
 
   overlay: {
     modal: {
@@ -166,42 +121,15 @@ export const semantic: TokenSection = {
   extend: {
     brand: {
       glass: {
-        background: alpha(
-          '{ink}',
-          76,
-        ),
-        strongBackground: alpha(
-          '{ink}',
-          86,
-        ),
+        background: alpha('{ink}', 76),
+        strongBackground: alpha('{ink}', 86),
         blur: '12px',
       },
-      tile: {
-        background: alpha(
-          '{espresso.50}',
-          4,
-        ),
-        borderColor: alpha(
-          '{copper.500}',
-          18,
-        ),
-      },
-      divider: alpha(
-        '{copper.500}',
-        15,
-      ),
-      headerFade: `linear-gradient(180deg, ${alpha(
-        '{ink}',
-        92,
-      )} 0%, ${alpha(
-        '{ink}',
-        60,
-      )} 55%, transparent 100%)`,
+      tile: { background: alpha('{espresso.50}', 4), borderColor: alpha('{copper.500}', 18) },
+      divider: alpha('{copper.500}', 15),
+      headerFade: `linear-gradient(180deg, ${alpha('{ink}', 92)} 0%, ${alpha('{ink}', 60)} 55%, transparent 100%)`,
       ctaGradient: 'linear-gradient(100deg, {ink} 0%, {espresso.800} 30%, {copper.500} 65%, {copper.300} 100%)',
-      ctaGlow: `0 16px 36px -10px ${alpha(
-        '{copper.500}',
-        80,
-      )}`,
+      ctaGlow: `0 16px 36px -10px ${alpha('{copper.500}', 80)}`,
       success: '{mint}',
       ease: 'cubic-bezier(0.2, 0.8, 0.2, 1)',
     },

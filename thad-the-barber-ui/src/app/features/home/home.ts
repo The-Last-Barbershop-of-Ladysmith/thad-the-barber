@@ -1,8 +1,18 @@
-import { ChangeDetectionStrategy, Component, type OnInit, type Signal, inject } from '@angular/core';
-import { type AppState } from '../../store/app.state';
-import { type Announcement, type GalleryPhoto, type Testimonial } from './models/home.models';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  Signal,
+  inject,
+} from '@angular/core';
+import { AppState } from '../../store/app.state';
+import {
+  Announcement,
+  GalleryPhoto,
+  Testimonial,
+} from './models/home.models';
 import { Store } from '@ngrx/store';
-import { Backdrop, type BackdropAnchor } from '../../shared/components/backdrop/backdrop';
+import { Backdrop, BackdropAnchor } from '../../shared/components/backdrop/backdrop';
 import { Announcements } from './components/announcements/announcements';
 import { Gallery } from './components/gallery/gallery';
 import { Hero } from './components/hero/hero';

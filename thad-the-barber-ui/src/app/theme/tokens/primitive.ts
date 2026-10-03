@@ -1,4 +1,4 @@
-import { type TokenSection } from '@primeuix/themes';
+import { TokenSection } from '@primeuix/themes';
 
 /**
  * Primitive tokens: raw brand values with no meaning attached.

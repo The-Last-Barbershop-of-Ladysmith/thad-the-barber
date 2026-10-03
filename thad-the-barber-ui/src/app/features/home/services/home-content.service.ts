@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { type Observable, of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { HOME_CONTENT } from '../data/home-content.data';
-import { type HomeContent } from '../models/home.models';
+import { HomeContent } from '../models/home.models';
 
 /**
  * Announcements, testimonials and gallery photos.

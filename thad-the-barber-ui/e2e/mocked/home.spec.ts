@@ -1,12 +1,6 @@
-import {
-  type Locator,
-  type Page,
-} from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 import { expectNoA11yViolations } from '../support/axe';
-import {
-  expect,
-  test,
-} from '../support/fixtures';
+import { expect, test } from '../support/fixtures';
 
 const SECTIONS: readonly string[] = [
   'announcements',
@@ -22,10 +16,7 @@ test.describe(
     test.beforeEach(async ({ page }: { page: Page; }): Promise<void> => {
       await page.goto('/');
       // The hero renders once the lazy home route has loaded. Until then its NavigationEnd would close the menu.
-      await expect(page.getByRole(
-        'heading',
-        { level: 1 },
-      )).toBeVisible();
+      await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
     });
 
     test(
@@ -47,13 +38,7 @@ test.describe(
 
         test(
           'nav links scroll to their section',
-          async ({
-            page,
-            isMobile,
-          }: {
-            page: Page;
-            isMobile: boolean;
-          }): Promise<void> => {
+          async ({ page, isMobile }: { page: Page; isMobile: boolean; }): Promise<void> => {
             for (const id of SECTIONS) {
               if (isMobile) {
                 await page.getByTestId('menu-toggle').click();

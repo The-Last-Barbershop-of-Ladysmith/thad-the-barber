@@ -1,11 +1,16 @@
-import { ChangeDetectionStrategy, Component, type InputSignal, input } from '@angular/core';
-import { type ShopInfo } from '../../../../core/models/shop.models';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  InputSignal,
+  input,
+} from '@angular/core';
+import { ShopInfo } from '../../../../core/models/shop.models';
 import { FormsModule } from '@angular/forms';
 import { CardModule } from 'primeng/card';
 import { RatingModule } from 'primeng/rating';
 import { SHOP_INFO } from '../../../../core/config/shop-info';
 import { SectionHeading } from '../../../../shared/components/section-heading/section-heading';
-import { type Testimonial } from '../../models/home.models';
+import { Testimonial } from '../../models/home.models';
 
 @Component({
   selector: 'app-testimonials',

@@ -6,17 +6,11 @@ import { formatDate } from '@angular/common';
 const DATE_LOCALE: string = 'en-US';
 
 function pad(value: number): string {
-  return String(value).padStart(
-    2,
-    '0',
-  );
+  return String(value).padStart(2, '0');
 }
 
 /** "2026-10-03" → [2026, 10, 3]. Throws on anything that isn't `count` dash-separated numbers. */
-function parseParts<T extends number[]>(
-  value: string,
-  count: T['length'],
-): T {
+function parseParts<T extends number[]>(value: string, count: T['length']): T {
   const parts: number[] = value.split('-').map(Number);
   if (parts.length !== count || parts.some((part: number): boolean => Number.isNaN(part))) {
     throw new Error(`Expected ${count} dash-separated numbers, got "${value}".`);
@@ -36,10 +30,7 @@ export function fromIsoDate(iso: string): Date {
     month,
     day,
   ]: [number, number, number,
-  ] = parseParts<[number, number, number]>(
-    iso,
-    3,
-  );
+  ] = parseParts<[number, number, number]>(iso, 3);
   return new Date(
     year,
     month - 1,
@@ -55,13 +46,9 @@ export function toMonthKey(date: Date): string {
 /** "2026-10" → October 1st 2026 at local midnight. */
 export function fromMonthKey(month: string): Date {
   const [
-    year,
-    monthNumber,
+    year, monthNumber,
   ]: [number, number,
-  ] = parseParts<[number, number]>(
-    month,
-    2,
-  );
+  ] = parseParts<[number, number]>(month, 2);
   return new Date(
     year,
     monthNumber - 1,
@@ -77,10 +64,7 @@ export function startOfToday(now: Date = new Date()): Date {
   );
 }
 
-export function addDays(
-  date: Date,
-  days: number,
-): Date {
+export function addDays(date: Date, days: number): Date {
   return new Date(
     date.getFullYear(),
     date.getMonth(),
@@ -89,10 +73,7 @@ export function addDays(
 }
 
 /** 630 → "10:30 AM"; with `compact`, whole hours drop the minutes: 600 → "10 AM". */
-export function formatMinutes(
-  minutes: number,
-  compact: boolean = false,
-): string {
+export function formatMinutes(minutes: number, compact: boolean = false): string {
   const hours: number = Math.floor(minutes / 60);
   const remainder: number = minutes % 60;
   const hours12: number = ((hours + 11) % 12) + 1;

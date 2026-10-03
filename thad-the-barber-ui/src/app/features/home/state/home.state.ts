@@ -1,4 +1,8 @@
-import { type Announcement, type GalleryPhoto, type Testimonial } from '../models/home.models';
+import {
+  Announcement,
+  GalleryPhoto,
+  Testimonial,
+} from '../models/home.models';
 
 export type RequestStatus = 'idle' | 'pending' | 'success' | 'error';
 

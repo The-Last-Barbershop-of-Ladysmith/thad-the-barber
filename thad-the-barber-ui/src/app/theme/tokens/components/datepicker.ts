@@ -1,4 +1,4 @@
-import type { DatePickerDesignTokens } from '@primeuix/themes/types/datepicker';
+import { DatePickerDesignTokens } from '@primeuix/themes/types/datepicker';
 
 /** Booking calendar: square tiles, copper selection, struck-through unavailable days. */
 export const datepicker: DatePickerDesignTokens = {
@@ -8,10 +8,7 @@ export const datepicker: DatePickerDesignTokens = {
     padding: '1rem',
     shadow: 'none',
   },
-  header: {
-    background: 'transparent',
-    padding: '0 0 0.75rem 0',
-  },
+  header: { background: 'transparent', padding: '0 0 0.75rem 0' },
   title: { fontWeight: '700' },
   weekDay: {
     color: '{espresso.200}',
@@ -29,10 +26,7 @@ export const datepicker: DatePickerDesignTokens = {
     selectedColor: '{primary.contrast.color}',
     color: '{text.color}',
   },
-  today: {
-    background: 'color-mix(in srgb, {espresso.50} 16%, transparent)',
-    color: '{text.color}',
-  },
+  today: { background: 'color-mix(in srgb, {espresso.50} 16%, transparent)', color: '{text.color}' },
   css: `
     .p-datepicker-inline { width: 100%; backdrop-filter: blur(var(--p-brand-glass-blur)); }
     .p-datepicker-day-view { width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 6px; }

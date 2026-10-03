@@ -7,13 +7,7 @@
 export function encodeBase64(text: string): string {
   return btoa(encodeURIComponent(text).replace(
     /%([0-9A-F]{2})/g,
-    (
-      _match: string,
-      hex: string,
-    ): string => String.fromCharCode(parseInt(
-      hex,
-      16,
-    )),
+    (_match: string, hex: string): string => String.fromCharCode(parseInt(hex, 16)),
   ));
 }
 
@@ -21,9 +15,6 @@ export function encodeBase64(text: string): string {
 export function decodeBase64(encoded: string): string {
   return decodeURIComponent(Array.from(
     atob(encoded),
-    (char: string): string => `%${char.charCodeAt(0).toString(16).padStart(
-      2,
-      '0',
-    )}`,
+    (char: string): string => `%${char.charCodeAt(0).toString(16).padStart(2, '0')}`,
   ).join(''));
 }

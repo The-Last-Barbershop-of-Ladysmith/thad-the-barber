@@ -1,4 +1,4 @@
-import { type ThemeOptions, definePreset } from '@primeuix/themes';
+import { ThemeOptions, definePreset } from '@primeuix/themes';
 import Aura from '@primeuix/themes/aura';
 import { components } from './tokens/components';
 import { primitive } from './tokens/primitive';
@@ -24,8 +24,5 @@ export const DARK_MODE_CLASS: string = 'app-dark';
 export const themeOptions: ThemeOptions = {
   prefix: 'p',
   darkModeSelector: `.${DARK_MODE_CLASS}`,
-  cssLayer: {
-    name: 'primeng',
-    order: 'theme, base, primeng, components, utilities',
-  },
+  cssLayer: { name: 'primeng', order: 'theme, base, primeng, components, utilities' },
 };

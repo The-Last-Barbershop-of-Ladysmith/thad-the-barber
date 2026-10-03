@@ -1,7 +1,7 @@
-import { type BookingRequest, type TimeSlot } from '../models/booking.models';
+import { BookingRequest, TimeSlot } from '../models/booking.models';
 import { BookingApiActions, BookingPageActions } from './booking.actions';
 import { bookingReducer } from './booking.reducer';
-import { type BookingState, initialBookingState } from './booking.state';
+import { BookingState, initialBookingState } from './booking.state';
 
 const slots: TimeSlot[] = [
   {
@@ -33,10 +33,7 @@ describe(
           selectedTime: '10:30',
           slots,
         };
-        const state: BookingState = bookingReducer(
-          before,
-          BookingPageActions.dateSelected({ date: '2026-10-04' }),
-        );
+        const state: BookingState = bookingReducer(before, BookingPageActions.dateSelected({ date: '2026-10-04' }));
 
         expect(state.selectedDate).toBe('2026-10-04');
         expect(state.selectedTime).toBeNull();
@@ -53,13 +50,7 @@ describe(
           selectedDate: '2026-10-04',
           slotsLoading: true,
         };
-        const state: BookingState = bookingReducer(
-          before,
-          BookingApiActions.slotsLoaded({
-            date: '2026-10-03',
-            slots,
-          }),
-        );
+        const state: BookingState = bookingReducer(before, BookingApiActions.slotsLoaded({ date: '2026-10-03', slots }));
 
         expect(state.slots).toEqual([]);
         expect(state.slotsLoading).toBe(true);
@@ -69,16 +60,10 @@ describe(
     it(
       'ignores availability for a month no longer in view',
       (): void => {
-        const before: BookingState = {
-          ...initialBookingState,
-          visibleMonth: '2026-11',
-        };
+        const before: BookingState = { ...initialBookingState, visibleMonth: '2026-11' };
         const state: BookingState = bookingReducer(
           before,
-          BookingApiActions.monthAvailabilityLoaded({
-            month: '2026-10',
-            unavailableDates: ['2026-10-01'],
-          }),
+          BookingApiActions.monthAvailabilityLoaded({ month: '2026-10', unavailableDates: ['2026-10-01'] }),
         );
 
         expect(state.unavailableDates).toEqual([]);
@@ -94,21 +79,10 @@ describe(
           name: 'Test',
           phone: '(540) 555-1234',
         };
-        let state: BookingState = bookingReducer(
-          initialBookingState,
-          BookingPageActions.confirmRequested({ request }),
-        );
+        let state: BookingState = bookingReducer(initialBookingState, BookingPageActions.confirmRequested({ request }));
         expect(state.status).toBe('submitting');
 
-        state = bookingReducer(
-          state,
-          BookingApiActions.bookingConfirmed({
-            confirmation: {
-              ...request,
-              id: 'abc',
-            },
-          }),
-        );
+        state = bookingReducer(state, BookingApiActions.bookingConfirmed({ confirmation: { ...request, id: 'abc' } }));
         expect(state.status).toBe('booked');
         expect(state.confirmation?.id).toBe('abc');
       },
@@ -122,10 +96,7 @@ describe(
           status: 'booked',
           confirmation: null,
         };
-        expect(bookingReducer(
-          booked,
-          BookingPageActions.detailsEdited(),
-        ).status).toBe('idle');
+        expect(bookingReducer(booked, BookingPageActions.detailsEdited()).status).toBe('idle');
       },
     );
   },

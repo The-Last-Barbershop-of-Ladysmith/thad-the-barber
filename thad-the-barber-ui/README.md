@@ -168,7 +168,7 @@ Lint config lives in `eslint.config.js`; `npm run lint` checks and `npm run lint
   - `@typescript-eslint/typedef` enforces the variable and parameter annotations. typescript-eslint marks this rule deprecated because its guidance is to let TypeScript infer local variables. It still works in v8; replace it if a future major version removes it.
   - **One exception:** NgRx doesn't export the types returned by `createActionGroup` and `createFeature`, so those 8 declarations carry a one-line `eslint-disable` with that reason.
 - **Semicolons** end every statement and every interface/type member.
-- **One item per line** when there is more than one, for array items, object properties, call arguments, function parameters and destructured properties. `eslint/one-item-per-line.js` is a small local rule covering the two cases no published rule handles (parameters and destructuring).
+- **One item per line from 3 items**, and 1–2 items on one line (unless that passes 120 characters), for array items, object properties, call arguments, function parameters and destructured properties. `@stylistic` has no item threshold for properties, arguments, parameters or destructuring, so `eslint/items-per-line.js` covers those; `eslint-plugin-import-newlines` does the same for imports.
 - **Stricter compiler:** `tsconfig.json` adds `strict`, `noUncheckedIndexedAccess`, `noUnusedLocals`/`noUnusedParameters`, and Angular `strictTemplates`, with extended diagnostics treated as errors.
 - **Formatting ownership:** ESLint formats `.ts` files. Prettier formats HTML/SCSS/CSS only (`npm run format`), because Prettier would collapse the one-per-line wrapping. `.vscode/settings.json` applies both on save.
 - **NgRx typing patterns:**

@@ -10,14 +10,8 @@ export const CLIP_COUNT: number = 7;
 export const FRAMES_PER_CLIP: number = 121;
 
 /** Clip 0-6, frame 0-120 → "assets/frames3/c1/000.avif". */
-export function frameUrl(
-  clip: number,
-  frame: number,
-): string {
-  return `assets/frames3/c${clip + 1}/${String(frame).padStart(
-    3,
-    '0',
-  )}.avif`;
+export function frameUrl(clip: number, frame: number): string {
+  return `assets/frames3/c${clip + 1}/${String(frame).padStart(3, '0')}.avif`;
 }
 
 /** High-res stills at each clip boundary: keyframes 1 → 7, then back to 1 so the footer loops to the opening shot. */
@@ -69,36 +63,20 @@ const MOTION: Readonly<Record<number, readonly number[]>> = {
 function buildWarpTable(motion: readonly number[]): number[] {
   const steps: number[] = [0];
   let sum: number = 0;
-  motion.forEach((
-    delta: number,
-    index: number,
-  ): void => {
-    sum += Math.max(
-      0.12,
-      (index === 0 ? 0.3 : delta) - 0.22,
-    );
+  motion.forEach((delta: number, index: number): void => {
+    sum += Math.max(0.12, (index === 0 ? 0.3 : delta) - 0.22);
     steps.push(sum);
   });
   const last: number = steps.length - 1;
-  return steps.map((
-    value: number,
-    index: number,
-  ): number => (value / sum) * 0.85 + (index / last) * 0.15);
+  return steps.map((value: number, index: number): number => (value / sum) * 0.85 + (index / last) * 0.15);
 }
 
-const WARP_TABLES: ReadonlyMap<number, number[]> = new Map(Object.entries(MOTION).map(([
-  clip,
-  motion]: [string, readonly number[],
-]): [number, number[]] => [
-  Number(clip),
-  buildWarpTable(motion),
-]));
+const WARP_TABLES: ReadonlyMap<number, number[]> = new Map(Object.entries(MOTION).map(
+  ([clip, motion]: [string, readonly number[]]): [number, number[]] => [Number(clip), buildWarpTable(motion)],
+));
 
 /** Progress 0-1 through a clip → fractional frame index 0-120, retimed for clips with measured motion. */
-export function frameInClip(
-  clip: number,
-  progress: number,
-): number {
+export function frameInClip(clip: number, progress: number): number {
   const table: number[] | undefined = WARP_TABLES.get(clip);
   if (!table) {
     return progress * (FRAMES_PER_CLIP - 1);
@@ -115,8 +93,5 @@ export function frameInClip(
     }
   }
   const span: number = at(high) - at(low);
-  return Math.min(
-    FRAMES_PER_CLIP - 1,
-    low + (span > 0 ? (progress - at(low)) / span : 0),
-  );
+  return Math.min(FRAMES_PER_CLIP - 1, low + (span > 0 ? (progress - at(low)) / span : 0));
 }

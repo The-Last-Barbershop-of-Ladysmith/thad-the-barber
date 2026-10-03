@@ -1,9 +1,14 @@
-import { ChangeDetectionStrategy, Component, type InputSignal, input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  InputSignal,
+  input,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { CarouselModule } from 'primeng/carousel';
-import { type Announcement } from '../../models/home.models';
+import { Announcement } from '../../models/home.models';
 import { SmsSignup } from '../sms-signup/sms-signup';
 
 /** Full-height announcement slider (PrimeNG composable carousel; swipe, arrows and dots are built in). */

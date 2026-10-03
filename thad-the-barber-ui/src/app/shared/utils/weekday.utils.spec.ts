@@ -1,4 +1,8 @@
-import { WEEKDAY_SHORT_NAMES, toWeekday, weekdaySpanLabel } from './weekday.utils';
+import {
+  WEEKDAY_SHORT_NAMES,
+  toWeekday,
+  weekdaySpanLabel,
+} from './weekday.utils';
 
 describe(
   'weekday utils',
@@ -14,10 +18,7 @@ describe(
     it(
       'labels a single day or a span',
       (): void => {
-        expect(weekdaySpanLabel(
-          1,
-          1,
-        )).toBe('Monday');
+        expect(weekdaySpanLabel(1, 1)).toBe('Monday');
         expect(weekdaySpanLabel(
           1,
           5,

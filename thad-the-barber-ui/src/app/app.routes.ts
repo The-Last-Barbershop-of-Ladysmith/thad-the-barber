@@ -1,6 +1,6 @@
-import { type Routes } from '@angular/router';
-import type * as bookingRoutes from './features/booking/booking.routes';
-import type * as homeRoutes from './features/home/home.routes';
+import { Routes } from '@angular/router';
+import * as bookingRoutes from './features/booking/booking.routes';
+import * as homeRoutes from './features/home/home.routes';
 
 /** Each feature lazy-loads its own routes, which also register that feature's store slice. */
 export const routes: Routes = [
@@ -16,8 +16,5 @@ export const routes: Routes = [
     loadChildren: (): Promise<Routes> =>
       import('./features/booking/booking.routes').then((m: typeof bookingRoutes): Routes => m.BOOKING_ROUTES),
   },
-  {
-    path: '**',
-    redirectTo: '',
-  },
+  { path: '**', redirectTo: '' },
 ];

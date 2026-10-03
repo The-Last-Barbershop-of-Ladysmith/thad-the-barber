@@ -1,5 +1,11 @@
-import { ChangeDetectionStrategy, Component, type InputSignal, inject, input } from '@angular/core';
-import { type HoursRow } from '../../../core/models/shop.models';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  InputSignal,
+  inject,
+  input,
+} from '@angular/core';
+import { HoursRow } from '../../../core/models/shop.models';
 import { ShopHoursService } from '../../../core/services/shop-hours.service';
 
 export type HoursListVariant = 'table' | 'stacked' | 'compact';
