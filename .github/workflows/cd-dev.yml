@@ -1,5 +1,6 @@
 # Deploys every merge into dev/* to the dev environment, then runs the smoke tests (issue #16).
-# Only the app(s) the push changed are built and deployed; a manual run deploys both.
+# Only the app(s) the push changed are built and deployed; a manual run deploys all of them. The CI reports viewer
+# (#137) deploys here too, when tools/report-viewer/ changes.
 # No rollback: a red run notifies the owner and the fix rolls forward with the next merge.
 name: cd-dev
 
@@ -23,23 +24,26 @@ jobs:
     outputs:
       ui: ${{ steps.diff.outputs.ui }}
       api: ${{ steps.diff.outputs.api }}
+      viewer: ${{ steps.diff.outputs.viewer }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
-      # A new branch or a manual run has no usable "before" commit, so both apps deploy.
+      # A new branch or a manual run has no usable "before" commit, so everything deploys.
       - id: diff
         run: |
           if [[ "$EVENT" != push || "$BEFORE" =~ ^0+$ ]] || ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
             echo "ui=true" >> "$GITHUB_OUTPUT"
             echo "api=true" >> "$GITHUB_OUTPUT"
+            echo "viewer=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           changed=$(git diff --name-only "$BEFORE" "$GITHUB_SHA")
           shared='^(\.github/workflows/(cd-dev|build|deploy)\.yml)$'
           grep -qE "^thad-the-barber-(ui|express)/|$shared" <<< "$changed" && echo "ui=true" >> "$GITHUB_OUTPUT"
           grep -qE "^thad-the-barber-api/|^(Directory\.Build\.props|global\.json)$|$shared" <<< "$changed" && echo "api=true" >> "$GITHUB_OUTPUT"
+          grep -qE "^tools/report-viewer/|^(Directory\.Build\.props|global\.json|\.github/workflows/cd-dev\.yml)$" <<< "$changed" && echo "viewer=true" >> "$GITHUB_OUTPUT"
           true
         env:
           EVENT: ${{ github.event_name }}
@@ -66,3 +70,31 @@ jobs:
       environment: dev
       ui-artifact: ${{ needs.changes.outputs.ui == 'true' && format('ttb-ui-dev-{0}', needs.build.outputs.suffix) || '' }}
       api-artifact: ${{ needs.changes.outputs.api == 'true' && format('ttb-api-{0}', needs.build.outputs.suffix) || '' }}
+
+  # The viewer runs on the nonprod plan; the dev deploy identity has Website Contributor on it (infra/reports.bicep).
+  viewer:
+    needs: changes
+    if: needs.changes.outputs.viewer == 'true' && vars.REPORTS_URL != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: dev
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+
+      - run: dotnet publish tools/report-viewer/report-viewer.csproj -c Release -o viewer
+      - run: cd viewer && zip -qr ../viewer.zip .
+
+      - uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - run: az webapp deploy --resource-group rg-ttb-nonprod-centralus --name as-ttb-reports-nonprod-centralus --src-path viewer.zip --type zip

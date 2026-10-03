@@ -90,7 +90,11 @@ API (.NET 10 SDK, from the repo root):
 ```bash
 dotnet run --project thad-the-barber-api                            # http://localhost:5078
 dotnet test --solution thad-the-barber-api/thad-the-barber-api.sln  # xUnit v3 on Microsoft.Testing.Platform
+dotnet test --solution tools/report-viewer/report-viewer.slnx       # the CI reports viewer
+dotnet tool restore && dotnet reportgenerator -reports:thad-the-barber-api.tests/TestResults/coverage.cobertura.xml -targetdir:coverage-report -reporttypes:Html
 ```
+
+CI's HTML reports (Playwright, Lighthouse, API coverage, smoke) open from the links in the PR comment, behind an Entra sign-in. See [CI reports](docs/environments.md#ci-reports).
 
 Warnings fail the build (`Directory.Build.props`). Coming with their issues: the fake Square gateway and coverage for the API tests (#12), the Playwright end-to-end suite (#14), and the CI workflow that runs all four checks on every PR (#15).
 

@@ -24,8 +24,11 @@ updates:
 
   - package-ecosystem: nuget
     directories:
+      - /
       - /thad-the-barber-api
       - /thad-the-barber-api.tests
+      - /tools/report-viewer
+      - /tools/report-viewer.tests
     target-branch: dev/angry-apple-1.0.0.0
     schedule:
       interval: weekly
