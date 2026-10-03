@@ -30,7 +30,7 @@ npm install
 npm start          # dev server at http://localhost:4200
 npm run build      # production build to dist/
 npx ng build -c devCloud   # Azure dev build (also -c test)
-npm run build:express:dev  # build into ../thad-the-barber-express/public/app (also :dev-cloud, :test, :production)
+npm run build:express:dev  # build into ../thad-the-barber-express/public/app/thad-the-barber-ui (also :dev-cloud, :test, :production)
 npm run start:express:dev  # that build, served by Express at http://localhost:3000
 npm test           # unit tests (Vitest)
 npx playwright install chromium webkit   # once, for the end-to-end tests

@@ -131,7 +131,7 @@
             },
             "express": {
               "outputPath": {
-                "base": "../thad-the-barber-express/public/app",
+                "base": "../thad-the-barber-express/public/app/thad-the-barber-ui",
                 "browser": ""
               }
             }
