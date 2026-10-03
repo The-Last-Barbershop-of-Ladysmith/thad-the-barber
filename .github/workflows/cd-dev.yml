@@ -34,9 +34,7 @@ jobs:
       - id: diff
         run: |
           if [[ "$EVENT" != push || "$BEFORE" =~ ^0+$ ]] || ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
-            echo "ui=true" >> "$GITHUB_OUTPUT"
-            echo "api=true" >> "$GITHUB_OUTPUT"
-            echo "viewer=true" >> "$GITHUB_OUTPUT"
+            printf '%s\n' ui=true api=true viewer=true >> "$GITHUB_OUTPUT"
             exit 0
           fi
           changed=$(git diff --name-only "$BEFORE" "$GITHUB_SHA")
