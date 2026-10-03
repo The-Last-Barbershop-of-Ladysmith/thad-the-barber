@@ -1,5 +1,10 @@
+var fs = require('fs');
+var path = require('path');
+var angularDist = require('./angular-dist');
 var { errorPagePolicy } = require('./content-security-policy');
 var { recordException, requestId } = require('./telemetry');
+
+var shop = JSON.parse(fs.readFileSync(path.join(angularDist, 'shop.json'), 'utf8'));
 
 // "//host" and "/\host" are links to another site, which would make "Try again" an open redirect.
 var SAME_ORIGIN_PATH = /^\/(?![/\\])/;
@@ -16,6 +21,7 @@ function errorHandler(err, req, res, next) {
     .set('Content-Security-Policy', errorPagePolicy())
     .set('Cache-Control', 'no-store')
     .render('error', {
+      shop: shop,
       status: status,
       requestId: requestId(),
       retryUrl: req.method === 'GET' && SAME_ORIGIN_PATH.test(req.originalUrl) ? req.originalUrl : '/',

@@ -29,7 +29,7 @@ describe('error page', function() {
     var response = await request(app).get('/_test/error');
     expect(response.status).toBe(500);
     expect(response.type).toBe('text/html');
-    expect(response.text).toContain('<h1>Something went wrong</h1>');
+    expect(response.text).toContain('<h1>We hit a snag.</h1>');
     expect(response.text).toContain('href="/brand.css"');
     expect(response.text).toMatch(/data-testid="error-request-id">[0-9a-f]{32}</);
     expect(response.text).not.toContain('Forced test error');
@@ -38,6 +38,12 @@ describe('error page', function() {
       "default-src 'none'; style-src 'self'; img-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
     );
     expect(response.headers['cache-control']).toBe('no-store');
+  });
+
+  it('offers the shop phone from the build, to call or text', async function() {
+    var response = await request(app).get('/_test/error');
+    expect(response.text).toContain('href="tel:+15550100000" data-testid="error-call">Call (555) 010-0000</a>');
+    expect(response.text).toContain('href="sms:+15550100000" data-testid="error-text"');
   });
 
   it.each([502, 503])('keeps a %s status', async function(status) {

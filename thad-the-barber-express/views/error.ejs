@@ -4,29 +4,48 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
-  <title>Something went wrong</title>
+  <title>Something went wrong · <%= shop.name %></title>
   <link rel="stylesheet" href="/brand.css">
   <link rel="stylesheet" href="/stylesheets/error.css">
 </head>
 <body>
+  <div class="backdrop" aria-hidden="true">
+    <img src="/assets/keys/error.avif" alt="" class="photo">
+    <div class="wash"></div>
+  </div>
+
   <header class="site-header">
-    <a href="/" class="home-link"><img src="/assets/logo.png" alt="Home" class="logo" width="830" height="366"></a>
+    <a href="/" class="home-link"><img src="/assets/logo.png" alt="<%= shop.name %>" class="logo" width="830" height="366"></a>
+    <a href="/" class="back-link">&larr; Back to site</a>
   </header>
-  <main class="panel">
-    <p class="eyebrow">Error <%= status %></p>
-    <h1>Something went wrong</h1>
-    <p class="lead">Sorry, this page didn't load. Please try again in a moment.</p>
-    <div class="actions">
-      <a class="button" href="<%= retryUrl %>" data-testid="error-retry">Try again</a>
-      <a class="text-link" href="/" data-testid="error-home">Back to home</a>
-    </div>
-    <p class="request-id">Request ID <code data-testid="error-request-id"><%= requestId %></code></p>
+
+  <main class="error">
+    <div class="content">
+      <p class="eyebrow">Error <%= status %> · Something went wrong</p>
+      <h1>We hit a snag.</h1>
+      <p class="lead">
+        Something on our end came unplugged. Give it another try in a moment &mdash; or call or text the shop and
+        we'll get you on the books.
+      </p>
+
+      <div class="actions">
+        <a class="button" href="<%= retryUrl %>" data-testid="error-retry">Try again</a>
+        <a class="button button-outlined" href="<%= shop.phone.tel %>" data-testid="error-call">Call <%= shop.phone.display %></a>
+      </div>
+
+      <div class="links">
+        <a href="/" data-testid="error-home">Go to homepage</a>
+        <a href="<%= shop.phone.sms %>" data-testid="error-text">Text a question</a>
+        <span class="ref">Ref <code data-testid="error-request-id"><%= requestId %></code></span>
+      </div>
 <% if (stack) { -%>
-    <details class="details" open data-testid="error-details">
-      <summary>Error details</summary>
-      <pre><%= stack %></pre>
-    </details>
+
+      <details class="details" open data-testid="error-details">
+        <summary>Error details</summary>
+        <pre><%= stack %></pre>
+      </details>
 <% } -%>
+    </div>
   </main>
 </body>
 </html>

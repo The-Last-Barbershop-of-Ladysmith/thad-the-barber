@@ -1,11 +1,11 @@
 var express = require('express');
 var fs = require('fs');
 var path = require('path');
+var angularDist = require('../lib/angular-dist');
 var csp = require('../lib/content-security-policy');
 
 var router = express.Router();
 
-var angularDist = path.resolve(process.env.ANGULAR_DIST_PATH || path.join(__dirname, '..', 'public', 'app', 'thad-the-barber-ui'));
 var cspSources = JSON.parse(fs.readFileSync(path.join(angularDist, 'csp-sources.json'), 'utf8'));
 var cspHeader = process.env.CSP_REPORT_ONLY === 'true' ? 'Content-Security-Policy-Report-Only' : 'Content-Security-Policy';
 
