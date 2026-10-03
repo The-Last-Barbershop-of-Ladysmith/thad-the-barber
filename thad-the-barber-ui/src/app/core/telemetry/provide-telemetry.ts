@@ -27,6 +27,8 @@ export function telemetryConfig(settings: TelemetrySettings, angularPlugin: Angu
   return {
     connectionString: settings.appInsightsConnectionString,
     disableCookiesUsage: true,
+    // The unload event is deprecated (a Lighthouse best practice); the SDK still flushes on pagehide/visibilitychange.
+    disablePageUnloadEvents: ['unload'],
     // Page views are tracked on NavigationEnd below; the SDK's own tracking would count each route change twice.
     enableAutoRouteTracking: false,
     // Exceptions arrive once, via the ErrorHandler; provideBrowserGlobalErrorListeners forwards window errors to it.

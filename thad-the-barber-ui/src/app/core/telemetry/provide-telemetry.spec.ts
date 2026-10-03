@@ -111,6 +111,13 @@ describe(
     );
 
     it(
+      'skips the deprecated unload event',
+      (): void => {
+        expect(config.disablePageUnloadEvents).toEqual(['unload']);
+      },
+    );
+
+    it(
       'links traces with W3C headers to the API host only',
       (): void => {
         expect(config.distributedTracingMode).toBe(DistributedTracingModes.W3C);
