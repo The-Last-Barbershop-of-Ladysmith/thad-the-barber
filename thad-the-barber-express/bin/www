@@ -7,6 +7,9 @@ var debug = require('debug')('thad-the-barber-express:server');
 
 var port = Number(process.env.PORT) || 3000;
 
-app.listen(port, function() {
+app.listen(port, function(err) {
+  if (err) {
+    throw err;
+  }
   debug('Listening at http://localhost:' + port);
 });
