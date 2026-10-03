@@ -20,6 +20,12 @@ export const routes: Routes = [
       import('./features/booking/booking.routes').then((m: typeof bookingRoutes): Routes => m.BOOKING_ROUTES),
   },
   {
+    path: '404',
+    title: 'Page not found · Thad The Barber',
+    loadComponent: (): Promise<typeof notFound.NotFound> =>
+      import('./pages/not-found/not-found').then((m: typeof notFound): typeof notFound.NotFound => m.NotFound),
+  },
+  {
     path: '**',
     title: 'Page not found · Thad The Barber',
     loadComponent: (): Promise<typeof notFound.NotFound> =>

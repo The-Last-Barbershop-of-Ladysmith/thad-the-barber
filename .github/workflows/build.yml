@@ -7,7 +7,7 @@ on:
   workflow_call:
     inputs:
       ui-builds:
-        description: 'JSON list of {"env": ..., "configuration": ...} Angular builds, or [] for none.'
+        description: 'JSON list of {"env": ..., "build": ...} web builds, or [] for none. build names the UI script build:express:<build>.'
         type: string
         default: '[]'
       api:
@@ -45,9 +45,6 @@ jobs:
     strategy:
       matrix:
         build: ${{ fromJSON(inputs.ui-builds) }}
-    defaults:
-      run:
-        working-directory: thad-the-barber-ui
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -55,29 +52,26 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: thad-the-barber-ui/package-lock.json
+          cache-dependency-path: |
+            thad-the-barber-ui/package-lock.json
+            thad-the-barber-express/package-lock.json
 
+      # The npm script's post-build hook writes csp-sources.json next to the build, in the Express app's public/app.
       - run: npm ci
-      - run: npx ng build --configuration "${{ matrix.build.configuration }}"
+        working-directory: thad-the-barber-ui
+      - run: npm run "build:express:${{ matrix.build.build }}"
+        working-directory: thad-the-barber-ui
 
-      # Until the Express server (#19) exists, App Service runs `npm start`, which serves the build with the pm2
-      # preinstalled in its Node images, falling back to index.html for client routes.
-      - name: Add the start script
-        working-directory: thad-the-barber-ui/dist/thad-the-barber-ui/browser
-        run: |
-          cat > package.json <<'EOF'
-          {
-            "private": true,
-            "scripts": {
-              "start": "pm2 serve /home/site/wwwroot ${PORT:-8080} --no-daemon --spa"
-            }
-          }
-          EOF
+      # App Service runs `npm start` (node ./bin/www) from the zip and doesn't install packages itself.
+      - run: npm ci --omit=dev
+        working-directory: thad-the-barber-express
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ttb-ui-${{ matrix.build.env }}-${{ needs.name.outputs.suffix }}
-          path: thad-the-barber-ui/dist/thad-the-barber-ui/browser/
+          path: |
+            thad-the-barber-express/
+            !thad-the-barber-express/test/
           retention-days: ${{ inputs.retention-days }}
           if-no-files-found: error
 

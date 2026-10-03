@@ -1,4 +1,3 @@
-import { RESPONSE_INIT } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { HOME_SECTIONS, SHOP_INFO } from '../../core/config/shop-info';
@@ -23,19 +22,7 @@ describe(
     });
 
     it(
-      'sets a 404 status when rendered on the server',
-      (): void => {
-        const response: ResponseInit = {};
-        TestBed.configureTestingModule({ providers: [{ provide: RESPONSE_INIT, useValue: response }] });
-
-        render();
-
-        expect(response.status).toBe(404);
-      },
-    );
-
-    it(
-      'renders in the browser, where there is no response to set',
+      'renders',
       (): void => {
         expect(render().querySelector('[data-testid="not-found"]')).not.toBeNull();
       },

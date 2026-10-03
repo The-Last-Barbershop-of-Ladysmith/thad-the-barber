@@ -56,13 +56,22 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: thad-the-barber-ui/package-lock.json
+          cache-dependency-path: |
+            thad-the-barber-ui/package-lock.json
+            thad-the-barber-express/package-lock.json
 
       - run: npm ci
       - run: npm audit --audit-level=high
       - run: npm run lint
       - run: npx ng test --watch=false
       - run: npm run build
+
+      - run: npm ci
+        working-directory: thad-the-barber-express
+      - run: npm audit --audit-level=high
+        working-directory: thad-the-barber-express
+      - run: npm test
+        working-directory: thad-the-barber-express
 
   api:
     runs-on: ubuntu-latest

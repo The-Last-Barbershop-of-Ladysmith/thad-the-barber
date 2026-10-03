@@ -5,6 +5,9 @@ var indexRouter = require('./routes/index');
 
 var app = express();
 
+// Pages carry a per-request CSP nonce, so an ETag would only invite a cached copy with a stale one.
+app.set('etag', false);
+
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');

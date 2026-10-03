@@ -38,7 +38,7 @@ jobs:
           fi
           changed=$(git diff --name-only "$BEFORE" "$GITHUB_SHA")
           shared='^(\.github/workflows/(cd-dev|build|deploy)\.yml)$'
-          grep -qE "^thad-the-barber-ui/|$shared" <<< "$changed" && echo "ui=true" >> "$GITHUB_OUTPUT"
+          grep -qE "^thad-the-barber-(ui|express)/|$shared" <<< "$changed" && echo "ui=true" >> "$GITHUB_OUTPUT"
           grep -qE "^thad-the-barber-api/|^(Directory\.Build\.props|global\.json)$|$shared" <<< "$changed" && echo "api=true" >> "$GITHUB_OUTPUT"
           true
         env:
@@ -50,7 +50,7 @@ jobs:
     if: needs.changes.outputs.ui == 'true' || needs.changes.outputs.api == 'true'
     uses: ./.github/workflows/build.yml
     with:
-      ui-builds: ${{ needs.changes.outputs.ui == 'true' && '[{"env":"dev","configuration":"devCloud"}]' || '[]' }}
+      ui-builds: ${{ needs.changes.outputs.ui == 'true' && '[{"env":"dev","build":"dev-cloud"}]' || '[]' }}
       api: ${{ needs.changes.outputs.api == 'true' }}
 
   deploy:
