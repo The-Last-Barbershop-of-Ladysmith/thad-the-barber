@@ -40,30 +40,36 @@ router.use(function(req, res, next) {
   serveStatic(req, res, next);
 });
 
-function readPage(file) {
-  var fullPath = path.join(angularDist, file);
-  if (!fullPath.startsWith(angularDist + path.sep)) {
-    return null;
-  }
-  try {
-    return fs.readFileSync(fullPath, 'utf8');
-  } catch (err) {
-    if (err.code === 'ENOENT' || err.code === 'EISDIR') {
-      return null;
-    }
-    throw err;
-  }
+function loadPage(file) {
+  var html = fs.readFileSync(path.join(angularDist, file), 'utf8');
+  return { html: html, styleHashes: csp.styleAttributeHashes(html) };
 }
 
+function routeOf(file) {
+  var dir = path.dirname(file);
+  return dir === '.' ? '/' : '/' + dir.split(path.sep).join('/');
+}
+
+// The build never changes while the server runs, so every page is read and hashed once.
+var pages = new Map(fs.readdirSync(angularDist, { recursive: true })
+  .filter(function(file) {
+    return path.basename(file) === 'index.html' && routeOf(file) !== '/404';
+  })
+  .map(function(file) {
+    return [routeOf(file), loadPage(file)];
+  }));
+var appShell = fs.existsSync(path.join(angularDist, 'index.csr.html')) ? loadPage('index.csr.html') : null;
+var notFoundPage = loadPage(path.join('404', 'index.html'));
+
 // Every HTML response gets a fresh nonce and the matching header, and is never cached, which would replay a nonce.
-function sendPage(res, status, html) {
+function sendPage(res, status, page) {
   var nonce = csp.createNonce();
   res.removeHeader('Content-Security-Policy');
   res.status(status)
-    .set(cspHeader, csp.contentSecurityPolicy(nonce, cspSources, csp.styleAttributeHashes(html)))
+    .set(cspHeader, csp.contentSecurityPolicy(nonce, cspSources, page.styleHashes))
     .set('Cache-Control', 'no-cache')
     .type('html')
-    .send(csp.applyNonce(html, nonce));
+    .send(csp.applyNonce(page.html, nonce));
 }
 
 router.get('/{*splat}', function(req, res, next) {
@@ -71,14 +77,13 @@ router.get('/{*splat}', function(req, res, next) {
     return next();
   }
   var route = req.path.length > 1 ? req.path.replace(/\/+$/, '') : req.path;
-  var prerendered = route === '/404' ? null : readPage(path.join(route, 'index.html'));
-  if (prerendered !== null) {
-    return sendPage(res, 200, prerendered);
+  if (pages.has(route)) {
+    return sendPage(res, 200, pages.get(route));
   }
-  if (clientRoutes.has(route)) {
-    return sendPage(res, 200, readPage('index.csr.html'));
+  if (appShell && clientRoutes.has(route)) {
+    return sendPage(res, 200, appShell);
   }
-  sendPage(res, 404, readPage(path.join('404', 'index.html')));
+  sendPage(res, 404, notFoundPage);
 });
 
 module.exports = router;

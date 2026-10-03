@@ -137,12 +137,13 @@ Repo variables `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID` and `AZURE_PREVIEW_CLI
 
 | Check | What runs |
 | --- | --- |
-| `ui` | `npm ci` → `npm audit` → `ng lint` → `ng test` (Vitest) → `ng build` → Express `npm ci` → `npm audit` → `npm test` (Vitest + supertest) |
+| `ui` | `npm ci` → `npm audit` → `ng lint` → `ng test` (Vitest) → `build:express:test`, uploaded for `e2e` and `lighthouse` |
+| `express` | Express `npm ci` → `npm audit` → `npm test` (Vitest + supertest) |
 | `api` | `dotnet build` → `dotnet test` (xUnit) |
-| `e2e` | Playwright with a mocked API and `@axe-core/playwright`, on Chromium + WebKit, desktop + mobile, against the `test` build served by Express (real CSP header and 404s) |
-| `lighthouse` | Lighthouse on `/` and `/book`, served by Express with prod's headers (`NOINDEX=false`): accessibility ≥ 95, best practices and SEO ≥ 90, performance reported only |
+| `e2e` | Playwright with a mocked API and `@axe-core/playwright`, on Chromium + WebKit, desktop + mobile, against the `ui` job's `test` build served by Express (real CSP header and 404s) |
+| `lighthouse` | Lighthouse on `/` and `/book` of the `ui` job's build, served by Express with prod's headers (`NOINDEX=false`): accessibility ≥ 95, best practices and SEO ≥ 90, performance reported only |
 
-All four checks must pass before a merge. On failure, traces, screenshots and video are uploaded as artifacts.
+All five checks must pass before a merge. On failure, traces, screenshots and video are uploaded as artifacts.
 
 ## CD (deploy pipeline)
 

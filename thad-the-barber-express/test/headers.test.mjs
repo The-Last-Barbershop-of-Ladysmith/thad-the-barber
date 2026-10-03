@@ -1,34 +1,30 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 import express from 'express';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { createFakeDist } from './fake-dist.mjs';
 
 var require = createRequire(import.meta.url);
-var dist = mkdtempSync(join(tmpdir(), 'ttb-dist-'));
+var fakeDist;
 var app;
 
 beforeAll(function() {
-  mkdirSync(join(dist, '404'));
-  mkdirSync(join(dist, 'assets', 'frames'), { recursive: true });
-  mkdirSync(join(dist, 'media'));
-  writeFileSync(join(dist, 'index.html'), '<html><body>' + 'home '.repeat(500) + '</body></html>');
-  writeFileSync(join(dist, '404', 'index.html'), 'not found');
-  writeFileSync(join(dist, 'main-LDA72QPD.js'), 'console.log(1);');
-  writeFileSync(join(dist, 'main.js'), 'console.log(1);');
-  writeFileSync(join(dist, 'media', 'primeicons-S6ICFECY.eot'), 'font');
-  writeFileSync(join(dist, 'assets', 'frames', '001.avif'), 'frame');
-  writeFileSync(join(dist, 'favicon.ico'), 'icon');
-  writeFileSync(join(dist, 'csp-sources.json'), '{}');
-  process.env.ANGULAR_DIST_PATH = dist;
   delete process.env.NOINDEX;
-  app = require('../app');
+  fakeDist = createFakeDist({
+    'index.html': '<html><body>' + 'home '.repeat(500) + '</body></html>',
+    '404/index.html': 'not found',
+    'main-LDA72QPD.js': 'console.log(1);',
+    'main.js': 'console.log(1);',
+    'media/primeicons-S6ICFECY.eot': 'font',
+    'assets/frames/001.avif': 'frame',
+    'favicon.ico': 'icon',
+    'csp-sources.json': '{}',
+  });
+  app = fakeDist.app;
 });
 
 afterAll(function() {
-  rmSync(dist, { recursive: true, force: true });
+  fakeDist.cleanup();
 });
 
 describe('security headers', function() {

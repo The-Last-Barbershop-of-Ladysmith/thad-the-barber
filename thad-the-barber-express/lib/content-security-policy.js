@@ -29,7 +29,7 @@ function styleAttributeHashes(html) {
 }
 
 // sources is the build's csp-sources.json: the environment's API, App Insights and media origins.
-function contentSecurityPolicy(nonce, sources, styleHashes) {
+function contentSecurityPolicy(nonce, sources, styleHashes = []) {
   var directives = {
     'default-src': ["'self'"],
     'script-src': ["'nonce-" + nonce + "'", "'strict-dynamic'"],
@@ -47,7 +47,7 @@ function contentSecurityPolicy(nonce, sources, styleHashes) {
     'base-uri': ["'self'"],
     'form-action': ["'self'"],
   };
-  if (styleHashes && styleHashes.length > 0) {
+  if (styleHashes.length > 0) {
     directives['style-src-attr'] = ["'unsafe-hashes'"].concat(styleHashes);
   }
   return Object.entries(directives).map(function([name, values]) {

@@ -34,7 +34,7 @@ npm run build:express:dev  # build into ../thad-the-barber-express/public/app (a
 npm run start:express:dev  # that build, served by Express at http://localhost:3000
 npm test           # unit tests (Vitest)
 npx playwright install chromium webkit   # once, for the end-to-end tests
-npm run e2e        # end-to-end tests against mocks (starts ng serve unless it's already running; CI=1 uses Express)
+npm run e2e        # end-to-end tests against mocks (starts ng serve unless it's already running; CI=1 uses Express and needs `npm run build:express:test` first)
 npm run e2e:smoke  # smoke tests against the local site and API; set BASE_URL and API_BASE_URL for a deployed site
 ```
 
@@ -48,7 +48,7 @@ npm run e2e:smoke  # smoke tests against the local site and API; set BASE_URL an
 
 ### CI
 
-`.github/workflows/ci.yml` runs four checks on every PR into `dev/**`, `release/**`, `hotfix/**` and `main`: `ui` (lint, unit tests, production build), `api` (build, tests, at least 80% line coverage), `e2e` (the mocked suite against the `test` build served by Express, the optimized build with test URLs) and `lighthouse`. The `ui` check also runs the Express app's audit and tests. Failed runs upload the Playwright report and traces; the API coverage file and the Lighthouse reports are always uploaded.
+`.github/workflows/ci.yml` runs five checks on every PR into `dev/**`, `release/**`, `hotfix/**` and `main`: `ui` (lint, unit tests, and the `test` build, the optimized build with test URLs), `express` (the Express app's audit and tests), `api` (build, tests, at least 80% line coverage), `e2e` (the mocked suite against the `ui` check's build served by Express) and `lighthouse` (the same build). `e2e` and `lighthouse` wait for `ui` and download its build instead of building again. Failed runs upload the Playwright report and traces; the API coverage file and the Lighthouse reports are always uploaded.
 
 Each run writes a job summary (API coverage, Playwright totals with any failed or flaky tests, the Lighthouse score table), and a `report` job posts the same summary as one PR comment, which later runs update. `npm run e2e:summary` (`ci/e2e-summary.ts`) builds the Playwright part from the JSON report CI writes to `test-results/results.json`.
 

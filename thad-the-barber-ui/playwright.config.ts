@@ -46,8 +46,9 @@ const config: PlaywrightTestConfig = defineConfig({
     { name: 'webkit-mobile', use: { browserName: 'webkit', ...mobile } },
   ],
   webServer: {
-    // CI tests what deploys: the optimized build served by Express, with its CSP header and real 404s.
-    command: isCi ? 'npm run build:express:test && npm --prefix ../thad-the-barber-express start' : 'npm start',
+    // CI tests what deploys: the optimized build served by Express, with its CSP header and real 404s. The ui job
+    // builds it (locally, run `npm run build:express:test` first).
+    command: isCi ? 'npm --prefix ../thad-the-barber-express start' : 'npm start',
     env: { PORT: new URL(baseURL).port },
     url: baseURL,
     reuseExistingServer: !isCi,

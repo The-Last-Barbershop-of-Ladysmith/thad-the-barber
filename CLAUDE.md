@@ -19,7 +19,7 @@ npm run build                 # production build to dist/
 npm test                      # Vitest via @angular/build:unit-test
 npx ng test --watch=false     # single run
 npx ng test --include src/app/store/app.reducer.spec.ts   # one spec file
-npm run e2e                   # Playwright against mocks (Chromium + WebKit, desktop + mobile); CI=1 serves the build with Express; see README
+npm run e2e                   # Playwright against mocks (Chromium + WebKit, desktop + mobile); CI=1 serves the build with Express (run `build:express:test` first); see README
 npm run start:express:dev     # build into the Express app and serve it at http://localhost:3000
 npm run e2e:smoke             # Playwright smoke; local URLs unless BASE_URL / API_BASE_URL are set
 npm run lint                  # ESLint (TS + templates)

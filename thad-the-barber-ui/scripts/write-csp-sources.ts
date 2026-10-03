@@ -13,24 +13,41 @@ interface CspEnvironment {
   appInsightsConnectionString: string;
 }
 
-interface BuildConfiguration { fileReplacements?: { with: string; }[]; }
+interface FileReplacement {
+  replace: string;
+  with: string;
+}
+
+interface BuildConfiguration {
+  fileReplacements?: FileReplacement[];
+  outputPath?: { base: string; };
+}
 
 interface AngularProject { architect: { build: { configurations: Record<string, BuildConfiguration>; }; }; }
 
+interface AngularJson { projects: Record<string, AngularProject>; }
+
 /**
- * Writes the environment-specific CSP sources to `<outDir>/csp-sources.json` for Express's Content-Security-Policy.
- * Runs after each `build:express:*` script: `node scripts/write-csp-sources.ts <configuration> <outDir>`.
+ * Writes the environment-specific CSP sources to csp-sources.json in the `express` configuration's output folder,
+ * for Express's Content-Security-Policy. Runs after each `build:express:*` script:
+ * `node scripts/write-csp-sources.ts <configuration>`.
  * The environment file is the one angular.json swaps in for that configuration, so the origins live in one place.
  */
+const ENVIRONMENT_FILE: string = 'src/environments/environment.ts';
+
 const configuration: string | undefined = process.argv[2];
-const outDir: string | undefined = process.argv[3];
-if (!configuration || !outDir) {
-  throw new Error('Usage: node scripts/write-csp-sources.ts <configuration> <outDir>');
+if (!configuration) {
+  throw new Error('Usage: node scripts/write-csp-sources.ts <configuration>');
 }
 
-const projects: Record<string, AngularProject> = (JSON.parse(readFileSync('angular.json', 'utf8')) as { projects: Record<string, AngularProject>; }).projects;
-const build: BuildConfiguration | undefined = Object.values(projects)[0]?.architect.build.configurations[configuration];
-const environmentFile: string = build?.fileReplacements?.[0]?.with ?? 'src/environments/environment.ts';
+const angularJson: AngularJson = JSON.parse(readFileSync('angular.json', 'utf8')) as AngularJson;
+const configurations: Record<string, BuildConfiguration> | undefined = angularJson.projects['thad-the-barber-ui']?.architect.build.configurations;
+const outDir: string | undefined = configurations?.['express']?.outputPath?.base;
+if (!outDir) {
+  throw new Error('angular.json has no express configuration with an outputPath');
+}
+const environmentFile: string = configurations?.[configuration]?.fileReplacements
+  ?.find((replacement: FileReplacement): boolean => replacement.replace === ENVIRONMENT_FILE)?.with ?? ENVIRONMENT_FILE;
 
 // Transpiling drops the type-only `Environment` import, which Node couldn't resolve.
 const javascript: string = ts.transpileModule(readFileSync(environmentFile, 'utf8'), { compilerOptions: { module: ts.ModuleKind.ESNext } }).outputText;

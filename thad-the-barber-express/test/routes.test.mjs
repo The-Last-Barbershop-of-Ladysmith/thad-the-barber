@@ -1,11 +1,8 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
-import { createRequire } from 'node:module';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { createFakeDist } from './fake-dist.mjs';
 
-var dist = mkdtempSync(join(tmpdir(), 'ttb-dist-'));
+var fakeDist;
 var app;
 
 function page(name) {
@@ -17,22 +14,21 @@ function headerNonce(response) {
 }
 
 beforeAll(function() {
-  mkdirSync(join(dist, '404'));
-  mkdirSync(join(dist, 'assets'));
-  writeFileSync(join(dist, 'index.html'), page('home'));
-  writeFileSync(join(dist, 'index.csr.html'), page('shell'));
-  writeFileSync(join(dist, '404', 'index.html'), page('not found'));
-  writeFileSync(join(dist, 'assets', 'app.css'), 'body {}');
-  writeFileSync(join(dist, 'csp-sources.json'), JSON.stringify({
-    'connect-src': ['https://api.example.com'],
-    'img-src': ['https://media.example.com'],
-  }));
-  process.env.ANGULAR_DIST_PATH = dist;
-  app = createRequire(import.meta.url)('../app');
+  fakeDist = createFakeDist({
+    'index.html': page('home'),
+    'index.csr.html': page('shell'),
+    '404/index.html': page('not found'),
+    'assets/app.css': 'body {}',
+    'csp-sources.json': JSON.stringify({
+      'connect-src': ['https://api.example.com'],
+      'img-src': ['https://media.example.com'],
+    }),
+  });
+  app = fakeDist.app;
 });
 
 afterAll(function() {
-  rmSync(dist, { recursive: true, force: true });
+  fakeDist.cleanup();
 });
 
 describe('pages', function() {
