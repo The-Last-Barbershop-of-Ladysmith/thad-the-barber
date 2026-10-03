@@ -46,6 +46,14 @@ resource plan 'Microsoft.Web/serverfarms@2024-11-01' existing = {
   name: 'asp-ttb-nonprod-${location}'
 }
 
+var storageName = 'storttbci${location}'
+var containerName = 'reports'
+
+resource devDeployIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2024-11-30' existing = {
+  scope: nonprodRg
+  name: 'id-ttb-deploy-dev-${location}'
+}
+
 resource deployIdentities 'Microsoft.ManagedIdentity/userAssignedIdentities@2024-11-30' existing = [
   for env in deployEnvironments: {
     scope: nonprodRg
@@ -53,8 +61,8 @@ resource deployIdentities 'Microsoft.ManagedIdentity/userAssignedIdentities@2024
   }
 ]
 
-// The viewer must sit in the plan's resource group. It's told the account's name, which is fixed by convention,
-// so it doesn't wait on the storage module (which needs the viewer's identity).
+// The viewer must sit in the plan's resource group. Both modules get the account's name from the vars above, so
+// the viewer doesn't wait on the storage module (which needs the viewer's identity).
 module viewer 'modules/report-viewer.bicep' = {
   scope: nonprodRg
   name: 'reports-viewer'
@@ -62,11 +70,11 @@ module viewer 'modules/report-viewer.bicep' = {
     location: location
     planId: plan.id
     dotnetRuntime: dotnetRuntime
-    storageName: 'storttbci${location}'
-    containerName: 'reports'
+    storageName: storageName
+    containerName: containerName
     allowedIpRanges: allowedIpRanges
     ownerPrincipalId: ownerPrincipalId
-    deployerPrincipalId: deployIdentities[indexOf(deployEnvironments, 'dev')].properties.principalId
+    deployerPrincipalId: devDeployIdentity.properties.principalId
     tags: tags
   }
 }
@@ -76,6 +84,8 @@ module storage 'modules/reports-storage.bicep' = {
   name: 'reports-storage'
   params: {
     location: location
+    storageName: storageName
+    containerName: containerName
     coolAfterDays: coolAfterDays
     deleteAfterDays: deleteAfterDays
     githubSubjectPrefix: github.subjectPrefix
@@ -90,7 +100,7 @@ module storage 'modules/reports-storage.bicep' = {
 output viewerUrl string = viewer.outputs.url
 
 @description('REPORTS_STORAGE_ACCOUNT repo variable.')
-output storageAccount string = storage.outputs.storageName
+output storageAccount string = storageName
 
 @description('AZURE_REPORTS_CLIENT_ID repo variable, for pull requests and the nightly smoke run.')
 output ciClientId string = storage.outputs.ciClientId

@@ -2,6 +2,8 @@
 // with, and who may read or write the reports container.
 
 param location string
+param storageName string
+param containerName string
 
 @description('Days a report stays on the Hot tier before moving to Cool.')
 param coolAfterDays int
@@ -24,7 +26,7 @@ var storageBlobDataReader = '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1'
 var storageBlobDataContributor = 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
 
 resource storage 'Microsoft.Storage/storageAccounts@2024-01-01' = {
-  name: 'storttbci${location}'
+  name: storageName
   location: location
   tags: tags
   kind: 'StorageV2'
@@ -44,7 +46,7 @@ resource storage 'Microsoft.Storage/storageAccounts@2024-01-01' = {
     name: 'default'
 
     resource reports 'containers' = {
-      name: 'reports'
+      name: containerName
       properties: {
         publicAccess: 'None'
       }
@@ -162,6 +164,4 @@ resource lock 'Microsoft.Authorization/locks@2020-05-01' = if (lockResourceGroup
   }
 }
 
-output storageName string = storage.name
-output containerName string = storage::blob::reports.name
 output ciClientId string = ciIdentity.properties.clientId

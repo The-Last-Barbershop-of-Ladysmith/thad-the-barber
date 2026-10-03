@@ -79,8 +79,10 @@ Invoke-Gh variable set AZURE_TENANT_ID --repo $Repo --body $account.tenant
 Invoke-Gh variable set AZURE_SUBSCRIPTION_ID --repo $Repo --body $account.subscription
 Invoke-Gh variable set AZURE_PREVIEW_CLIENT_ID --repo $Repo --body $previewClientId
 
-$reports = az deployment sub show --name reports --query properties.outputs -o json 2>$null | ConvertFrom-Json
-if ($reports) {
+# Lists instead of `show`, which fails when the deployment doesn't exist, and that would stop this script.
+$reportsJson = (az deployment sub list --query "[?name=='reports' && properties.provisioningState=='Succeeded'] | [0].properties.outputs" -o json) -join ''
+if ($reportsJson -and $reportsJson -ne 'null') {
+    $reports = $reportsJson | ConvertFrom-Json
     Invoke-Gh variable set REPORTS_URL --repo $Repo --body $reports.viewerUrl.value
     Invoke-Gh variable set REPORTS_STORAGE_ACCOUNT --repo $Repo --body $reports.storageAccount.value
     Invoke-Gh variable set AZURE_REPORTS_CLIENT_ID --repo $Repo --body $reports.ciClientId.value
