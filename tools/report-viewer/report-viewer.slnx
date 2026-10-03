@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="../report-viewer.tests/report-viewer.tests.csproj" />
+  <Project Path="report-viewer.csproj" />
+</Solution>

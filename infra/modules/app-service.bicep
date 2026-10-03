@@ -18,6 +18,9 @@ param restrictAccess bool
 
 param allowedIpRanges string[]
 
+@description('Resource ID of a user-assigned identity to add beside the system-assigned one. Empty adds none.')
+param userAssignedIdentityId string = ''
+
 param tags object
 
 var allowedIpRules = [
@@ -44,9 +47,16 @@ resource app 'Microsoft.Web/sites@2024-11-01' = {
   location: location
   tags: tags
   kind: 'app,linux'
-  identity: {
-    type: 'SystemAssigned'
-  }
+  identity: empty(userAssignedIdentityId)
+    ? {
+        type: 'SystemAssigned'
+      }
+    : {
+        type: 'SystemAssigned, UserAssigned'
+        userAssignedIdentities: {
+          '${userAssignedIdentityId}': {}
+        }
+      }
   properties: {
     serverFarmId: planId
     httpsOnly: true

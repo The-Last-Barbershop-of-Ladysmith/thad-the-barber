@@ -96,6 +96,7 @@ $env:TTB_ALLOWED_IPS     = (Invoke-RestMethod https://api.ipify.org)   # comma-s
 az deployment sub what-if --location centralus --parameters infra/nonprod.bicepparam
 az deployment sub create  --location centralus --parameters infra/nonprod.bicepparam
 ./infra/scripts/Set-TtbSecrets.ps1 -Environment dev    # then -Environment test
+az deployment sub create --name reports --location centralus --parameters infra/reports.bicepparam   # CI reports, see below
 ```
 
 Personal values come from environment variables, so they never land in this public repo. A second `create` should report no changes in `what-if`. `budgetStartDate` is fixed in the param file; Azure rejects a monthly budget whose start date is before the current month, so if the first deploy happens after October 2026, move it to the first of that month.
@@ -111,6 +112,7 @@ GitHub Actions signs in with **user-assigned managed identities** that trust Git
 | `id-ttb-deploy-dev-centralus` | jobs in GitHub environment `dev` | deploy `as-ttb-ui-dev-centralus` + `as-ttb-api-dev-centralus`, upload to `media-dev` |
 | `id-ttb-deploy-test-centralus` | jobs in GitHub environment `test` | the same for the test apps and `media-test` |
 | `id-ttb-preview-nonprod-centralus` | `pull_request` jobs | read the subscription and run what-if (no writes) |
+| `id-ttb-reports-ci-centralus` | `pull_request` jobs, and jobs on `main` without an environment (the nightly smoke) | write to the `reports` container only ([CI reports](#ci-reports)) |
 | prod (M5) | jobs in GitHub environment `production` | created by `prod.bicepparam` |
 
 - One identity per environment, rather than one app registration for all of them, so the `dev` sign-in can't touch test (they share a resource group).
@@ -131,7 +133,46 @@ Repo variables `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID` and `AZURE_PREVIEW_CLI
 ./infra/scripts/Set-TtbGitHub.ps1    # safe to re-run, e.g. after your IP changes
 ```
 
+Once `infra/reports.bicep` is deployed, the script also sets `REPORTS_URL`, `REPORTS_STORAGE_ACCOUNT` and `AZURE_REPORTS_CLIENT_ID` from the `reports` deployment's outputs. CI publishes reports only while `REPORTS_URL` is set.
+
 `.github/workflows/azure-login.yml` checks the sign-in: on a push to `dev/*` it signs in as dev (on `release/*` or `hotfix/*`, as test), confirms it can see its own two apps, and fails if it can see the other environment's.
+
+### CI reports
+
+Every Playwright, Lighthouse and API coverage report opens in the browser from a link in the PR comment or the run summary, behind a Microsoft Entra sign-in that only you pass (#137). `infra/reports.bicep` is its own deployment, after `main.bicep`, because it creates Entra objects (Microsoft Graph Bicep), which what-if can't preview. CI builds and lints it but doesn't run what-if on it. Deploying it needs the Entra right to create app registrations, which you have as the tenant's admin.
+
+| Resource | Name | Notes |
+| --- | --- | --- |
+| Resource group | `rg-ttb-ci-centralus` | Holds every environment's reports. `CanNotDelete` lock `lock-ttb-ci-centralus` |
+| Storage | `storttbcicentralus`, container `reports` | Standard LRS. No anonymous access, no shared keys (Entra only), TLS 1.2, no static website. Lifecycle: Hot for 30 days, then Cool (links keep working), deleted after 365 days |
+| Viewer app | `as-ttb-reports-nonprod-centralus` | .NET 10 ([`tools/report-viewer/`](../tools/report-viewer/)) on the nonprod F1 plan, so it's in `rg-ttb-nonprod-centralus`. Same access restrictions as the other nonprod apps |
+| Entra app | `Thad the Barber reports viewer (nonprod)` (`uniqueName` `ttb-reports-viewer-nonprod`) | App Service authentication signs in with it. **Assignment required**, and only you (`TTB_ADMIN_OBJECT_ID`) are assigned. The auth settings also allow only your object ID (`allowedPrincipals`) |
+| Identity | `id-ttb-reports-auth-nonprod-centralus` | Assigned to the viewer only. The Entra app trusts it through a federated credential, which replaces the client secret (`OVERRIDE_USE_MI_FIC_ASSERTION_CLIENTID`), so there's no secret to rotate |
+| Identity | `id-ttb-reports-ci-centralus` | Pull requests and the nightly smoke run upload with it (table above) |
+
+| Who | Role | Scope |
+| --- | --- | --- |
+| viewer (system-assigned identity) | Storage Blob Data Reader | `reports` |
+| `id-ttb-reports-ci-centralus` | Storage Blob Data Contributor | `reports` |
+| `id-ttb-deploy-dev-centralus`, `id-ttb-deploy-test-centralus` | Storage Blob Data Contributor | `reports` (smoke reports) |
+| `id-ttb-deploy-dev-centralus` | Website Contributor | the viewer app (`cd-dev` deploys it) |
+
+**Layout** in `reports`. A folder without an `index.html` lists its subfolders, newest run first:
+
+| Path | Report | Written by |
+| --- | --- | --- |
+| `pr/<pr#>/<run-id>/e2e/` | Playwright HTML report (mocked suite) | `ci.yml` `report` job |
+| `pr/<pr#>/<run-id>/lighthouse/` | `home.report.html`, `book.report.html` | `ci.yml` `report` job |
+| `pr/<pr#>/<run-id>/coverage/` | ReportGenerator HTML coverage report for the API | `ci.yml` `report` job |
+| `deploy/<env>/<run-id>/smoke/` | smoke report after each deploy | `deploy.yml` `publish-smoke` |
+| `nightly/test/<run-id>/smoke/` | nightly smoke report | `deploy.yml` `publish-smoke` |
+
+- Fork and Dependabot PRs get no OIDC token, so they skip publishing. Their checks still pass, and the zip artifacts stay as the fallback for every run.
+- The test environment only admits `release/*` and `hotfix/*`, but scheduled runs come from `main`. So the nightly upload runs without an environment and signs in as `id-ttb-reports-ci-centralus`, which trusts `main` and can only write reports.
+- `cd-dev` redeploys the viewer when `tools/report-viewer/` changes on `dev/*`.
+- **F1 limits** apply to the viewer: it cold-starts, and every report you open counts toward the plan's shared 165 MB/day outbound cap. Responses carry ETags, so reopening a report costs a 304 instead of the whole file.
+- **Cost:** storage only, a few cents a month at this volume. The app runs on the free plan, and the Entra app and identities are free.
+- **Checking the lockdown:** a signed-out browser is sent to the Entra sign-in; another account in the tenant is refused (not assigned); a plain `curl` to a blob URL on `storttbcicentralus` is refused (public access is off).
 
 ## CI (every pull request)
 
@@ -139,11 +180,11 @@ Repo variables `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID` and `AZURE_PREVIEW_CLI
 | --- | --- |
 | `ui` | `npm ci` → `npm audit` → `ng lint` → `ng test` (Vitest) → `build:express:test`, uploaded for `e2e` and `lighthouse` |
 | `express` | Express `npm ci` → `npm audit` → `npm test` (Vitest + supertest) |
-| `api` | `dotnet build` → `dotnet test` (xUnit) |
+| `api` | `dotnet build` → `dotnet test` (xUnit) → report viewer tests → ReportGenerator coverage (line and branch per class) → line coverage ≥ 80% |
 | `e2e` | Playwright with a mocked API and `@axe-core/playwright`, on Chromium + WebKit, desktop + mobile, against the `ui` job's `test` build served by Express (real CSP header and 404s) |
 | `lighthouse` | Lighthouse on `/` and `/book` of the `ui` job's build, served by Express with prod's headers (`NOINDEX=false`): accessibility ≥ 95, best practices and SEO ≥ 90, performance reported only |
 
-All five checks must pass before a merge. On failure, traces, screenshots and video are uploaded as artifacts.
+All five checks must pass before a merge. The `report` job publishes the Playwright, Lighthouse and coverage reports to the [CI reports](#ci-reports) viewer and links them from the PR comment and each job summary. The same reports, plus traces, screenshots and video, are also uploaded as zip artifacts.
 
 ## CD (deploy pipeline)
 

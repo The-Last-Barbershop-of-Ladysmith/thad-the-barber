@@ -1,4 +1,5 @@
 # Compiles and lints the Bicep in infra/, then previews the nonprod deployment with what-if (issue #9).
+# reports.bicep (#137) is built and linted only: it creates Entra objects, which what-if doesn't support.
 # What-if signs in with OIDC as the read-only preview identity (issue #10), set up by infra/scripts/Set-TtbGitHub.ps1.
 # It's skipped until the AZURE_PREVIEW_CLIENT_ID variable exists, and on fork PRs (no OIDC token, no secrets).
 name: infra
@@ -25,8 +26,12 @@ jobs:
           az bicep build --file infra/main.bicep --stdout > /dev/null
           az bicep lint --file infra/main.bicep
           az bicep build-params --file infra/nonprod.bicepparam --stdout > /dev/null
+          az bicep build --file infra/reports.bicep --stdout > /dev/null
+          az bicep lint --file infra/reports.bicep
+          az bicep build-params --file infra/reports.bicepparam --stdout > /dev/null
         env:
           TTB_BUDGET_EMAIL: ci@example.invalid
+          TTB_ADMIN_OBJECT_ID: 00000000-0000-0000-0000-000000000000
 
   what-if:
     needs: bicep

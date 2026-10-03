@@ -3,6 +3,8 @@
 // See docs/environments.md for the one-time setup and the secrets to add after the first deploy.
 targetScope = 'subscription'
 
+import * as github from 'github.bicep'
+
 @description('One hosted environment on the plan.')
 type environmentConfig = {
   @description('Short name used in resource names: dev, test or prod.')
@@ -57,8 +59,7 @@ param budgetEmail string
 @description('Object ID of the owner. Gets Key Vault Secrets Officer on each vault so they can add the secrets. Empty skips it.')
 param adminPrincipalId string = ''
 
-@description('Start of the GitHub OIDC subject claim. The repo uses immutable subjects (owner and repo IDs), so a renamed or re-created repo can\'t inherit the trust.')
-param githubSubjectPrefix string = 'repo:The-Last-Barbershop-of-Ladysmith@118852654/thad-the-barber@1391006695'
+param githubSubjectPrefix string = github.subjectPrefix
 
 @description('Create the identity that pull requests use to run what-if (Reader on the subscription). One stage is enough.')
 param createPreviewIdentity bool = false

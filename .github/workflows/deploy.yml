@@ -142,9 +142,46 @@ jobs:
           API_BASE_URL: https://${{ env.API_APP }}.azurewebsites.net/api
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        if: failure()
+        if: ${{ !cancelled() }}
         with:
           name: smoke-report-${{ inputs.environment }}
           path: |
             thad-the-barber-ui/playwright-report/smoke/
             thad-the-barber-ui/test-results/smoke/
+
+  # Publishes the smoke report to the reports viewer (#137). Deploys sign in as the environment's deploy identity.
+  # The nightly run comes from main, which no environment allows, so it runs without one and signs in as the
+  # reports identity (it trusts main and can only write reports).
+  publish-smoke:
+    needs: smoke
+    if: ${{ !cancelled() && needs.smoke.result != 'skipped' && vars.REPORTS_URL != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: ${{ github.event_name != 'schedule' && inputs.environment || '' }}
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      FOLDER: ${{ github.event_name == 'schedule' && 'nightly' || 'deploy' }}/${{ inputs.environment }}/${{ github.run_id }}/smoke
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: smoke-report-${{ inputs.environment }}
+          path: smoke
+
+      - uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
+        with:
+          client-id: ${{ github.event_name == 'schedule' && vars.AZURE_REPORTS_CLIENT_ID || vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Publish the smoke report
+        run: |
+          az storage blob upload-batch --auth-mode login --only-show-errors --overwrite \
+            --account-name "$ACCOUNT" --destination reports \
+            --destination-path "$FOLDER" --source smoke/playwright-report/smoke > /dev/null
+          echo "[Smoke report ($ENVIRONMENT)]($REPORTS_URL/$FOLDER/) (Entra sign-in)" >> "$GITHUB_STEP_SUMMARY"
+        env:
+          ACCOUNT: ${{ vars.REPORTS_STORAGE_ACCOUNT }}
+          REPORTS_URL: ${{ vars.REPORTS_URL }}
+          ENVIRONMENT: ${{ inputs.environment }}
