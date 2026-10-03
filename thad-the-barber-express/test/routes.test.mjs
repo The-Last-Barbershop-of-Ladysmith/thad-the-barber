@@ -56,6 +56,12 @@ describe('page routes', function() {
     expect(response.status).toBe(200);
   });
 
+  it('never serves the raw HTML files', async function() {
+    var response = await request(app).get('/index.html');
+    expect(response.status).toBe(404);
+    expect(response.text).not.toBe('prerendered home');
+  });
+
   it('returns a bare 404 for missing files', async function() {
     var response = await request(app).get('/assets/missing.css');
     expect(response.status).toBe(404);

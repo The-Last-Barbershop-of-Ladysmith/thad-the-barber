@@ -1,8 +1,11 @@
 import { provideHttpClient } from '@angular/common/http';
 import {
   ApplicationConfig,
+  CSP_NONCE,
+  inject,
   isDevMode,
   provideBrowserGlobalErrorListeners,
+  provideEnvironmentInitializer,
 } from '@angular/core';
 import {
   provideRouter,
@@ -12,7 +15,7 @@ import {
 import { provideEffects } from '@ngrx/effects';
 import { provideStore } from '@ngrx/store';
 import { provideStoreDevtools } from '@ngrx/store-devtools';
-import { providePrimeNG } from 'primeng/config';
+import { PrimeNG, providePrimeNG } from 'primeng/config';
 import { PRIMEUI_LICENSE } from './core/config/primeui-license';
 import { routes } from './app.routes';
 import * as appEffects from './store/app.effects';
@@ -38,6 +41,10 @@ export const appConfig: ApplicationConfig = {
       ripple: false,
       theme: { preset: ThadPreset, options: themeOptions },
       ...(PRIMEUI_LICENSE ? { license: PRIMEUI_LICENSE } : {}),
+    }),
+    // PrimeNG injects its theme styles at runtime, so they need the page's CSP nonce (from ngCspNonce in index.html).
+    provideEnvironmentInitializer((): void => {
+      inject(PrimeNG).csp.set({ nonce: inject(CSP_NONCE) ?? undefined });
     }),
     provideClientHydration(),
   ],
