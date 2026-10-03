@@ -13,7 +13,8 @@ test.describe(
         await expectNoA11yViolations(page);
 
         await page.locator('.p-datepicker-day:not(.p-disabled)').first().click();
-        await page.getByRole('group').getByRole('button', { disabled: false }).first().click();
+        // PrimeNG marks a taken slot with data-p-disabled but not aria-disabled (#84), so a role filter matches it.
+        await page.getByRole('group').locator('[role="button"][data-p-disabled="false"]').first().click();
         await page.locator('#booking-name').fill('Jordan Customer');
         const phone: Locator = page.locator('#booking-phone');
         // InputMask redraws its buffer on a timer after focus, which can wipe a value filled too soon.

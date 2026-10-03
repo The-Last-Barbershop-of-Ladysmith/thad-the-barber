@@ -18,7 +18,8 @@
     "lint": "ng lint",
     "lint:fix": "ng lint --fix",
     "format": "prettier --write \"src/**/*.{html,scss,css}\"",
-    "serve:ssr:thad-the-barber-ui": "node dist/thad-the-barber-ui/server/server.mjs"
+    "build:express": "ng build -c development,express",
+    "start:express": "npm run build:express && npm --prefix ../thad-the-barber-express run start:dev"
   },
   "private": true,
   "packageManager": "npm@11.11.0",
@@ -37,7 +38,6 @@
     "@ngrx/store-devtools": "^22.0.1",
     "@primeuix/themes": "^3.0.1",
     "@tailwindcss/postcss": "^4.3.3",
-    "express": "^5.1.0",
     "ngrx-store-localstorage": "^20.1.0",
     "postcss": "^8.5.28",
     "primeicons": "^8.0.2",
@@ -55,7 +55,6 @@
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.63.0",
     "@stylistic/eslint-plugin": "^5.10.0",
-    "@types/express": "^5.0.1",
     "@types/node": "^22.12.0",
     "angular-eslint": "22.5.0",
     "eslint": "^10.9.1",

@@ -15,7 +15,7 @@ test.describe(
   (): void => {
     test.beforeEach(async ({ page }: { page: Page; }): Promise<void> => {
       await page.goto('/');
-      // The hero renders once the lazy home route has loaded. Until then its NavigationEnd would close the menu.
+      // The prerendered hero shows before the app starts; until its first NavigationEnd a menu opened now would close.
       await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
     });
 

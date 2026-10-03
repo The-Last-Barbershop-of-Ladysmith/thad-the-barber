@@ -5,11 +5,11 @@ import * as homeEffects from './state/home.effects';
 import { homeFeature } from './state/home.feature';
 import { Home } from './home';
 
-/** The home slice and effects register only when this route loads. */
+/** The home slice and effects register only when this route activates. */
 export const HOME_ROUTES: Routes = [
   {
     path: '',
     providers: [provideState(homeFeature), provideEffects(homeEffects)],
-    loadComponent: (): Promise<typeof Home> => import('./home').then((m: { Home: typeof Home; }): typeof Home => m.Home),
+    component: Home,
   },
 ];

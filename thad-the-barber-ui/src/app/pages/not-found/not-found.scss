@@ -1,0 +1,61 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: var(--p-surface-950);
+
+  .photo {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 62% 50%;
+  }
+
+  // Dark on the left behind the copy, clearing toward the chair on the right.
+  .wash {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--p-surface-950) 92%, transparent) 0%,
+      color-mix(in srgb, var(--p-surface-950) 70%, transparent) 40%,
+      color-mix(in srgb, var(--p-surface-950) 15%, transparent) 75%,
+      color-mix(in srgb, var(--p-surface-950) 35%, transparent) 100%
+    );
+  }
+}
+
+.not-found {
+  position: relative;
+  display: flex;
+  min-height: 100svh;
+  align-items: center;
+  max-width: 75rem;
+  margin-inline: auto;
+  padding-block: 8rem 3rem;
+
+  .content {
+    align-items: flex-start;
+    max-width: 32.5rem;
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      padding-top: 0.5rem;
+    }
+
+    .links {
+      --link-color: var(--p-text-muted-color);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.25rem;
+      align-self: stretch;
+      padding-top: 1.75rem;
+      border-top-width: 1px;
+      font-size: 0.875rem;
+    }
+  }
+}

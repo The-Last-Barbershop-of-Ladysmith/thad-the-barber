@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "start": "node ./bin/www",
-    "start:dev": "cross-env NODE_ENV=development DEBUG=thad-the-barber-express:* node --watch ./bin/www"
+    "start:dev": "cross-env NODE_ENV=development DEBUG=thad-the-barber-express:* node --watch ./bin/www",
+    "start:app": "npm --prefix ../thad-the-barber-ui run build:express && npm run start:dev"
   },
   "dependencies": {
     "@azure/monitor-opentelemetry": "^1.20.0",
