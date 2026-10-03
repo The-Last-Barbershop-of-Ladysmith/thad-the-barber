@@ -37,7 +37,7 @@
     "ngrx-store-localstorage": "^20.1.0",
     "postcss": "^8.5.28",
     "primeicons": "^8.0.2",
-    "primeng": "^22.1.1",
+    "primeng": "^22.1.2",
     "rxjs": "~7.8.0",
     "tailwindcss": "^4.3.3",
     "tailwindcss-primeui": "^0.6.1",
@@ -58,7 +58,7 @@
     "lighthouse": "^13.5.0",
     "prettier": "^3.8.1",
     "typescript": "~6.0.2",
-    "typescript-eslint": "8.69.0",
+    "typescript-eslint": "8.71.0",
     "vitest": "^5.0.0"
   },
   "engines": {
