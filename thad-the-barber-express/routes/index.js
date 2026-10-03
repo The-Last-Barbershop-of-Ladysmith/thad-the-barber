@@ -58,6 +58,7 @@ function readPage(file) {
 // Every HTML response gets a fresh nonce and the matching header, and is never cached, which would replay a nonce.
 function sendPage(res, status, html) {
   var nonce = csp.createNonce();
+  res.removeHeader('Content-Security-Policy');
   res.status(status)
     .set(cspHeader, csp.contentSecurityPolicy(nonce, cspSources, csp.styleAttributeHashes(html)))
     .set('Cache-Control', 'no-cache')

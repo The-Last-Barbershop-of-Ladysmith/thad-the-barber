@@ -67,7 +67,8 @@ jobs:
         working-directory: thad-the-barber-express
 
       # GET /healthz reports these. The version is the branch name after its first slash, as in the artifact names.
-      - run: jq -n --arg version "${REF_NAME#*/}" --arg commit "$GITHUB_SHA" '{version: $version, commit: $commit}' > build-info.json
+      - run: |
+          jq -n --arg version "${REF_NAME#*/}" --arg commit "$GITHUB_SHA" '{version: $version, commit: $commit}' > build-info.json
         working-directory: thad-the-barber-express
         env:
           REF_NAME: ${{ github.ref_name }}

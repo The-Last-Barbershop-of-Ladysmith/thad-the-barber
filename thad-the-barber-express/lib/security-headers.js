@@ -11,11 +11,20 @@ var PERMISSIONS_POLICY = [
   'usb=()',
 ].join(', ');
 
-// Pages send their own nonce-based CSP (routes/index.js), so helmet's is off. NOINDEX is an App Service setting,
-// "false" only in prod; anywhere else, including local runs, search engines are told to stay away.
+// Every response gets a CSP that allows nothing, so a file opened directly (an SVG, say) can't run anything. Pages
+// replace it with their nonce-based policy (routes/index.js). NOINDEX is an App Service setting, "false" only in prod;
+// anywhere else, including local runs, search engines are told to stay away.
 function securityHeaders(noIndex) {
   var headers = helmet({
-    contentSecurityPolicy: false,
+    contentSecurityPolicy: {
+      useDefaults: false,
+      directives: {
+        defaultSrc: ["'none'"],
+        frameAncestors: ["'none'"],
+        baseUri: ["'none'"],
+        formAction: ["'none'"],
+      },
+    },
     referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
   });
   return function(req, res, next) {

@@ -8,3 +8,10 @@ condition = "AND"
 paths = ['''^infra/.*\.bicep$''']
 regexTarget = "line"
 regexes = ['''^\s*var\s+\w+\s*=\s*'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'\s*$''']
+
+[[allowlists]]
+description = "App Insights connection strings are public: the browser SDK ships them in the bundle (#13, #121)"
+condition = "AND"
+paths = ['''^thad-the-barber-ui/src/environments/environment[\w.-]*\.ts$''']
+regexTarget = "line"
+regexes = ['''^\s*appInsightsConnectionString:\s*'InstrumentationKey=[0-9a-f-]{36};IngestionEndpoint=https://[\w.-]+/;LiveEndpoint=https://[\w.-]+/;ApplicationId=[0-9a-f-]{36}',\s*$''']

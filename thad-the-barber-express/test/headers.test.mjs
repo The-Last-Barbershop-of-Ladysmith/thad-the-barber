@@ -40,9 +40,15 @@ describe('security headers', function() {
     expect(response.headers['permissions-policy']).toContain('camera=()');
   });
 
-  it("leave the CSP to the page router, so static files don't get helmet's", async function() {
+  it('lock down files with a CSP that allows nothing', async function() {
     var response = await request(app).get('/main-LDA72QPD.js');
-    expect(response.headers['content-security-policy']).toBeUndefined();
+    expect(response.headers['content-security-policy']).toBe("default-src 'none';frame-ancestors 'none';base-uri 'none';form-action 'none'");
+  });
+
+  it('give pages only their nonce-based CSP', async function() {
+    var response = await request(app).get('/');
+    expect(response.headers['content-security-policy']).toContain("script-src 'nonce-");
+    expect(response.headers['content-security-policy']).not.toContain("default-src 'none'");
   });
 });
 
