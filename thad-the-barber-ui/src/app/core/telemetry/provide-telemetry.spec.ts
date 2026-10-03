@@ -1,6 +1,7 @@
 import { ErrorHandler } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { MockInstance } from 'vitest';
 import {
   AngularPlugin,
   ApplicationinsightsAngularpluginErrorService,
@@ -51,6 +52,20 @@ describe(
         expect(wiredPlugin()).toBeDefined();
       },
     );
+
+    it(
+      'keeps logging errors to the console',
+      (): void => {
+        const consoleError: MockInstance<typeof console.error> = vi.spyOn(console, 'error').mockReturnValue(undefined);
+        const error: Error = new Error('boom');
+        TestBed.configureTestingModule({ providers: [provideRouter([]), provideTelemetry(SETTINGS)] });
+
+        TestBed.inject(ErrorHandler).handleError(error);
+
+        expect(consoleError).toHaveBeenCalledWith('ERROR', error);
+        consoleError.mockRestore();
+      },
+    );
   },
 );
 
@@ -78,14 +93,6 @@ describe(
       (): void => {
         expect(config.extensions).toEqual([plugin]);
         expect(config.disableExceptionTracking).toBe(true);
-      },
-    );
-
-    it(
-      'keeps logging errors to the console through the default handler',
-      (): void => {
-        const defaultHandler: object = { errorServices: [expect.any(ErrorHandler)] };
-        expect(config.extensionConfig?.[plugin.identifier]).toMatchObject(defaultHandler);
       },
     );
 

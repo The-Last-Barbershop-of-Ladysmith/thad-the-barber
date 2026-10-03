@@ -37,8 +37,6 @@ export function telemetryConfig(settings: TelemetrySettings, angularPlugin: Angu
     extensions: [angularPlugin],
     extensionConfig: {
       [angularPlugin.identifier]: {
-        // Angular's default handler keeps logging uncaught errors to the console.
-        errorServices: [new ErrorHandler()],
         // Wires the plugin to the injected error service even if nothing has resolved ErrorHandler yet.
         useInjector: true,
       },
@@ -70,7 +68,17 @@ export function provideTelemetry(settings: TelemetrySettings): EnvironmentProvid
     return makeEnvironmentProviders([]);
   }
   return makeEnvironmentProviders([
-    { provide: ErrorHandler, useExisting: ApplicationinsightsAngularpluginErrorService },
+    {
+      provide: ErrorHandler,
+      useFactory: (): ErrorHandler => {
+        const errorService: ApplicationinsightsAngularpluginErrorService =
+          inject(ApplicationinsightsAngularpluginErrorService);
+        // Angular's default handler keeps logging to the console, from the first error on, before the SDK loads too.
+        // Add other handlers with addErrorHandler: an errorServices array in the plugin config replaces this one.
+        errorService.addErrorHandler(new ErrorHandler());
+        return errorService;
+      },
+    },
     provideAppInitializer((): void => {
       const angularPlugin: AngularPlugin = new AngularPlugin(inject(Injector));
       const config: IConfiguration & IConfig = telemetryConfig(settings, angularPlugin);
