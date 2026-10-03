@@ -13,7 +13,24 @@ var cspHeader = process.env.CSP_REPORT_ONLY === 'true' ? 'Content-Security-Polic
 // #58: once /book is prerendered, remove it here.
 var clientRoutes = new Set(['/book']);
 
-var serveStatic = express.static(angularDist, { index: false, redirect: false });
+var ONE_YEAR_SECONDS = 365 * 24 * 60 * 60;
+var ONE_DAY_SECONDS = 24 * 60 * 60;
+// Angular's output hashing names files like main-LDA72QPD.js or media/primeicons-S6ICFECY.eot.
+var HASHED_FILE = /-[A-Z0-9]{8}\.[a-z0-9]+$/;
+
+// Hashed files never change under their name. Unhashed images and frames under assets/ can wait a day for an update;
+// anything else unhashed (favicon, a development build's main.js) is checked on every use.
+function cacheControl(res, filePath) {
+  if (HASHED_FILE.test(path.basename(filePath))) {
+    res.set('Cache-Control', 'public, max-age=' + ONE_YEAR_SECONDS + ', immutable');
+  } else if (path.relative(angularDist, filePath).split(path.sep)[0] === 'assets') {
+    res.set('Cache-Control', 'public, max-age=' + ONE_DAY_SECONDS);
+  } else {
+    res.set('Cache-Control', 'no-cache');
+  }
+}
+
+var serveStatic = express.static(angularDist, { index: false, redirect: false, setHeaders: cacheControl });
 
 // HTML only goes out through sendPage, which fills in the CSP nonce; the raw files carry a placeholder.
 router.use(function(req, res, next) {

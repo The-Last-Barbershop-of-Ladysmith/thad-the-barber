@@ -208,12 +208,13 @@ jobs:
       - run: npm ci --omit=dev
         working-directory: thad-the-barber-express
 
-      # Scores what deploys: the optimized build served by Express.
+      # Scores what deploys: the optimized build served by Express. NOINDEX=false sends prod's headers, since the
+      # noindex that dev and test send would fail the SEO category.
       - run: npm run build:express:test
 
       - name: Start the site
         run: |
-          PORT=4200 npm --prefix ../thad-the-barber-express start > serve.log 2>&1 &
+          PORT=4200 NOINDEX=false npm --prefix ../thad-the-barber-express start > serve.log 2>&1 &
           timeout 60 bash -c 'until curl -sf http://localhost:4200 > /dev/null; do sleep 2; done' || { cat serve.log; exit 1; }
 
       # Mobile emulation, Lighthouse's default. Uses the runner's preinstalled Chrome.

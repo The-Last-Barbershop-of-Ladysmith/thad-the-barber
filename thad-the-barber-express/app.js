@@ -1,6 +1,9 @@
+var compression = require('compression');
 var express = require('express');
 var path = require('path');
 
+var { securityHeaders } = require('./lib/security-headers');
+var healthRouter = require('./routes/health');
 var indexRouter = require('./routes/index');
 
 var app = express();
@@ -12,6 +15,9 @@ app.set('etag', false);
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
+app.use(compression());
+app.use(securityHeaders(process.env.NOINDEX !== 'false'));
+app.use('/', healthRouter);
 app.use('/', indexRouter);
 
 app.use(function(req, res) {
