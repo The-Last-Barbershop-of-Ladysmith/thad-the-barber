@@ -31,7 +31,7 @@ See [environments.md](environments.md) for the deploy setup and the branching an
 
 | App | What it runs | Serves |
 | --- | --- | --- |
-| **web** (`as-ttb-ui-*`) | Node LTS + **Express 5** (TypeScript), static only: no SSR, no proxy | The Angular build (prerendered pages + SPA), with a per-request CSP nonce, themed EJS error pages, and a correct 404 status |
+| **web** (`as-ttb-ui-*`) | Node LTS + **Express 5** (`thad-the-barber-express/`, JavaScript), static only: no SSR, no proxy | The Angular build (prerendered pages + SPA), with a per-request CSP nonce, security headers, themed EJS error pages, and a correct 404 status |
 | **api** (`as-ttb-api-*`) | ASP.NET Core (.NET LTS) | `/api/*` only |
 
 - The browser calls the API **cross-origin**. **CORS is configured only in the .NET app** (ASP.NET Core middleware) and allows exactly the origins in **`Cors:AllowedOrigins`, an array stored in Key Vault** (`Cors--AllowedOrigins--0`, `--1`, …). App Service's built-in CORS stays empty, because when it's enabled it overrides the app's own CORS handling.
@@ -133,10 +133,11 @@ The decided rules are recorded in **[business-rules.md](business-rules.md)** wit
 
 ## G. Rendering and SEO
 
-- `@angular/ssr` **prerendering** of `/`, `/privacy`, `/accessibility` and `/404`, as part of each environment's build against that environment's API; Express serves the static output (no SSR). `/book` stays client-rendered.
+- `@angular/ssr` **prerendering** of `/`, `/privacy`, `/accessibility` and `/404`, as part of each environment's build against that environment's API; Express serves the static output (no SSR). `/book` stays client-rendered until its date step waits for availability (#58); then it's prerendered too.
+- Express serves a prerendered page when its `<route>/index.html` exists, the app shell (`index.csr.html`) for the client-rendered routes it lists (`clientRoutes` in `routes/index.js`; only `/book` today), and the prerendered `/404` page otherwise. Routes with ids in the URL (`/book/manage/*`, the admin portal) join that list as prefixes. Angular's server rendering was tried for the 404 status and dropped (2026-10-03): it would run Angular in Node for every unknown URL.
 - Per-route titles, descriptions, canonical, Open Graph and Twitter tags built from the store; `HairSalon` JSON-LD; `sitemap.xml` and `robots.txt`; favicon set and manifest.
-- Unknown paths return a real **HTTP 404** with the themed 404 page.
-- Dev and test are never indexed (`robots.txt` disallow + `X-Robots-Tag: noindex`).
+- Unknown paths return a real **HTTP 404** with the themed 404 page, never `200 index.html` (a soft 404).
+- Dev and test are never indexed (`robots.txt` disallow + `X-Robots-Tag: noindex`). Express sends the header unless the web app's `NOINDEX` setting is `false`, which infra sets only in prod.
 - A branded startup loader appears only on client-rendered routes. The loader and the Express error pages use `brand.css`, generated from the theme tokens.
 
 ## H. Accessibility
@@ -243,7 +244,7 @@ The design for when it's picked up needs no database:
 
 **Transport and headers:**
 - HTTPS only, HSTS, TLS 1.2+.
-- CSP on the Express frontend, sent as a header with a **per-request nonce** that Express injects into the HTML (Angular's `ngCspNonce` and PrimeNG's `csp.nonce`), so there's no `'unsafe-inline'`. The rest of the policy still applies: `connect-src` (API + reCAPTCHA), `frame-src` (Maps + reCAPTCHA), `img-src`, `frame-ancestors 'none'`, `object-src 'none'`, `base-uri 'self'`.
+- CSP on the Express frontend, sent as a header with a **per-request nonce**, so there's no `'unsafe-inline'`. `index.html` carries `ngCspNonce="CSP_NONCE"`, the Angular build copies that placeholder onto its own script and style tags, and Express swaps in a fresh nonce for every page (PrimeNG gets it through `CSP_NONCE`). Pages are sent `no-cache` without an ETag, so a nonce is never replayed. The rest of the policy: `connect-src` (API, App Insights ingestion, reCAPTCHA), `frame-src` (Maps + reCAPTCHA), `img-src` (media host), `frame-ancestors 'none'`, `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`. The environment's origins come from `csp-sources.json`, which the `postbuild:express:*` scripts write from the build's `environment.*.ts`, so they're never duplicated. Prerendered `style` attributes (PrimeNG's carousel) are allowed by hash (`style-src-attr 'unsafe-hashes'`). Setting `CSP_REPORT_ONLY=true` on the web app switches to `Content-Security-Policy-Report-Only` for rolling out a policy change.
 - `nosniff`, a strict Referrer-Policy, and a Permissions-Policy.
 
 **Privacy:**
