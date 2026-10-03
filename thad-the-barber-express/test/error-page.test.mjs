@@ -1,24 +1,9 @@
-import { createRequire } from 'node:module';
-import { join } from 'node:path';
-import express from 'express';
 import request from 'supertest';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { createFakeDist } from './fake-dist.mjs';
 
-var require = createRequire(import.meta.url);
-var { errorPage } = require('../lib/error-page');
 var fakeDist;
 var app;
-
-function appThatThrows(showDetails) {
-  return express()
-    .set('views', join(import.meta.dirname, '..', 'views'))
-    .set('view engine', 'ejs')
-    .get('/boom', function() {
-      throw new Error('Kaboom at the chair');
-    })
-    .use(errorPage(showDetails));
-}
 
 beforeAll(function() {
   process.env.ERROR_TEST_ROUTE = 'true';
@@ -28,6 +13,10 @@ beforeAll(function() {
     'csp-sources.json': '{}',
   });
   app = fakeDist.app;
+});
+
+afterEach(function() {
+  delete process.env.NODE_ENV;
 });
 
 afterAll(function() {
@@ -58,15 +47,16 @@ describe('error page', function() {
   });
 
   it('shows the error details with the stack trace in development', async function() {
-    var response = await request(appThatThrows(true)).get('/boom');
+    process.env.NODE_ENV = 'development';
+    var response = await request(app).get('/_test/error');
     expect(response.text).toContain('data-testid="error-details"');
-    expect(response.text).toContain('Error: Kaboom at the chair');
-    expect(response.text).toMatch(/at .*error-page\.test\.mjs/);
+    expect(response.text).toContain('Error: Forced test error');
+    expect(response.text).toMatch(/at .*app\.js/);
   });
 
   it('retries the same URL, escaped', async function() {
-    var response = await request(appThatThrows(false)).get('/boom?x="><script>');
-    expect(response.text).toContain('href="/boom?x=%22%3E%3Cscript%3E"');
+    var response = await request(app).get('/_test/error?x="><script>');
+    expect(response.text).toContain('href="/_test/error?x=%22%3E%3Cscript%3E"');
   });
 
   it.each(['//evil.example/%E0', '/\\evil.example/%E0'])('never retries %s, which points at another site', async function(path) {
