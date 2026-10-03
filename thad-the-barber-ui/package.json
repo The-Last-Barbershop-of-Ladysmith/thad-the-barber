@@ -18,8 +18,14 @@
     "lint": "ng lint",
     "lint:fix": "ng lint --fix",
     "format": "prettier --write \"src/**/*.{html,scss,css}\"",
-    "build:express": "ng build -c development,express",
-    "start:express": "npm run build:express && npm --prefix ../thad-the-barber-express run start:dev"
+    "build:express:dev": "ng build -c development,express",
+    "build:express:dev-cloud": "ng build -c devCloud,express",
+    "build:express:test": "ng build -c test,express",
+    "build:express:production": "ng build -c production,express",
+    "start:express:dev": "npm run build:express:dev && npm --prefix ../thad-the-barber-express run start:dev",
+    "start:express:dev-cloud": "npm run build:express:dev-cloud && npm --prefix ../thad-the-barber-express run start:dev-cloud",
+    "start:express:test": "npm run build:express:test && npm --prefix ../thad-the-barber-express run start:test",
+    "start:express:production": "npm run build:express:production && npm --prefix ../thad-the-barber-express run start:production"
   },
   "private": true,
   "packageManager": "npm@11.11.0",
