@@ -138,9 +138,13 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: thad-the-barber-ui/package-lock.json
+          cache-dependency-path: |
+            thad-the-barber-ui/package-lock.json
+            thad-the-barber-express/package-lock.json
 
       - run: npm ci
+      - run: npm ci --omit=dev
+        working-directory: thad-the-barber-express
 
       - name: Playwright version
         id: playwright
@@ -196,15 +200,21 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: thad-the-barber-ui/package-lock.json
+          cache-dependency-path: |
+            thad-the-barber-ui/package-lock.json
+            thad-the-barber-express/package-lock.json
 
       - run: npm ci
+      - run: npm ci --omit=dev
+        working-directory: thad-the-barber-express
 
-      # Serves the optimized build until the Express server (#19) exists.
+      # Scores what deploys: the optimized build served by Express.
+      - run: npm run build:express:test
+
       - name: Start the site
         run: |
-          npx ng serve --configuration test --port 4200 > serve.log 2>&1 &
-          timeout 180 bash -c 'until curl -sf http://localhost:4200 > /dev/null; do sleep 2; done' || { cat serve.log; exit 1; }
+          PORT=4200 npm --prefix ../thad-the-barber-express start > serve.log 2>&1 &
+          timeout 60 bash -c 'until curl -sf http://localhost:4200 > /dev/null; do sleep 2; done' || { cat serve.log; exit 1; }
 
       # Mobile emulation, Lighthouse's default. Uses the runner's preinstalled Chrome.
       - name: Lighthouse
