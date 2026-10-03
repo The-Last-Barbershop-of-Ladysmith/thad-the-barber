@@ -3,6 +3,7 @@ import { primitive } from './tokens/primitive';
 
 interface PrimitiveTokens {
   ink: string;
+  fontFamily: { sans: string; };
   borderRadius: Record<string, string>;
   copper: Record<string, string>;
   espresso: Record<string, string>;
@@ -13,11 +14,7 @@ const tokens: PrimitiveTokens = primitive as PrimitiveTokens;
 describe(
   'brandCss',
   (): void => {
-    let css: string;
-
-    beforeAll((): void => {
-      css = brandCss();
-    });
+    const css: string = brandCss();
 
     it.each(['copper', 'espresso'] as const)(
       'has a variable for every %s shade',
@@ -32,7 +29,7 @@ describe(
       'has the ink, font and radius primitives',
       (): void => {
         expect(css).toContain(`--p-ink:${tokens.ink};`);
-        expect(css).toContain('--p-font-family-sans:Helvetica, Arial, sans-serif;');
+        expect(css).toContain(`--p-font-family-sans:${tokens.fontFamily.sans};`);
         Object.entries(tokens.borderRadius).forEach(([size, value]: [string, string]): void => {
           expect(css).toContain(`--p-border-radius-${size}:${value};`);
         });

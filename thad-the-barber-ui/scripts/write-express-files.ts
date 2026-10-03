@@ -13,6 +13,10 @@ interface CspEnvironment {
   appInsightsConnectionString: string;
 }
 
+interface EnvironmentModule { environment: CspEnvironment; }
+
+interface BrandCssModule { brandCss: () => string; }
+
 interface FileReplacement {
   replace: string;
   with: string;
@@ -63,8 +67,10 @@ async function importSource<T>(file: string): Promise<T> {
   return await import(`data:text/javascript,${encodeURIComponent(javascript)}`) as T;
 }
 
-const { environment }: { environment: CspEnvironment; } = await importSource(environmentFile);
-const { brandCss }: { brandCss: () => string; } = await importSource('src/app/theme/brand-css.ts');
+const environmentModule: Promise<EnvironmentModule> = importSource(environmentFile);
+const brandCssModule: Promise<BrandCssModule> = importSource('src/app/theme/brand-css.ts');
+const { environment }: EnvironmentModule = await environmentModule;
+const { brandCss }: BrandCssModule = await brandCssModule;
 
 const ingestionEndpoint: string | undefined = /IngestionEndpoint=([^;]+)/.exec(environment.appInsightsConnectionString)?.[1];
 const sources: Record<string, string[]> = {
