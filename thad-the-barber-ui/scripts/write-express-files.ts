@@ -1,10 +1,10 @@
+import { build } from 'esbuild';
 import {
   mkdirSync,
   readFileSync,
   writeFileSync,
 } from 'node:fs';
 import { join } from 'node:path';
-import ts from 'typescript';
 
 /** The environment fields the CSP needs. Node runs this file unbuilt, so it can't import `Environment`. */
 interface CspEnvironment {
@@ -28,16 +28,17 @@ interface AngularProject { architect: { build: { configurations: Record<string, 
 interface AngularJson { projects: Record<string, AngularProject>; }
 
 /**
- * Writes the environment-specific CSP sources to csp-sources.json in the `express` configuration's output folder,
- * for Express's Content-Security-Policy. Runs after each `build:express:*` script:
- * `node scripts/write-csp-sources.ts <configuration>`.
- * The environment file is the one angular.json swaps in for that configuration, so the origins live in one place.
+ * Writes the files Express needs next to the build in the `express` configuration's output folder. Runs after each
+ * `build:express:*` script: `node scripts/write-express-files.ts <configuration>`.
+ * - csp-sources.json: the environment's origins for Express's Content-Security-Policy, from the environment file
+ *   angular.json swaps in for that configuration, so the origins live in one place.
+ * - brand.css: the theme's CSS variables for the error pages (src/app/theme/brand-css.ts).
  */
 const ENVIRONMENT_FILE: string = 'src/environments/environment.ts';
 
 const configuration: string | undefined = process.argv[2];
 if (!configuration) {
-  throw new Error('Usage: node scripts/write-csp-sources.ts <configuration>');
+  throw new Error('Usage: node scripts/write-express-files.ts <configuration>');
 }
 
 const angularJson: AngularJson = JSON.parse(readFileSync('angular.json', 'utf8')) as AngularJson;
@@ -49,10 +50,21 @@ if (!outDir) {
 const environmentFile: string = configurations?.[configuration]?.fileReplacements
   ?.find((replacement: FileReplacement): boolean => replacement.replace === ENVIRONMENT_FILE)?.with ?? ENVIRONMENT_FILE;
 
-// Transpiling drops the type-only `Environment` import, which Node couldn't resolve.
-const javascript: string = ts.transpileModule(readFileSync(environmentFile, 'utf8'), { compilerOptions: { module: ts.ModuleKind.ESNext } }).outputText;
-const module: { environment: CspEnvironment; } = await import(`data:text/javascript,${encodeURIComponent(javascript)}`) as { environment: CspEnvironment; };
-const environment: CspEnvironment = module.environment;
+/** Bundles a TypeScript module from src (Node can't resolve its extensionless imports) and imports it. */
+async function importSource<T>(file: string): Promise<T> {
+  const bundle: Awaited<ReturnType<typeof build>> = await build({
+    entryPoints: [file],
+    bundle: true,
+    format: 'esm',
+    platform: 'node',
+    write: false,
+  });
+  const javascript: string = bundle.outputFiles[0]?.text ?? '';
+  return await import(`data:text/javascript,${encodeURIComponent(javascript)}`) as T;
+}
+
+const { environment }: { environment: CspEnvironment; } = await importSource(environmentFile);
+const { brandCss }: { brandCss: () => string; } = await importSource('src/app/theme/brand-css.ts');
 
 const ingestionEndpoint: string | undefined = /IngestionEndpoint=([^;]+)/.exec(environment.appInsightsConnectionString)?.[1];
 const sources: Record<string, string[]> = {
@@ -66,4 +78,5 @@ writeFileSync(join(outDir, 'csp-sources.json'), `${JSON.stringify(
   null,
   2,
 )}\n`);
-process.stdout.write(`Wrote csp-sources.json from ${environmentFile}\n`);
+writeFileSync(join(outDir, 'brand.css'), brandCss());
+process.stdout.write(`Wrote csp-sources.json from ${environmentFile} and brand.css to ${outDir}\n`);

@@ -147,6 +147,8 @@ Brand values PrimeNG has no slot for (glass background, CTA gradient, dividers, 
 
 The layer order in `styles.css` (`theme, base, primeng, components, utilities`) lets Tailwind utilities override PrimeNG styles without `!important`.
 
+**Outside Angular** (#68): `theme/brand-css.ts` asks PrimeNG's own generator for the primitive and semantic CSS variables (`--p-copper-500`, `--p-focus-ring-color`, `--p-brand-*`, …), so they always match the theme. The `build:express:*` post-build hook (`scripts/write-express-files.ts`, which bundles it with esbuild) writes them to `brand.css` next to the build, where Express serves them at `/brand.css` for its error pages. Put `class="app-dark"` on `<html>` as the app does. A Playwright test in CI checks that every variable in `brand.css` computes to the same value as on the live page.
+
 ## Component conventions
 
 - **Templates** go in a `.html` file. Only templates of 4 lines or fewer stay inline.

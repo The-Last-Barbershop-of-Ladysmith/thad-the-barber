@@ -71,7 +71,7 @@ jobs:
       - run: npx ng test --watch=false
 
       # The test build Express serves, built once for the e2e and lighthouse jobs. Its post-build hook writes
-      # csp-sources.json into the same folder.
+      # csp-sources.json and brand.css into the same folder.
       - run: npm run build:express:test
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
