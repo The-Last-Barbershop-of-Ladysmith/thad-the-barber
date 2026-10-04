@@ -15,3 +15,10 @@ condition = "AND"
 paths = ['''^thad-the-barber-ui/src/environments/environment[\w.-]*\.ts$''']
 regexTarget = "line"
 regexes = ['''^\s*appInsightsConnectionString:\s*'InstrumentationKey=[0-9a-f-]{36};IngestionEndpoint=https://[\w.-]+/;LiveEndpoint=https://[\w.-]+/;ApplicationId=[0-9a-f-]{36}',\s*$''']
+
+[[allowlists]]
+description = "Square custom attribute definition keys in the sandbox fixtures are names we chose, not keys (#21)"
+condition = "AND"
+paths = ['''^thad-the-barber-api\.tests/Fixtures/Square/[\w-]+\.json$''']
+regexTarget = "line"
+regexes = ['''^\s*"key":\s*"spike21-[\w-]+",?\s*$''']
