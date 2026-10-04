@@ -1,4 +1,5 @@
-using ThadTheBarber.Api.Square;
+using ThadTheBarber.Api.Square.Models;
+using ThadTheBarber.Api.Square.Services;
 
 namespace ThadTheBarber.Api.Tests.Fakes;
 
@@ -9,7 +10,15 @@ namespace ThadTheBarber.Api.Tests.Fakes;
 /// </summary>
 public sealed class FakeSquareService : ISquareService
 {
-    public bool Reachable { get; init; } = true;
+    private int _checks;
 
-    public Task<bool> IsReachableAsync(CancellationToken cancellationToken) => Task.FromResult(Reachable);
+    public SquareConnection Connection { get; init; } = SquareConnection.Connected;
+
+    public int Checks => _checks;
+
+    public Task<SquareConnection> CheckConnectionAsync(CancellationToken cancellationToken)
+    {
+        Interlocked.Increment(ref _checks);
+        return Task.FromResult(Connection);
+    }
 }

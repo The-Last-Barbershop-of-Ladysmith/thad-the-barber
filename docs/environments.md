@@ -34,7 +34,10 @@ How code moves from a topic branch to production. The decisions behind this are 
 | Key Vaults | `kv-ttb-dev-centralus`, `kv-ttb-test-centralus` | One per environment, because the secret names are the same in each. Standard, RBAC, soft delete + purge protection |
 | Application Insights | `ai-ttb-dev-centralus`, `ai-ttb-test-centralus` | Workspace-based, on `log-ttb-nonprod-centralus` (30-day retention, 0.15 GB/day cap ≈ 4.5 GB/month, under the 5 GB free allowance) |
 | Storage | `storttbnonprodcentralus` | Standard LRS, hot. Public-read containers `media-dev` and `media-test`. HTTPS only, TLS 1.2, **shared-key access off** (uploads use Entra ID). Blob CORS allows GET from the web origins |
-| Budget | `budget-ttb-monthly` | $5/month on the subscription; emails at 80% and 100% actual and 100% forecast |
+| Budget | `budget-ttb-monthly` | $5/month on the subscription; alerts at 80% and 100% actual and 100% forecast through the action group |
+| Action group | `ag-ttb-<stage>` | Every alert (budget, Square): email to `TTB_ALERT_EMAIL`, plus SMS to `TTB_ALERT_PHONE` when set. US SMS: first 100/month free |
+| Key Vault audit logs | `audit-to-log-analytics` on each vault | Every vault operation to Log Analytics, so reads of the Square secrets can be checked (#23) |
+| Square alerts | `alert-ttb-square-secret-read-<env>-<region>`, `alert-ttb-square-not-connected-<env>-<region>` | **Prod only** (`squareAlerts: true`; nonprod uses the sandbox). **Secret read** (severity 1): a Square secret read by anyone but the API; if it wasn't you, follow the breach checklist. **Not connected** (severity 2): Square refused the refresh token or it's missing; rerun `tools/square-connect`. Every 15 minutes, about $0.50/month each |
 
 Every app: system-assigned identity, HTTPS only, minimum TLS 1.2, FTP and basic-auth publishing disabled, platform CORS **unset** (the API does CORS itself). App, Key Vault and storage names are globally unique in Azure, so a deploy fails if someone else already has one. Because of purge protection, a deleted vault keeps its name for 90 days; recover it instead of redeploying.
 
@@ -53,21 +56,21 @@ The API reads all its secrets through the Key Vault configuration provider, so t
 | --- | --- | --- |
 | `Cors--AllowedOrigins--0…N` | secret | Bicep: the environment's web origin, then `extraCorsOrigins` (dev adds `http://localhost:4200` for local runs). If you remove an origin, delete its leftover secret by hand |
 | `session-jwt-signing` | EC P-256 key (ES256) | Bicep. Generated in the vault and never exported; re-runs don't rotate it |
-| `Square--ApplicationSecret`, `Square--RefreshToken`, `Square--WebhookSignatureKey`, `ManageLink--HmacKey`, `Recaptcha--ApiKey`, `Google--ClientSecret`, `Google--RefreshToken` | secrets | You, with `infra/scripts/Set-TtbSecrets.ps1`. Bicep never writes them, so a re-run can't overwrite a real value |
+| `Square--RefreshToken` | secret | `tools/square-connect` (one-time connect, #23), under your `az login`. The API only reads it: Square's code flow never rotates it |
+| `Square--ApplicationSecret`, `Square--WebhookSignatureKey`, `ManageLink--HmacKey`, `Recaptcha--ApiKey`, `Google--ClientSecret`, `Google--RefreshToken` | secrets | You, with `infra/scripts/Set-TtbSecrets.ps1`. Bicep never writes them, so a re-run can't overwrite a real value |
 
 **Role assignments:**
 
 | Who | Role | Scope |
 | --- | --- | --- |
 | web + api identities | Key Vault Secrets User | their environment's vault |
-| api identity | Key Vault Secrets Officer, with an ABAC condition allowing writes to `Square--RefreshToken` only (it rotates) | vault |
 | api identity | Key Vault Crypto User | the `session-jwt-signing` key only |
 | you (`TTB_ADMIN_OBJECT_ID`) | Key Vault Secrets Officer | each vault |
 | `id-ttb-deploy-<env>-<region>` (GitHub, #10) | Website Contributor | its environment's web and API apps only |
 | `id-ttb-deploy-<env>-<region>` (GitHub, #10) | Storage Blob Data Contributor | its environment's media container only |
 | `id-ttb-preview-nonprod-<region>` (GitHub PRs, #10) | Reader + `TTB What-If Previewer` (custom: what-if and validate only) | the subscription |
 
-Key Vault ABAC conditions are in **preview**. If Azure rejects the condition, fall back to Secrets Officer on the vault without the condition and note it here.
+No app can write to Key Vault (#23). Bicep doesn't delete role assignments it no longer declares, so after redeploying, remove the old API write grant by hand: `az role assignment list --scope <vault id> --assignee <api principal id>` shows it as Key Vault Secrets Officer; delete it with `az role assignment delete --ids <id>`.
 
 **Lockdown:**
 
@@ -90,7 +93,8 @@ You need the Azure CLI and **Owner** (or Contributor + User Access Administrator
 
 ```powershell
 az login
-$env:TTB_BUDGET_EMAIL    = '<your email>'
+$env:TTB_ALERT_EMAIL     = '<the app-activity email>'
+$env:TTB_ALERT_PHONE     = '<10-digit US mobile>'   # optional: the same alerts by SMS
 $env:TTB_ADMIN_OBJECT_ID = az ad signed-in-user show --query id -o tsv
 $env:TTB_ALLOWED_IPS     = (Invoke-RestMethod https://api.ipify.org)   # comma-separate more than one
 az deployment sub what-if --location centralus --parameters infra/nonprod.bicepparam
@@ -127,7 +131,7 @@ GitHub Actions signs in with **user-assigned managed identities** that trust Git
 | `test` | `release/*`, `hotfix/*` | none | `id-ttb-deploy-test-centralus` |
 | `production` | `release/*`, `hotfix/*` | required reviewer (you) | added at M5 |
 
-Repo variables `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID` and `AZURE_PREVIEW_CLIENT_ID` (IDs, not secrets). The what-if job also needs the `TTB_BUDGET_EMAIL`, `TTB_ADMIN_OBJECT_ID` and `TTB_ALLOWED_IPS` values; they're repo **secrets** so the public workflow logs mask them. After deploying, set up GitHub with the same `TTB_*` variables still set in your shell:
+Repo variables `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID` and `AZURE_PREVIEW_CLIENT_ID` (IDs, not secrets). The what-if job also needs the `TTB_ALERT_EMAIL`, `TTB_ALERT_PHONE`, `TTB_ADMIN_OBJECT_ID` and `TTB_ALLOWED_IPS` values; they're repo **secrets** so the public workflow logs mask them. After deploying, set up GitHub with the same `TTB_*` variables still set in your shell:
 
 ```powershell
 ./infra/scripts/Set-TtbGitHub.ps1    # safe to re-run, e.g. after your IP changes

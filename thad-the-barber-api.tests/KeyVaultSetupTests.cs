@@ -1,5 +1,7 @@
 using Microsoft.Extensions.Configuration;
-using ThadTheBarber.Api.Infrastructure;
+using Azure.Security.KeyVault.Secrets;
+using ThadTheBarber.Api.Infrastructure.KeyVault.Configuration;
+using ThadTheBarber.Api.Square.Configuration;
 
 namespace ThadTheBarber.Api.Tests;
 
@@ -33,6 +35,18 @@ public sealed class KeyVaultSetupTests
     public void TestsHaveNoVault()
     {
         Assert.Null(KeyVaultSetup.GetVaultUri(AppSettings("Testing")));
+    }
+
+    [Theory]
+    [InlineData(SquareSecrets.RefreshToken, false)]
+    [InlineData(SquareSecrets.ApplicationSecret, false)]
+    [InlineData(SquareSecrets.SandboxSeedToken, false)]
+    [InlineData("Cors--AllowedOrigins--0", true)]
+    public void SquareSecretsStayOutOfConfiguration(string secretName, bool loaded)
+    {
+        SkipSecretsManager manager = new(SquareSecrets.All);
+
+        Assert.Equal(loaded, manager.Load(new SecretProperties(secretName)));
     }
 
     private static IConfiguration Configuration(string? name) =>

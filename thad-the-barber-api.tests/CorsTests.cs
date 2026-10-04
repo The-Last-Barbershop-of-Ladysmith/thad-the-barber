@@ -4,7 +4,7 @@ using Azure.Security.KeyVault.Secrets;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using ThadTheBarber.Api.Infrastructure.Cors;
+using ThadTheBarber.Api.Infrastructure.Cors.Configuration;
 
 namespace ThadTheBarber.Api.Tests;
 

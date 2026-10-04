@@ -12,6 +12,8 @@ param environments array
 param githubSubjectPrefix string
 param createPreviewIdentity bool
 param lockResourceGroup bool
+param alertEmail string
+param alertPhone string
 param tags object
 
 // Origins are built from the app names (not defaultHostName) so what-if stays deterministic.
@@ -109,6 +111,31 @@ resource previewIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2024-
   }
 }
 
+// Every alert in the stage (budget, Square) goes to this group: email, plus SMS when a phone is set.
+resource alerts 'Microsoft.Insights/actionGroups@2023-01-01' = {
+  name: 'ag-ttb-${stage}'
+  location: 'global'
+  tags: tags
+  properties: {
+    groupShortName: 'ttb-${stage}'
+    enabled: true
+    emailReceivers: [
+      {
+        name: 'owner-email'
+        emailAddress: alertEmail
+        useCommonAlertSchema: true
+      }
+    ]
+    smsReceivers: empty(alertPhone) ? [] : [
+      {
+        name: 'owner-sms'
+        countryCode: '1'
+        phoneNumber: alertPhone
+      }
+    ]
+  }
+}
+
 // Blocks deletes (not changes) of everything in the group, including by a compromised sign-in.
 resource lock 'Microsoft.Authorization/locks@2020-05-01' = if (lockResourceGroup) {
   name: 'lock-ttb-${stage}-${location}'
@@ -120,6 +147,7 @@ resource lock 'Microsoft.Authorization/locks@2020-05-01' = if (lockResourceGroup
 
 output planId string = plan.id
 output workspaceId string = workspace.id
+output actionGroupId string = alerts.id
 output storageName string = storage.name
 output blobEndpoint string = storage.properties.primaryEndpoints.blob
 output previewPrincipalId string = createPreviewIdentity ? previewIdentity!.properties.principalId : ''

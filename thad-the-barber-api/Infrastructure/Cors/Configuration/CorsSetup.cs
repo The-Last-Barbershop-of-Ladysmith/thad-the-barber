@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.Extensions.Options;
 
-namespace ThadTheBarber.Api.Infrastructure.Cors;
+namespace ThadTheBarber.Api.Infrastructure.Cors.Configuration;
 
 /// <summary>
 /// CORS lives only here, never in App Service's platform CORS (that would override it). The default policy allows the

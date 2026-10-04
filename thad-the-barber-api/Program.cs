@@ -1,14 +1,15 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Azure.Monitor.OpenTelemetry.AspNetCore;
-using ThadTheBarber.Api.Features.Health;
-using ThadTheBarber.Api.Infrastructure;
-using ThadTheBarber.Api.Infrastructure.Cors;
-using ThadTheBarber.Api.Square;
+using ThadTheBarber.Api.Features.Health.Endpoints;
+using ThadTheBarber.Api.Infrastructure.Cors.Configuration;
+using ThadTheBarber.Api.Infrastructure.Headers.Middleware;
+using ThadTheBarber.Api.Infrastructure.KeyVault.Configuration;
+using ThadTheBarber.Api.Square.Configuration;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
-builder.Configuration.AddKeyVaultIfConfigured();
+builder.AddKeyVaultIfConfigured(SquareSecrets.All);
 
 if (builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"] is { Length: > 0 })
 {
@@ -27,9 +28,10 @@ builder.Services.AddSwaggerGen();
 
 WebApplication app = builder.Build();
 
+// Every environment, so Square failures reach callers as ProblemDetails (dev included; the booking fallback needs them).
+app.UseExceptionHandler();
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler();
     app.UseHsts();
 }
 

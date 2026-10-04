@@ -53,7 +53,7 @@ See [environments.md](environments.md) for the deploy setup and the branching an
 
 **Decision:** no database in v1. Bookings, customers, services, durations, hours, and location details all live in Square. Copying them would add cost and sync bugs.
 
-- The only *data* we persist is the **Square OAuth refresh token**, in **Azure Key Vault** alongside every other secret (see [M](#m-security)). It costs fractions of a cent per month.
+- The only *data* we persist is the **Square OAuth refresh token**, in **Azure Key Vault** alongside every other secret (see [M](#m-security)). It's written once by `tools/square-connect` and only read by the API. It costs fractions of a cent per month.
 - When the admin portal needs app-owned data (announcement editing, notes, audit log), add the **Azure SQL Database free offer** (serverless, auto-pause) through EF Core.
 
 ## C. Square integration
@@ -233,6 +233,10 @@ The design for when it's picked up needs no database:
 - These live in Key Vault: the Square application secret, the Square OAuth refresh token, the Square webhook signature key, the manage-link HMAC key, and the session-JWT signing key.
 - The .NET API loads Key Vault straight into configuration with the **Azure Key Vault configuration provider** and its managed identity; the vault **name** (`KeyVault:Name`, only in `appsettings.{Env}.json`, picked by `ASPNETCORE_ENVIRONMENT`; no app setting) is its only Key Vault-related setting. That includes the **CORS allowed-origins array** (`Cors--AllowedOrigins--N` → `Cors:AllowedOrigins`), which the session endpoint's Origin check also uses. Other apps use `@Microsoft.KeyVault(...)` references.
 - Nothing sensitive goes in the repo, app settings, or GitHub. GitHub reaches Azure through OIDC, with no stored credentials.
+- **No app writes to Key Vault** (✅ 2026-10-04, #23). Square's code flow returns the same refresh token on every refresh and it doesn't expire unless revoked, so nothing rotates. The one-time connect is a script (`tools/square-connect`) run under the owner's `az login`; there are no connect endpoints in the API.
+- **Square tokens:** the API reads `Square--RefreshToken` and `Square--ApplicationSecret` through a `SecretClient` **only when renewing** (they're kept out of configuration). The 30-day access token lives only in memory and renews on start-up, when it's older than 7 days, or after a 401. Rejected: a token-broker Function (it only limits an *undetected* breach to 30 days, and adds a component holding the same credentials plus write access); revisit if the API scales out or serves more than one seller.
+- **Detection:** vault audit logs go to Log Analytics. In prod, two log alerts (email + SMS) with different responses: **secret read** (severity 1) when a Square secret is read by anyone but the API's identity, which is a possible breach unless it was you; and **not connected** (severity 2) when Square refuses the refresh token or it's missing, which usually means Thad disconnected the app (rerun the connect script).
+- **Breach checklist:** (1) revoke the app's access in Square (Developer Console → the app → OAuth, or the seller's Apps page): every token stops at once; (2) replace the app secret in Square and in `Square--ApplicationSecret` (`infra/scripts/Set-TtbSecrets.ps1`); (3) find and fix the hole, redeploy; (4) rerun `tools/square-connect`.
 - Key Vault uses RBAC, with soft delete and purge protection on.
 
 **Frontend-only API access (✅ required, with an honest limit).**

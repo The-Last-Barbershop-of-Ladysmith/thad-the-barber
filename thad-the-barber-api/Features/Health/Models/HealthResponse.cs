@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
-namespace ThadTheBarber.Api.Features.Health;
+namespace ThadTheBarber.Api.Features.Health.Models;
 
 /// <summary>
 /// Body of <c>GET /api/health</c>. <see cref="Checks"/> maps each health check's name to its status and is only present

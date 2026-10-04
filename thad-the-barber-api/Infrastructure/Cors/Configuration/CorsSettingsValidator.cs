@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Options;
 
-namespace ThadTheBarber.Api.Infrastructure.Cors;
+namespace ThadTheBarber.Api.Infrastructure.Cors.Configuration;
 
 /// <summary>Fails startup unless every allowed origin is an exact http(s) origin: no wildcard, path or trailing slash.</summary>
 public sealed class CorsSettingsValidator : IValidateOptions<CorsSettings>
