@@ -13,11 +13,7 @@ public sealed class SquareService(SquareClient square) : ISquareService
             await square.OAuth.RetrieveTokenStatusAsync(cancellationToken: cancellationToken);
             return SquareConnection.Connected;
         }
-        catch (SquareNotConnectedException)
-        {
-            return SquareConnection.NotConnected;
-        }
-        catch (SquareApiException exception) when (exception.StatusCode == StatusCodes.Status401Unauthorized)
+        catch (Exception exception) when (exception is SquareNotConnectedException or SquareApiException { StatusCode: StatusCodes.Status401Unauthorized })
         {
             return SquareConnection.NotConnected;
         }
