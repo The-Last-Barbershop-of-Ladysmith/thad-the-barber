@@ -75,6 +75,9 @@ public sealed partial class SquareAccessTokenProvider(
     private async Task<string> RenewAsync(CancellationToken cancellationToken)
     {
         SquareClient square = SquareSetup.CreateClient(httpClients.CreateClient(SquareSetup.OAuthHttpClientName), settings.Value);
+        Task<string> applicationSecret = ReadSecretAsync(SquareSecrets.ApplicationSecret, cancellationToken);
+        Task<string> refreshToken = ReadSecretAsync(SquareSecrets.RefreshToken, cancellationToken);
+        await Task.WhenAll(applicationSecret, refreshToken);
         ObtainTokenResponse response;
         try
         {
@@ -82,9 +85,9 @@ public sealed partial class SquareAccessTokenProvider(
                 new ObtainTokenRequest
                 {
                     ClientId = settings.Value.ApplicationId,
-                    ClientSecret = await ReadSecretAsync(SquareSecrets.ApplicationSecret, cancellationToken),
+                    ClientSecret = await applicationSecret,
                     GrantType = RefreshTokenGrant,
-                    RefreshToken = await ReadSecretAsync(SquareSecrets.RefreshToken, cancellationToken),
+                    RefreshToken = await refreshToken,
                 },
                 cancellationToken: cancellationToken);
         }
