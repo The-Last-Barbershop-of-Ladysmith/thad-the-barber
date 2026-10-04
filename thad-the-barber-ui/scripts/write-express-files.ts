@@ -23,6 +23,7 @@ interface ErrorPageShop {
   phone: {
     display: string; tel: string; sms: string;
   };
+  bookingUrl: string;
 }
 
 interface ShopInfoModule { SHOP_INFO: ErrorPageShop; }
@@ -47,7 +48,7 @@ interface AngularJson { projects: Record<string, AngularProject>; }
  * - csp-sources.json: the environment's origins for Express's Content-Security-Policy, from the environment file
  *   angular.json swaps in for that configuration, so the origins live in one place.
  * - brand.css: the theme's CSS variables for the error pages (src/app/theme/brand-css.ts).
- * - shop.json: the shop name and phone for the error page, from src/app/core/config/shop-info.ts.
+ * - shop.json: the shop name, phone and Square booking URL for the error page, from src/app/core/config/shop-info.ts.
  */
 const ENVIRONMENT_FILE: string = 'src/environments/environment.ts';
 
@@ -74,7 +75,7 @@ async function importSource<T>(file: string): Promise<T> {
     platform: 'node',
     write: false,
   });
-  const javascript: string = bundle.outputFiles[0]?.text ?? '';
+  const javascript: string = bundle.outputFiles?.[0]?.text ?? '';
   return await import(`data:text/javascript,${encodeURIComponent(javascript)}`) as T;
 }
 
@@ -84,7 +85,11 @@ const shopInfoModule: Promise<ShopInfoModule> = importSource('src/app/core/confi
 const { environment }: EnvironmentModule = await environmentModule;
 const { brandCss }: BrandCssModule = await brandCssModule;
 const { SHOP_INFO }: ShopInfoModule = await shopInfoModule;
-const shop: ErrorPageShop = { name: SHOP_INFO.name, phone: SHOP_INFO.phone };
+const shop: ErrorPageShop = {
+  name: SHOP_INFO.name,
+  phone: SHOP_INFO.phone,
+  bookingUrl: SHOP_INFO.bookingUrl,
+};
 
 const ingestionEndpoint: string | undefined = /IngestionEndpoint=([^;]+)/.exec(environment.appInsightsConnectionString)?.[1];
 const sources: Record<string, string[]> = {

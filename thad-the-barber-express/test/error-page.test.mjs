@@ -46,6 +46,13 @@ describe('error page', function() {
     expect(response.text).toContain('href="sms:+15550100000" data-testid="error-text"');
   });
 
+  it('links to the Square booking site from the build, in a new tab', async function() {
+    var response = await request(app).get('/_test/error');
+    expect(response.text).toContain(
+      'href="https://test-shop.example" target="_blank" rel="noopener" data-testid="error-book-square"',
+    );
+  });
+
   it.each([502, 503])('keeps a %s status', async function(status) {
     var response = await request(app).get('/_test/error?status=' + status);
     expect(response.status).toBe(status);
