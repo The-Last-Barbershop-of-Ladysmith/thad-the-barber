@@ -4,4 +4,5 @@ namespace ThadTheBarber.Api.Features.Shop.Models;
 public sealed record OpeningHours(
     int Day,
     int OpensAt,
-    int ClosesAt);
+    int ClosesAt
+);

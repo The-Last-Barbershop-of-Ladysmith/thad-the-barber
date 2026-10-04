@@ -32,15 +32,21 @@ public sealed class ShopDtoMapperTests
                 "Thad the Barber",
                 Tagline: null,
                 Area: null,
-                new ShopPhone("(540) 621-2143", "tel:+15406212143", "sms:+15406212143"),
+                new ShopPhone(
+                    "(540) 621-2143",
+                    "tel:+15406212143",
+                    "sms:+15406212143"
+                ),
                 "https://square.site/book/LVF9Q8XN61NA4/thad-the-barber-sandbox-washington-dc",
                 new ShopInfoLocation(
                     Venue: null,
                     "2022 Augustine Ave",
                     "Fredericksburg, VA 22401",
                     $"https://maps.google.com/maps?q={mapQuery}&z=14&output=embed",
-                    $"https://www.google.com/maps/dir/?api=1&destination={mapQuery}"),
-                Reviews: null),
+                    $"https://www.google.com/maps/dir/?api=1&destination={mapQuery}"
+                ),
+                Reviews: null
+            ),
             Location.ToShopInfo(Profile));
     }
 
@@ -49,7 +55,13 @@ public sealed class ShopDtoMapperTests
     {
         ShopLocation location = Location with { Phone = "+442079460958" };
 
-        Assert.Equal(new ShopPhone("+442079460958", "tel:+442079460958", "sms:+442079460958"), location.ToShopInfo(Profile).Phone);
+        Assert.Equal(
+            new ShopPhone(
+                "+442079460958",
+                "tel:+442079460958",
+                "sms:+442079460958"
+            ),
+            location.ToShopInfo(Profile).Phone);
     }
 
     [Fact]
@@ -57,8 +69,16 @@ public sealed class ShopDtoMapperTests
     {
         Assert.Equal(
             [
-                new OpeningHours(0, 10 * 60, 16 * 60),
-                new OpeningHours(6, 10 * 60, 19 * 60),
+                new OpeningHours(
+                    0,
+                    10 * 60,
+                    16 * 60
+                ),
+                new OpeningHours(
+                    6,
+                    10 * 60,
+                    19 * 60
+                ),
             ],
             Location.Hours.Select(period => period.ToOpeningHours()));
     }
@@ -66,6 +86,11 @@ public sealed class ShopDtoMapperTests
     [Fact]
     public void ProfileAndServiceBecomeBookingRules()
     {
-        Assert.Equal(new BookingRules(365, 30), Profile.ToBookingRules(Service));
+        Assert.Equal(
+            new BookingRules(
+                365,
+                30
+            ),
+            Profile.ToBookingRules(Service));
     }
 }

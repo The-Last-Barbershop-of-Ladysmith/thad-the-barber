@@ -11,5 +11,6 @@ public static class BookingProfileMapper
         TimeSpan.FromSeconds(profile.BusinessAppointmentSettings?.MaxBookingLeadTimeSeconds
             ?? throw new InvalidOperationException("The Square booking profile has no maximum lead time.")),
         profile.AllowUserCancel ?? false,
-        location?.BookingSiteUrl);
+        location?.BookingSiteUrl
+    );
 }

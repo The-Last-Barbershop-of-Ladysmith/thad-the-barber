@@ -13,7 +13,10 @@ public sealed class ShopTime(TimeZoneInfo timeZone)
     public ShopDateTime ToLocal(DateTimeOffset instant)
     {
         DateTime local = TimeZoneInfo.ConvertTime(instant, timeZone).DateTime;
-        return new ShopDateTime(DateOnly.FromDateTime(local), TimeOnly.FromDateTime(local));
+        return new ShopDateTime(
+            DateOnly.FromDateTime(local),
+            TimeOnly.FromDateTime(local)
+        );
     }
 
     /// <summary>

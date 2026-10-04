@@ -9,7 +9,11 @@ public static class BookingDtoMapper
     public static TimeSlot ToTimeSlot(this AvailableSlot slot, ShopTime shopTime)
     {
         ShopDateTime local = shopTime.ToLocal(slot.StartAt);
-        return new TimeSlot(local.TimeKey, local.Label, Available: true);
+        return new TimeSlot(
+            local.TimeKey,
+            local.Label,
+            Available: true
+        );
     }
 
     public static DateTimeOffset ToStartAt(this BookingRequest request, ShopTime shopTime) =>
@@ -19,6 +23,12 @@ public static class BookingDtoMapper
     public static BookingConfirmation ToConfirmation(this ShopBooking booking, BookingRequest request, ShopTime shopTime)
     {
         ShopDateTime local = shopTime.ToLocal(booking.StartAt);
-        return new BookingConfirmation(booking.Id, local.DateKey, local.TimeKey, request.Name, request.Phone);
+        return new BookingConfirmation(
+            booking.Id,
+            local.DateKey,
+            local.TimeKey,
+            request.Name,
+            request.Phone
+        );
     }
 }

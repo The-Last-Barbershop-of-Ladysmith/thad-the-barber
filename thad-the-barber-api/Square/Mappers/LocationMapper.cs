@@ -15,7 +15,8 @@ public static class LocationMapper
         [.. location.BusinessHours?.Periods?.Select(ToShopHoursPeriod) ?? []],
         location.Description,
         location.InstagramUsername,
-        location.FacebookUrl);
+        location.FacebookUrl
+    );
 
     /// <summary>Square keeps the number as typed in the Dashboard, e.g. <c>+1 540-621-2143</c>; 10 digits are US.</summary>
     private static string ToE164(string phone)
@@ -28,7 +29,8 @@ public static class LocationMapper
         address.AddressLine1 ?? throw MissingField(nameof(Address.AddressLine1)),
         address.Locality ?? throw MissingField(nameof(Address.Locality)),
         address.AdministrativeDistrictLevel1 ?? throw MissingField(nameof(Address.AdministrativeDistrictLevel1)),
-        address.PostalCode ?? throw MissingField(nameof(Address.PostalCode)));
+        address.PostalCode ?? throw MissingField(nameof(Address.PostalCode))
+    );
 
     private static ShopHoursPeriod ToShopHoursPeriod(BusinessHoursPeriod period) => new(
         period.DayOfWeek?.Value switch
@@ -43,7 +45,8 @@ public static class LocationMapper
             var day => throw new InvalidOperationException($"Square returned an unknown day of week '{day}'."),
         },
         TimeOnly.Parse(period.StartLocalTime ?? throw MissingField(nameof(BusinessHoursPeriod.StartLocalTime)), CultureInfo.InvariantCulture),
-        TimeOnly.Parse(period.EndLocalTime ?? throw MissingField(nameof(BusinessHoursPeriod.EndLocalTime)), CultureInfo.InvariantCulture));
+        TimeOnly.Parse(period.EndLocalTime ?? throw MissingField(nameof(BusinessHoursPeriod.EndLocalTime)), CultureInfo.InvariantCulture)
+    );
 
     private static InvalidOperationException MissingField(string field) => new($"The Square location has no {field}.");
 }

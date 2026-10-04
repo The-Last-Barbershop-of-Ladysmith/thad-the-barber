@@ -6,4 +6,5 @@ public sealed record ShopBooking(
     int Version,
     ShopBookingStatus Status,
     DateTimeOffset StartAt,
-    string? CustomerId);
+    string? CustomerId
+);

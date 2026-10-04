@@ -5,4 +5,5 @@ public sealed record BookingRequest(
     string Date,
     string Time,
     string Name,
-    string Phone);
+    string Phone
+);

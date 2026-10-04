@@ -6,4 +6,5 @@ public sealed record ShopInfoLocation(
     string Street,
     string CityLine,
     string MapEmbedUrl,
-    string DirectionsUrl);
+    string DirectionsUrl
+);

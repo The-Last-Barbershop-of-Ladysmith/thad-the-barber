@@ -4,4 +4,5 @@ namespace ThadTheBarber.Api.Features.Booking.Models;
 public sealed record TimeSlot(
     string Time,
     string Label,
-    bool Available);
+    bool Available
+);

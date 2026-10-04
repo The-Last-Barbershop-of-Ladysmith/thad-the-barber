@@ -6,4 +6,5 @@ public sealed record BookingConfirmation(
     string Date,
     string Time,
     string Name,
-    string Phone);
+    string Phone
+);

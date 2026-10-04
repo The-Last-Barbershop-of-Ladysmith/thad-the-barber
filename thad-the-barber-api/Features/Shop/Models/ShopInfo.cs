@@ -11,4 +11,5 @@ public sealed record ShopInfo(
     ShopPhone Phone,
     string? BookingUrl,
     ShopInfoLocation Location,
-    ShopReviews? Reviews);
+    ShopReviews? Reviews
+);

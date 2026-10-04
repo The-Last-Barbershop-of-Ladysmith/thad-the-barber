@@ -9,4 +9,5 @@ public sealed record ShopLocation(
     IReadOnlyList<ShopHoursPeriod> Hours,
     string? Description,
     string? InstagramUsername,
-    string? FacebookUrl);
+    string? FacebookUrl
+);

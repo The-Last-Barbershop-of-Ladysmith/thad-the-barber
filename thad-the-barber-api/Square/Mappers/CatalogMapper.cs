@@ -25,6 +25,7 @@ public static class CatalogMapper
                 variation.Version ?? throw new InvalidOperationException($"Square variation {variation.Id} has no version."),
                 TimeSpan.FromMilliseconds(variation.ItemVariationData!.ServiceDuration
                     ?? throw new InvalidOperationException($"Square variation {variation.Id} has no service duration.")),
-                [.. variation.ItemVariationData.TeamMemberIds ?? []]));
+                [.. variation.ItemVariationData.TeamMemberIds ?? []]
+            ));
     }
 }

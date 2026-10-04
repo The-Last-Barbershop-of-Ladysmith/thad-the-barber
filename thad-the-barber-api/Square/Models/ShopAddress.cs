@@ -4,4 +4,5 @@ public sealed record ShopAddress(
     string Street,
     string Locality,
     string Region,
-    string PostalCode);
+    string PostalCode
+);

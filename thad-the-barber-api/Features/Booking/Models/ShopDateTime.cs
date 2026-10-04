@@ -5,7 +5,8 @@ namespace ThadTheBarber.Api.Features.Booking.Models;
 /// <summary>A wall-clock date and time at the shop, in the key formats the UI uses.</summary>
 public readonly record struct ShopDateTime(
     DateOnly Date,
-    TimeOnly Time)
+    TimeOnly Time
+)
 {
     private const string DateFormat = "yyyy-MM-dd";
     private const string TimeFormat = "HH:mm";
@@ -21,5 +22,6 @@ public readonly record struct ShopDateTime(
 
     public static ShopDateTime Parse(string dateKey, string timeKey) => new(
         DateOnly.ParseExact(dateKey, DateFormat, CultureInfo.InvariantCulture),
-        TimeOnly.ParseExact(timeKey, TimeFormat, CultureInfo.InvariantCulture));
+        TimeOnly.ParseExact(timeKey, TimeFormat, CultureInfo.InvariantCulture)
+    );
 }

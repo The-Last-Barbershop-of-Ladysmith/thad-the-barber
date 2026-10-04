@@ -17,11 +17,26 @@ public sealed class SquareMapperTests
         Assert.Equal("Thad the Barber", location.Name);
         Assert.Equal("+15406212143", location.Phone);
         Assert.Equal("America/New_York", location.TimeZone);
-        Assert.Equal(new ShopAddress("2022 Augustine Ave", "Fredericksburg", "VA", "22401-4419"), location.Address);
+        Assert.Equal(
+            new ShopAddress(
+                "2022 Augustine Ave",
+                "Fredericksburg",
+                "VA",
+                "22401-4419"
+            ),
+            location.Address);
         Assert.Equal(
             [
-                new ShopHoursPeriod(System.DayOfWeek.Sunday, new TimeOnly(10, 0), new TimeOnly(16, 0)),
-                new ShopHoursPeriod(System.DayOfWeek.Saturday, new TimeOnly(10, 0), new TimeOnly(19, 0)),
+                new ShopHoursPeriod(
+                    System.DayOfWeek.Sunday,
+                    new TimeOnly(10, 0),
+                    new TimeOnly(16, 0)
+                ),
+                new ShopHoursPeriod(
+                    System.DayOfWeek.Saturday,
+                    new TimeOnly(10, 0),
+                    new TimeOnly(19, 0)
+                ),
             ],
             location.Hours);
         Assert.StartsWith("❗Important", location.Description, StringComparison.Ordinal);
@@ -50,7 +65,8 @@ public sealed class SquareMapperTests
                 MinNotice: TimeSpan.Zero,
                 MaxAdvance: TimeSpan.FromDays(365),
                 CustomersCanCancel: true,
-                BookingSiteUrl: "https://square.site/book/LVF9Q8XN61NA4/thad-the-barber-sandbox-washington-dc"),
+                BookingSiteUrl: "https://square.site/book/LVF9Q8XN61NA4/thad-the-barber-sandbox-washington-dc"
+            ),
             business.ToBookingProfile(location));
     }
 
@@ -88,7 +104,10 @@ public sealed class SquareMapperTests
         Availability availability = SquareFixture.Read<SearchAvailabilityResponse>("search-availability.json").Availabilities!.First();
 
         Assert.Equal(
-            new AvailableSlot(new DateTimeOffset(2026, 10, 5, 13, 0, 0, TimeSpan.Zero), "TMN76Ik4Cpv-ToYe"),
+            new AvailableSlot(
+                new DateTimeOffset(2026, 10, 5, 13, 0, 0, TimeSpan.Zero),
+                "TMN76Ik4Cpv-ToYe"
+            ),
             availability.ToAvailableSlot());
     }
 
@@ -106,7 +125,8 @@ public sealed class SquareMapperTests
                 version,
                 status,
                 DateTimeOffset.Parse(startAt, CultureInfo.InvariantCulture),
-                "X0ZH4DE1DVN5P1261RKAE8JPDM"),
+                "X0ZH4DE1DVN5P1261RKAE8JPDM"
+            ),
             booking.ToShopBooking());
     }
 }

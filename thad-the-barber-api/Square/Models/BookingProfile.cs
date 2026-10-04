@@ -6,4 +6,5 @@ public sealed record BookingProfile(
     TimeSpan MinNotice,
     TimeSpan MaxAdvance,
     bool CustomersCanCancel,
-    string? BookingSiteUrl);
+    string? BookingSiteUrl
+);
