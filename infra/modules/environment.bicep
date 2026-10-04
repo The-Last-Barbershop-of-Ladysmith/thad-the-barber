@@ -96,6 +96,8 @@ resource keyVaultAudit 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview
   scope: keyVault
   properties: {
     workspaceId: workspaceId
+    // The resource-specific AZKVAuditLogs table: smaller rows and typed columns, unlike the shared AzureDiagnostics.
+    logAnalyticsDestinationType: 'Dedicated'
     logs: [
       {
         category: 'AuditEvent'

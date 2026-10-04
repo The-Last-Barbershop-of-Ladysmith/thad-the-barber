@@ -11,12 +11,12 @@ param actionGroupId string
 param tags object
 
 var secretReadQuery = '''
-AzureDiagnostics
-| where ResourceProvider == 'MICROSOFT.KEYVAULT' and Resource =~ 'KEY_VAULT' and OperationName == 'SecretGet'
-| where requestUri_s has 'Square--RefreshToken' or requestUri_s has 'Square--ApplicationSecret'
-| extend Caller = coalesce(tostring(column_ifexists('identity_claim_oid_g', '')), tostring(column_ifexists('identity_claim_http_schemas_microsoft_com_identity_claims_objectidentifier_g', '')))
+AZKVAuditLogs
+| where _ResourceId endswith '/vaults/KEY_VAULT' and OperationName == 'SecretGet'
+| where RequestUri has 'Square--RefreshToken' or RequestUri has 'Square--ApplicationSecret'
+| extend Caller = coalesce(tostring(Identity.claim.oid), tostring(Identity.claim['http://schemas.microsoft.com/identity/claims/objectidentifier']))
 | where Caller != 'API_PRINCIPAL'
-| project TimeGenerated, Caller, CallerIPAddress, requestUri_s
+| project TimeGenerated, Caller, CallerIpAddress, RequestUri
 '''
 
 var notConnectedQuery = '''
