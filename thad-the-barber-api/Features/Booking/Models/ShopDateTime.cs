@@ -3,7 +3,9 @@ using System.Globalization;
 namespace ThadTheBarber.Api.Features.Booking.Models;
 
 /// <summary>A wall-clock date and time at the shop, in the key formats the UI uses.</summary>
-public readonly record struct ShopDateTime(DateOnly Date, TimeOnly Time)
+public readonly record struct ShopDateTime(
+    DateOnly Date,
+    TimeOnly Time)
 {
     private const string DateFormat = "yyyy-MM-dd";
     private const string TimeFormat = "HH:mm";
