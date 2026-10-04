@@ -16,6 +16,7 @@ namespace ThadTheBarber.Api.Tests.Square;
 /// </summary>
 public sealed class SquareHarness : IDisposable
 {
+    public const string ApplicationId = "sandbox-test-app";
     public const string ApplicationSecret = "app-secret-value";
     public const string RefreshToken = "refresh-token-value";
 
@@ -34,7 +35,7 @@ public sealed class SquareHarness : IDisposable
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["Square:BaseUrl"] = "https://square.example",
-                ["Square:ApplicationId"] = "sandbox-test-app",
+                ["Square:ApplicationId"] = ApplicationId,
             })
             .Build();
 

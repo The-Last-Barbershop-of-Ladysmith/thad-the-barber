@@ -21,7 +21,7 @@ public sealed class SquareAccessTokenProviderTests
         Assert.Equal("/oauth2/token", request.Path);
         Assert.Null(request.Token);
         Assert.Contains("\"grant_type\":\"refresh_token\"", request.Body);
-        Assert.Contains("\"client_id\":\"sandbox-test-app\"", request.Body);
+        Assert.Contains($"\"client_id\":\"{SquareHarness.ApplicationId}\"", request.Body);
         Assert.Contains($"\"client_secret\":\"{SquareHarness.ApplicationSecret}\"", request.Body);
         Assert.Contains($"\"refresh_token\":\"{SquareHarness.RefreshToken}\"", request.Body);
     }

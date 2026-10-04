@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using ThadTheBarber.Api.Square.Services;
 using ThadTheBarber.Api.Tests.Fakes;
+using ThadTheBarber.Api.Tests.Square;
 
 namespace ThadTheBarber.Api.Tests;
 
@@ -36,7 +37,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
-        builder.UseSetting("Square:ApplicationId", "sandbox-test-app");
+        builder.UseSetting("Square:ApplicationId", SquareHarness.ApplicationId);
         for (int i = 0; i < _origins.Length; i++)
         {
             builder.UseSetting($"Cors:AllowedOrigins:{i}", _origins[i]);
