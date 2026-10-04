@@ -74,7 +74,7 @@ public sealed partial class SquareAccessTokenProvider(
 
     private async Task<string> RenewAsync(CancellationToken cancellationToken)
     {
-        SquareClient square = SquareSetup.CreateClient(httpClients, settings.Value);
+        SquareClient square = SquareSetup.CreateClient(httpClients.CreateClient(SquareSetup.OAuthHttpClientName), settings.Value);
         ObtainTokenResponse response;
         try
         {

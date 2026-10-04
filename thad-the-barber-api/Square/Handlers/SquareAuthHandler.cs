@@ -6,21 +6,12 @@ using ThadTheBarber.Api.Square.Services;
 namespace ThadTheBarber.Api.Square.Handlers;
 
 /// <summary>
-/// Puts the current access token on every Square request, and on a 401 renews it and retries once. The token request
-/// itself goes out without one.
+/// Puts the current access token on every Square request, and on a 401 renews it and retries once.
 /// </summary>
 public sealed class SquareAuthHandler(SquareAccessTokenProvider tokens) : DelegatingHandler
 {
-    private const string ObtainTokenPath = "/oauth2/token";
-
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
-        if (request.RequestUri?.AbsolutePath == ObtainTokenPath)
-        {
-            request.Headers.Authorization = null;
-            return await base.SendAsync(request, cancellationToken);
-        }
-
         string token = await tokens.GetAccessTokenAsync(cancellationToken);
         HttpResponseMessage response = await SendWithTokenAsync(request, token, cancellationToken);
         if (response.StatusCode != HttpStatusCode.Unauthorized)

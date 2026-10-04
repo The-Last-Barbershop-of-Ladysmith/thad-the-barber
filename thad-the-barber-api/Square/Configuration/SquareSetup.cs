@@ -9,6 +9,7 @@ namespace ThadTheBarber.Api.Square.Configuration;
 public static class SquareSetup
 {
     public const string HttpClientName = "Square";
+    public const string OAuthHttpClientName = "SquareOAuth";
     private static readonly TimeSpan httpClientTimeout = TimeSpan.FromSeconds(10);
     private static readonly string squareAccessTokenPlaceholder = "set-by-SquareAuthHandler";
 
@@ -25,22 +26,26 @@ public static class SquareSetup
         services.TryAddSingleton(TimeProvider.System);
         services.AddSingleton<SquareAccessTokenProvider>();
         services.AddTransient<SquareAuthHandler>();
+        services.AddTransient<NoAuthorizationHandler>();
         services.AddHttpClient(HttpClientName, client => client.Timeout = httpClientTimeout)
             .AddHttpMessageHandler<SquareAuthHandler>();
+        services.AddHttpClient(OAuthHttpClientName, client => client.Timeout = httpClientTimeout)
+            .AddHttpMessageHandler<NoAuthorizationHandler>();
         services.AddScoped<ISquareService>(provider => new SquareService(CreateClient(
-            provider.GetRequiredService<IHttpClientFactory>(),
+            provider.GetRequiredService<IHttpClientFactory>().CreateClient(HttpClientName),
             provider.GetRequiredService<IOptions<SquareSettings>>().Value)));
         return services;
     }
 
     /// <summary>
-    /// The SDK insists on a token when it's built; <see cref="SquareAuthHandler"/> replaces it on every request, so the
-    /// renewed token is always the one sent.
+    /// The SDK insists on a token when it's built. The <see cref="HttpClientName"/> client's
+    /// <see cref="SquareAuthHandler"/> replaces it on every request, and the <see cref="OAuthHttpClientName"/> client's
+    /// <see cref="NoAuthorizationHandler"/> removes it.
     /// </summary>
-    internal static SquareClient CreateClient(IHttpClientFactory httpClients, SquareSettings settings) =>
+    internal static SquareClient CreateClient(HttpClient http, SquareSettings settings) =>
         new(squareAccessTokenPlaceholder, new ClientOptions
         {
             BaseUrl = settings.BaseUrl.ToString().TrimEnd('/'),
-            HttpClient = httpClients.CreateClient(HttpClientName),
+            HttpClient = http,
         });
 }

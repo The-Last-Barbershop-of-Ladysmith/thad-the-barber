@@ -43,9 +43,9 @@ public sealed class SquareHarness : IDisposable
         services.AddSingleton<TimeProvider>(Time);
         services.AddSingleton<SecretClient>(Secrets);
         services.AddSquareService(configuration);
-        services.AddHttpClient(SquareSetup.HttpClientName)
+        services.ConfigureHttpClientDefaults(client => client
             .ConfigurePrimaryHttpMessageHandler(() => Http)
-            .SetHandlerLifetime(Timeout.InfiniteTimeSpan);
+            .SetHandlerLifetime(Timeout.InfiniteTimeSpan));
         _services = services.BuildServiceProvider();
     }
 
