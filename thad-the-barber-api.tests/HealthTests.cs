@@ -40,6 +40,19 @@ public sealed class HealthTests(ApiFactory factory) : IClassFixture<ApiFactory>
         Assert.Equal("healthy", body.GetProperty("checks").GetProperty("square").GetString());
     }
 
+    [Fact]
+    public async Task DeepHealthReusesTheSquareResultForRepeatedProbes()
+    {
+        FakeSquareService square = new();
+        using ApiFactory probed = new(square: square);
+        using HttpClient client = probed.CreateClient();
+
+        await client.GetAsync("/api/health?deep=true", TestContext.Current.CancellationToken);
+        await client.GetAsync("/api/health?deep=true", TestContext.Current.CancellationToken);
+
+        Assert.Equal(1, square.Checks);
+    }
+
     [Theory]
     [InlineData(SquareConnection.NotConnected)]
     [InlineData(SquareConnection.Unreachable)]

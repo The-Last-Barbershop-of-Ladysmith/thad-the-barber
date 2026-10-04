@@ -12,6 +12,7 @@ public static class HealthEndpoints
     public static IServiceCollection AddHealth(this IServiceCollection services)
     {
         services.AddSingleton(BuildInfo.FromAssembly(typeof(HealthEndpoints).Assembly));
+        services.AddMemoryCache();
         services.AddHealthChecks()
             .AddCheck<SquareHealthCheck>(SquareHealthCheck.Name);
         return services;

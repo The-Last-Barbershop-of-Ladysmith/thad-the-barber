@@ -10,7 +10,15 @@ namespace ThadTheBarber.Api.Tests.Fakes;
 /// </summary>
 public sealed class FakeSquareService : ISquareService
 {
+    private int _checks;
+
     public SquareConnection Connection { get; init; } = SquareConnection.Connected;
 
-    public Task<SquareConnection> CheckConnectionAsync(CancellationToken cancellationToken) => Task.FromResult(Connection);
+    public int Checks => _checks;
+
+    public Task<SquareConnection> CheckConnectionAsync(CancellationToken cancellationToken)
+    {
+        Interlocked.Increment(ref _checks);
+        return Task.FromResult(Connection);
+    }
 }
