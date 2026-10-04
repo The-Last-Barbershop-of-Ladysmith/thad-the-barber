@@ -22,7 +22,7 @@ AZKVAuditLogs
 var notConnectedQuery = '''
 AppTraces
 | where _ResourceId has 'APP_INSIGHTS'
-| where Message has_any ("Square refused the refresh token", "isn't in Key Vault")
+| where tostring(Properties.EventName) in ('SquareRefreshTokenRefused', 'SquareSecretMissing')
 | project TimeGenerated, Message
 '''
 
