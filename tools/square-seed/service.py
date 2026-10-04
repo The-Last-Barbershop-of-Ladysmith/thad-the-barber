@@ -63,6 +63,9 @@ def updated_service_object(seed: Json, item: Json, plan: Plan, team_member_ids: 
     update_fields(updated, verify_location_presence(plan.location_id), "", lines)
     update_fields(updated["item_data"], {"name": seed["service"]["name"]}, "", lines)
     variations: list[Json] = updated["item_data"]["variations"]
+    current_team: list[str] = variations[0]["item_variation_data"].get("team_member_ids", [])
+    if sorted(current_team) == team_member_ids:
+        team_member_ids = current_team
     update_fields(variations[0], verify_location_presence(plan.location_id), "variation.", lines)
     update_fields(variations[0]["item_variation_data"], desired_variation_data(seed, team_member_ids), "variation.", lines)
     for extra in variations[1:]:

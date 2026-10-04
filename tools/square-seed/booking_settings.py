@@ -1,6 +1,6 @@
 from typing import Any
 
-from plan import Plan, update_line_description
+from plan import Plan, change_line
 from square_api import Json, SquareState
 
 
@@ -20,7 +20,7 @@ def plan_booking_settings(seed: Json, state: SquareState, plan: Plan) -> None:
     for key, desired in flatten(seed["booking_settings"]).items():
         current: Any = setting_value(current_settings, key, desired)
         if current != desired:
-            plan.dashboard_steps.append("Booking settings " + update_line_description(key, current, desired))
+            plan.dashboard_steps.append("Booking settings " + change_line(key, current, desired))
 
     location_profile: Json = next(
         (p for p in state.location_booking_profiles if p["location_id"] == plan.location_id), {})

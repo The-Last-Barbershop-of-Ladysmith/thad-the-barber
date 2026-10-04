@@ -91,6 +91,14 @@ class DryRunTests(unittest.TestCase):
         self.assertIn('Turn off online booking for the extra service "Beard trim" (the site books one service)', steps)
         self.assertIn("Make exactly one team member bookable (now 2: TM2, TMN76Ik4Cpv-ToYe)", steps)
 
+    def test_team_member_order_from_square_is_not_a_change(self) -> None:
+        state: SquareState = seeded_sandbox()
+        state.bookable_team_member_ids = ["TMN76Ik4Cpv-ToYe", "TM2"]
+        variation: Json = state.service_items[0]["item_data"]["variations"][0]["item_variation_data"]
+        variation["team_member_ids"] = ["TMN76Ik4Cpv-ToYe", "TM2"]
+
+        self.assertIsNone(plan_seed(SEED, state).service_object)
+
     def test_online_booking_off_is_a_dashboard_step(self) -> None:
         state: SquareState = seeded_sandbox()
         state.location_booking_profiles[0]["online_booking_enabled"] = False
