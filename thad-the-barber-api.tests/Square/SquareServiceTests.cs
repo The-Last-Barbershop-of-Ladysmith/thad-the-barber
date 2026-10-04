@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using ThadTheBarber.Api.Square.Models;
 
 namespace ThadTheBarber.Api.Tests.Square;
@@ -46,6 +47,15 @@ public sealed class SquareServiceTests
         using SquareHarness harness = new(connected: false);
 
         Assert.Equal(SquareConnection.NotConnected, await harness.Square.CheckConnectionAsync(Cancellation));
+    }
+
+    [Fact]
+    public async Task UnreachableWhenKeyVaultRefusesTheRead()
+    {
+        using SquareHarness harness = new();
+        harness.Secrets.FailWith = StatusCodes.Status403Forbidden;
+
+        Assert.Equal(SquareConnection.Unreachable, await harness.Square.CheckConnectionAsync(Cancellation));
     }
 
     [Fact]

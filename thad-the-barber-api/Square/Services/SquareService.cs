@@ -1,3 +1,5 @@
+using Azure;
+using Azure.Identity;
 using Square;
 using ThadTheBarber.Api.Square.Exceptions;
 using ThadTheBarber.Api.Square.Models;
@@ -18,6 +20,7 @@ public sealed class SquareService(SquareClient square) : ISquareService
             return SquareConnection.NotConnected;
         }
         catch (Exception exception) when (exception is SquareException or HttpRequestException
+            or RequestFailedException or AuthenticationFailedException
             || (exception is TaskCanceledException && !cancellationToken.IsCancellationRequested))
         {
             return SquareConnection.Unreachable;
