@@ -7,7 +7,8 @@ namespace ThadTheBarber.Api.Square.Handlers;
 
 /// <summary>
 /// Turns Square failures from any endpoint into ProblemDetails, so endpoints call Square without catching:
-/// not connected or Square down → 503 (try later or use the fallbacks, BR-14); Square rejecting our request → 502.
+/// not connected, Square down or timed out → 503 (try later or use the fallbacks, BR-14); Square rejecting our request
+/// → 502.
 /// </summary>
 public sealed class SquareExceptionHandler(IProblemDetailsService problemDetails) : IExceptionHandler
 {
@@ -17,6 +18,8 @@ public sealed class SquareExceptionHandler(IProblemDetailsService problemDetails
         {
             SquareNotConnectedException => (StatusCodes.Status503ServiceUnavailable, "Booking is unavailable right now."),
             SquareApiException { StatusCode: >= StatusCodes.Status500InternalServerError } or HttpRequestException
+                => (StatusCodes.Status503ServiceUnavailable, "Square is unavailable right now."),
+            TaskCanceledException when !httpContext.RequestAborted.IsCancellationRequested
                 => (StatusCodes.Status503ServiceUnavailable, "Square is unavailable right now."),
             SquareApiException => (StatusCodes.Status502BadGateway, "Square couldn't complete the request."),
             _ => null,

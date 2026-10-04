@@ -14,6 +14,7 @@ public sealed class SquareExceptionHandlerTests
         { new SquareNotConnectedException("Square refused the refresh token."), StatusCodes.Status503ServiceUnavailable },
         { new SquareApiException("Square is down", StatusCodes.Status500InternalServerError, """{"errors":[]}"""), StatusCodes.Status503ServiceUnavailable },
         { new HttpRequestException("No route to Square."), StatusCodes.Status503ServiceUnavailable },
+        { new TaskCanceledException("Square timed out."), StatusCodes.Status503ServiceUnavailable },
         { new SquareApiException("Bad request", StatusCodes.Status400BadRequest, """{"errors":[]}"""), StatusCodes.Status502BadGateway },
     };
 
