@@ -36,7 +36,7 @@ if (-not $Location) {
 # Key Vault names map to .NET configuration keys ('--' becomes ':').
 $secrets = [ordered]@{
     'Square--ApplicationSecret'   = 'Square application secret (OAuth)'
-    'Square--RefreshToken'        = 'Square OAuth refresh token (the API rotates it after this)'
+    'Square--RefreshToken'        = 'Square OAuth refresh token (normally saved by tools/square-connect instead)'
     'Square--WebhookSignatureKey' = 'Square webhook signature key'
     'ManageLink--HmacKey'         = 'Manage-link HMAC key (e.g. 64 random bytes, base64)'
     'Recaptcha--ApiKey'           = 'reCAPTCHA API key for server-side verification'
