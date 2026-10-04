@@ -11,4 +11,5 @@ public sealed record HealthResponse(
     HealthStatus Status,
     string Version,
     string Commit,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyDictionary<string, HealthStatus>? Checks = null);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyDictionary<string, HealthStatus>? Checks = null
+);

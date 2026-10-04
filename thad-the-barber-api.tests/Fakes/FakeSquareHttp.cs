@@ -28,7 +28,11 @@ public sealed class FakeSquareHttp : HttpMessageHandler
         }
 
         string body = request.Content is null ? string.Empty : await request.Content.ReadAsStringAsync(cancellationToken);
-        RecordedRequest recorded = new(request.RequestUri!.AbsolutePath, request.Headers.Authorization?.Parameter, body);
+        RecordedRequest recorded = new(
+            request.RequestUri!.AbsolutePath,
+            request.Headers.Authorization?.Parameter,
+            body
+        );
         Requests.Add(recorded);
 
         if (recorded.Path == "/oauth2/token")
@@ -50,5 +54,3 @@ public sealed class FakeSquareHttp : HttpMessageHandler
     private static HttpResponseMessage Json(HttpStatusCode status, string json) =>
         new(status) { Content = new StringContent(json, Encoding.UTF8, "application/json") };
 }
-
-public sealed record RecordedRequest(string Path, string? Token, string Body);
