@@ -1,0 +1,15 @@
+{
+  "customer": {
+    "id": "KCAYNMXV36K477WJYDVANJSVVG",
+    "created_at": "2026-10-04T03:24:09.322Z",
+    "updated_at": "2026-10-04T03:24:09Z",
+    "given_name": "Spike",
+    "family_name": "TwentyOne",
+    "phone_number": "+18045550123",
+    "preferences": {
+      "email_unsubscribed": false
+    },
+    "creation_source": "THIRD_PARTY",
+    "version": 0
+  }
+}

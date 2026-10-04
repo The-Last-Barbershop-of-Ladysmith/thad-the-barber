@@ -1,0 +1,54 @@
+{
+  "items": [
+    {
+      "type": "ITEM",
+      "id": "GTVG646AOD66JJI2XWNPIQHX",
+      "updated_at": "2026-10-04T01:35:02.222Z",
+      "created_at": "2026-10-04T01:33:35.839Z",
+      "version": 1791077702222,
+      "is_deleted": false,
+      "present_at_all_locations": true,
+      "item_data": {
+        "name": "Men's haircut",
+        "description": "Test Service",
+        "is_taxable": true,
+        "ordinal": 2,
+        "variations": [
+          {
+            "type": "ITEM_VARIATION",
+            "id": "TC6VHEWA3WPRAXH6HDMQ5DJN",
+            "updated_at": "2026-10-04T01:33:35.792Z",
+            "created_at": "2026-10-04T01:33:35.839Z",
+            "version": 1791077615792,
+            "is_deleted": false,
+            "present_at_all_locations": true,
+            "item_variation_data": {
+              "item_id": "GTVG646AOD66JJI2XWNPIQHX",
+              "name": "Regular",
+              "ordinal": 0,
+              "pricing_type": "VARIABLE_PRICING",
+              "service_duration": 1800000,
+              "available_for_booking": true,
+              "transition_time": 0,
+              "sellable": true,
+              "stockable": true,
+              "team_member_ids": [
+                "TMN76Ik4Cpv-ToYe"
+              ]
+            }
+          }
+        ],
+        "product_type": "APPOINTMENTS_SERVICE",
+        "skip_modifier_screen": false,
+        "description_html": "<p>Test Service</p>",
+        "description_plaintext": "Test Service",
+        "is_archived": false,
+        "is_alcoholic": false
+      }
+    }
+  ],
+  "cursor": "",
+  "matched_variation_ids": [
+    "TC6VHEWA3WPRAXH6HDMQ5DJN"
+  ]
+}

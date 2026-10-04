@@ -1,0 +1,27 @@
+{
+  "business_booking_profile": {
+    "seller_id": "MLGC8X89QXEAF",
+    "created_at": "2026-10-04T01:33:33Z",
+    "booking_enabled": false,
+    "customer_timezone_choice": "CUSTOMER_CHOICE",
+    "booking_policy": "ACCEPT_ALL",
+    "allow_user_cancel": true,
+    "business_appointment_settings": {
+      "location_types": [
+        "BUSINESS_LOCATION"
+      ],
+      "alignment_time": "HALF_HOURLY",
+      "min_booking_lead_time_seconds": 0,
+      "max_booking_lead_time_seconds": 31536000,
+      "any_team_member_booking_enabled": true,
+      "multiple_service_booking_enabled": true,
+      "cancellation_fee_money": {
+        "currency": "USD"
+      },
+      "cancellation_policy": "CUSTOM_POLICY",
+      "skip_booking_flow_staff_selection": false
+    },
+    "support_seller_level_writes": false
+  },
+  "errors": []
+}
