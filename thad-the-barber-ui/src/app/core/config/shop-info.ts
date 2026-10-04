@@ -20,6 +20,7 @@ export const SHOP_INFO: ShopInfo = {
     tel: 'tel:+15406212143',
     sms: 'sms:+15406212143',
   },
+  bookingUrl: 'https://square.site/book/L36PTJY0KNFV2/thad-the-barber-fredericksburg-va',
   location: {
     venue: "Jenny's Barber & Beauty Salon",
     street: '2022 Augustine Ave',

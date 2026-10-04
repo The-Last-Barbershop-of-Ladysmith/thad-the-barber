@@ -43,6 +43,8 @@ export interface ShopInfo {
     tel: string;
     sms: string;
   };
+  /** Thad's Square booking site: the fallback whenever booking on this site is down (BR-14). */
+  bookingUrl: string;
   location: {
     venue: string;
     street: string;

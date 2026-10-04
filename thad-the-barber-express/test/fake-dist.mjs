@@ -3,7 +3,7 @@ import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
-var SHOP = { name: 'Test Shop', phone: { display: '(555) 010-0000', tel: 'tel:+15550100000', sms: 'sms:+15550100000' } };
+var SHOP = { name: 'Test Shop', phone: { display: '(555) 010-0000', tel: 'tel:+15550100000', sms: 'sms:+15550100000' }, bookingUrl: 'https://test-shop.example' };
 
 // Writes a fake Angular build ({ 'relative/path': contents }, plus a shop.json) and loads the app against it.
 export function createFakeDist(files) {
