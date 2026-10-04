@@ -3,8 +3,10 @@ using Azure.Security.KeyVault.Secrets;
 using Microsoft.Extensions.Options;
 using Square;
 using Square.OAuth;
+using ThadTheBarber.Api.Square.Configuration;
+using ThadTheBarber.Api.Square.Exceptions;
 
-namespace ThadTheBarber.Api.Square.OAuth;
+namespace ThadTheBarber.Api.Square.Services;
 
 /// <summary>
 /// Holds Square's access token in memory only. It renews on first use (each start-up), when the token is older than

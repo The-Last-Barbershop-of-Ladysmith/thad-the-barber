@@ -1,7 +1,7 @@
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 
-namespace ThadTheBarber.Api.Infrastructure;
+namespace ThadTheBarber.Api.Infrastructure.KeyVault.Configuration;
 
 /// <summary>
 /// Loads Key Vault secrets into configuration ("--" in secret names maps to ":", so <c>Cors--AllowedOrigins--0</c>

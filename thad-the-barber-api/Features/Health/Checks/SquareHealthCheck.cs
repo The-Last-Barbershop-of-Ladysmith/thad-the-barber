@@ -1,8 +1,8 @@
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using ThadTheBarber.Api.Square.Service;
 using ThadTheBarber.Api.Square.Models;
+using ThadTheBarber.Api.Square.Services;
 
-namespace ThadTheBarber.Api.Features.Health;
+namespace ThadTheBarber.Api.Features.Health.Checks;
 
 /// <summary>Unhealthy when Square doesn't answer or refuses our token. Runs on <c>GET /api/health?deep=true</c>.</summary>
 public sealed class SquareHealthCheck(ISquareService square) : IHealthCheck

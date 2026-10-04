@@ -1,6 +1,6 @@
 using System.Reflection;
 
-namespace ThadTheBarber.Api.Features.Health;
+namespace ThadTheBarber.Api.Features.Health.Models;
 
 /// <summary>The app version and the commit it was built from, reported by <c>GET /api/health</c>.</summary>
 public sealed record BuildInfo(string Version, string Commit)

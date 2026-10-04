@@ -1,7 +1,8 @@
 using System.Net;
 using System.Net.Http.Headers;
+using ThadTheBarber.Api.Square.Services;
 
-namespace ThadTheBarber.Api.Square.OAuth;
+namespace ThadTheBarber.Api.Square.Handlers;
 
 /// <summary>
 /// Puts the current access token on every Square request, and on a 401 renews it and retries once. The token request

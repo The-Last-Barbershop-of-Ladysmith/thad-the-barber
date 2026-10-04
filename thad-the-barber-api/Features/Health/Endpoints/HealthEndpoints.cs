@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using ThadTheBarber.Api.Infrastructure;
+using ThadTheBarber.Api.Features.Health.Checks;
+using ThadTheBarber.Api.Features.Health.Models;
+using ThadTheBarber.Api.Infrastructure.Headers.Middleware;
 
-namespace ThadTheBarber.Api.Features.Health;
+namespace ThadTheBarber.Api.Features.Health.Endpoints;
 
 public static class HealthEndpoints
 {

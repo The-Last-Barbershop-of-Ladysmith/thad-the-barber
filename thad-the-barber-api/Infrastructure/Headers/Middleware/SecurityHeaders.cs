@@ -1,4 +1,4 @@
-namespace ThadTheBarber.Api.Infrastructure;
+namespace ThadTheBarber.Api.Infrastructure.Headers.Middleware;
 
 public static class SecurityHeaders
 {

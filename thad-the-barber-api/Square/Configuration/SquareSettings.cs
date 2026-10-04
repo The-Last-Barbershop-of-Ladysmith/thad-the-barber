@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace ThadTheBarber.Api.Square;
+namespace ThadTheBarber.Api.Square.Configuration;
 
 public sealed class SquareSettings
 {
@@ -10,7 +10,7 @@ public sealed class SquareSettings
     [Required]
     public Uri BaseUrl { get; set; } = null!;
 
-    /// <summary>The Square application's ID (not secret). Its secret is in Key Vault (<see cref="OAuth.SquareSecrets"/>).</summary>
+    /// <summary>The Square application's ID (not secret). Its secret is in Key Vault (<see cref="SquareSecrets"/>).</summary>
     [Required]
     public string ApplicationId { get; set; } = null!;
 }

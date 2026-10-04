@@ -1,4 +1,4 @@
-namespace ThadTheBarber.Api.Infrastructure.Cors;
+namespace ThadTheBarber.Api.Infrastructure.Cors.Configuration;
 
 /// <summary>
 /// Browser origins allowed to call the API. In Azure they come from the <c>Cors--AllowedOrigins--N</c> Key Vault secrets,

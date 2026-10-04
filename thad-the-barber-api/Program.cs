@@ -1,11 +1,11 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Azure.Monitor.OpenTelemetry.AspNetCore;
-using ThadTheBarber.Api.Features.Health;
-using ThadTheBarber.Api.Infrastructure;
-using ThadTheBarber.Api.Infrastructure.Cors;
-using ThadTheBarber.Api.Square;
-using ThadTheBarber.Api.Square.OAuth;
+using ThadTheBarber.Api.Features.Health.Endpoints;
+using ThadTheBarber.Api.Infrastructure.Cors.Configuration;
+using ThadTheBarber.Api.Infrastructure.Headers.Middleware;
+using ThadTheBarber.Api.Infrastructure.KeyVault.Configuration;
+using ThadTheBarber.Api.Square.Configuration;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 

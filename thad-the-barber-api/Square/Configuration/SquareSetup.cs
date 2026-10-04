@@ -1,10 +1,10 @@
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Square;
-using ThadTheBarber.Api.Square.OAuth;
-using ThadTheBarber.Api.Square.Service;
+using ThadTheBarber.Api.Square.Handlers;
+using ThadTheBarber.Api.Square.Services;
 
-namespace ThadTheBarber.Api.Square;
+namespace ThadTheBarber.Api.Square.Configuration;
 
 public static class SquareSetup
 {

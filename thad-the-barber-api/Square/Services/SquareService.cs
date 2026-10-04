@@ -1,8 +1,8 @@
 using Square;
-using ThadTheBarber.Api.Square.OAuth;
+using ThadTheBarber.Api.Square.Exceptions;
 using ThadTheBarber.Api.Square.Models;
 
-namespace ThadTheBarber.Api.Square.Service;
+namespace ThadTheBarber.Api.Square.Services;
 
 public sealed class SquareService(SquareClient square) : ISquareService
 {
