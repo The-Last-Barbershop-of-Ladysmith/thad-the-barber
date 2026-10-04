@@ -1,6 +1,7 @@
 // dev + test on one F1 Free Linux plan in rg-ttb-nonprod-centralus (issue #9).
 // Personal values come from environment variables so they stay out of this public repo:
-//   TTB_BUDGET_EMAIL         (required) who gets the $5 budget alerts
+//   TTB_ALERT_EMAIL          (required) who gets every alert (the $5 budget, Square)
+//   TTB_ALERT_PHONE          (optional) US mobile number, 10 digits, for the same alerts by SMS
 //   TTB_ADMIN_OBJECT_ID      (optional) your Entra object ID, for Key Vault Secrets Officer
 //   TTB_ALLOWED_IPS          your public IP(s), comma-separated. Without it the dev/test apps and vaults refuse you.
 using 'main.bicep'
@@ -36,7 +37,9 @@ param environments = [
 
 param budgetStartDate = '2026-10-01T00:00:00Z'
 
-param budgetEmail = readEnvironmentVariable('TTB_BUDGET_EMAIL')
+param alertEmail = readEnvironmentVariable('TTB_ALERT_EMAIL')
+
+param alertPhone = readEnvironmentVariable('TTB_ALERT_PHONE', '')
 
 param adminPrincipalId = readEnvironmentVariable('TTB_ADMIN_OBJECT_ID', '')
 

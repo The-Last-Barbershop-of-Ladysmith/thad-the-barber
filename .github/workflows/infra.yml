@@ -30,7 +30,7 @@ jobs:
           az bicep lint --file infra/reports.bicep
           az bicep build-params --file infra/reports.bicepparam --stdout > /dev/null
         env:
-          TTB_BUDGET_EMAIL: ci@example.invalid
+          TTB_ALERT_EMAIL: ci@example.invalid
           TTB_ADMIN_OBJECT_ID: 00000000-0000-0000-0000-000000000000
 
   what-if:
@@ -61,6 +61,7 @@ jobs:
             --validation-level ProviderNoRbac \
             --parameters infra/nonprod.bicepparam
         env:
-          TTB_BUDGET_EMAIL: ${{ secrets.TTB_BUDGET_EMAIL }}
+          TTB_ALERT_EMAIL: ${{ secrets.TTB_ALERT_EMAIL }}
+          TTB_ALERT_PHONE: ${{ secrets.TTB_ALERT_PHONE }}
           TTB_ADMIN_OBJECT_ID: ${{ secrets.TTB_ADMIN_OBJECT_ID }}
           TTB_ALLOWED_IPS: ${{ secrets.TTB_ALLOWED_IPS }}

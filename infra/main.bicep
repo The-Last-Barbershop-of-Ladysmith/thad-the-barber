@@ -18,6 +18,9 @@ type environmentConfig = {
 
   @description('Browser origins the API allows besides its own web app (custom domains in prod). Seeded into Key Vault as Cors--AllowedOrigins--N.')
   extraCorsOrigins: string[]
+
+  @description('Two Square alerts (email + SMS): a Square secret read by someone other than the API, and Square not connected. Prod only: nonprod uses the Square sandbox.')
+  squareAlerts: bool?
 }
 
 @description('Stage used in shared resource names.')
@@ -53,8 +56,11 @@ param budgetAmount int = 5
 @description('First day of the first budget month (ISO 8601). Keep it fixed so re-runs make no changes.')
 param budgetStartDate string
 
-@description('Email that receives the budget alerts.')
-param budgetEmail string
+@description('Email that receives every alert (budget, Square).')
+param alertEmail string
+
+@description('US mobile number (10 digits) that gets the alerts by SMS too. Empty sends email only.')
+param alertPhone string = ''
 
 @description('Object ID of the owner. Gets Key Vault Secrets Officer on each vault so they can add the secrets. Empty skips it.')
 param adminPrincipalId string = ''
@@ -97,6 +103,8 @@ module shared 'modules/shared.bicep' = {
     githubSubjectPrefix: githubSubjectPrefix
     createPreviewIdentity: createPreviewIdentity
     lockResourceGroup: lockResourceGroup
+    alertEmail: alertEmail
+    alertPhone: alertPhone
     tags: tags
   }
 }
@@ -186,8 +194,10 @@ resource budget 'Microsoft.Consumption/budgets@2023-11-01' = {
         operator: 'GreaterThanOrEqualTo'
         threshold: 80
         thresholdType: 'Actual'
-        contactEmails: [
-          budgetEmail
+        // The action group emails (and texts) the owner, so no separate addresses here.
+        contactEmails: []
+        contactGroups: [
+          shared.outputs.actionGroupId
         ]
       }
       actual100: {
@@ -195,8 +205,10 @@ resource budget 'Microsoft.Consumption/budgets@2023-11-01' = {
         operator: 'GreaterThanOrEqualTo'
         threshold: 100
         thresholdType: 'Actual'
-        contactEmails: [
-          budgetEmail
+        // The action group emails (and texts) the owner, so no separate addresses here.
+        contactEmails: []
+        contactGroups: [
+          shared.outputs.actionGroupId
         ]
       }
       forecast100: {
@@ -204,8 +216,10 @@ resource budget 'Microsoft.Consumption/budgets@2023-11-01' = {
         operator: 'GreaterThanOrEqualTo'
         threshold: 100
         thresholdType: 'Forecasted'
-        contactEmails: [
-          budgetEmail
+        // The action group emails (and texts) the owner, so no separate addresses here.
+        contactEmails: []
+        contactGroups: [
+          shared.outputs.actionGroupId
         ]
       }
     }

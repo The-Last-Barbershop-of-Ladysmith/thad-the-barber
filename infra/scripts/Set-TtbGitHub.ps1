@@ -91,7 +91,7 @@ else {
     Write-Warning 'No "reports" deployment yet (infra/reports.bicep); CI keeps its reports as zip artifacts only.'
 }
 
-foreach ($name in 'TTB_BUDGET_EMAIL', 'TTB_ADMIN_OBJECT_ID', 'TTB_ALLOWED_IPS') {
+foreach ($name in 'TTB_ALERT_EMAIL', 'TTB_ALERT_PHONE', 'TTB_ADMIN_OBJECT_ID', 'TTB_ALLOWED_IPS') {
     $value = [Environment]::GetEnvironmentVariable($name)
     if ($value) {
         $value | Invoke-Gh secret set $name --repo $Repo
