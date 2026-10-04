@@ -1,23 +1,28 @@
 using Azure.Identity;
+using Azure.Security.KeyVault.Secrets;
 
 namespace ThadTheBarber.Api.Infrastructure;
 
 /// <summary>
-/// Loads every Key Vault secret into configuration ("--" in secret names maps to ":", so <c>Cors--AllowedOrigins--0</c>
-/// becomes <c>Cors:AllowedOrigins:0</c>). The vault is named by <c>KeyVault:Name</c> in
-/// <c>appsettings.{Environment}.json</c>, picked by <c>ASPNETCORE_ENVIRONMENT</c>. Development (local runs and the Azure
-/// dev app) uses the dev vault; empty (tests) skips Key Vault.
+/// Loads Key Vault secrets into configuration ("--" in secret names maps to ":", so <c>Cors--AllowedOrigins--0</c>
+/// becomes <c>Cors:AllowedOrigins:0</c>) and registers a <see cref="SecretClient"/> for secrets read on demand. The
+/// vault is named by <c>KeyVault:Name</c> in <c>appsettings.{Environment}.json</c>, picked by
+/// <c>ASPNETCORE_ENVIRONMENT</c>. Development (local runs and the Azure dev app) uses the dev vault; empty (tests)
+/// skips Key Vault.
 /// </summary>
 public static class KeyVaultSetup
 {
-    public static IConfigurationManager AddKeyVaultIfConfigured(this IConfigurationManager configuration)
+    /// <param name="onDemandSecrets">Secrets kept out of configuration; read them through <see cref="SecretClient"/>.</param>
+    public static WebApplicationBuilder AddKeyVaultIfConfigured(this WebApplicationBuilder builder, IReadOnlySet<string> onDemandSecrets)
     {
-        if (GetVaultUri(configuration) is Uri vaultUri)
+        if (GetVaultUri(builder.Configuration) is Uri vaultUri)
         {
-            configuration.AddAzureKeyVault(vaultUri, new DefaultAzureCredential());
+            DefaultAzureCredential credential = new();
+            builder.Configuration.AddAzureKeyVault(vaultUri, credential, new SkipSecretsManager(onDemandSecrets));
+            builder.Services.AddSingleton(new SecretClient(vaultUri, credential));
         }
 
-        return configuration;
+        return builder;
     }
 
     /// <summary>The vault's URI from its name, e.g. <c>kv-ttb-dev-centralus</c> → <c>https://kv-ttb-dev-centralus.vault.azure.net/</c>.</summary>

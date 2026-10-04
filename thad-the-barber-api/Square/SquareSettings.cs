@@ -10,7 +10,7 @@ public sealed class SquareSettings
     [Required]
     public Uri BaseUrl { get; set; } = null!;
 
-    /// <summary>The Square application's ID (not secret). Its secret is in Key Vault (<see cref="SquareSecrets"/>).</summary>
+    /// <summary>The Square application's ID (not secret). Its secret is in Key Vault (<see cref="OAuth.SquareSecrets"/>).</summary>
     [Required]
     public string ApplicationId { get; set; } = null!;
 }

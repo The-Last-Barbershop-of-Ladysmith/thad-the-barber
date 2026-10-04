@@ -5,10 +5,11 @@ using ThadTheBarber.Api.Features.Health;
 using ThadTheBarber.Api.Infrastructure;
 using ThadTheBarber.Api.Infrastructure.Cors;
 using ThadTheBarber.Api.Square;
+using ThadTheBarber.Api.Square.OAuth;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
-builder.Configuration.AddKeyVaultIfConfigured();
+builder.AddKeyVaultIfConfigured(SquareSecrets.All);
 
 if (builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"] is { Length: > 0 })
 {

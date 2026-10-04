@@ -1,21 +1,44 @@
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
+using Square;
+using ThadTheBarber.Api.Square.OAuth;
+using ThadTheBarber.Api.Square.Service;
 
 namespace ThadTheBarber.Api.Square;
 
 public static class SquareSetup
 {
-    /// <summary>Square's settings and the typed HttpClient behind <see cref="ISquareService"/>.</summary>
+    public const string HttpClientName = "Square";
+
+    /// <summary>
+    /// Square's settings, the in-memory access token, and the SDK client behind <see cref="ISquareService"/>. Needs a
+    /// <see cref="Azure.Security.KeyVault.Secrets.SecretClient"/> (registered by <c>KeyVaultSetup</c>).
+    /// </summary>
     public static IServiceCollection AddSquareService(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddOptions<SquareSettings>()
             .Bind(configuration.GetSection(SquareSettings.SectionName))
             .ValidateDataAnnotations()
             .ValidateOnStart();
-        services.AddHttpClient<ISquareService, SquareService>((provider, client) =>
-        {
-            client.BaseAddress = provider.GetRequiredService<IOptions<SquareSettings>>().Value.BaseUrl;
-            client.Timeout = TimeSpan.FromSeconds(5);
-        });
+        services.TryAddSingleton(TimeProvider.System);
+        services.AddSingleton<SquareAccessTokenProvider>();
+        services.AddTransient<SquareAuthHandler>();
+        services.AddHttpClient(HttpClientName, client => client.Timeout = TimeSpan.FromSeconds(10))
+            .AddHttpMessageHandler<SquareAuthHandler>();
+        services.AddScoped<ISquareService>(provider => new SquareService(CreateClient(
+            provider.GetRequiredService<IHttpClientFactory>(),
+            provider.GetRequiredService<IOptions<SquareSettings>>().Value)));
         return services;
     }
+
+    /// <summary>
+    /// The SDK insists on a token when it's built; <see cref="SquareAuthHandler"/> replaces it on every request, so the
+    /// renewed token is always the one sent.
+    /// </summary>
+    internal static SquareClient CreateClient(IHttpClientFactory httpClients, SquareSettings settings) =>
+        new("set-by-SquareAuthHandler", new ClientOptions
+        {
+            BaseUrl = settings.BaseUrl.ToString().TrimEnd('/'),
+            HttpClient = httpClients.CreateClient(HttpClientName),
+        });
 }

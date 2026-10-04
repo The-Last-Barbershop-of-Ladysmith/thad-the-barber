@@ -1,4 +1,4 @@
-namespace ThadTheBarber.Api.Square;
+namespace ThadTheBarber.Api.Square.OAuth;
 
 /// <summary>
 /// Key Vault secrets the API reads only when renewing the Square access token, so they're never loaded into
