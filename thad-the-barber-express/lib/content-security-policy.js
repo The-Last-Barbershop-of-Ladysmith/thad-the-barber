@@ -50,9 +50,25 @@ function contentSecurityPolicy(nonce, sources, styleHashes = []) {
   if (styleHashes.length > 0) {
     directives['style-src-attr'] = ["'unsafe-hashes'"].concat(styleHashes);
   }
+  return serialize(directives);
+}
+
+// The error page has no inline code: its stylesheet, brand.css from the Angular build and the logo are all same-origin.
+function errorPagePolicy() {
+  return serialize({
+    'default-src': ["'none'"],
+    'style-src': ["'self'"],
+    'img-src': ["'self'"],
+    'frame-ancestors': ["'none'"],
+    'base-uri': ["'none'"],
+    'form-action': ["'none'"],
+  });
+}
+
+function serialize(directives) {
   return Object.entries(directives).map(function([name, values]) {
     return name + ' ' + values.join(' ');
   }).join('; ');
 }
 
-module.exports = { createNonce, applyNonce, styleAttributeHashes, contentSecurityPolicy };
+module.exports = { createNonce, applyNonce, styleAttributeHashes, contentSecurityPolicy, errorPagePolicy };

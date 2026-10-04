@@ -49,7 +49,7 @@ const config: PlaywrightTestConfig = defineConfig({
     // CI tests what deploys: the optimized build served by Express, with its CSP header and real 404s. The ui job
     // builds it (locally, run `npm run build:express:test` first).
     command: isCi ? 'npm --prefix ../thad-the-barber-express start' : 'npm start',
-    env: { PORT: new URL(baseURL).port },
+    env: { PORT: new URL(baseURL).port, ERROR_TEST_ROUTE: 'true' },
     url: baseURL,
     reuseExistingServer: !isCi,
     timeout: 180_000,
