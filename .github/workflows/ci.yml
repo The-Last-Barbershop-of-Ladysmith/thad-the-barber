@@ -128,6 +128,11 @@ jobs:
         working-directory: tools/square-seed
         run: python3 -m unittest -v
 
+      # The one-time Square connect (#23), also stdlib-only Python.
+      - name: Square connect tests
+        working-directory: tools/square-connect
+        run: python3 -m unittest -v
+
       # ReportGenerator (pinned in .config/dotnet-tools.json): per-class line and branch coverage for the summary,
       # and the HTML report the report job publishes.
       - name: Coverage report
