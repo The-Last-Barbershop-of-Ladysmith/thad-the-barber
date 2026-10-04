@@ -1,0 +1,758 @@
+{
+  "info": {
+    "name": "Square spike #21 (sandbox)",
+    "description": "Spike #21: buyer-level Square Bookings in sandbox. Run the folders top to bottom; scripts save the ids each later request needs. \"AC n\" = acceptance criterion n on issue #21. Save responses (Save Response → Save to a file) as fixtures.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{buyerToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://connect.squareupsandbox.com"
+    },
+    {
+      "key": "squareVersion",
+      "value": "2026-09-16"
+    }
+  ],
+  "item": [
+    {
+      "name": "1 Setup",
+      "item": [
+        {
+          "name": "Business booking profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Square-Version",
+                "value": "{{squareVersion}}"
+              }
+            ],
+            "url": "{{baseUrl}}/v2/bookings/business-booking-profile",
+            "description": "AC 2 (sandbox copy). Thad's live values were already read through the Square connector."
+          },
+          "event": []
+        },
+        {
+          "name": "Location booking profiles",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Square-Version",
+                "value": "{{squareVersion}}"
+              }
+            ],
+            "url": "{{baseUrl}}/v2/bookings/location-booking-profiles"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('locationId', pm.response.json().location_booking_profiles[0].location_id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Team member booking profiles",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Square-Version",
+                "value": "{{squareVersion}}"
+              }
+            ],
+            "url": "{{baseUrl}}/v2/bookings/team-member-booking-profiles?bookable_only=true"
+          },
+          "event": []
+        },
+        {
+          "name": "Catalog services (buyer token)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Square-Version",
+                "value": "{{squareVersion}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/v2/catalog/search-catalog-items",
+            "description": "Finding: can the buyer token read the catalog? Our scopes have no ITEMS_READ.",
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"product_types\": [\n    \"APPOINTMENTS_SERVICE\"\n  ]\n}"
+            }
+          },
+          "event": []
+        },
+        {
+          "name": "Catalog services (personal token)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Square-Version",
+                "value": "{{squareVersion}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/v2/catalog/search-catalog-items",
+            "description": "Gets the service variation id for the availability search, whatever the buyer-token result.",
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"product_types\": [\n    \"APPOINTMENTS_SERVICE\"\n  ]\n}"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{personalToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const variation = pm.response.json().items?.[0]?.item_data?.variations?.[0];",
+                  "if (variation) pm.collectionVariables.set('serviceVariationId', variation.id);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2 Booking flow",
+      "item": [
+        {
+          "name": "Search availability (next 7 days)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Square-Version",
+                "value": "{{squareVersion}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/v2/bookings/availability/search",
+            "description": "AC 3. Run again after making the external booking (folder 3): that time should be gone.",
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"query\": {\n    \"filter\": {\n      \"start_at_range\": {\n        \"start_at\": \"{{rangeStart}}\",\n        \"end_at\": \"{{rangeEnd}}\"\n      },\n      \"location_id\": \"{{locationId}}\",\n      \"segment_filters\": [\n        {\n          \"service_variation_id\": \"{{serviceVariationId}}\"\n        }\n      ]\n    }\n  }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('rangeStart', new Date(Date.now() + 864e5).toISOString());",
+                  "pm.collectionVariables.set('rangeEnd', new Date(Date.now() + 8 * 864e5).toISOString());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const slots = pm.response.json().availabilities ?? [];",
+                  "console.log(slots.map((slot) => slot.start_at));",
+                  "if (slots.length >= 3) {",
+                  "  const segment = slots[0].appointment_segments[0];",
+                  "  pm.collectionVariables.set('durationMinutes', segment.duration_minutes);",
+                  "  pm.collectionVariables.set('serviceVariationVersion', segment.service_variation_version);",
+                  "  pm.collectionVariables.set('teamMemberId', segment.team_member_id);",
+                  "  pm.collectionVariables.set('slot0', slots[0].start_at);",
+                  "  pm.collectionVariables.set('slot1', slots[1].start_at);",
+                  "  pm.collectionVariables.set('slot2', slots[2].start_at);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Search customers by phone",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Square-Version",
+                "value": "{{squareVersion}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/v2/customers/search",
+            "description": "Returning-customer match. Saves the customer id if one exists, so reruns skip creating another.",
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"query\": {\n    \"filter\": {\n      \"phone_number\": {\n        \"exact\": \"{{spikePhone}}\"\n      }\n    }\n  }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const customer = pm.response.json().customers?.[0];",
+                  "if (customer) pm.collectionVariables.set('customerId', customer.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create customer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Square-Version",
+                "value": "{{squareVersion}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/v2/customers",
+            "description": "Skipped when \"Search customers by phone\" found one.",
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"idempotency_key\": \"{{$guid}}\",\n  \"given_name\": \"Spike\",\n  \"family_name\": \"TwentyOne\",\n  \"phone_number\": \"{{spikePhone}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('customerId')) pm.execution.skipRequest();"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('customerId', pm.response.json().customer.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create booking",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Square-Version",
+                "value": "{{squareVersion}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/v2/bookings",
+            "description": "AC 3 + AC 5: books the first open time. Afterwards, check whether the test seller or customer gets an email/SMS.",
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"idempotency_key\": \"{{$guid}}\",\n  \"booking\": {\n    \"start_at\": \"{{slot0}}\",\n    \"location_id\": \"{{locationId}}\",\n    \"customer_id\": \"{{customerId}}\",\n    \"appointment_segments\": [\n      {\n        \"duration_minutes\": {{durationMinutes}},\n        \"service_variation_id\": \"{{serviceVariationId}}\",\n        \"service_variation_version\": {{serviceVariationVersion}},\n        \"team_member_id\": \"{{teamMemberId}}\"\n      }\n    ]\n  }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const booking = pm.response.json().booking;",
+                  "if (booking) {",
+                  "  pm.collectionVariables.set('bookingId', booking.id);",
+                  "  pm.collectionVariables.set('bookingVersion', booking.version);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Retrieve booking",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Square-Version",
+                "value": "{{squareVersion}}"
+              }
+            ],
+            "url": "{{baseUrl}}/v2/bookings/{{bookingId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const booking = pm.response.json().booking;",
+                  "if (booking) {",
+                  "  pm.collectionVariables.set('bookingId', booking.id);",
+                  "  pm.collectionVariables.set('bookingVersion', booking.version);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List bookings (buyer token)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Square-Version",
+                "value": "{{squareVersion}}"
+              }
+            ],
+            "url": "{{baseUrl}}/v2/bookings?location_id={{locationId}}&start_at_min={{listStart}}&start_at_max={{listEnd}}",
+            "description": "AC 7: compare with \"List bookings (personal token)\" in folder 3."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('listStart', new Date().toISOString());",
+                  "pm.collectionVariables.set('listEnd', new Date(Date.now() + 30 * 864e5).toISOString());"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update booking (reschedule)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Square-Version",
+                "value": "{{squareVersion}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/v2/bookings/{{bookingId}}",
+            "description": "AC 8: moves the booking to the second open time.",
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"idempotency_key\": \"{{$guid}}\",\n  \"booking\": {\n    \"version\": {{bookingVersion}},\n    \"start_at\": \"{{slot1}}\"\n  }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const booking = pm.response.json().booking;",
+                  "if (booking) {",
+                  "  pm.collectionVariables.set('bookingId', booking.id);",
+                  "  pm.collectionVariables.set('bookingVersion', booking.version);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cancel booking",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Square-Version",
+                "value": "{{squareVersion}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/v2/bookings/{{bookingId}}/cancel",
+            "description": "AC 3.",
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"idempotency_key\": \"{{$guid}}\",\n  \"booking_version\": {{bookingVersion}}\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const booking = pm.response.json().booking;",
+                  "if (booking) {",
+                  "  pm.collectionVariables.set('bookingId', booking.id);",
+                  "  pm.collectionVariables.set('bookingVersion', booking.version);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3 External booking",
+      "description": "AC 6 + AC 7. First book an open time in the Sandbox Seller Dashboard (Appointments calendar). Then run \"List bookings (personal token)\", which saves its id and start time, and rerun \"Search availability\" in folder 2.",
+      "item": [
+        {
+          "name": "List bookings (personal token)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Square-Version",
+                "value": "{{squareVersion}}"
+              }
+            ],
+            "url": "{{baseUrl}}/v2/bookings?location_id={{locationId}}&start_at_min={{listStart}}&start_at_max={{listEnd}}",
+            "description": "Saves the newest booking that the site did not create as the external booking.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{personalToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('listStart', new Date().toISOString());",
+                  "pm.collectionVariables.set('listEnd', new Date(Date.now() + 30 * 864e5).toISOString());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const external = (pm.response.json().bookings ?? []).filter((b) => b.id !== pm.collectionVariables.get('bookingId') && b.status === 'ACCEPTED').pop();",
+                  "if (external) {",
+                  "  pm.collectionVariables.set('externalBookingId', external.id);",
+                  "  pm.collectionVariables.set('externalStartAt', external.start_at);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create booking at the external time",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Square-Version",
+                "value": "{{squareVersion}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/v2/bookings",
+            "description": "AC 6: expect a conflict error.",
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"idempotency_key\": \"{{$guid}}\",\n  \"booking\": {\n    \"start_at\": \"{{externalStartAt}}\",\n    \"location_id\": \"{{locationId}}\",\n    \"customer_id\": \"{{customerId}}\",\n    \"appointment_segments\": [\n      {\n        \"duration_minutes\": {{durationMinutes}},\n        \"service_variation_id\": \"{{serviceVariationId}}\",\n        \"service_variation_version\": {{serviceVariationVersion}},\n        \"team_member_id\": \"{{teamMemberId}}\"\n      }\n    ]\n  }\n}"
+            }
+          },
+          "event": []
+        },
+        {
+          "name": "Retrieve external booking (buyer token)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Square-Version",
+                "value": "{{squareVersion}}"
+              }
+            ],
+            "url": "{{baseUrl}}/v2/bookings/{{externalBookingId}}",
+            "description": "AC 7: expect not found or forbidden."
+          },
+          "event": []
+        }
+      ]
+    },
+    {
+      "name": "4 Seller-level token",
+      "item": [
+        {
+          "name": "Create booking (personal token)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Square-Version",
+                "value": "{{squareVersion}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/v2/bookings",
+            "description": "AC 4: 403 on Free, if the sandbox reproduces it. Cancel it afterwards if it succeeds.",
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"idempotency_key\": \"{{$guid}}\",\n  \"booking\": {\n    \"start_at\": \"{{slot2}}\",\n    \"location_id\": \"{{locationId}}\",\n    \"customer_id\": \"{{customerId}}\",\n    \"appointment_segments\": [\n      {\n        \"duration_minutes\": {{durationMinutes}},\n        \"service_variation_id\": \"{{serviceVariationId}}\",\n        \"service_variation_version\": {{serviceVariationVersion}},\n        \"team_member_id\": \"{{teamMemberId}}\"\n      }\n    ]\n  }\n}"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{personalToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": []
+        }
+      ]
+    },
+    {
+      "name": "5 Customer groups and attributes",
+      "description": "AC 9: do these work with our scopes? (for M7 SMS alerts)",
+      "item": [
+        {
+          "name": "List customer groups",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Square-Version",
+                "value": "{{squareVersion}}"
+              }
+            ],
+            "url": "{{baseUrl}}/v2/customers/groups"
+          },
+          "event": []
+        },
+        {
+          "name": "Create customer group",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Square-Version",
+                "value": "{{squareVersion}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/v2/customers/groups",
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"idempotency_key\": \"{{$guid}}\",\n  \"group\": {\n    \"name\": \"Spike 21\"\n  }\n}"
+            }
+          },
+          "event": []
+        },
+        {
+          "name": "List customer attribute definitions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Square-Version",
+                "value": "{{squareVersion}}"
+              }
+            ],
+            "url": "{{baseUrl}}/v2/customers/custom-attribute-definitions"
+          },
+          "event": []
+        },
+        {
+          "name": "Create customer attribute definition",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Square-Version",
+                "value": "{{squareVersion}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/v2/customers/custom-attribute-definitions",
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"idempotency_key\": \"{{$guid}}\",\n  \"custom_attribute_definition\": {\n    \"key\": \"spike21-sms-consent\",\n    \"name\": \"Spike 21 SMS consent\",\n    \"schema\": {\n      \"$ref\": \"https://developer-production-s.squarecdn.com/schemas/v1/common.json#squareup.common.Boolean\"\n    },\n    \"visibility\": \"VISIBILITY_HIDDEN\"\n  }\n}"
+            }
+          },
+          "event": []
+        }
+      ]
+    },
+    {
+      "name": "6 Token",
+      "item": [
+        {
+          "name": "Refresh buyer token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Square-Version",
+                "value": "{{squareVersion}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/oauth2/token",
+            "description": "The buyer token expires after 30 days. Copy the new access_token into the environment. Input for #23.",
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"client_id\": \"{{appId}}\",\n  \"client_secret\": \"{{appSecret}}\",\n  \"grant_type\": \"refresh_token\",\n  \"refresh_token\": \"{{refreshToken}}\"\n}"
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": []
+        }
+      ]
+    }
+  ]
+}

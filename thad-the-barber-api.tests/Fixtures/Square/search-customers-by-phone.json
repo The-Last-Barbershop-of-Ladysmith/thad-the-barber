@@ -1,0 +1,69 @@
+{
+  "customers": [
+    {
+      "id": "X0ZH4DE1DVN5P1261RKAE8JPDM",
+      "created_at": "2026-10-04T02:49:35.085Z",
+      "updated_at": "2026-10-04T02:49:35Z",
+      "given_name": "Spike",
+      "family_name": "TwentyOne",
+      "phone_number": "+18045550123",
+      "preferences": {
+        "email_unsubscribed": false
+      },
+      "creation_source": "THIRD_PARTY",
+      "version": 0
+    },
+    {
+      "id": "KVEW6R0063MPYQYT8GTSZAJ8CW",
+      "created_at": "2026-10-04T03:02:38.13Z",
+      "updated_at": "2026-10-04T03:02:38Z",
+      "given_name": "Spike",
+      "family_name": "TwentyOne",
+      "phone_number": "+18045550123",
+      "preferences": {
+        "email_unsubscribed": false
+      },
+      "creation_source": "THIRD_PARTY",
+      "version": 0
+    },
+    {
+      "id": "82WFP6B2P189NM58BTEJ8GSQ9G",
+      "created_at": "2026-10-04T02:33:14.331Z",
+      "updated_at": "2026-10-04T02:33:14Z",
+      "given_name": "Spike",
+      "family_name": "TwentyOne",
+      "phone_number": "+18045550123",
+      "preferences": {
+        "email_unsubscribed": false
+      },
+      "creation_source": "THIRD_PARTY",
+      "version": 0
+    },
+    {
+      "id": "KCAYNMXV36K477WJYDVANJSVVG",
+      "created_at": "2026-10-04T03:24:09.322Z",
+      "updated_at": "2026-10-04T03:24:09Z",
+      "given_name": "Spike",
+      "family_name": "TwentyOne",
+      "phone_number": "+18045550123",
+      "preferences": {
+        "email_unsubscribed": false
+      },
+      "creation_source": "THIRD_PARTY",
+      "version": 0
+    },
+    {
+      "id": "8VD35DYV19CF315HP2VAR1R6V8",
+      "created_at": "2026-10-04T02:50:19.116Z",
+      "updated_at": "2026-10-04T02:50:19Z",
+      "given_name": "Spike",
+      "family_name": "TwentyOne",
+      "phone_number": "+18045550123",
+      "preferences": {
+        "email_unsubscribed": false
+      },
+      "creation_source": "THIRD_PARTY",
+      "version": 0
+    }
+  ]
+}

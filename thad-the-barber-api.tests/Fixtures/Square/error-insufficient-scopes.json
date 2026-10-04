@@ -1,0 +1,9 @@
+{
+  "errors": [
+    {
+      "category": "AUTHENTICATION_ERROR",
+      "code": "INSUFFICIENT_SCOPES",
+      "detail": "The merchant has not given your application sufficient permissions to do that. The merchant must authorize your application for the following scopes: ITEMS_READ"
+    }
+  ]
+}

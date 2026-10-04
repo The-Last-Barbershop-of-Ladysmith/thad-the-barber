@@ -9,14 +9,14 @@ These are the key decisions for taking `thad-the-barber-ui` from a mocked wirefr
 | --- | --- | --- |
 | [A](#a-hosting) | Express (static) frontend + ASP.NET Core API, two App Service apps per environment, CORS in .NET | ✅ |
 | [B](#b-data) | No database in v1; Square is the system of record | ✅ |
-| [C](#c-square-integration) | Square .NET SDK behind our API, with buyer-level OAuth on the Appointments Free plan | ✅ (spike verifies) |
+| [C](#c-square-integration) | Square .NET SDK behind our API, with buyer-level OAuth on the Appointments Free plan | ✅ (confirmed in sandbox, [#21](https://github.com/The-Last-Barbershop-of-Ladysmith/thad-the-barber/issues/21)) |
 | [D](#d-customer-info-and-privacy) | Customer data is never returned from a phone number alone; returning customers are matched silently | ✅ |
 | [E](#e-admin-portal) | Admin portal: Google sign-in verified by the API, allowlist in Key Vault | ✅ |
 | [F](#f-open-business-rules) | Open business rules | ⚠ |
 | [G](#g-rendering-and-seo) | Prerender `/` at build time | ✅ |
 | [H](#h-accessibility) | WCAG 2.2 AA | ✅ |
 | [I](#i-testing) | Component + unit + API + Playwright tests on every change | ✅ |
-| [J](#j-confirmations-and-reminders) | Square's built-in reminders, with a fallback only if needed | ⚠ (spike verifies) |
+| [J](#j-confirmations-and-reminders) | Square's built-in reminders, with a fallback only if needed | ⚠ (needs a live test, [#89](https://github.com/The-Last-Barbershop-of-Ladysmith/thad-the-barber/issues/89)) |
 | [K](#k-single-source-of-truth) | Every business fact lives in one place | ✅ |
 | [L](#l-text-alerts) | Text-alerts sign-up | ⏸ |
 | [M](#m-security) | Key Vault for every secret, bot-checked session JWT on every API call, hardening | ✅ |
@@ -76,17 +76,22 @@ Endpoints (each replaces a mocked Angular service without changing its NgRx effe
 | `POST /api/session` | None (Google reCAPTCHA v3 check) | New: issues the session JWT (see [M](#m-security)) |
 
 **Square plan and permissions:**
-- Thad is believed to be on **Appointments Free**. This hasn't been checked in the Dashboard or tested yet.
-- On Free, **seller-level** writes return `403 Merchant subscription does not support write operations`. **Buyer-level** permissions are supported, and public self-booking is a buyer-level use case.
-- Required scopes: `APPOINTMENTS_READ`, `APPOINTMENTS_WRITE`, `APPOINTMENTS_ALL_READ`, `APPOINTMENTS_BUSINESS_SETTINGS_READ`, `CUSTOMERS_READ`, `CUSTOMERS_WRITE`. **Not** `APPOINTMENTS_ALL_WRITE`.
+- Thad is on **Appointments Free**: checked in the Dashboard ([#5](https://github.com/The-Last-Barbershop-of-Ladysmith/thad-the-barber/issues/5)), and his booking profile has `support_seller_level_writes: false`.
+- On Free, **seller-level** writes return `403 Merchant subscription does not support write operations` (reproduced in sandbox with a personal access token, [#21](https://github.com/The-Last-Barbershop-of-Ladysmith/thad-the-barber/issues/21)). **Buyer-level** permissions are supported, and public self-booking is a buyer-level use case.
+- Required scopes: `APPOINTMENTS_READ`, `APPOINTMENTS_WRITE`, `APPOINTMENTS_ALL_READ`, `APPOINTMENTS_BUSINESS_SETTINGS_READ`, `CUSTOMERS_READ`, `CUSTOMERS_WRITE`, `ITEMS_READ`. **Not** `APPOINTMENTS_ALL_WRITE`. `ITEMS_READ` lets the API read the single service from the Catalog: without it that call returns `403 INSUFFICIENT_SCOPES`, and with it bookings stay buyer-level.
 - **Don't use a personal access token.** It carries every scope, so Square treats calls as seller-level. Use a one-time OAuth authorization of Thad's account with the scopes above, and refresh the token before its 30-day expiry.
 - Buyer-level limits:
-  - The API sees only the bookings it created (list/read). **Availability still reflects the whole calendar**: times booked in the Square app or by hand show as unavailable, and `CreateBooking` rejects a taken time.
+  - **Availability reflects the whole calendar**: times booked in the Square app or by hand show as unavailable. `CreateBooking` for a taken time returns `400 BAD_REQUEST` "That time slot is no longer available." (field `start_at`), not a 409, and the API maps it to a slot-taken response.
+  - Reads aren't limited to the API's own bookings: with `APPOINTMENTS_ALL_READ`, list and retrieve also return bookings made in the Dashboard, seller's note included (sandbox; to confirm on Thad's account, [#89](https://github.com/The-Last-Barbershop-of-Ladysmith/thad-the-barber/issues/89)). So the API returns a booking only to the holder of its manage link.
   - It can't book services that have a cancellation fee.
   - Customer cancellation follows the seller's policy.
   - The customer needs a phone number.
-- Upgrade to **Plus** (~$29/mo per location) only if the admin portal needs the full calendar, or if no-show fees or cancellation policies are adopted.
-- A spike issue confirms all of this in sandbox before anything is built on it.
+- Upgrade to **Plus** (~$29/mo per location) only if the admin portal needs seller-level writes (reading the full calendar works at buyer level), or if no-show fees or cancellation policies are adopted.
+- The [#21](https://github.com/The-Last-Barbershop-of-Ladysmith/thad-the-barber/issues/21) spike confirmed this in sandbox on 2026-10-04 (fixtures in `thad-the-barber-api.tests/Fixtures/Square/`). It also found:
+  - `UpdateBooking` reschedules with only `version` and `start_at`. Every write raises `version`, so the API always sends the current one.
+  - `SearchCustomers` by phone can return several customers, in no fixed order, so the API must pick one deterministically (for example the oldest).
+  - `ListBookings` needs a `start_at_min`/`start_at_max` range of 31 days or less.
+  - Customer Groups and Custom Attributes work with these scopes (for [L](#l-text-alerts)).
 
 **Cancel and reschedule:**
 - No limits until the appointment's start time passes. After that the API returns 409 and the UI hides the actions.
@@ -177,7 +182,7 @@ Every change ships with its tests:
 ## J. Confirmations and reminders
 
 - **Preferred:** Square's built-in confirmations and reminders, included in the Free plan and set in Square Dashboard → Appointments → Communications. They cost $0.
-- **Unknown:** Square's docs say seller-level API bookings send no email or SMS, but they don't say what happens for buyer-level bookings. The M2 spike ([#21](https://github.com/The-Last-Barbershop-of-Ladysmith/thad-the-barber/issues/21)) checks this.
+- **Unknown:** Square's docs say seller-level API bookings send no email or SMS, but they don't say what happens for buyer-level bookings. The [#21](https://github.com/The-Last-Barbershop-of-Ladysmith/thad-the-barber/issues/21) spike couldn't check this: the sandbox Seller Dashboard's Communications page doesn't load, so the sandbox can't send them. It needs one test booking on Thad's live account once the production app exists ([#89](https://github.com/The-Last-Barbershop-of-Ladysmith/thad-the-barber/issues/89)).
 - **Fallback (only if Square doesn't send them):** our API sends its own.
   - Email via Azure Communication Services; SMS via Twilio (with A2P 10DLC registration).
   - A GitHub Actions cron job calls a secured `POST /api/jobs/reminders`, which works on F1.

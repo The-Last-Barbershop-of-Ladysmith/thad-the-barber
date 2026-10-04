@@ -1,0 +1,162 @@
+{
+  "bookings": [
+    {
+      "id": "r1h5tfnj3ybo31",
+      "version": 0,
+      "status": "ACCEPTED",
+      "created_at": "2026-10-04T04:20:38Z",
+      "updated_at": "2026-10-04T04:20:38Z",
+      "location_id": "LVF9Q8XN61NA4",
+      "customer_id": "X0ZH4DE1DVN5P1261RKAE8JPDM",
+      "start_at": "2026-10-05T13:00:00Z",
+      "all_day": false,
+      "appointment_segments": [
+        {
+          "duration_minutes": 30,
+          "service_variation_id": "TC6VHEWA3WPRAXH6HDMQ5DJN",
+          "team_member_id": "TMN76Ik4Cpv-ToYe",
+          "service_variation_version": 1791077615792,
+          "service_variation_client_id": "TC6VHEWA3WPRAXH6HDMQ5DJN",
+          "any_team_member": false,
+          "intermission_minutes": 0,
+          "modifier_ids": []
+        }
+      ],
+      "transition_time_minutes": 0,
+      "creator_details": {
+        "creator_type": "CUSTOMER",
+        "customer_id": "X0ZH4DE1DVN5P1261RKAE8JPDM"
+      },
+      "source": "API",
+      "location_type": "BUSINESS_LOCATION"
+    },
+    {
+      "id": "7twr506i9vpul2",
+      "version": 2,
+      "status": "CANCELLED_BY_CUSTOMER",
+      "created_at": "2026-10-04T03:02:38Z",
+      "updated_at": "2026-10-04T03:02:40Z",
+      "location_id": "LVF9Q8XN61NA4",
+      "customer_id": "KVEW6R0063MPYQYT8GTSZAJ8CW",
+      "start_at": "2026-10-05T13:30:00Z",
+      "all_day": false,
+      "appointment_segments": [
+        {
+          "duration_minutes": 30,
+          "service_variation_id": "TC6VHEWA3WPRAXH6HDMQ5DJN",
+          "team_member_id": "TMN76Ik4Cpv-ToYe",
+          "service_variation_version": 1791077615792,
+          "service_variation_client_id": "TC6VHEWA3WPRAXH6HDMQ5DJN",
+          "any_team_member": false,
+          "intermission_minutes": 0,
+          "modifier_ids": []
+        }
+      ],
+      "transition_time_minutes": 0,
+      "creator_details": {
+        "creator_type": "CUSTOMER",
+        "customer_id": "KVEW6R0063MPYQYT8GTSZAJ8CW"
+      },
+      "source": "API",
+      "location_type": "BUSINESS_LOCATION"
+    },
+    {
+      "id": "8dccm5jb61xsxa",
+      "version": 2,
+      "status": "CANCELLED_BY_CUSTOMER",
+      "created_at": "2026-10-04T03:46:02Z",
+      "updated_at": "2026-10-04T03:46:04Z",
+      "location_id": "LVF9Q8XN61NA4",
+      "customer_id": "8VD35DYV19CF315HP2VAR1R6V8",
+      "start_at": "2026-10-05T13:30:00Z",
+      "all_day": false,
+      "appointment_segments": [
+        {
+          "duration_minutes": 30,
+          "service_variation_id": "TC6VHEWA3WPRAXH6HDMQ5DJN",
+          "team_member_id": "TMN76Ik4Cpv-ToYe",
+          "service_variation_version": 1791077615792,
+          "service_variation_client_id": "TC6VHEWA3WPRAXH6HDMQ5DJN",
+          "any_team_member": false,
+          "intermission_minutes": 0,
+          "modifier_ids": []
+        }
+      ],
+      "transition_time_minutes": 0,
+      "creator_details": {
+        "creator_type": "CUSTOMER",
+        "customer_id": "8VD35DYV19CF315HP2VAR1R6V8"
+      },
+      "source": "API",
+      "location_type": "BUSINESS_LOCATION"
+    },
+    {
+      "id": "91u6wfniy5p9fh",
+      "version": 1,
+      "status": "CANCELLED_BY_CUSTOMER",
+      "created_at": "2026-10-04T04:09:03Z",
+      "updated_at": "2026-10-04T04:09:23Z",
+      "location_id": "LVF9Q8XN61NA4",
+      "customer_id": "8VD35DYV19CF315HP2VAR1R6V8",
+      "start_at": "2026-10-05T14:00:00Z",
+      "all_day": false,
+      "appointment_segments": [
+        {
+          "duration_minutes": 30,
+          "service_variation_id": "TC6VHEWA3WPRAXH6HDMQ5DJN",
+          "team_member_id": "TMN76Ik4Cpv-ToYe",
+          "service_variation_version": 1791077615792,
+          "service_variation_client_id": "TC6VHEWA3WPRAXH6HDMQ5DJN",
+          "any_team_member": false,
+          "intermission_minutes": 0,
+          "modifier_ids": []
+        }
+      ],
+      "transition_time_minutes": 0,
+      "creator_details": {
+        "creator_type": "CUSTOMER",
+        "customer_id": "8VD35DYV19CF315HP2VAR1R6V8"
+      },
+      "source": "API",
+      "location_type": "BUSINESS_LOCATION"
+    },
+    {
+      "id": "xso2240jl9afq0",
+      "version": 1,
+      "status": "ACCEPTED",
+      "created_at": "2026-10-04T04:07:16Z",
+      "updated_at": "2026-10-04T04:07:55Z",
+      "location_id": "LVF9Q8XN61NA4",
+      "customer_id": "S884HZ7AGPKP1ZBHZC7H0JVZAR",
+      "start_at": "2026-10-06T13:00:00Z",
+      "all_day": false,
+      "appointment_segments": [
+        {
+          "duration_minutes": 30,
+          "service_variation_id": "TC6VHEWA3WPRAXH6HDMQ5DJN",
+          "team_member_id": "TMN76Ik4Cpv-ToYe",
+          "service_variation_version": 1791077615792,
+          "service_variation_client_id": "TC6VHEWA3WPRAXH6HDMQ5DJN",
+          "any_team_member": false,
+          "intermission_minutes": 0,
+          "modifier_ids": []
+        }
+      ],
+      "address": {
+        "address_line_1": "1600 Pennsylvania Ave NW",
+        "locality": "Washington",
+        "administrative_district_level_1": "DC",
+        "postal_code": "20500"
+      },
+      "seller_note": "Spike Sandbox Test",
+      "transition_time_minutes": 0,
+      "creator_details": {
+        "creator_type": "TEAM_MEMBER",
+        "team_member_id": "TMN76Ik4Cpv-ToYe"
+      },
+      "source": "FIRST_PARTY_MERCHANT",
+      "location_type": "BUSINESS_LOCATION"
+    }
+  ],
+  "errors": []
+}

@@ -1,0 +1,10 @@
+{
+  "errors": [
+    {
+      "category": "INVALID_REQUEST_ERROR",
+      "code": "BAD_REQUEST",
+      "detail": "That time slot is no longer available.",
+      "field": "start_at"
+    }
+  ]
+}

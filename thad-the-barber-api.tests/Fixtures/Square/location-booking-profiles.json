@@ -1,0 +1,11 @@
+{
+  "location_booking_profiles": [
+    {
+      "location_id": "LVF9Q8XN61NA4",
+      "booking_enabled": true,
+      "online_booking_enabled": true,
+      "booking_site_url": "https://square.site/book/LVF9Q8XN61NA4/thad-the-barber-sandbox-washington-dc"
+    }
+  ],
+  "errors": []
+}

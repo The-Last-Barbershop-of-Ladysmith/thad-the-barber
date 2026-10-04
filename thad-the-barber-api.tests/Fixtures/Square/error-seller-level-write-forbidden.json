@@ -1,0 +1,9 @@
+{
+  "errors": [
+    {
+      "category": "AUTHENTICATION_ERROR",
+      "code": "FORBIDDEN",
+      "detail": "Merchant subscription does not support write operations."
+    }
+  ]
+}
