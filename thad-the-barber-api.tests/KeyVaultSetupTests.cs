@@ -40,6 +40,7 @@ public sealed class KeyVaultSetupTests
     [Theory]
     [InlineData(SquareSecrets.RefreshToken, false)]
     [InlineData(SquareSecrets.ApplicationSecret, false)]
+    [InlineData(SquareSecrets.SandboxSeedToken, false)]
     [InlineData("Cors--AllowedOrigins--0", true)]
     public void SquareSecretsStayOutOfConfiguration(string secretName, bool loaded)
     {
