@@ -16,8 +16,7 @@ public static class ShopDtoMapper
             Area: null,
             new ShopPhone(
                 ToDisplayPhone(location.Phone),
-                $"tel:{location.Phone}",
-                $"sms:{location.Phone}"
+                location.Phone
             ),
             profile.BookingSiteUrl,
             new ShopInfoLocation(

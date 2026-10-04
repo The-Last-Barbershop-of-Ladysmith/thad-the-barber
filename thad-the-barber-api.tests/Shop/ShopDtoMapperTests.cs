@@ -34,8 +34,7 @@ public sealed class ShopDtoMapperTests
                 Area: null,
                 new ShopPhone(
                     "(540) 621-2143",
-                    "tel:+15406212143",
-                    "sms:+15406212143"
+                    "+15406212143"
                 ),
                 "https://square.site/book/LVF9Q8XN61NA4/thad-the-barber-sandbox-washington-dc",
                 new ShopInfoLocation(
@@ -58,8 +57,7 @@ public sealed class ShopDtoMapperTests
         Assert.Equal(
             new ShopPhone(
                 "+442079460958",
-                "tel:+442079460958",
-                "sms:+442079460958"
+                "+442079460958"
             ),
             location.ToShopInfo(Profile).Phone);
     }
