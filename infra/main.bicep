@@ -181,6 +181,14 @@ resource previewWhatIf 'Microsoft.Authorization/roleAssignments@2022-04-01' = if
   }
 }
 
+// The action group emails (and texts) the owner, so no separate addresses here.
+var budgetContacts = {
+  contactEmails: []
+  contactGroups: [
+    shared.outputs.actionGroupId
+  ]
+}
+
 resource budget 'Microsoft.Consumption/budgets@2023-11-01' = {
   name: 'budget-ttb-monthly'
   properties: {
@@ -196,33 +204,24 @@ resource budget 'Microsoft.Consumption/budgets@2023-11-01' = {
         operator: 'GreaterThanOrEqualTo'
         threshold: 80
         thresholdType: 'Actual'
-        // The action group emails (and texts) the owner, so no separate addresses here.
-        contactEmails: []
-        contactGroups: [
-          shared.outputs.actionGroupId
-        ]
+        contactEmails: budgetContacts.contactEmails
+        contactGroups: budgetContacts.contactGroups
       }
       actual100: {
         enabled: true
         operator: 'GreaterThanOrEqualTo'
         threshold: 100
         thresholdType: 'Actual'
-        // The action group emails (and texts) the owner, so no separate addresses here.
-        contactEmails: []
-        contactGroups: [
-          shared.outputs.actionGroupId
-        ]
+        contactEmails: budgetContacts.contactEmails
+        contactGroups: budgetContacts.contactGroups
       }
       forecast100: {
         enabled: true
         operator: 'GreaterThanOrEqualTo'
         threshold: 100
         thresholdType: 'Forecasted'
-        // The action group emails (and texts) the owner, so no separate addresses here.
-        contactEmails: []
-        contactGroups: [
-          shared.outputs.actionGroupId
-        ]
+        contactEmails: budgetContacts.contactEmails
+        contactGroups: budgetContacts.contactGroups
       }
     }
   }
