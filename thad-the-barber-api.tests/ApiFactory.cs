@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
-using ThadTheBarber.Api.Square;
+using ThadTheBarber.Api.Square.Services;
 using ThadTheBarber.Api.Tests.Fakes;
 
 namespace ThadTheBarber.Api.Tests;
@@ -26,7 +26,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
     }
 
     /// <param name="origins">The CORS allow-list; defaults to <see cref="FrontendOrigin"/> and <see cref="CustomDomainOrigin"/>.</param>
-    /// <param name="square">Replaces Square for this host; defaults to a reachable <see cref="FakeSquareService"/>.</param>
+    /// <param name="square">Replaces Square for this host; defaults to a connected <see cref="FakeSquareService"/>.</param>
     internal ApiFactory(string[]? origins = null, ISquareService? square = null)
     {
         _origins = origins ?? [FrontendOrigin, CustomDomainOrigin];
@@ -36,6 +36,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
+        builder.UseSetting("Square:ApplicationId", "sandbox-test-app");
         for (int i = 0; i < _origins.Length; i++)
         {
             builder.UseSetting($"Cors:AllowedOrigins:{i}", _origins[i]);
