@@ -18,6 +18,7 @@ public static class ShopDtoMapper
                 ToDisplayPhone(location.Phone),
                 location.Phone
             ),
+            location.TimeZone,
             profile.BookingSiteUrl,
             new ShopInfoLocation(
                 Venue: null,

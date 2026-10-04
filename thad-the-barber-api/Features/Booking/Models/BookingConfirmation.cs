@@ -1,10 +1,9 @@
 namespace ThadTheBarber.Api.Features.Booking.Models;
 
-/// <summary>The booked appointment, like the UI's <c>BookingConfirmation</c>.</summary>
+/// <summary>The booked appointment. <see cref="StartAt"/> is Square's UTC start; the UI shows it in the shop's timezone.</summary>
 public sealed record BookingConfirmation(
     string Id,
-    string Date,
-    string Time,
+    DateTimeOffset StartAt,
     string Name,
     string Phone
 );

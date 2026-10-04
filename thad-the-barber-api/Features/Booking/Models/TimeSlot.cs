@@ -1,8 +1,10 @@
 namespace ThadTheBarber.Api.Features.Booking.Models;
 
-/// <summary>One bookable time on a day, like the UI's <c>TimeSlot</c>.</summary>
+/// <summary>
+/// One bookable time, as a UTC instant. The UI shows it in the shop's timezone (<c>ShopInfo.TimeZone</c>) and sends
+/// <see cref="StartAt"/> back unchanged to book it.
+/// </summary>
 public sealed record TimeSlot(
-    string Time,
-    string Label,
+    DateTimeOffset StartAt,
     bool Available
 );

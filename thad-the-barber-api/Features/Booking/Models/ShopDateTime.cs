@@ -2,7 +2,10 @@ using System.Globalization;
 
 namespace ThadTheBarber.Api.Features.Booking.Models;
 
-/// <summary>A wall-clock date and time at the shop, in the key formats the UI uses.</summary>
+/// <summary>
+/// A wall-clock date and time at the shop. The API groups slots by <see cref="DateKey"/> and turns a shop day into the
+/// UTC range it asks Square about; times sent to the UI stay UTC instants.
+/// </summary>
 public readonly record struct ShopDateTime(
     DateOnly Date,
     TimeOnly Time
@@ -16,9 +19,6 @@ public readonly record struct ShopDateTime(
 
     /// <summary>"14:30"</summary>
     public string TimeKey => Time.ToString(TimeFormat, CultureInfo.InvariantCulture);
-
-    /// <summary>"2:30 PM"</summary>
-    public string Label => Time.ToString("h:mm tt", CultureInfo.InvariantCulture);
 
     public static ShopDateTime Parse(string dateKey, string timeKey) => new(
         DateOnly.ParseExact(dateKey, DateFormat, CultureInfo.InvariantCulture),

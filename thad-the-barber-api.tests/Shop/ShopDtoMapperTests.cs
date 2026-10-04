@@ -36,6 +36,7 @@ public sealed class ShopDtoMapperTests
                     "(540) 621-2143",
                     "+15406212143"
                 ),
+                "America/New_York",
                 "https://square.site/book/LVF9Q8XN61NA4/thad-the-barber-sandbox-washington-dc",
                 new ShopInfoLocation(
                     Venue: null,
