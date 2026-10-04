@@ -1,0 +1,48 @@
+{
+  "location": {
+    "name": "Thad",
+    "business_name": "Thad the Barber",
+    "phone_number": "+1 540-621-2143",
+    "timezone": "America/New_York",
+    "address": {
+      "address_line_1": "2022 Augustine Ave",
+      "locality": "Fredericksburg",
+      "administrative_district_level_1": "VA",
+      "postal_code": "22401-4419",
+      "country": "US"
+    },
+    "business_hours": {
+      "periods": [
+        {
+          "day_of_week": "SAT",
+          "start_local_time": "10:00:00",
+          "end_local_time": "19:00:00"
+        },
+        {
+          "day_of_week": "SUN",
+          "start_local_time": "10:00:00",
+          "end_local_time": "16:00:00"
+        }
+      ]
+    },
+    "description": "❗Important: Read Before Booking❗\n\nI'm now cutting in a new shop on Route 1 in Fredericksburg, so allow enough time for the drive.\n\nHave questions? TEXT 540-621-2143.\n\nPrices and everything else will stay the same for now.\n\nThank you for your continued support.\n"
+  },
+  "service": {
+    "name": "Haircut w/ Thad",
+    "variation_name": "Regular",
+    "pricing_type": "VARIABLE_PRICING",
+    "service_duration": 1800000
+  },
+  "booking_settings": {
+    "booking_enabled": true,
+    "allow_user_cancel": true,
+    "business_appointment_settings": {
+      "alignment_time": "SERVICE_DURATION",
+      "min_booking_lead_time_seconds": 3600,
+      "max_booking_lead_time_seconds": 31536000,
+      "any_team_member_booking_enabled": true,
+      "multiple_service_booking_enabled": false,
+      "cancellation_window_seconds": 0
+    }
+  }
+}

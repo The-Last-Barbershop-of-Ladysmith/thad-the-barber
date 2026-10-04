@@ -123,6 +123,11 @@ jobs:
       - name: Report viewer tests
         run: dotnet test --solution tools/report-viewer/report-viewer.slnx
 
+      # The Square sandbox seed (#22) is a stdlib-only Python script; the runner's Python runs its tests.
+      - name: Square seed tests
+        working-directory: tools/square-seed
+        run: python3 -m unittest -v
+
       # ReportGenerator (pinned in .config/dotnet-tools.json): per-class line and branch coverage for the summary,
       # and the HTML report the report job publishes.
       - name: Coverage report
