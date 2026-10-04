@@ -49,11 +49,6 @@ resource plan 'Microsoft.Web/serverfarms@2024-11-01' existing = {
 var storageName = 'storttbci${location}'
 var containerName = 'reports'
 
-resource devDeployIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2024-11-30' existing = {
-  scope: nonprodRg
-  name: 'id-ttb-deploy-dev-${location}'
-}
-
 resource deployIdentities 'Microsoft.ManagedIdentity/userAssignedIdentities@2024-11-30' existing = [
   for env in deployEnvironments: {
     scope: nonprodRg
@@ -74,7 +69,7 @@ module viewer 'modules/report-viewer.bicep' = {
     containerName: containerName
     allowedIpRanges: allowedIpRanges
     ownerPrincipalId: ownerPrincipalId
-    deployerPrincipalId: devDeployIdentity.properties.principalId
+    deployerPrincipalId: deployIdentities[indexOf(deployEnvironments, 'dev')].properties.principalId
     tags: tags
   }
 }
