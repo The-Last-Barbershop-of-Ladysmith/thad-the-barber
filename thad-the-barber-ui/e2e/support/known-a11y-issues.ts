@@ -24,4 +24,9 @@ export const KNOWN_A11Y_ISSUES: readonly KnownA11yIssue[] = [
     selector: '.p-datepicker-day-selected',
     issue: '#84',
   },
+  {
+    rule: 'color-contrast',
+    selector: '.p-datepicker-day-selected',
+    issue: '#84',
+  },
 ];
