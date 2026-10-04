@@ -26,6 +26,11 @@ param extraCorsOrigins string[]
 param adminPrincipalId string
 param restrictAppAccess bool
 param allowedIpRanges string[]
+
+@description('Deploy the Square alerts (prod only; nonprod uses the Square sandbox).')
+param squareAlerts bool
+
+param actionGroupId string
 param tags object
 
 var keyVaultSecretsUser = '4633458b-17de-408a-b874-0445c86b69e6'
@@ -46,42 +51,6 @@ var keyVaultName = 'kv-ttb-${envName}-${location}'
 
 // Key Vault IP rules take a bare address for a single host.
 var yourIps = map(allowedIpRanges, ip => endsWith(ip, '/32') ? replace(ip, '/32', '') : ip)
-
-// The API rotates the Square refresh token, so it may write that one secret and nothing else.
-// ABAC conditions (preview) match lowercase names; @Request covers setSecret before the secret exists.
-// Bicep never writes the token itself, so a re-run can't overwrite a rotated value.
-var refreshTokenSecret = 'square--refreshtoken'
-var refreshTokenOnlyCondition = '''
-(
- (
-  !(ActionMatches{'Microsoft.KeyVault/vaults/secrets/setSecret/action'})
-  AND
-  !(ActionMatches{'Microsoft.KeyVault/vaults/secrets/restore/action'})
- )
- OR
- (
-  @Request[Microsoft.KeyVault/vaults/secrets:name] StringEquals 'SECRET_NAME'
- )
-)
-AND
-(
- (
-  !(ActionMatches{'Microsoft.KeyVault/vaults/secrets/update/action'})
-  AND
-  !(ActionMatches{'Microsoft.KeyVault/vaults/secrets/delete'})
-  AND
-  !(ActionMatches{'Microsoft.KeyVault/vaults/secrets/backup/action'})
-  AND
-  !(ActionMatches{'Microsoft.KeyVault/vaults/secrets/recover/action'})
-  AND
-  !(ActionMatches{'Microsoft.KeyVault/vaults/secrets/purge/action'})
- )
- OR
- (
-  @Resource[Microsoft.KeyVault/vaults/secrets:name] StringEquals 'SECRET_NAME'
- )
-)
-'''
 
 resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
   name: 'ai-ttb-${envName}-${location}'
@@ -118,6 +87,34 @@ resource keyVault 'Microsoft.KeyVault/vaults@2024-11-01' = {
         value: ip
       })
     }
+  }
+}
+
+// Every vault operation goes to Log Analytics, so reads of the Square secrets can be audited and alerted on (#23).
+resource keyVaultAudit 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+  name: 'audit-to-log-analytics'
+  scope: keyVault
+  properties: {
+    workspaceId: workspaceId
+    logs: [
+      {
+        category: 'AuditEvent'
+        enabled: true
+      }
+    ]
+  }
+}
+
+module squareAlert 'square-alerts.bicep' = if (squareAlerts) {
+  name: 'square-alerts-${envName}'
+  params: {
+    envName: envName
+    location: location
+    workspaceId: workspaceId
+    keyVaultName: keyVault.name
+    apiPrincipalId: api.outputs.principalId
+    actionGroupId: actionGroupId
+    tags: tags
   }
 }
 
@@ -212,19 +209,6 @@ resource apiSecretsUser 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
     principalId: api.outputs.principalId
     principalType: 'ServicePrincipal'
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', keyVaultSecretsUser)
-  }
-}
-
-resource apiRefreshTokenOfficer 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(keyVault.id, apiAppName, keyVaultSecretsOfficer)
-  scope: keyVault
-  properties: {
-    principalId: api.outputs.principalId
-    principalType: 'ServicePrincipal'
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', keyVaultSecretsOfficer)
-    description: 'Write access to ${refreshTokenSecret} only (it rotates).'
-    conditionVersion: '2.0'
-    condition: replace(refreshTokenOnlyCondition, 'SECRET_NAME', refreshTokenSecret)
   }
 }
 

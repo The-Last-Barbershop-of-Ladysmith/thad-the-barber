@@ -131,6 +131,8 @@ module env 'modules/environment.bicep' = [
       githubEnvironment: e.githubEnvironment
       extraCorsOrigins: e.extraCorsOrigins
       adminPrincipalId: adminPrincipalId
+      squareAlerts: e.?squareAlerts ?? false
+      actionGroupId: shared.outputs.actionGroupId
       tags: tags
     }
   }
