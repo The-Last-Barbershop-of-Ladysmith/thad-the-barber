@@ -28,9 +28,10 @@ builder.Services.AddSwaggerGen();
 
 WebApplication app = builder.Build();
 
+// Every environment, so Square failures reach callers as ProblemDetails (dev included; the booking fallback needs them).
+app.UseExceptionHandler();
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler();
     app.UseHsts();
 }
 
