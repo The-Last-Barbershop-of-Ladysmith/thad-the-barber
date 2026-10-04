@@ -10,7 +10,11 @@ internal sealed class FakeReportStore(Dictionary<string, string> blobs) : IRepor
 
     public Task<ReportFile?> OpenAsync(string blobName, CancellationToken cancellationToken) =>
         Task.FromResult(blobs.TryGetValue(blobName, out string? content)
-            ? new ReportFile(new MemoryStream(Encoding.UTF8.GetBytes(content)), LastModified, $"\"{blobName.GetHashCode():x}\"")
+            ? new ReportFile(
+                new MemoryStream(Encoding.UTF8.GetBytes(content)),
+                LastModified,
+                $"\"{blobName.GetHashCode():x}\""
+            )
             : null);
 
     public Task<IReadOnlyList<ReportEntry>> ListAsync(string prefix, CancellationToken cancellationToken) =>
@@ -18,7 +22,13 @@ internal sealed class FakeReportStore(Dictionary<string, string> blobs) : IRepor
             .Where(name => name.StartsWith(prefix, StringComparison.Ordinal))
             .Select(name => name[prefix.Length..])
             .Select(rest => rest.Split('/', 2) is [string folder, _]
-                ? new ReportEntry(folder, IsFolder: true)
-                : new ReportEntry(rest, IsFolder: false))
+                ? new ReportEntry(
+                    folder,
+                    IsFolder: true
+                )
+                : new ReportEntry(
+                    rest,
+                    IsFolder: false
+                ))
             .Distinct()]);
 }

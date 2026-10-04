@@ -13,7 +13,11 @@ public sealed class BlobReportStore(BlobContainerClient container) : IReportStor
             Response<BlobDownloadStreamingResult> response =
                 await container.GetBlobClient(blobName).DownloadStreamingAsync(cancellationToken: cancellationToken);
             BlobDownloadDetails details = response.Value.Details;
-            return new ReportFile(response.Value.Content, details.LastModified, details.ETag.ToString("H"));
+            return new ReportFile(
+                response.Value.Content,
+                details.LastModified,
+                details.ETag.ToString("H")
+            );
         }
         catch (RequestFailedException e) when (e.Status == StatusCodes.Status404NotFound)
         {
@@ -32,8 +36,14 @@ public sealed class BlobReportStore(BlobContainerClient container) : IReportStor
             cancellationToken: cancellationToken))
         {
             entries.Add(item.IsPrefix
-                ? new ReportEntry(item.Prefix[prefix.Length..].TrimEnd('/'), IsFolder: true)
-                : new ReportEntry(item.Blob.Name[prefix.Length..], IsFolder: false));
+                ? new ReportEntry(
+                    item.Prefix[prefix.Length..].TrimEnd('/'),
+                    IsFolder: true
+                )
+                : new ReportEntry(
+                    item.Blob.Name[prefix.Length..],
+                    IsFolder: false
+                ));
         }
 
         return entries;
