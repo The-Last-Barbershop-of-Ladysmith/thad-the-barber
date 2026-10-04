@@ -17,8 +17,8 @@ az login
 python tools/square-connect/connect_square.py --env dev     # or test, prod
 ```
 
-1. Open the printed link and approve. In the sandbox, open it in the browser where the sandbox seller's Dashboard is open (Developer Console → Sandbox test accounts → Open in Square Dashboard). In prod, Thad signs in with his own Square login.
-2. Square redirects to the site with `?code=…&state=…`. Copy the whole URL from the address bar and paste it at the hidden prompt.
+1. **Sandbox only: open the seller's Dashboard first** (Developer Console → Sandbox test accounts → Open in Square Dashboard) and keep it open. Then open the printed link in that **same browser**. Without the Dashboard session, Square's consent page errors (a 400 or 404) and never redirects. In prod, Thad just opens the link and signs in with his own Square login.
+2. Square redirects to the site, which shows its 404 page: that's expected. Copy the whole URL from the address bar (it ends in `?code=…&state=…`) and paste it at the hidden prompt within a few minutes. The code works once; if it fails, rerun the script for a fresh link.
 3. The script rejects the URL if its `state` isn't the one this run created, exchanges the code, checks the new token with Square, saves the refresh token and prints only the merchant ID.
 
 The code in the URL is single-use, expires within minutes and is useless without the app secret, so it showing up in the site's request logs is harmless.
