@@ -1,7 +1,11 @@
+using Microsoft.Net.Http.Headers;
+
 namespace ThadTheBarber.Api.Infrastructure.Headers.Middleware;
 
 public static class SecurityHeaders
 {
+    private const string NoSniff = "nosniff";
+
     /// <summary>
     /// Adds <c>X-Content-Type-Options: nosniff</c> to every response. It's set when the response starts so it survives
     /// the exception handler, which clears headers before writing ProblemDetails.
@@ -11,7 +15,7 @@ public static class SecurityHeaders
         {
             context.Response.OnStarting(() =>
             {
-                context.Response.Headers.XContentTypeOptions = "nosniff";
+                context.Response.Headers.XContentTypeOptions = NoSniff;
                 return Task.CompletedTask;
             });
             return next(context);
@@ -22,7 +26,7 @@ public static class SecurityHeaders
         where TBuilder : IEndpointConventionBuilder =>
         builder.AddEndpointFilter((context, next) =>
         {
-            context.HttpContext.Response.Headers.CacheControl = "no-store";
+            context.HttpContext.Response.Headers.CacheControl = CacheControlHeaderValue.NoStoreString;
             return next(context);
         });
 }

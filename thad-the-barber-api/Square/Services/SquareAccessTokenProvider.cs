@@ -5,6 +5,7 @@ using Square;
 using Square.OAuth;
 using ThadTheBarber.Api.Square.Configuration;
 using ThadTheBarber.Api.Square.Exceptions;
+using ThadTheBarber.Api.Square.Models;
 
 namespace ThadTheBarber.Api.Square.Services;
 
@@ -21,11 +22,12 @@ public sealed partial class SquareAccessTokenProvider(
     ILogger<SquareAccessTokenProvider> logger) : IDisposable
 {
     public static readonly TimeSpan MaxAge = TimeSpan.FromDays(7);
+    private const string RefreshTokenGrant = "refresh_token";
 
     private readonly SemaphoreSlim _renewal = new(1, 1);
     private string? _accessToken;
     private DateTimeOffset _obtainedAt;
-    private string _nextRenewalReason = "start-up";
+    private TokenRenewalReason _nextRenewalReason = TokenRenewalReason.StartUp;
 
     public void Dispose() => _renewal.Dispose();
 
@@ -54,7 +56,7 @@ public sealed partial class SquareAccessTokenProvider(
     {
         if (Interlocked.CompareExchange(ref _accessToken, null, rejectedToken) == rejectedToken)
         {
-            _nextRenewalReason = "rejected";
+            _nextRenewalReason = TokenRenewalReason.Rejected;
         }
     }
 
@@ -63,7 +65,7 @@ public sealed partial class SquareAccessTokenProvider(
         string? token = Volatile.Read(ref _accessToken);
         if (token is not null && time.GetUtcNow() - _obtainedAt >= MaxAge)
         {
-            _nextRenewalReason = "age";
+            _nextRenewalReason = TokenRenewalReason.Age;
             return null;
         }
 
@@ -81,7 +83,7 @@ public sealed partial class SquareAccessTokenProvider(
                 {
                     ClientId = settings.Value.ApplicationId,
                     ClientSecret = await ReadSecretAsync(SquareSecrets.ApplicationSecret, cancellationToken),
-                    GrantType = "refresh_token",
+                    GrantType = RefreshTokenGrant,
                     RefreshToken = await ReadSecretAsync(SquareSecrets.RefreshToken, cancellationToken),
                 },
                 cancellationToken: cancellationToken);
@@ -113,7 +115,7 @@ public sealed partial class SquareAccessTokenProvider(
     }
 
     [LoggerMessage(EventName = "SquareTokenRenewed", Level = LogLevel.Information, Message = "Square access token renewed ({Reason}); it expires {ExpiresAt}.")]
-    private static partial void LogRenewed(ILogger logger, string reason, string? expiresAt);
+    private static partial void LogRenewed(ILogger logger, TokenRenewalReason reason, string? expiresAt);
 
     [LoggerMessage(EventName = "SquareRefreshTokenRefused", Level = LogLevel.Warning, Message = "Square refused the refresh token (HTTP {StatusCode}). Run tools/square-connect again.")]
     private static partial void LogNotConnected(ILogger logger, int statusCode);

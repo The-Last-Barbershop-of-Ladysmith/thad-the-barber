@@ -9,6 +9,8 @@ namespace ThadTheBarber.Api.Square.Configuration;
 public static class SquareSetup
 {
     public const string HttpClientName = "Square";
+    private static readonly TimeSpan httpClientTimeout = TimeSpan.FromSeconds(10);
+    private static readonly string squareAccessTokenPlaceholder = "set-by-SquareAuthHandler";
 
     /// <summary>
     /// Square's settings, the in-memory access token, and the SDK client behind <see cref="ISquareService"/>. Needs a
@@ -23,7 +25,7 @@ public static class SquareSetup
         services.TryAddSingleton(TimeProvider.System);
         services.AddSingleton<SquareAccessTokenProvider>();
         services.AddTransient<SquareAuthHandler>();
-        services.AddHttpClient(HttpClientName, client => client.Timeout = TimeSpan.FromSeconds(10))
+        services.AddHttpClient(HttpClientName, client => client.Timeout = httpClientTimeout)
             .AddHttpMessageHandler<SquareAuthHandler>();
         services.AddScoped<ISquareService>(provider => new SquareService(CreateClient(
             provider.GetRequiredService<IHttpClientFactory>(),
@@ -36,7 +38,7 @@ public static class SquareSetup
     /// renewed token is always the one sent.
     /// </summary>
     internal static SquareClient CreateClient(IHttpClientFactory httpClients, SquareSettings settings) =>
-        new("set-by-SquareAuthHandler", new ClientOptions
+        new(squareAccessTokenPlaceholder, new ClientOptions
         {
             BaseUrl = settings.BaseUrl.ToString().TrimEnd('/'),
             HttpClient = httpClients.CreateClient(HttpClientName),

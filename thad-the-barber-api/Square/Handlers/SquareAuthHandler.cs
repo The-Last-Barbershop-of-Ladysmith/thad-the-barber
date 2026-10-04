@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Headers;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using ThadTheBarber.Api.Square.Services;
 
 namespace ThadTheBarber.Api.Square.Handlers;
@@ -34,7 +35,7 @@ public sealed class SquareAuthHandler(SquareAccessTokenProvider tokens) : Delega
 
     private Task<HttpResponseMessage> SendWithTokenAsync(HttpRequestMessage request, string token, CancellationToken cancellationToken)
     {
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        request.Headers.Authorization = new AuthenticationHeaderValue(JwtBearerDefaults.AuthenticationScheme, token);
         return base.SendAsync(request, cancellationToken);
     }
 }
