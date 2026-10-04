@@ -16,7 +16,7 @@ namespace ThadTheBarber.Api.Square.Services;
 /// </summary>
 public sealed partial class SquareAccessTokenProvider(
     SecretClient secrets,
-    IHttpClientFactory httpClients,
+    [FromKeyedServices(SquareSetup.OAuthHttpClientName)] SquareClient square,
     IOptions<SquareSettings> settings,
     TimeProvider time,
     ILogger<SquareAccessTokenProvider> logger) : IDisposable
@@ -74,7 +74,6 @@ public sealed partial class SquareAccessTokenProvider(
 
     private async Task<string> RenewAsync(CancellationToken cancellationToken)
     {
-        SquareClient square = SquareSetup.CreateClient(httpClients.CreateClient(SquareSetup.OAuthHttpClientName), settings.Value);
         Task<string> applicationSecret = ReadSecretAsync(SquareSecrets.ApplicationSecret, cancellationToken);
         Task<string> refreshToken = ReadSecretAsync(SquareSecrets.RefreshToken, cancellationToken);
         await Task.WhenAll(applicationSecret, refreshToken);

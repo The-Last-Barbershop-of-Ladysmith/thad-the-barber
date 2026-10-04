@@ -11,6 +11,10 @@ public static class SquareSetup
     public const string HttpClientName = "Square";
     public const string OAuthHttpClientName = "SquareOAuth";
     private static readonly TimeSpan httpClientTimeout = TimeSpan.FromSeconds(10);
+
+    // The SDK clients live for the app's lifetime, so their connections are recycled instead of their handlers, which
+    // still picks up DNS changes.
+    private static readonly TimeSpan pooledConnectionLifetime = TimeSpan.FromMinutes(5);
     private static readonly string squareAccessTokenPlaceholder = "set-by-SquareAuthHandler";
 
     /// <summary>
@@ -27,13 +31,11 @@ public static class SquareSetup
         services.AddSingleton<SquareAccessTokenProvider>();
         services.AddTransient<SquareAuthHandler>();
         services.AddTransient<NoAuthorizationHandler>();
-        services.AddHttpClient(HttpClientName, client => client.Timeout = httpClientTimeout)
-            .AddHttpMessageHandler<SquareAuthHandler>();
-        services.AddHttpClient(OAuthHttpClientName, client => client.Timeout = httpClientTimeout)
-            .AddHttpMessageHandler<NoAuthorizationHandler>();
-        services.AddScoped<ISquareService>(provider => new SquareService(CreateClient(
-            provider.GetRequiredService<IHttpClientFactory>().CreateClient(HttpClientName),
-            provider.GetRequiredService<IOptions<SquareSettings>>().Value)));
+        AddLongLivedHttpClient(services, HttpClientName).AddHttpMessageHandler<SquareAuthHandler>();
+        AddLongLivedHttpClient(services, OAuthHttpClientName).AddHttpMessageHandler<NoAuthorizationHandler>();
+        services.AddSingleton(provider => CreateClient(provider, HttpClientName));
+        services.AddKeyedSingleton(OAuthHttpClientName, (provider, _) => CreateClient(provider, OAuthHttpClientName));
+        services.AddSingleton<ISquareService, SquareService>();
         return services;
     }
 
@@ -42,10 +44,15 @@ public static class SquareSetup
     /// <see cref="SquareAuthHandler"/> replaces it on every request, and the <see cref="OAuthHttpClientName"/> client's
     /// <see cref="NoAuthorizationHandler"/> removes it.
     /// </summary>
-    internal static SquareClient CreateClient(HttpClient http, SquareSettings settings) =>
+    private static SquareClient CreateClient(IServiceProvider provider, string httpClientName) =>
         new(squareAccessTokenPlaceholder, new ClientOptions
         {
-            BaseUrl = settings.BaseUrl.ToString().TrimEnd('/'),
-            HttpClient = http,
+            BaseUrl = provider.GetRequiredService<IOptions<SquareSettings>>().Value.BaseUrl.ToString().TrimEnd('/'),
+            HttpClient = provider.GetRequiredService<IHttpClientFactory>().CreateClient(httpClientName),
         });
+
+    private static IHttpClientBuilder AddLongLivedHttpClient(IServiceCollection services, string name) =>
+        services.AddHttpClient(name, client => client.Timeout = httpClientTimeout)
+            .UseSocketsHttpHandler((handler, _) => handler.PooledConnectionLifetime = pooledConnectionLifetime)
+            .SetHandlerLifetime(Timeout.InfiniteTimeSpan);
 }
