@@ -10,13 +10,13 @@ namespace ThadTheBarber.Api.Tests.Square;
 public sealed class SquareMapperTests
 {
     [Fact]
-    public void LocationBecomesShopLocation()
+    public void LocationBecomesShopDetails()
     {
-        ShopLocation location = SquareFixture.Read<GetLocationResponse>("retrieve-location.json").Location!.ToShopLocation();
+        ShopDetails details = SquareFixture.ReadAs<GetLocationResponse>("retrieve-location.json").Location!.ToShopDetails();
 
-        Assert.Equal("Thad the Barber", location.Name);
-        Assert.Equal("+15406212143", location.Phone);
-        Assert.Equal("America/New_York", location.TimeZone);
+        Assert.Equal("Thad the Barber", details.Name);
+        Assert.Equal("+15406212143", details.Phone);
+        Assert.Equal("America/New_York", details.TimeZone);
         Assert.Equal(
             new ShopAddress(
                 "2022 Augustine Ave",
@@ -24,22 +24,22 @@ public sealed class SquareMapperTests
                 "VA",
                 "22401-4419"
             ),
-            location.Address);
+            details.Address);
         Assert.Equal(
             [
-                new ShopHoursPeriod(
+                new OpeningPeriod(
                     System.DayOfWeek.Sunday,
                     new TimeOnly(10, 0),
                     new TimeOnly(16, 0)
                 ),
-                new ShopHoursPeriod(
+                new OpeningPeriod(
                     System.DayOfWeek.Saturday,
                     new TimeOnly(10, 0),
                     new TimeOnly(19, 0)
                 ),
             ],
-            location.Hours);
-        Assert.StartsWith("❗Important", location.Description, StringComparison.Ordinal);
+            details.Hours);
+        Assert.StartsWith("❗Important", details.Description, StringComparison.Ordinal);
     }
 
     [Theory]
@@ -48,24 +48,24 @@ public sealed class SquareMapperTests
     [InlineData("+44 20 7946 0958", "+442079460958")]
     public void LocationPhoneBecomesE164(string squarePhone, string e164)
     {
-        Location location = SquareFixture.Read<GetLocationResponse>("retrieve-location.json").Location! with { PhoneNumber = squarePhone };
+        Location location = SquareFixture.ReadAs<GetLocationResponse>("retrieve-location.json").Location! with { PhoneNumber = squarePhone };
 
-        Assert.Equal(e164, location.ToShopLocation().Phone);
+        Assert.Equal(e164, location.ToShopDetails().Phone);
     }
 
     [Fact]
     public void BookingProfilesBecomeBookingProfile()
     {
-        BusinessBookingProfile business = SquareFixture.Read<GetBusinessBookingProfileResponse>("business-booking-profile.json").BusinessBookingProfile!;
-        LocationBookingProfile location = SquareFixture.Read<ListLocationBookingProfilesResponse>("location-booking-profiles.json").LocationBookingProfiles!.Single();
+        BusinessBookingProfile business = SquareFixture.ReadAs<GetBusinessBookingProfileResponse>("business-booking-profile.json").BusinessBookingProfile!;
+        LocationBookingProfile location = SquareFixture.ReadAs<ListLocationBookingProfilesResponse>("location-booking-profiles.json").LocationBookingProfiles!.Single();
 
         Assert.Equal(
             new BookingProfile(
-                BookingEnabled: false,
-                MinNotice: TimeSpan.Zero,
-                MaxAdvance: TimeSpan.FromDays(365),
-                CustomersCanCancel: true,
-                BookingSiteUrl: "https://square.site/book/LVF9Q8XN61NA4/thad-the-barber-sandbox-washington-dc"
+                IsOnlineBookingEnabled: false,
+                MinimumNotice: TimeSpan.Zero,
+                MaximumAdvance: TimeSpan.FromDays(365),
+                CanCustomersCancel: true,
+                SquareBookingSiteUrl: "https://square.site/book/LVF9Q8XN61NA4/thad-the-barber-sandbox-washington-dc"
             ),
             business.ToBookingProfile(location));
     }
@@ -73,7 +73,7 @@ public sealed class SquareMapperTests
     [Fact]
     public void AppointmentServiceItemBecomesItsBookableVariations()
     {
-        CatalogObject item = SquareFixture.Read<SearchCatalogItemsResponse>("search-catalog-items.json").Items!.Single();
+        CatalogObject item = SquareFixture.ReadAs<SearchCatalogItemsResponse>("search-catalog-items.json").Items!.Single();
 
         BookableService service = Assert.Single(item.ToBookableServices());
 
@@ -90,7 +90,7 @@ public sealed class SquareMapperTests
     [InlineData("\"is_deleted\": false,\n      \"present_at_all_locations\": true,\n      \"item_data\"", "\"is_deleted\": true,\n      \"present_at_all_locations\": true,\n      \"item_data\"")]
     public void ItemsAndVariationsCustomersCantBookAreLeftOut(string squareValue, string replacement)
     {
-        string json = SquareFixture.Text("search-catalog-items.json").ReplaceLineEndings("\n");
+        string json = SquareFixture.ReadText("search-catalog-items.json").ReplaceLineEndings("\n");
         Assert.Contains(squareValue, json, StringComparison.Ordinal);
 
         CatalogObject item = JsonSerializer.Deserialize<SearchCatalogItemsResponse>(json.Replace(squareValue, replacement, StringComparison.Ordinal))!.Items!.Single();
@@ -99,34 +99,33 @@ public sealed class SquareMapperTests
     }
 
     [Fact]
-    public void AvailabilityBecomesAvailableSlot()
+    public void AvailabilityBecomesTimeSlot()
     {
-        Availability availability = SquareFixture.Read<SearchAvailabilityResponse>("search-availability.json").Availabilities!.First();
+        Availability availability = SquareFixture.ReadAs<SearchAvailabilityResponse>("search-availability.json").Availabilities!.First();
 
         Assert.Equal(
-            new AvailableSlot(
+            new TimeSlot(
                 new DateTimeOffset(2026, 10, 5, 13, 0, 0, TimeSpan.Zero),
                 "TMN76Ik4Cpv-ToYe"
             ),
-            availability.ToAvailableSlot());
+            availability.ToTimeSlot());
     }
 
     [Theory]
-    [InlineData("create-booking.json", 0, ShopBookingStatus.Accepted, "2026-10-05T13:00:00Z")]
-    [InlineData("update-booking.json", 1, ShopBookingStatus.Accepted, "2026-10-05T13:30:00Z")]
-    [InlineData("cancel-booking.json", 2, ShopBookingStatus.CancelledByCustomer, "2026-10-05T13:30:00Z")]
-    public void BookingBecomesShopBooking(string fixture, int version, ShopBookingStatus status, string startAt)
+    [InlineData("create-booking.json", 0, AppointmentStatus.Accepted, "2026-10-05T13:00:00Z")]
+    [InlineData("update-booking.json", 1, AppointmentStatus.Accepted, "2026-10-05T13:30:00Z")]
+    [InlineData("cancel-booking.json", 2, AppointmentStatus.CancelledByCustomer, "2026-10-05T13:30:00Z")]
+    public void BookingBecomesAppointment(string fixture, int version, AppointmentStatus status, string startAt)
     {
-        SquareBooking booking = SquareFixture.Read<CreateBookingResponse>(fixture).Booking!;
+        SquareBooking booking = SquareFixture.ReadAs<CreateBookingResponse>(fixture).Booking!;
 
         Assert.Equal(
-            new ShopBooking(
+            new Appointment(
                 "r1h5tfnj3ybo31",
                 version,
                 status,
-                DateTimeOffset.Parse(startAt, CultureInfo.InvariantCulture),
-                "X0ZH4DE1DVN5P1261RKAE8JPDM"
+                DateTimeOffset.Parse(startAt, CultureInfo.InvariantCulture)
             ),
-            booking.ToShopBooking());
+            booking.ToAppointment());
     }
 }

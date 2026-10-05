@@ -1,6 +1,6 @@
 namespace ThadTheBarber.Api.Square.Models;
 
-public enum ShopBookingStatus
+public enum AppointmentStatus
 {
     Pending,
     Accepted,

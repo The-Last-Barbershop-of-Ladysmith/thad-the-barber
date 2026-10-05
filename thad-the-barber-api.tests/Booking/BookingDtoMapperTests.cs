@@ -10,26 +10,26 @@ namespace ThadTheBarber.Api.Tests.Booking;
 public sealed class BookingDtoMapperTests
 {
     [Fact]
-    public void CreatedBookingBecomesConfirmation()
+    public void AppointmentBecomesConfirmation()
     {
-        ShopBooking booking = SquareFixture.Read<CreateBookingResponse>("create-booking.json").Booking!.ToShopBooking();
+        Appointment appointment = SquareFixture.ReadAs<CreateBookingResponse>("create-booking.json").Booking!.ToAppointment();
 
         Assert.Equal(
             new BookingConfirmation(
                 "r1h5tfnj3ybo31",
                 new DateTimeOffset(2026, 10, 5, 13, 0, 0, TimeSpan.Zero)
             ),
-            booking.ToConfirmation());
+            appointment.ToConfirmation());
     }
 
     [Fact]
-    public void ConfirmationsAreUtcWhateverOffsetTheBookingCameWith()
+    public void ConfirmationsAreUtcWhateverOffsetTheAppointmentCameWith()
     {
-        ShopBooking booking = SquareFixture.Read<CreateBookingResponse>("create-booking.json").Booking!.ToShopBooking() with
+        Appointment appointment = SquareFixture.ReadAs<CreateBookingResponse>("create-booking.json").Booking!.ToAppointment() with
         {
             StartAt = new DateTimeOffset(2026, 10, 5, 9, 0, 0, TimeSpan.FromHours(-4)),
         };
 
-        Assert.Equal(TimeSpan.Zero, booking.ToConfirmation().StartAt.Offset);
+        Assert.Equal(TimeSpan.Zero, appointment.ToConfirmation().StartAt.Offset);
     }
 }

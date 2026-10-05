@@ -7,19 +7,19 @@ namespace ThadTheBarber.Api.Square.Mappers;
 
 public static class LocationMapper
 {
-    public static ShopLocation ToShopLocation(this Location location) => new(
+    public static ShopDetails ToShopDetails(this Location location) => new(
         location.BusinessName ?? location.Name ?? throw MissingField(nameof(Location.BusinessName)),
-        ToE164(location.PhoneNumber ?? throw MissingField(nameof(Location.PhoneNumber))),
+        ToE164Phone(location.PhoneNumber ?? throw MissingField(nameof(Location.PhoneNumber))),
         location.Timezone ?? throw MissingField(nameof(Location.Timezone)),
         ToShopAddress(location.Address ?? throw MissingField(nameof(Location.Address))),
-        [.. location.BusinessHours?.Periods?.Select(ToShopHoursPeriod) ?? []],
+        [.. location.BusinessHours?.Periods?.Select(ToOpeningPeriod) ?? []],
         location.Description,
         location.InstagramUsername,
         location.FacebookUrl
     );
 
     /// <summary>Square keeps the number as typed in the Dashboard, e.g. <c>+1 540-621-2143</c>; 10 digits are US.</summary>
-    private static string ToE164(string phone)
+    private static string ToE164Phone(string phone)
     {
         string digits = string.Concat(phone.Where(char.IsAsciiDigit));
         return digits.Length == 10 ? $"+1{digits}" : $"+{digits}";
@@ -32,7 +32,7 @@ public static class LocationMapper
         address.PostalCode ?? throw MissingField(nameof(Address.PostalCode))
     );
 
-    private static ShopHoursPeriod ToShopHoursPeriod(BusinessHoursPeriod period) => new(
+    private static OpeningPeriod ToOpeningPeriod(BusinessHoursPeriod period) => new(
         period.DayOfWeek?.Value switch
         {
             SquareDay.Sun => System.DayOfWeek.Sunday,

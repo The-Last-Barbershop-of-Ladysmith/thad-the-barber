@@ -16,23 +16,23 @@ namespace ThadTheBarber.Api.Tests.Shop;
 
 public sealed class ShopDtoMapperTests
 {
-    private static ShopLocation Location =>
-        SquareFixture.Read<GetLocationResponse>("retrieve-location.json").Location!.ToShopLocation();
+    private static ShopDetails Details =>
+        SquareFixture.ReadAs<GetLocationResponse>("retrieve-location.json").Location!.ToShopDetails();
 
-    private static BookingProfile Profile => SquareFixture.Read<GetBusinessBookingProfileResponse>("business-booking-profile.json")
+    private static BookingProfile Profile => SquareFixture.ReadAs<GetBusinessBookingProfileResponse>("business-booking-profile.json")
         .BusinessBookingProfile!
-        .ToBookingProfile(SquareFixture.Read<ListLocationBookingProfilesResponse>("location-booking-profiles.json").LocationBookingProfiles!.Single());
+        .ToBookingProfile(SquareFixture.ReadAs<ListLocationBookingProfilesResponse>("location-booking-profiles.json").LocationBookingProfiles!.Single());
 
-    private static BookableService Service => SquareFixture.Read<SearchCatalogItemsResponse>("search-catalog-items.json")
+    private static BookableService Service => SquareFixture.ReadAs<SearchCatalogItemsResponse>("search-catalog-items.json")
         .Items!
         .Single()
         .ToBookableServices()
         .Single();
 
     [Fact]
-    public void LocationProfileAndServiceBecomeShopInfo()
+    public void DetailsProfileAndServiceBecomeShopInfo()
     {
-        ShopInfo shop = Location.ToShopInfo(Profile, Service);
+        ShopInfo shop = Details.ToShopInfo(Profile, Service);
 
         Assert.Equal("Thad the Barber", shop.Name);
         Assert.Equal("+15406212143", shop.Phone);
@@ -78,9 +78,9 @@ public sealed class ShopDtoMapperTests
     [InlineData("  \n")]
     public void ABlankDescriptionMeansNoNotice(string description)
     {
-        ShopLocation location = Location with { Description = description };
+        ShopDetails details = Details with { Description = description };
 
-        Assert.Null(location.ToShopInfo(Profile, Service).Notice);
+        Assert.Null(details.ToShopInfo(Profile, Service).Notice);
     }
 
     [Fact]
@@ -89,7 +89,7 @@ public sealed class ShopDtoMapperTests
         using ApiFactory api = new();
         JsonSerializerOptions json = api.Services.GetRequiredService<IOptions<JsonOptions>>().Value.SerializerOptions;
 
-        JsonNode hours = JsonSerializer.SerializeToNode(Location.ToShopInfo(Profile, Service), json)!["hours"]![1]!;
+        JsonNode hours = JsonSerializer.SerializeToNode(Details.ToShopInfo(Profile, Service), json)!["hours"]![1]!;
 
         Assert.Equal("""{"day":6,"opens":"10:00:00","closes":"19:00:00"}""", hours.ToJsonString());
     }
