@@ -5,16 +5,8 @@ namespace ThadTheBarber.Api.Features.Booking.Mappers;
 
 public static class BookingDtoMapper
 {
-    public static TimeSlot ToTimeSlot(this AvailableSlot slot) => new(
-        slot.StartAt.ToUniversalTime(),
-        Available: true
-    );
-
-    /// <summary>The start comes from Square's booking; the name and phone from the request, since Square only holds a customer id.</summary>
-    public static BookingConfirmation ToConfirmation(this ShopBooking booking, BookingRequest request) => new(
+    public static BookingConfirmation ToConfirmation(this ShopBooking booking) => new(
         booking.Id,
-        booking.StartAt.ToUniversalTime(),
-        request.Name,
-        request.Phone
+        booking.StartAt.ToUniversalTime()
     );
 }

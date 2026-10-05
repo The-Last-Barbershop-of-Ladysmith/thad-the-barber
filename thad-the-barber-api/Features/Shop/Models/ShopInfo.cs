@@ -1,17 +1,19 @@
 namespace ThadTheBarber.Api.Features.Shop.Models;
 
 /// <summary>
-/// The shop's details, like the UI's <c>ShopInfo</c>. <see cref="Tagline"/>, <see cref="Area"/> and <see cref="Reviews"/>
-/// aren't in Square; they stay null until the content file (#25) and Google reviews (#36) fill them. <see cref="TimeZone"/>
-/// is the IANA id the UI shows every time in, whatever the browser's timezone.
+/// The shop's details from Square. <see cref="Phone"/> is E.164 and <see cref="TimeZone"/> an IANA id: the UI formats
+/// the phone, builds its links, and shows every time in that timezone. <see cref="Notice"/> is the location's
+/// description (BR-42).
 /// </summary>
 public sealed record ShopInfo(
     string Name,
-    string? Tagline,
-    string? Area,
-    ShopPhone Phone,
+    string Phone,
     string TimeZone,
-    string? BookingUrl,
-    ShopInfoLocation Location,
-    ShopReviews? Reviews
+    string? SquareBookingSiteUrl,
+    Address Address,
+    string? Notice,
+    string? InstagramUsername,
+    string? FacebookUrl,
+    IReadOnlyList<OpeningHours> Hours,
+    BookingSettings BookingSettings
 );
