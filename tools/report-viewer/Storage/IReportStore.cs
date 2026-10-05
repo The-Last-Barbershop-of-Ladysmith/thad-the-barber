@@ -9,8 +9,3 @@ public interface IReportStore
     /// <summary>The folders and files directly under <paramref name="prefix"/>, named relative to it.</summary>
     Task<IReadOnlyList<ReportEntry>> ListAsync(string prefix, CancellationToken cancellationToken);
 }
-
-/// <param name="ETag">Quoted, as sent in the <c>ETag</c> header.</param>
-public sealed record ReportFile(Stream Content, DateTimeOffset LastModified, string ETag);
-
-public sealed record ReportEntry(string Name, bool IsFolder);
