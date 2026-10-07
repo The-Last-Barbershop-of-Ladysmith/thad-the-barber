@@ -1,14 +1,24 @@
 using Azure;
 using Azure.Identity;
 using Square;
+using Square.Bookings;
+using Square.Catalog;
 using ThadTheBarber.Api.Common.Models;
 using ThadTheBarber.Api.Square.Exceptions;
+using ThadTheBarber.Api.Square.Mappers;
 using ThadTheBarber.Api.Square.Models;
 
 namespace ThadTheBarber.Api.Square.Services;
 
-public sealed class SquareService(SquareClient square) : ISquareService
+public sealed class SquareService : ISquareService
 {
+    private readonly SquareClient square;
+
+    public SquareService(SquareClient square)
+{
+        this.square = square;
+    }
+
     public Task<Appointment> CancelBookingAsync(string bookingId, int version, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
@@ -48,9 +58,18 @@ public sealed class SquareService(SquareClient square) : ISquareService
         throw new NotImplementedException();
     }
 
-    public Task<BookableService[]> GetBookableServicesAsync(CancellationToken cancellationToken)
+    public async Task<BookableService> GetBookableServiceAsync(CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        SearchCatalogItemsRequest request = new()
+    {
+            ProductTypes = [CatalogItemProductType.AppointmentsService]
+        };
+
+        SearchCatalogItemsResponse response = await square.Catalog.SearchItemsAsync(request, cancellationToken: cancellationToken);
+
+        // Expecting only one bookable service, so we can safely use Single() here.
+        // If there are multiple services, this will throw an exception.
+        return (response.Items ?? []).SelectMany(item => item.ToBookableServices()).Single();
     }
 
     public Task<BookingProfile> GetBookingProfileAsync(CancellationToken cancellationToken)
@@ -68,7 +87,7 @@ public sealed class SquareService(SquareClient square) : ISquareService
         throw new NotImplementedException();
     }
 
-    public Task<IReadOnlyList<TimeSlot>> SearchAvailableTimeSlots(DateTimeRange dateTimeRange, BookableService service, CancellationToken cancellationToken)
+    public Task<List<TimeSlot>> SearchAvailableTimeSlots(DateTimeRange dateTimeRange, BookableService service, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }

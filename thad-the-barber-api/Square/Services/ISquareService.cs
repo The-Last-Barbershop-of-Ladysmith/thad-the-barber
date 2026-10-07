@@ -16,9 +16,9 @@ public interface ISquareService
 
     Task<BookingProfile> GetBookingProfileAsync(CancellationToken cancellationToken);
 
-    Task<BookableService[]> GetBookableServicesAsync(CancellationToken cancellationToken);
+    Task<BookableService> GetBookableServiceAsync(CancellationToken cancellationToken);
 
-    Task<IReadOnlyList<TimeSlot>> SearchAvailableTimeSlots(DateTimeRange dateTimeRange, BookableService service, CancellationToken cancellationToken);
+    Task<List<TimeSlot>> SearchAvailableTimeSlots(DateTimeRange dateTimeRange, BookableService service, CancellationToken cancellationToken);
 
     Task<string?> FindCustomerIdAsync(string phone, CancellationToken cancellationToken);
 

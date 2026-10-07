@@ -9,5 +9,5 @@ public sealed record BookableService(
     string VariationId,
     long VariationVersion,
     TimeSpan Duration,
-    IReadOnlyList<string> TeamMemberIds
+    List<string> TeamMemberIds
 );

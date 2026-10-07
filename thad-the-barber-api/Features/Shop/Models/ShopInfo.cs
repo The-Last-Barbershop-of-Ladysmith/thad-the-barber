@@ -14,6 +14,6 @@ public sealed record ShopInfo(
     string? Notice,
     string? InstagramUsername,
     string? FacebookUrl,
-    IReadOnlyList<OpeningHours> Hours,
+    List<OpeningHours> Hours,
     BookingSettings BookingSettings
 );

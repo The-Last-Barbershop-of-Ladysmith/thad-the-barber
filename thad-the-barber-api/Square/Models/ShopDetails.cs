@@ -6,7 +6,7 @@ public sealed record ShopDetails(
     string Phone,
     string TimeZone,
     ShopAddress Address,
-    IReadOnlyList<OpeningPeriod> Hours,
+    List<OpeningPeriod> Hours,
     string? Description,
     string? InstagramUsername,
     string? FacebookUrl

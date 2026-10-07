@@ -6,13 +6,13 @@ namespace ThadTheBarber.Api.Square.Mappers;
 public static class CatalogMapper
 {
     /// <summary>The variations of an appointment service item that customers can book online.</summary>
-    public static IEnumerable<BookableService> ToBookableServices(this CatalogObject catalogObject)
+    public static List<BookableService> ToBookableServices(this CatalogObject catalogObject)
     {
         if (!catalogObject.IsItem
             || catalogObject.AsItem() is not { IsDeleted: not true, ItemData: { } item }
             || item.ProductType != CatalogItemProductType.AppointmentsService)
         {
-            return [];
+            return new List<BookableService>();
         }
 
         return (item.Variations ?? [])
@@ -25,7 +25,7 @@ public static class CatalogMapper
                 variation.Version ?? throw new InvalidOperationException($"Square variation {variation.Id} has no version."),
                 TimeSpan.FromMilliseconds(variation.ItemVariationData!.ServiceDuration
                     ?? throw new InvalidOperationException($"Square variation {variation.Id} has no service duration.")),
-                [.. variation.ItemVariationData.TeamMemberIds ?? []]
-            ));
+                variation.ItemVariationData.TeamMemberIds?.ToList() ?? new List<string>()
+            )).ToList();
     }
 }
