@@ -9,9 +9,9 @@ namespace ThadTheBarber.Api.Square.Handlers;
 
 /// <summary>
 /// Turns Square failures from any endpoint into ProblemDetails, so endpoints call Square without catching:
-/// a taken time → 409 <c>slot_unavailable</c>; customer details Square refused → 400 <c>invalid_customer_details</c>;
 /// not connected, Key Vault unreachable, Square down or timed out → 503 (try later or use the fallbacks, BR-14); Square
-/// rejecting our request → 502. The <c>code</c> lets the UI react without reading the title.
+/// rejecting our request → 502. Outcomes the customer can act on are <see cref="Common.Exceptions.ProblemException"/>s
+/// with their own handler.
 /// </summary>
 public sealed class SquareExceptionHandler(IProblemDetailsService problemDetails) : IExceptionHandler
 {
@@ -19,10 +19,6 @@ public sealed class SquareExceptionHandler(IProblemDetailsService problemDetails
     {
         ProblemDetails? problem = exception switch
         {
-            SlotUnavailableException
-                => Problem(StatusCodes.Status409Conflict, "That time is no longer available.", "slot_unavailable"),
-            InvalidCustomerDetailsException
-                => Problem(StatusCodes.Status400BadRequest, "Square couldn't accept the name or phone.", "invalid_customer_details"),
             SquareNotConnectedException or RequestFailedException or AuthenticationFailedException
                 => Problem(StatusCodes.Status503ServiceUnavailable, "Booking is unavailable right now."),
             SquareApiException { StatusCode: >= StatusCodes.Status500InternalServerError } or HttpRequestException
@@ -46,18 +42,9 @@ public sealed class SquareExceptionHandler(IProblemDetailsService problemDetails
         });
     }
 
-    private static ProblemDetails Problem(int status, string title, string? code = null)
+    private static ProblemDetails Problem(int status, string title) => new()
     {
-        ProblemDetails problem = new()
-        {
-            Status = status,
-            Title = title,
-        };
-        if (code is not null)
-        {
-            problem.Extensions["code"] = code;
-        }
-
-        return problem;
-    }
+        Status = status,
+        Title = title,
+    };
 }
