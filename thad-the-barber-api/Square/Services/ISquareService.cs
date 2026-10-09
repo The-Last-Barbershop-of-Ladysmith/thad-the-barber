@@ -1,8 +1,5 @@
-using OneOf.Types;
-using Square;
 using ThadTheBarber.Api.Common.Models;
 using ThadTheBarber.Api.Square.Models;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace ThadTheBarber.Api.Square.Services;
 
@@ -18,15 +15,16 @@ public interface ISquareService
 
     Task<BookableService> GetBookableServiceAsync(CancellationToken cancellationToken);
 
-    Task<List<TimeSlot>> SearchAvailableTimeSlots(DateTimeRange dateTimeRange, BookableService service, CancellationToken cancellationToken);
+    Task<List<TimeSlot>> SearchAvailableTimeSlotsAsync(string locationId, BookableService bookableService, DateTimeRange dateTimeRange, CancellationToken cancellationToken);
 
+    /// <summary>The oldest Square customer with this E.164 phone; Square can hold duplicates.</summary>
     Task<string?> FindCustomerIdAsync(string phone, CancellationToken cancellationToken);
 
     Task<string> CreateCustomerAsync(string name, string phone, CancellationToken cancellationToken);
 
-    Task<Appointment> CreateBookingAsync(string customerId, string serviceVariationId, string locationId, string teamMemberId, TimeSlot slot, CancellationToken cancellationToken);
+    Task<Appointment> CreateBookingAsync(string customerId, TimeSlot timeSlot, string idempotencyKey, CancellationToken cancellationToken);
 
-    Task<Appointment> CancelBookingAsync(string bookingId, int version, CancellationToken cancellationToken);
+    Task<Appointment> CancelBookingAsync(string bookingId, int bookingVersion, CancellationToken cancellationToken);
 
-    Task<Appointment> RescheduleBookingAsync(string bookingId, int version, TimeSlot slot, CancellationToken cancellationToken);
+    Task<Appointment> RescheduleBookingAsync(string bookingId, int bookingVersion, DateTimeOffset newStartAt, CancellationToken cancellationToken);
 }

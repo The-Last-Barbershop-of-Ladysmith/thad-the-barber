@@ -1,8 +1,13 @@
+using System.Globalization;
 using Azure;
 using Azure.Identity;
 using Square;
 using Square.Bookings;
+using Square.Bookings.LocationProfiles;
 using Square.Catalog;
+using Square.Core;
+using Square.Customers;
+using Square.Locations;
 using ThadTheBarber.Api.Common.Models;
 using ThadTheBarber.Api.Square.Exceptions;
 using ThadTheBarber.Api.Square.Mappers;
@@ -12,23 +17,21 @@ namespace ThadTheBarber.Api.Square.Services;
 
 public sealed class SquareService : ISquareService
 {
-    private readonly SquareClient square;
+    private const string MainLocationId = "main";
+    private static readonly TimeSpan minimumAvailabilitySearchLength = TimeSpan.FromHours(24);
 
-    public SquareService(SquareClient square)
-{
-        this.square = square;
-    }
+    private readonly SquareClient squareClient;
 
-    public Task<Appointment> CancelBookingAsync(string bookingId, int version, CancellationToken cancellationToken)
+    public SquareService(SquareClient squareClient)
     {
-        throw new NotImplementedException();
+        this.squareClient = squareClient;
     }
 
     public async Task<SquareConnection> CheckConnectionAsync(CancellationToken cancellationToken)
     {
         try
         {
-            await square.OAuth.RetrieveTokenStatusAsync(cancellationToken: cancellationToken);
+            await squareClient.OAuth.RetrieveTokenStatusAsync(cancellationToken: cancellationToken);
             return SquareConnection.Connected;
         }
         catch (Exception exception) when (exception is SquareNotConnectedException or SquareApiException { StatusCode: StatusCodes.Status401Unauthorized })
@@ -43,52 +46,180 @@ public sealed class SquareService : ISquareService
         }
     }
 
-    public Task<Appointment> CreateBookingAsync(string customerId, string serviceVariationId, string locationId, string teamMemberId, TimeSlot slot, CancellationToken cancellationToken)
+    public async Task<ShopDetails> GetShopDetailsAsync(CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        GetLocationsRequest locationRequest = new()
+        {
+            LocationId = MainLocationId,
+        };
+
+        GetLocationResponse locationResponse = await squareClient.Locations.GetAsync(locationRequest, cancellationToken: cancellationToken);
+        Location location = locationResponse.Location ?? throw new InvalidOperationException("Square returned no location.");
+
+        return location.ToShopDetails();
     }
 
-    public Task<string> CreateCustomerAsync(string name, string phone, CancellationToken cancellationToken)
+    public async Task<BookingProfile> GetBookingProfileAsync(CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
-    }
+        GetBusinessBookingProfileResponse businessProfileResponse = await squareClient.Bookings.GetBusinessProfileAsync(cancellationToken: cancellationToken);
+        BusinessBookingProfile businessProfile = businessProfileResponse.BusinessBookingProfile
+            ?? throw new InvalidOperationException("Square returned no business booking profile.");
 
-    public Task<string?> FindCustomerIdAsync(string phone, CancellationToken cancellationToken)
-    {
-        throw new NotImplementedException();
+        Pager<LocationBookingProfile> locationProfiles = await squareClient.Bookings.LocationProfiles.ListAsync(
+            new ListLocationProfilesRequest(),
+            cancellationToken: cancellationToken);
+        LocationBookingProfile? locationProfile = await locationProfiles.SingleOrDefaultAsync(cancellationToken);
+
+        return businessProfile.ToBookingProfile(locationProfile);
     }
 
     public async Task<BookableService> GetBookableServiceAsync(CancellationToken cancellationToken)
     {
-        SearchCatalogItemsRequest request = new()
-    {
+        SearchCatalogItemsRequest catalogRequest = new()
+        {
             ProductTypes = [CatalogItemProductType.AppointmentsService]
         };
 
-        SearchCatalogItemsResponse response = await square.Catalog.SearchItemsAsync(request, cancellationToken: cancellationToken);
+        SearchCatalogItemsResponse catalogResponse = await squareClient.Catalog.SearchItemsAsync(catalogRequest, cancellationToken: cancellationToken);
 
-        // Expecting only one bookable service, so we can safely use Single() here.
-        // If there are multiple services, this will throw an exception.
-        return (response.Items ?? []).SelectMany(item => item.ToBookableServices()).Single();
+        // The shop offers one service (BR-01), so a second bookable one is a Dashboard mistake worth failing on.
+        return (catalogResponse.Items ?? []).SelectMany(catalogItem => catalogItem.ToBookableServices()).Single();
     }
 
-    public Task<BookingProfile> GetBookingProfileAsync(CancellationToken cancellationToken)
+    /// <summary>
+    /// Square rejects ranges shorter than 24 hours, and a day with a DST jump has 23, so the search covers at least 24
+    /// hours and drops what falls outside <paramref name="dateTimeRange"/>.
+    /// </summary>
+    public async Task<List<TimeSlot>> SearchAvailableTimeSlotsAsync(string locationId, BookableService bookableService, DateTimeRange dateTimeRange, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        DateTimeOffset searchEndAt = dateTimeRange.End;
+        if (dateTimeRange.End - dateTimeRange.Start < minimumAvailabilitySearchLength)
+        {
+            searchEndAt = dateTimeRange.Start + minimumAvailabilitySearchLength;
+        }
+
+        SearchAvailabilityRequest availabilityRequest = new()
+        {
+            Query = new SearchAvailabilityQuery
+            {
+                Filter = new SearchAvailabilityFilter
+                {
+                    StartAtRange = new TimeRange
+                    {
+                        StartAt = ToSquareTime(dateTimeRange.Start),
+                        EndAt = ToSquareTime(searchEndAt),
+                    },
+                    LocationId = locationId,
+                    SegmentFilters = [new SegmentFilter { ServiceVariationId = bookableService.VariationId }],
+                },
+            },
+        };
+
+        SearchAvailabilityResponse availabilityResponse = await squareClient.Bookings.SearchAvailabilityAsync(availabilityRequest, cancellationToken: cancellationToken);
+
+        return (availabilityResponse.Availabilities ?? [])
+            .Select(availability => availability.ToTimeSlot())
+            .Where(timeSlot => timeSlot.StartAt >= dateTimeRange.Start && timeSlot.StartAt < dateTimeRange.End)
+            .ToList();
     }
 
-    public Task<ShopDetails> GetShopDetailsAsync(CancellationToken cancellationToken)
+    public async Task<string?> FindCustomerIdAsync(string phone, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        SearchCustomersRequest customerSearchRequest = new()
+        {
+            Query = new CustomerQuery
+            {
+                Filter = new CustomerFilter { PhoneNumber = new CustomerTextFilter { Exact = phone } },
+                Sort = new CustomerSort { Field = CustomerSortField.CreatedAt, Order = SortOrder.Asc },
+            },
+            Limit = 1,
+        };
+
+        SearchCustomersResponse customerSearchResponse = await squareClient.Customers.SearchAsync(customerSearchRequest, cancellationToken: cancellationToken);
+
+        return customerSearchResponse.Customers?.FirstOrDefault()?.Id;
     }
 
-    public Task<Appointment> RescheduleBookingAsync(string bookingId, int version, TimeSlot slot, CancellationToken cancellationToken)
+    /// <summary>The site asks for one name (BR-09); its first word becomes Square's given name and the rest the family name.</summary>
+    public async Task<string> CreateCustomerAsync(string name, string phone, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        string[] nameParts = name.Trim().Split(' ', 2, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        CreateCustomerRequest createCustomerRequest = new()
+        {
+            IdempotencyKey = Guid.NewGuid().ToString(),
+            GivenName = nameParts[0],
+            FamilyName = nameParts.ElementAtOrDefault(1),
+            PhoneNumber = phone,
+        };
+
+        CreateCustomerResponse createCustomerResponse = await squareClient.Customers.CreateAsync(createCustomerRequest, cancellationToken: cancellationToken);
+
+        return createCustomerResponse.Customer?.Id ?? throw new InvalidOperationException("Square created a customer without an id.");
     }
 
-    public Task<List<TimeSlot>> SearchAvailableTimeSlots(DateTimeRange dateTimeRange, BookableService service, CancellationToken cancellationToken)
+    public async Task<Appointment> CreateBookingAsync(string customerId, TimeSlot timeSlot, string idempotencyKey, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        CreateBookingRequest createBookingRequest = new()
+        {
+            IdempotencyKey = idempotencyKey,
+            Booking = new Booking
+            {
+                CustomerId = customerId,
+                LocationId = timeSlot.LocationId,
+                StartAt = ToSquareTime(timeSlot.StartAt),
+                AppointmentSegments =
+                [
+                    new AppointmentSegment
+                    {
+                        TeamMemberId = timeSlot.TeamMemberId,
+                        ServiceVariationId = timeSlot.ServiceVariationId,
+                        ServiceVariationVersion = timeSlot.ServiceVariationVersion,
+                    },
+                ],
+            },
+        };
+
+        CreateBookingResponse createBookingResponse = await squareClient.Bookings.CreateAsync(createBookingRequest, cancellationToken: cancellationToken);
+        Booking createdBooking = createBookingResponse.Booking ?? throw new InvalidOperationException("Square returned no booking.");
+
+        return createdBooking.ToAppointment();
     }
+
+    public async Task<Appointment> CancelBookingAsync(string bookingId, int bookingVersion, CancellationToken cancellationToken)
+    {
+        CancelBookingRequest cancelBookingRequest = new()
+        {
+            BookingId = bookingId,
+            BookingVersion = bookingVersion,
+            IdempotencyKey = Guid.NewGuid().ToString(),
+        };
+
+        CancelBookingResponse cancelBookingResponse = await squareClient.Bookings.CancelAsync(cancelBookingRequest, cancellationToken: cancellationToken);
+        Booking cancelledBooking = cancelBookingResponse.Booking ?? throw new InvalidOperationException("Square returned no booking.");
+
+        return cancelledBooking.ToAppointment();
+    }
+
+    /// <summary>Square moves the booking with only its version and new start (#21); the service and barber stay.</summary>
+    public async Task<Appointment> RescheduleBookingAsync(string bookingId, int bookingVersion, DateTimeOffset newStartAt, CancellationToken cancellationToken)
+    {
+        UpdateBookingRequest updateBookingRequest = new()
+        {
+            BookingId = bookingId,
+            IdempotencyKey = Guid.NewGuid().ToString(),
+            Booking = new Booking
+            {
+                Version = bookingVersion,
+                StartAt = ToSquareTime(newStartAt),
+            },
+        };
+
+        UpdateBookingResponse updateBookingResponse = await squareClient.Bookings.UpdateAsync(updateBookingRequest, cancellationToken: cancellationToken);
+        Booking rescheduledBooking = updateBookingResponse.Booking ?? throw new InvalidOperationException("Square returned no booking.");
+
+        return rescheduledBooking.ToAppointment();
+    }
+
+    private static string ToSquareTime(DateTimeOffset instant) =>
+        instant.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture);
 }
