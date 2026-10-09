@@ -17,14 +17,17 @@ public sealed record BuildInfo(
         string informational = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
             ?? "0.0.0";
         int plus = informational.IndexOf('+', StringComparison.Ordinal);
-        return plus < 0
-            ? new BuildInfo(
+        if (plus < 0)
+        {
+            return new BuildInfo(
                 informational,
                 "unknown"
-            )
-            : new BuildInfo(
-                informational[..plus],
-                informational[(plus + 1)..]
             );
+        }
+
+        return new BuildInfo(
+            informational[..plus],
+            informational[(plus + 1)..]
+        );
     }
 }

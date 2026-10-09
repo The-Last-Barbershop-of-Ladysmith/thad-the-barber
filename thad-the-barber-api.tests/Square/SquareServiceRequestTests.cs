@@ -83,7 +83,13 @@ public sealed class SquareServiceRequestTests
 
         JsonElement body = Body(harness, "/v2/customers");
         Assert.Equal(givenName, body.GetProperty("given_name").GetString());
-        Assert.Equal(familyName, body.TryGetProperty("family_name", out JsonElement family) ? family.GetString() : null);
+        string? sentFamilyName = null;
+        if (body.TryGetProperty("family_name", out JsonElement family))
+        {
+            sentFamilyName = family.GetString();
+        }
+
+        Assert.Equal(familyName, sentFamilyName);
         Assert.Equal("KCAYNMXV36K477WJYDVANJSVVG", customerId);
     }
 
