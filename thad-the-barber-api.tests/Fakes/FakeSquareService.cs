@@ -55,7 +55,7 @@ public sealed class FakeSquareService : ISquareService
 
     public Task<ShopDetails> GetShopDetailsAsync(CancellationToken cancellationToken) => Task.FromResult(ShopDetails);
 
-    public Task<BookingProfile> GetBookingProfileAsync(CancellationToken cancellationToken) => Task.FromResult(BookingProfile);
+    public Task<BookingProfile> GetBookingProfileAsync(string locationId, CancellationToken cancellationToken) => Task.FromResult(BookingProfile);
 
     public Task<BookableService> GetBookableServiceAsync(CancellationToken cancellationToken) => Task.FromResult(BookableService);
 
@@ -64,7 +64,7 @@ public sealed class FakeSquareService : ISquareService
 
     public Task<string?> FindCustomerIdAsync(string phone, CancellationToken cancellationToken) => Task.FromResult(CustomerId);
 
-    public Task<string> CreateCustomerAsync(string name, string phone, CancellationToken cancellationToken) => Task.FromResult(CreatedCustomerId);
+    public Task<string> CreateCustomerAsync(string name, string phone, string idempotencyKey, CancellationToken cancellationToken) => Task.FromResult(CreatedCustomerId);
 
     public Task<Appointment> CreateBookingAsync(string customerId, TimeSlot timeSlot, string idempotencyKey, CancellationToken cancellationToken) =>
         Task.FromResult(CreatedAppointment);

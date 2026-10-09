@@ -31,9 +31,22 @@ public sealed class SquareServiceRequestTests
         harness.Http.Responses["/v2/bookings/business-booking-profile"] = SquareFixture.ReadText("business-booking-profile.json");
         harness.Http.Responses["/v2/bookings/location-booking-profiles"] = SquareFixture.ReadText("location-booking-profiles.json");
 
-        BookingProfile profile = await harness.Square.GetBookingProfileAsync(Cancellation);
+        BookingProfile profile = await harness.Square.GetBookingProfileAsync("LVF9Q8XN61NA4", Cancellation);
 
         Assert.Equal("https://square.site/book/LVF9Q8XN61NA4/thad-the-barber-sandbox-washington-dc", profile.SquareBookingSiteUrl);
+    }
+
+    [Fact]
+    public async Task AnotherLocationsBookingProfileIsIgnored()
+    {
+        using SquareHarness harness = new();
+        harness.Http.Responses["/v2/bookings/business-booking-profile"] = SquareFixture.ReadText("business-booking-profile.json");
+        harness.Http.Responses["/v2/bookings/location-booking-profiles"] = SquareFixture.ReadText("location-booking-profiles.json");
+
+        BookingProfile profile = await harness.Square.GetBookingProfileAsync("OTHER-LOCATION", Cancellation);
+
+        Assert.Null(profile.SquareBookingSiteUrl);
+        Assert.False(profile.IsOnlineBookingEnabled);
     }
 
     [Fact]
@@ -79,9 +92,10 @@ public sealed class SquareServiceRequestTests
         using SquareHarness harness = new();
         harness.Http.Responses["/v2/customers"] = SquareFixture.ReadText("create-customer.json");
 
-        string customerId = await harness.Square.CreateCustomerAsync(name, "+18045550123", Cancellation);
+        string customerId = await harness.Square.CreateCustomerAsync(name, "+18045550123", "key-1", Cancellation);
 
         JsonElement body = Body(harness, "/v2/customers");
+        Assert.Equal("key-1", body.GetProperty("idempotency_key").GetString());
         Assert.Equal(givenName, body.GetProperty("given_name").GetString());
         string? sentFamilyName = null;
         if (body.TryGetProperty("family_name", out JsonElement family))
@@ -178,7 +192,28 @@ public sealed class SquareServiceRequestTests
         harness.Http.Responses["/v2/customers"] = """{"errors":[{"category":"INVALID_REQUEST_ERROR","code":"INVALID_PHONE_NUMBER","field":"phone_number"}]}""";
         harness.Http.ResponseStatuses["/v2/customers"] = HttpStatusCode.BadRequest;
 
-        await Assert.ThrowsAsync<InvalidCustomerDetailsException>(() => harness.Square.CreateCustomerAsync("Spike TwentyOne", "+1555", Cancellation));
+        await Assert.ThrowsAsync<InvalidCustomerDetailsException>(() => harness.Square.CreateCustomerAsync("Spike TwentyOne", "+1555", "key-1", Cancellation));
+    }
+
+    [Fact]
+    public async Task OtherCustomerRejectionsStaySquareErrors()
+    {
+        using SquareHarness harness = new();
+        harness.Http.Responses["/v2/customers"] = """{"errors":[{"category":"INVALID_REQUEST_ERROR","code":"VALUE_TOO_LONG","field":"idempotency_key"}]}""";
+        harness.Http.ResponseStatuses["/v2/customers"] = HttpStatusCode.BadRequest;
+
+        await Assert.ThrowsAsync<SquareApiException>(() => harness.Square.CreateCustomerAsync("Spike TwentyOne", "+18045550123", "key-1", Cancellation));
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task ABlankNameIsAnInvalidCustomerDetailsErrorWithoutCallingSquare(string name)
+    {
+        using SquareHarness harness = new();
+
+        await Assert.ThrowsAsync<InvalidCustomerDetailsException>(() => harness.Square.CreateCustomerAsync(name, "+18045550123", "key-1", Cancellation));
+        Assert.DoesNotContain(harness.Http.Requests, request => request.Path == "/v2/customers");
     }
 
     [Fact]

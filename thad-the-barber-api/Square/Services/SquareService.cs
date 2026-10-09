@@ -59,20 +59,16 @@ public sealed class SquareService : ISquareService
         return location.ToShopDetails();
     }
 
-    public async Task<BookingProfile> GetBookingProfileAsync(CancellationToken cancellationToken)
+    public async Task<BookingProfile> GetBookingProfileAsync(string locationId, CancellationToken cancellationToken)
     {
         Task<GetBusinessBookingProfileResponse> businessProfileTask = squareClient.Bookings.GetBusinessProfileAsync(cancellationToken: cancellationToken);
+        Task<LocationBookingProfile?> locationProfileTask = FindLocationProfileAsync(locationId, cancellationToken);
+        await Task.WhenAll(businessProfileTask, locationProfileTask);
 
-        Pager<LocationBookingProfile> locationProfiles = await squareClient.Bookings.LocationProfiles.ListAsync(
-            new ListLocationProfilesRequest(),
-            cancellationToken: cancellationToken);
-        LocationBookingProfile? locationProfile = await locationProfiles.SingleOrDefaultAsync(cancellationToken);
-
-        GetBusinessBookingProfileResponse businessProfileResponse = await businessProfileTask;
-        BusinessBookingProfile businessProfile = businessProfileResponse.BusinessBookingProfile
+        BusinessBookingProfile businessProfile = businessProfileTask.Result.BusinessBookingProfile
             ?? throw new InvalidOperationException("Square returned no business booking profile.");
 
-        return businessProfile.ToBookingProfile(locationProfile);
+        return businessProfile.ToBookingProfile(locationProfileTask.Result);
     }
 
     public async Task<BookableService> GetBookableServiceAsync(CancellationToken cancellationToken)
@@ -131,8 +127,18 @@ public sealed class SquareService : ISquareService
         {
             Query = new CustomerQuery
             {
-                Filter = new CustomerFilter { PhoneNumber = new CustomerTextFilter { Exact = phone } },
-                Sort = new CustomerSort { Field = CustomerSortField.CreatedAt, Order = SortOrder.Asc },
+                Filter = new CustomerFilter
+                {
+                    PhoneNumber = new CustomerTextFilter
+                    {
+                        Exact = phone,
+                    },
+                },
+                Sort = new CustomerSort
+                {
+                    Field = CustomerSortField.CreatedAt,
+                    Order = SortOrder.Asc,
+                },
             },
             Limit = 1,
         };
@@ -142,13 +148,21 @@ public sealed class SquareService : ISquareService
         return customerSearchResponse.Customers?.FirstOrDefault()?.Id;
     }
 
-    /// <summary>The site asks for one name (BR-09); its first word becomes Square's given name and the rest the family name.</summary>
-    public async Task<string> CreateCustomerAsync(string name, string phone, CancellationToken cancellationToken)
+    /// <summary>
+    /// The site asks for one name (BR-09); its first word becomes Square's given name and the rest the family name.
+    /// Passing the booking attempt's idempotency key means a retried attempt doesn't create a second customer.
+    /// </summary>
+    public async Task<string> CreateCustomerAsync(string name, string phone, string idempotencyKey, CancellationToken cancellationToken)
     {
         string[] nameParts = name.Trim().Split(' ', 2, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (nameParts.Length == 0)
+        {
+            throw new InvalidCustomerDetailsException("A customer needs a name.");
+        }
+
         CreateCustomerRequest createCustomerRequest = new()
         {
-            IdempotencyKey = Guid.NewGuid().ToString(),
+            IdempotencyKey = idempotencyKey,
             GivenName = nameParts[0],
             FamilyName = nameParts.ElementAtOrDefault(1),
             PhoneNumber = phone,
@@ -159,7 +173,7 @@ public sealed class SquareService : ISquareService
         {
             createCustomerResponse = await squareClient.Customers.CreateAsync(createCustomerRequest, cancellationToken: cancellationToken);
         }
-        catch (SquareApiException exception) when (exception.StatusCode == StatusCodes.Status400BadRequest)
+        catch (SquareApiException exception) when (IsCustomerInputRejected(exception))
         {
             throw new InvalidCustomerDetailsException("Square rejected the customer's name or phone.", exception);
         }
@@ -248,13 +262,26 @@ public sealed class SquareService : ISquareService
         return rescheduledBooking.ToAppointment();
     }
 
+    private async Task<LocationBookingProfile?> FindLocationProfileAsync(string locationId, CancellationToken cancellationToken)
+    {
+        Pager<LocationBookingProfile> locationProfiles = await squareClient.Bookings.LocationProfiles.ListAsync(
+            new ListLocationProfilesRequest(),
+            cancellationToken: cancellationToken);
+
+        return await locationProfiles.FirstOrDefaultAsync(locationProfile => locationProfile.LocationId == locationId, cancellationToken);
+    }
+
     /// <summary>
     /// Square answers a taken time with a plain 400 on <c>start_at</c> (#21), not a 409. We format <c>start_at</c>
     /// ourselves, so a 400 on it means the time, not the request.
     /// </summary>
     private static bool IsSlotTaken(SquareApiException exception) =>
         exception.StatusCode == StatusCodes.Status400BadRequest
-        && exception.Errors.Any(error => error.Field == "start_at");
+        && exception.Errors.Any(error => error.Field is "start_at" or "booking.start_at");
+
+    private static bool IsCustomerInputRejected(SquareApiException exception) =>
+        exception.StatusCode == StatusCodes.Status400BadRequest
+        && exception.Errors.Any(error => error.Field is "given_name" or "family_name" or "phone_number");
 
     private static string ToSquareTime(DateTimeOffset instant) =>
         instant.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture);

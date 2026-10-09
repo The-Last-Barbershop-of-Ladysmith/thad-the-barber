@@ -11,7 +11,7 @@ public interface ISquareService
 
     Task<ShopDetails> GetShopDetailsAsync(CancellationToken cancellationToken);
 
-    Task<BookingProfile> GetBookingProfileAsync(CancellationToken cancellationToken);
+    Task<BookingProfile> GetBookingProfileAsync(string locationId, CancellationToken cancellationToken);
 
     Task<BookableService> GetBookableServiceAsync(CancellationToken cancellationToken);
 
@@ -20,7 +20,7 @@ public interface ISquareService
     /// <summary>The oldest Square customer with this E.164 phone; Square can hold duplicates.</summary>
     Task<string?> FindCustomerIdAsync(string phone, CancellationToken cancellationToken);
 
-    Task<string> CreateCustomerAsync(string name, string phone, CancellationToken cancellationToken);
+    Task<string> CreateCustomerAsync(string name, string phone, string idempotencyKey, CancellationToken cancellationToken);
 
     Task<Appointment> CreateBookingAsync(string customerId, TimeSlot timeSlot, string idempotencyKey, CancellationToken cancellationToken);
 
