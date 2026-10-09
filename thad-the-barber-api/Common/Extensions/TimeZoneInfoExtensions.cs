@@ -25,9 +25,16 @@ public static class TimeZoneInfoExtensions
     private static DateTimeOffset GetStartOfDay(this TimeZoneInfo timeZone, DateOnly date)
     {
         DateTime midnight = date.ToDateTime(TimeOnly.MinValue);
-        TimeSpan offset = timeZone.IsInvalidTime(midnight) ? timeZone.GetUtcOffset(midnight.AddTicks(-1))
-            : timeZone.IsAmbiguousTime(midnight) ? timeZone.GetAmbiguousTimeOffsets(midnight).Max()
-            : timeZone.GetUtcOffset(midnight);
+        TimeSpan offset = timeZone.GetUtcOffset(midnight);
+        if (timeZone.IsInvalidTime(midnight))
+        {
+            offset = timeZone.GetUtcOffset(midnight.AddTicks(-1));
+        }
+        else if (timeZone.IsAmbiguousTime(midnight))
+        {
+            offset = timeZone.GetAmbiguousTimeOffsets(midnight).Max();
+        }
+
         return new DateTimeOffset(midnight, offset);
     }
 }

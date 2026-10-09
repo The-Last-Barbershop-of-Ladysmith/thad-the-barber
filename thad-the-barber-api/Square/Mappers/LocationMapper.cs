@@ -23,7 +23,12 @@ public static class LocationMapper
     private static string ToE164Phone(string phone)
     {
         string digits = string.Concat(phone.Where(char.IsAsciiDigit));
-        return digits.Length == 10 ? $"+1{digits}" : $"+{digits}";
+        if (digits.Length == 10)
+        {
+            return $"+1{digits}";
+        }
+
+        return $"+{digits}";
     }
 
     private static ShopAddress ToShopAddress(Address address) => new(
