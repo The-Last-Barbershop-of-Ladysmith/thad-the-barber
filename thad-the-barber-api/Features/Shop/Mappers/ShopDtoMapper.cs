@@ -7,12 +7,6 @@ public static class ShopDtoMapper
 {
     public static ShopInfo ToShopInfo(this ShopDetails shopDetails, BookingProfile bookingProfile, BookableService bookableService)
     {
-        string? notice = null;
-        if (!string.IsNullOrWhiteSpace(shopDetails.Description))
-        {
-            notice = shopDetails.Description;
-        }
-
         return new ShopInfo(
             shopDetails.Name,
             shopDetails.Phone,
@@ -24,7 +18,7 @@ public static class ShopDtoMapper
                 shopDetails.Address.State,
                 shopDetails.Address.PostalCode
             ),
-            notice,
+            shopDetails.Description,
             shopDetails.InstagramUsername,
             shopDetails.FacebookUrl,
             [.. shopDetails.Hours.Select(openingPeriod => new OpeningHours(

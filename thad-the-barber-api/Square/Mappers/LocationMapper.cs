@@ -7,17 +7,26 @@ namespace ThadTheBarber.Api.Square.Mappers;
 
 public static class LocationMapper
 {
-    public static ShopDetails ToShopDetails(this Location location) => new(
-        location.Id ?? throw MissingField(nameof(Location.Id)),
-        location.BusinessName ?? location.Name ?? throw MissingField(nameof(Location.BusinessName)),
-        ToE164Phone(location.PhoneNumber ?? throw MissingField(nameof(Location.PhoneNumber))),
-        location.Timezone ?? throw MissingField(nameof(Location.Timezone)),
-        ToShopAddress(location.Address ?? throw MissingField(nameof(Location.Address))),
-        [.. location.BusinessHours?.Periods?.Select(ToOpeningPeriod) ?? []],
-        location.Description,
-        location.InstagramUsername,
-        location.FacebookUrl
-    );
+    public static ShopDetails ToShopDetails(this Location location)
+    {
+        string? description = location.Description;
+        if (string.IsNullOrWhiteSpace(description))
+        {
+            description = null;
+        }
+
+        return new ShopDetails(
+            location.Id ?? throw MissingField(nameof(Location.Id)),
+            location.BusinessName ?? location.Name ?? throw MissingField(nameof(Location.BusinessName)),
+            ToE164Phone(location.PhoneNumber ?? throw MissingField(nameof(Location.PhoneNumber))),
+            location.Timezone ?? throw MissingField(nameof(Location.Timezone)),
+            ToShopAddress(location.Address ?? throw MissingField(nameof(Location.Address))),
+            [.. location.BusinessHours?.Periods?.Select(ToOpeningPeriod) ?? []],
+            description,
+            location.InstagramUsername,
+            location.FacebookUrl
+        );
+    }
 
     /// <summary>Square keeps the number as typed in the Dashboard, e.g. <c>+1 540-621-2143</c>; 10 digits are US.</summary>
     private static string ToE164Phone(string phone)

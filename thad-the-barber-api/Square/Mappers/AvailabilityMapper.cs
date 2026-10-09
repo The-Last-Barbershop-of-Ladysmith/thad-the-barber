@@ -14,7 +14,7 @@ public static class AvailabilityMapper
         return new TimeSlot(
             DateTimeOffset.Parse(
                 availability.StartAt ?? throw MissingField("start time"),
-                CultureInfo.InvariantCulture),
+                CultureInfo.InvariantCulture).ToUniversalTime(),
             availability.LocationId ?? throw MissingField("location"),
             appointmentSegment.TeamMemberId,
             appointmentSegment.ServiceVariationId ?? throw MissingField("service variation"),

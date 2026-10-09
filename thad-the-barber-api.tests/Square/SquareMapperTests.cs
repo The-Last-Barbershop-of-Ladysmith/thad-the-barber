@@ -54,6 +54,16 @@ public sealed class SquareMapperTests
         Assert.Equal(e164, location.ToShopDetails().Phone);
     }
 
+    [Theory]
+    [InlineData("")]
+    [InlineData("  \n")]
+    public void ABlankDescriptionMeansNone(string description)
+    {
+        Location location = SquareFixture.ReadAs<GetLocationResponse>("retrieve-location.json").Location! with { Description = description };
+
+        Assert.Null(location.ToShopDetails().Description);
+    }
+
     [Fact]
     public void BookingProfilesBecomeBookingProfile()
     {
@@ -131,5 +141,15 @@ public sealed class SquareMapperTests
                 DateTimeOffset.Parse(startAt, CultureInfo.InvariantCulture)
             ),
             booking.ToAppointment());
+    }
+
+    [Fact]
+    public void TimesWithAnOffsetBecomeUtc()
+    {
+        SquareBooking booking = SquareFixture.ReadAs<CreateBookingResponse>("create-booking.json").Booking! with { StartAt = "2026-10-05T09:00:00-04:00" };
+        Availability availability = SquareFixture.ReadAs<SearchAvailabilityResponse>("search-availability.json").Availabilities!.First() with { StartAt = "2026-10-05T09:00:00-04:00" };
+
+        Assert.Equal(TimeSpan.Zero, booking.ToAppointment().StartAt.Offset);
+        Assert.Equal(TimeSpan.Zero, availability.ToTimeSlot().StartAt.Offset);
     }
 }

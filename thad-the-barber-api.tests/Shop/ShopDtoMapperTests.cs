@@ -3,12 +3,9 @@ using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Square;
 using ThadTheBarber.Api.Features.Shop.Mappers;
 using ThadTheBarber.Api.Features.Shop.Models;
-using ThadTheBarber.Api.Square.Mappers;
-using ThadTheBarber.Api.Square.Models;
-using ThadTheBarber.Api.Tests.Square;
+using ThadTheBarber.Api.Tests.Fakes;
 using Address = ThadTheBarber.Api.Features.Shop.Models.Address;
 using DayOfWeek = System.DayOfWeek;
 
@@ -16,23 +13,12 @@ namespace ThadTheBarber.Api.Tests.Shop;
 
 public sealed class ShopDtoMapperTests
 {
-    private static ShopDetails Details =>
-        SquareFixture.ReadAs<GetLocationResponse>("retrieve-location.json").Location!.ToShopDetails();
-
-    private static BookingProfile Profile => SquareFixture.ReadAs<GetBusinessBookingProfileResponse>("business-booking-profile.json")
-        .BusinessBookingProfile!
-        .ToBookingProfile(SquareFixture.ReadAs<ListLocationBookingProfilesResponse>("location-booking-profiles.json").LocationBookingProfiles!.Single());
-
-    private static BookableService Service => SquareFixture.ReadAs<SearchCatalogItemsResponse>("search-catalog-items.json")
-        .Items!
-        .Single()
-        .ToBookableServices()
-        .Single();
+    private readonly FakeSquareService _square = new();
 
     [Fact]
     public void DetailsProfileAndServiceBecomeShopInfo()
     {
-        ShopInfo shop = Details.ToShopInfo(Profile, Service);
+        ShopInfo shop = _square.ShopDetails.ToShopInfo(_square.BookingProfile, _square.BookableService);
 
         Assert.Equal("Thad the Barber", shop.Name);
         Assert.Equal("+15406212143", shop.Phone);
@@ -73,23 +59,13 @@ public sealed class ShopDtoMapperTests
             shop.BookingSettings);
     }
 
-    [Theory]
-    [InlineData("")]
-    [InlineData("  \n")]
-    public void ABlankDescriptionMeansNoNotice(string description)
-    {
-        ShopDetails details = Details with { Description = description };
-
-        Assert.Null(details.ToShopInfo(Profile, Service).Notice);
-    }
-
     [Fact]
     public void HoursGoOutAsDayNumbersAndTimeStrings()
     {
         using ApiFactory api = new();
         JsonSerializerOptions json = api.Services.GetRequiredService<IOptions<JsonOptions>>().Value.SerializerOptions;
 
-        JsonNode hours = JsonSerializer.SerializeToNode(Details.ToShopInfo(Profile, Service), json)!["hours"]![1]!;
+        JsonNode hours = JsonSerializer.SerializeToNode(_square.ShopDetails.ToShopInfo(_square.BookingProfile, _square.BookableService), json)!["hours"]![1]!;
 
         Assert.Equal("""{"day":6,"opens":"10:00:00","closes":"19:00:00"}""", hours.ToJsonString());
     }
