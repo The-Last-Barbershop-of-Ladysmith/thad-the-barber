@@ -39,7 +39,10 @@ public sealed class FakeSquareHttp : HttpMessageHandler
             request.Headers.Authorization?.Parameter,
             body
         );
-        Requests.Add(recorded);
+        lock (Requests)
+        {
+            Requests.Add(recorded);
+        }
 
         if (recorded.Path == "/oauth2/token")
         {
@@ -52,9 +55,12 @@ public sealed class FakeSquareHttp : HttpMessageHandler
             return Json(HttpStatusCode.OK, $$"""{"access_token":"access-{{TokensIssued}}","expires_at":"2026-11-03T00:00:00Z","refresh_token":"same"}""");
         }
 
-        return recorded.Token is { } token && RejectedTokens.Contains(token)
-            ? Json(HttpStatusCode.Unauthorized, """{"errors":[{"category":"AUTHENTICATION_ERROR","code":"UNAUTHORIZED"}]}""")
-            : Json(ResponseStatuses.GetValueOrDefault(recorded.Path, HttpStatusCode.OK), Responses.GetValueOrDefault(recorded.Path, """{"merchant_id":"M1","expires_at":"2026-11-03T00:00:00Z"}"""));
+        if (recorded.Token is { } token && RejectedTokens.Contains(token))
+        {
+            return Json(HttpStatusCode.Unauthorized, """{"errors":[{"category":"AUTHENTICATION_ERROR","code":"UNAUTHORIZED"}]}""");
+        }
+
+        return Json(ResponseStatuses.GetValueOrDefault(recorded.Path, HttpStatusCode.OK), Responses.GetValueOrDefault(recorded.Path, """{"merchant_id":"M1","expires_at":"2026-11-03T00:00:00Z"}"""));
     }
 
     private static HttpResponseMessage Json(HttpStatusCode status, string json) =>

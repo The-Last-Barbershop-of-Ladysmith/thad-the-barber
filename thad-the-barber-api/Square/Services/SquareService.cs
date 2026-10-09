@@ -61,14 +61,16 @@ public sealed class SquareService : ISquareService
 
     public async Task<BookingProfile> GetBookingProfileAsync(CancellationToken cancellationToken)
     {
-        GetBusinessBookingProfileResponse businessProfileResponse = await squareClient.Bookings.GetBusinessProfileAsync(cancellationToken: cancellationToken);
-        BusinessBookingProfile businessProfile = businessProfileResponse.BusinessBookingProfile
-            ?? throw new InvalidOperationException("Square returned no business booking profile.");
+        Task<GetBusinessBookingProfileResponse> businessProfileTask = squareClient.Bookings.GetBusinessProfileAsync(cancellationToken: cancellationToken);
 
         Pager<LocationBookingProfile> locationProfiles = await squareClient.Bookings.LocationProfiles.ListAsync(
             new ListLocationProfilesRequest(),
             cancellationToken: cancellationToken);
         LocationBookingProfile? locationProfile = await locationProfiles.SingleOrDefaultAsync(cancellationToken);
+
+        GetBusinessBookingProfileResponse businessProfileResponse = await businessProfileTask;
+        BusinessBookingProfile businessProfile = businessProfileResponse.BusinessBookingProfile
+            ?? throw new InvalidOperationException("Square returned no business booking profile.");
 
         return businessProfile.ToBookingProfile(locationProfile);
     }
