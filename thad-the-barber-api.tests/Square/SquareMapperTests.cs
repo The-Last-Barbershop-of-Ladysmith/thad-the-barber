@@ -72,7 +72,7 @@ public sealed class SquareMapperTests
 
         Assert.Equal(
             new BookingProfile(
-                IsOnlineBookingEnabled: false,
+                IsOnlineBookingEnabled: true,
                 MinimumNotice: TimeSpan.Zero,
                 MaximumAdvance: TimeSpan.FromDays(365),
                 CanCustomersCancel: true,

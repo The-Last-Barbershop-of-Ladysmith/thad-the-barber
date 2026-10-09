@@ -12,7 +12,7 @@ public static class AppointmentMapper
 
         return new Appointment(
             booking.Id ?? throw new InvalidOperationException("A Square booking has no id."),
-            booking.Version ?? 0,
+            booking.Version ?? throw MissingField(booking, "version"),
             Enum.Parse<AppointmentStatus>(status.Replace("_", string.Empty, StringComparison.Ordinal), ignoreCase: true),
             DateTimeOffset.Parse(
                 booking.StartAt ?? throw MissingField(booking, "start time"),
