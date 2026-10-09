@@ -152,7 +152,15 @@ public sealed class SquareService : ISquareService
             PhoneNumber = phone,
         };
 
-        CreateCustomerResponse createCustomerResponse = await squareClient.Customers.CreateAsync(createCustomerRequest, cancellationToken: cancellationToken);
+        CreateCustomerResponse createCustomerResponse;
+        try
+        {
+            createCustomerResponse = await squareClient.Customers.CreateAsync(createCustomerRequest, cancellationToken: cancellationToken);
+        }
+        catch (SquareApiException exception) when (exception.StatusCode == StatusCodes.Status400BadRequest)
+        {
+            throw new InvalidCustomerDetailsException("Square rejected the customer's name or phone.", exception);
+        }
 
         return createCustomerResponse.Customer?.Id ?? throw new InvalidOperationException("Square created a customer without an id.");
     }
@@ -179,7 +187,16 @@ public sealed class SquareService : ISquareService
             },
         };
 
-        CreateBookingResponse createBookingResponse = await squareClient.Bookings.CreateAsync(createBookingRequest, cancellationToken: cancellationToken);
+        CreateBookingResponse createBookingResponse;
+        try
+        {
+            createBookingResponse = await squareClient.Bookings.CreateAsync(createBookingRequest, cancellationToken: cancellationToken);
+        }
+        catch (SquareApiException exception) when (IsSlotTaken(exception))
+        {
+            throw new SlotUnavailableException("Square says the time is no longer available.", exception);
+        }
+
         Booking createdBooking = createBookingResponse.Booking ?? throw new InvalidOperationException("Square returned no booking.");
 
         return createdBooking.ToAppointment();
@@ -214,11 +231,28 @@ public sealed class SquareService : ISquareService
             },
         };
 
-        UpdateBookingResponse updateBookingResponse = await squareClient.Bookings.UpdateAsync(updateBookingRequest, cancellationToken: cancellationToken);
+        UpdateBookingResponse updateBookingResponse;
+        try
+        {
+            updateBookingResponse = await squareClient.Bookings.UpdateAsync(updateBookingRequest, cancellationToken: cancellationToken);
+        }
+        catch (SquareApiException exception) when (IsSlotTaken(exception))
+        {
+            throw new SlotUnavailableException("Square says the new time is no longer available.", exception);
+        }
+
         Booking rescheduledBooking = updateBookingResponse.Booking ?? throw new InvalidOperationException("Square returned no booking.");
 
         return rescheduledBooking.ToAppointment();
     }
+
+    /// <summary>
+    /// Square answers a taken time with a plain 400 on <c>start_at</c> (#21), not a 409. We format <c>start_at</c>
+    /// ourselves, so a 400 on it means the time, not the request.
+    /// </summary>
+    private static bool IsSlotTaken(SquareApiException exception) =>
+        exception.StatusCode == StatusCodes.Status400BadRequest
+        && exception.Errors.Any(error => error.Field == "start_at");
 
     private static string ToSquareTime(DateTimeOffset instant) =>
         instant.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture);

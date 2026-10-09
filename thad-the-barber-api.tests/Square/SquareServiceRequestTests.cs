@@ -1,5 +1,8 @@
+using System.Net;
 using System.Text.Json;
+using Square;
 using ThadTheBarber.Api.Common.Models;
+using ThadTheBarber.Api.Square.Exceptions;
 using ThadTheBarber.Api.Square.Models;
 using ThadTheBarber.Api.Tests.Fakes;
 
@@ -124,6 +127,52 @@ public sealed class SquareServiceRequestTests
             booking.EnumerateObject().Select(property => property.Name).Order());
         Assert.Equal("2026-10-05T13:30:00Z", booking.GetProperty("start_at").GetString());
         Assert.Equal(1, appointment.Version);
+    }
+
+    [Fact]
+    public async Task ATakenTimeOnBookingIsASlotUnavailableError()
+    {
+        using SquareHarness harness = new();
+        harness.Http.Responses["/v2/bookings"] = SquareFixture.ReadText("error-slot-no-longer-available.json");
+        harness.Http.ResponseStatuses["/v2/bookings"] = HttpStatusCode.BadRequest;
+        TimeSlot slot = new FakeSquareService().TimeSlots[0];
+
+        await Assert.ThrowsAsync<SlotUnavailableException>(() => harness.Square.CreateBookingAsync("CUSTOMER-1", slot, "key-1", Cancellation));
+    }
+
+    [Fact]
+    public async Task ATakenTimeOnRescheduleIsASlotUnavailableError()
+    {
+        using SquareHarness harness = new();
+        harness.Http.Responses["/v2/bookings/r1h5tfnj3ybo31"] = SquareFixture.ReadText("error-slot-no-longer-available.json");
+        harness.Http.ResponseStatuses["/v2/bookings/r1h5tfnj3ybo31"] = HttpStatusCode.BadRequest;
+
+        await Assert.ThrowsAsync<SlotUnavailableException>(() => harness.Square.RescheduleBookingAsync(
+            "r1h5tfnj3ybo31",
+            0,
+            new DateTimeOffset(2026, 10, 5, 13, 30, 0, TimeSpan.Zero),
+            Cancellation));
+    }
+
+    [Fact]
+    public async Task OtherBookingRejectionsStaySquareErrors()
+    {
+        using SquareHarness harness = new();
+        harness.Http.Responses["/v2/bookings"] = """{"errors":[{"category":"INVALID_REQUEST_ERROR","code":"INVALID_VALUE","field":"location_id"}]}""";
+        harness.Http.ResponseStatuses["/v2/bookings"] = HttpStatusCode.BadRequest;
+        TimeSlot slot = new FakeSquareService().TimeSlots[0];
+
+        await Assert.ThrowsAsync<SquareApiException>(() => harness.Square.CreateBookingAsync("CUSTOMER-1", slot, "key-1", Cancellation));
+    }
+
+    [Fact]
+    public async Task ARejectedPhoneIsAnInvalidCustomerDetailsError()
+    {
+        using SquareHarness harness = new();
+        harness.Http.Responses["/v2/customers"] = """{"errors":[{"category":"INVALID_REQUEST_ERROR","code":"INVALID_PHONE_NUMBER","field":"phone_number"}]}""";
+        harness.Http.ResponseStatuses["/v2/customers"] = HttpStatusCode.BadRequest;
+
+        await Assert.ThrowsAsync<InvalidCustomerDetailsException>(() => harness.Square.CreateCustomerAsync("Spike TwentyOne", "+1555", Cancellation));
     }
 
     [Fact]

@@ -5,7 +5,7 @@ namespace ThadTheBarber.Api.Tests.Fakes;
 
 /// <summary>
 /// Square's HTTP API for tests. Token requests issue <c>access-1</c>, <c>access-2</c>, …; other requests answer 200
-/// with their path's body from <see cref="Responses"/> unless their bearer token is in <see cref="RejectedTokens"/>.
+/// (or their path's <see cref="ResponseStatuses"/>) with their path's body from <see cref="Responses"/> unless their bearer token is in <see cref="RejectedTokens"/>.
 /// Every request is recorded; <see cref="Down"/> makes them all fail.
 /// </summary>
 public sealed class FakeSquareHttp : HttpMessageHandler
@@ -16,6 +16,9 @@ public sealed class FakeSquareHttp : HttpMessageHandler
 
     /// <summary>Response bodies by request path, e.g. <c>/v2/locations/main</c>.</summary>
     public Dictionary<string, string> Responses { get; } = [];
+
+    /// <summary>Statuses other than 200 by request path, answered with the path's body from <see cref="Responses"/>.</summary>
+    public Dictionary<string, HttpStatusCode> ResponseStatuses { get; } = [];
 
     public HttpStatusCode TokenStatus { get; set; } = HttpStatusCode.OK;
 
@@ -51,7 +54,7 @@ public sealed class FakeSquareHttp : HttpMessageHandler
 
         return recorded.Token is { } token && RejectedTokens.Contains(token)
             ? Json(HttpStatusCode.Unauthorized, """{"errors":[{"category":"AUTHENTICATION_ERROR","code":"UNAUTHORIZED"}]}""")
-            : Json(HttpStatusCode.OK, Responses.GetValueOrDefault(recorded.Path, """{"merchant_id":"M1","expires_at":"2026-11-03T00:00:00Z"}"""));
+            : Json(ResponseStatuses.GetValueOrDefault(recorded.Path, HttpStatusCode.OK), Responses.GetValueOrDefault(recorded.Path, """{"merchant_id":"M1","expires_at":"2026-11-03T00:00:00Z"}"""));
     }
 
     private static HttpResponseMessage Json(HttpStatusCode status, string json) =>
