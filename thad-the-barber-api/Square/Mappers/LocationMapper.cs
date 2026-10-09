@@ -8,6 +8,7 @@ namespace ThadTheBarber.Api.Square.Mappers;
 public static class LocationMapper
 {
     public static ShopDetails ToShopDetails(this Location location) => new(
+        location.Id ?? throw MissingField(nameof(Location.Id)),
         location.BusinessName ?? location.Name ?? throw MissingField(nameof(Location.BusinessName)),
         ToE164Phone(location.PhoneNumber ?? throw MissingField(nameof(Location.PhoneNumber))),
         location.Timezone ?? throw MissingField(nameof(Location.Timezone)),

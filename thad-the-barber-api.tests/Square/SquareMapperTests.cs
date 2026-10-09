@@ -14,6 +14,7 @@ public sealed class SquareMapperTests
     {
         ShopDetails details = SquareFixture.ReadAs<GetLocationResponse>("retrieve-location.json").Location!.ToShopDetails();
 
+        Assert.Equal("LVF9Q8XN61NA4", details.LocationId);
         Assert.Equal("Thad the Barber", details.Name);
         Assert.Equal("+15406212143", details.Phone);
         Assert.Equal("America/New_York", details.TimeZone);
@@ -106,7 +107,10 @@ public sealed class SquareMapperTests
         Assert.Equal(
             new TimeSlot(
                 new DateTimeOffset(2026, 10, 5, 13, 0, 0, TimeSpan.Zero),
-                "TMN76Ik4Cpv-ToYe"
+                "LVF9Q8XN61NA4",
+                "TMN76Ik4Cpv-ToYe",
+                "TC6VHEWA3WPRAXH6HDMQ5DJN",
+                1791077615792
             ),
             availability.ToTimeSlot());
     }
