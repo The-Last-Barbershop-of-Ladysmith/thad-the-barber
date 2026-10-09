@@ -154,17 +154,23 @@ public sealed class SquareService : ISquareService
     /// </summary>
     public async Task<string> CreateCustomerAsync(string name, string phone, string idempotencyKey, CancellationToken cancellationToken)
     {
-        string[] nameParts = name.Trim().Split(' ', 2, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        if (nameParts.Length == 0)
+        string[] nameWords = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (nameWords.Length == 0)
         {
             throw new InvalidCustomerDetailsException("A customer needs a name.");
+        }
+
+        string? familyName = null;
+        if (nameWords.Length > 1)
+        {
+            familyName = string.Join(' ', nameWords[1..]);
         }
 
         CreateCustomerRequest createCustomerRequest = new()
         {
             IdempotencyKey = idempotencyKey,
-            GivenName = nameParts[0],
-            FamilyName = nameParts.ElementAtOrDefault(1),
+            GivenName = nameWords[0],
+            FamilyName = familyName,
             PhoneNumber = phone,
         };
 

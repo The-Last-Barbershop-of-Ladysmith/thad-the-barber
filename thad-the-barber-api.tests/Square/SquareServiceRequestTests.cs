@@ -85,7 +85,8 @@ public sealed class SquareServiceRequestTests
 
     [Theory]
     [InlineData("Spike TwentyOne", "Spike", "TwentyOne")]
-    [InlineData("  Mary Ann  Smith ", "Mary", "Ann  Smith")]
+    [InlineData("  Mary Ann  Smith ", "Mary", "Ann Smith")]
+    [InlineData("Juan Carlos de la Cruz", "Juan", "Carlos de la Cruz")]
     [InlineData("Cher", "Cher", null)]
     public async Task ANewCustomersNameSplitsAtTheFirstSpace(string name, string givenName, string? familyName)
     {
