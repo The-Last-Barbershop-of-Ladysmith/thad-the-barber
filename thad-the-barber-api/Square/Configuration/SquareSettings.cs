@@ -13,4 +13,7 @@ public sealed class SquareSettings
     /// <summary>The Square application's ID (not secret). Its secret is in Key Vault (<see cref="SquareSecrets"/>).</summary>
     [Required]
     public string ApplicationId { get; set; } = null!;
+
+    /// <summary>Pins the shop's bookable service when the catalog holds more than one (BR-01). Usually unset.</summary>
+    public string? ServiceVariationId { get; set; }
 }
