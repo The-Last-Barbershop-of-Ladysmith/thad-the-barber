@@ -66,7 +66,7 @@ public sealed class FakeSquareService : ISquareService
         SquareFixture.ReadAs<UpdateBookingResponse>("update-booking.json").Booking!.ToAppointment();
 
     /// <summary>When set, the shop, booking profile and catalog reads throw it, as if Square were down.</summary>
-    public Exception? Failure { get; set; }
+    public Exception? ReadFailure { get; set; }
 
     public int Checks => _checks;
 
@@ -118,9 +118,9 @@ public sealed class FakeSquareService : ISquareService
 
     private Task<T> FailOr<T>(T value)
     {
-        if (Failure is not null)
+        if (ReadFailure is not null)
         {
-            return Task.FromException<T>(Failure);
+            return Task.FromException<T>(ReadFailure);
         }
 
         return Task.FromResult(value);

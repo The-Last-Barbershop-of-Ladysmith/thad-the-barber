@@ -80,7 +80,7 @@ public sealed class HealthTests(ApiFactory factory) : IClassFixture<ApiFactory>
     }
 
     [Fact]
-    public async Task DeepHealthReusesAFailedBookableServiceLookupForRepeatedProbes()
+    public async Task DeepHealthReusesTheCachedCatalogForRepeatedProbes()
     {
         FakeSquareService square = new()
         {

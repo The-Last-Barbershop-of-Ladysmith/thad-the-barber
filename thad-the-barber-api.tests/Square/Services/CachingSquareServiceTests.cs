@@ -31,13 +31,14 @@ public sealed class CachingSquareServiceTests
     [Fact]
     public async Task ASecondReadWithinTheHourIsServedFromTheCache()
     {
-        for (int read = 0; read < 2; read++)
-        {
-            await _cached.GetShopDetailsAsync(Cancellation);
-            await _cached.GetBookingProfileAsync("LOCATION0TEST", Cancellation);
-            await _cached.GetBookableServicesAsync(Cancellation);
-            _time.Advance(CachingSquareService.CacheFor - TimeSpan.FromSeconds(1));
-        }
+        await _cached.GetShopDetailsAsync(Cancellation);
+        await _cached.GetBookingProfileAsync("LOCATION0TEST", Cancellation);
+        await _cached.GetBookableServicesAsync(Cancellation);
+        _time.Advance(CachingSquareService.CacheFor - TimeSpan.FromSeconds(1));
+
+        await _cached.GetShopDetailsAsync(Cancellation);
+        await _cached.GetBookingProfileAsync("LOCATION0TEST", Cancellation);
+        await _cached.GetBookableServicesAsync(Cancellation);
 
         Assert.Equal(1, _square.ShopDetailsReads);
         Assert.Equal(1, _square.BookingProfileReads);
@@ -69,20 +70,20 @@ public sealed class CachingSquareServiceTests
     {
         ShopDetails fetched = await _cached.GetShopDetailsAsync(Cancellation);
         _time.Advance(CachingSquareService.CacheFor);
-        _square.Failure = new HttpRequestException("Square is down.");
+        _square.ReadFailure = new HttpRequestException("Square is down.");
 
         ShopDetails served = await _cached.GetShopDetailsAsync(Cancellation);
 
         Assert.Same(fetched, served);
         Assert.Equal(2, _square.ShopDetailsReads);
         Assert.Equal(LogLevel.Warning, _logger.LatestRecord.Level);
-        Assert.Same(_square.Failure, _logger.LatestRecord.Exception);
+        Assert.Same(_square.ReadFailure, _logger.LatestRecord.Exception);
     }
 
     [Fact]
     public async Task WhenSquareFailsWithNothingCachedTheCallerGetsTheFailure()
     {
-        _square.Failure = new HttpRequestException("Square is down.");
+        _square.ReadFailure = new HttpRequestException("Square is down.");
 
         await Assert.ThrowsAsync<HttpRequestException>(() => _cached.GetShopDetailsAsync(Cancellation));
     }
@@ -92,7 +93,7 @@ public sealed class CachingSquareServiceTests
     {
         await _cached.GetShopDetailsAsync(Cancellation);
         _time.Advance(CachingSquareService.CacheFor);
-        _square.Failure = new TaskCanceledException();
+        _square.ReadFailure = new TaskCanceledException();
         using CancellationTokenSource cancelled = new();
         await cancelled.CancelAsync();
 

@@ -57,7 +57,7 @@ public sealed class ShopEndpointsTests
         using HttpClient client = timed.CreateClient();
         string fresh = await client.GetStringAsync("/api/shop", Cancellation);
         time.Advance(CachingSquareService.CacheFor);
-        square.Failure = new HttpRequestException("Square is down.");
+        square.ReadFailure = new HttpRequestException("Square is down.");
 
         using HttpResponseMessage response = await client.GetAsync("/api/shop", Cancellation);
 
@@ -71,7 +71,7 @@ public sealed class ShopEndpointsTests
     {
         using ApiFactory api = new(square: new FakeSquareService
         {
-            Failure = new HttpRequestException("Square is down."),
+            ReadFailure = new HttpRequestException("Square is down."),
         });
 
         using HttpResponseMessage response = await api.CreateClient().GetAsync("/api/shop", Cancellation);
