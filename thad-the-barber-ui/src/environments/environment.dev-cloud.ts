@@ -5,6 +5,6 @@ export const environment: Environment = {
   apiBaseUrl: 'https://as-ttb-api-dev-centralus.azurewebsites.net/api',
   siteUrl: 'https://as-ttb-ui-dev-centralus.azurewebsites.net',
   mediaBaseUrl: 'https://storttbnonprodcentralus.blob.core.windows.net/media-dev',
-  recaptchaSiteKey: '6Lc3zegtAAAAAMbasiX7iGPa4fFvAqixRtu57Y0j',
+  recaptchaSiteKey: '6LfdeugtAAAAAH8ctabtu7arVmL3hMAp9Uxad6Dp',
   appInsightsConnectionString: 'InstrumentationKey=e98a89ed-6192-4b0c-9cf6-322a6f9d5e29;IngestionEndpoint=https://centralus-2.in.applicationinsights.azure.com/;LiveEndpoint=https://centralus.livediagnostics.monitor.azure.com/;ApplicationId=4bc47276-55a1-4e2b-b416-e2aacd02aac2',
 };
