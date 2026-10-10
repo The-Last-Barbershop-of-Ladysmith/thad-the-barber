@@ -108,6 +108,24 @@ Personal values come from environment variables, so they never land in this publ
 
 CI (`.github/workflows/infra.yml`) builds and lints the Bicep on every PR that touches `infra/`, then runs what-if as the read-only preview identity (below). It never deploys: `create` is still run by hand.
 
+### Google reCAPTCHA (#34)
+
+`POST /api/session` asks Google's reCAPTCHA `createAssessment` API about each visitor. The API won't start without `Recaptcha:ProjectId` and `Recaptcha:SiteKey` (not secret: `appsettings.{Environment}.json`) and the `Recaptcha--ApiKey` secret, so set these up before a build with #34 deploys. It's free up to 10,000 assessments a month. One Google Cloud project serves every environment (the same one the reviews API will use, #36):
+
+```powershell
+gcloud services enable recaptchaenterprise.googleapis.com apikeys.googleapis.com
+# One score key per environment. Nonprod keys return a fixed score, so dev and test never depend on real traffic;
+# rerun with --testing-score=0.1 to try the call/text fallback.
+gcloud recaptcha keys create --display-name=ttb-dev  --web --integration-type=score --domains=as-ttb-ui-dev-centralus.azurewebsites.net,localhost --testing-score=0.9
+gcloud recaptcha keys create --display-name=ttb-test --web --integration-type=score --domains=as-ttb-ui-test-centralus.azurewebsites.net --testing-score=0.9
+# Prod (M5): no --testing-score, domains = the custom domain.
+gcloud services api-keys create --display-name=ttb-api-recaptcha --api-target=service=recaptchaenterprise.googleapis.com
+```
+
+- Put the project ID and each key's ID (the site key) in that environment's `appsettings.{Environment}.json` under `Recaptcha`, and the site key in the UI's `environment.*.ts` (`recaptchaSiteKey`).
+- Save the API key with `./infra/scripts/Set-TtbSecrets.ps1 -Environment dev` (then `test`) as `Recaptcha--ApiKey`. One key serves every environment; it can only call the reCAPTCHA API. The API sends it in a header, never the URL.
+- `Recaptcha:MinScore` (default 0.5) is the threshold; override it in `appsettings.{Environment}.json`.
+
 ### GitHub → Azure sign-in (OIDC)
 
 GitHub Actions signs in with **user-assigned managed identities** that trust GitHub's OIDC tokens (federated credentials), so there's no client secret or publish profile anywhere. Bicep creates them with the rest of the stage; they're free.
