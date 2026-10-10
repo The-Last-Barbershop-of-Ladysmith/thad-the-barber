@@ -2,6 +2,7 @@ using System.Globalization;
 using Square;
 using ThadTheBarber.Api.Square.Mappers;
 using ThadTheBarber.Api.Square.Models;
+using ThadTheBarber.Api.Tests.TestSupport;
 using SquareBooking = Square.Booking;
 
 namespace ThadTheBarber.Api.Tests.Square.Mappers;

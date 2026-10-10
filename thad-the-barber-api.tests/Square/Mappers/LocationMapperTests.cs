@@ -1,6 +1,7 @@
 using Square;
 using ThadTheBarber.Api.Square.Mappers;
 using ThadTheBarber.Api.Square.Models;
+using ThadTheBarber.Api.Tests.TestSupport;
 using SquareDayOfWeek = Square.DayOfWeek;
 
 namespace ThadTheBarber.Api.Tests.Square.Mappers;

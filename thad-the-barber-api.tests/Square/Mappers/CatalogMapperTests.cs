@@ -2,6 +2,7 @@ using System.Text.Json;
 using Square;
 using ThadTheBarber.Api.Square.Mappers;
 using ThadTheBarber.Api.Square.Models;
+using ThadTheBarber.Api.Tests.TestSupport;
 
 namespace ThadTheBarber.Api.Tests.Square.Mappers;
 
