@@ -4,11 +4,14 @@ using Azure.Monitor.OpenTelemetry.AspNetCore;
 using ThadTheBarber.Api.Common.Exceptions;
 using ThadTheBarber.Api.Features.Booking.Endpoints;
 using ThadTheBarber.Api.Features.Health.Endpoints;
+using ThadTheBarber.Api.Features.Session.Configuration;
+using ThadTheBarber.Api.Features.Session.Endpoints;
 using ThadTheBarber.Api.Features.Shop.Endpoints;
 using ThadTheBarber.Api.Infrastructure.Cors.Configuration;
 using ThadTheBarber.Api.Infrastructure.Headers.Middleware;
 using ThadTheBarber.Api.Infrastructure.KeyVault.Configuration;
 using ThadTheBarber.Api.Infrastructure.Problems.Handlers;
+using ThadTheBarber.Api.Recaptcha.Configuration;
 using ThadTheBarber.Api.Square.Configuration;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -28,6 +31,8 @@ builder.Services.AddExceptionHandler<ProblemExceptionHandler>();
 builder.Services.AddHsts(options => options.MaxAge = TimeSpan.FromDays(365));
 builder.Services.AddFrontendCors(builder.Configuration);
 builder.Services.AddSquareService(builder.Configuration);
+builder.Services.AddRecaptcha(builder.Configuration);
+builder.Services.AddSessionAuth(builder.Configuration);
 builder.Services.AddHealth();
 builder.Services.AddBooking();
 builder.Services.AddOpenApi();
@@ -50,15 +55,18 @@ if (!app.Environment.IsDevelopment())
 app.UseStatusCodePages();
 app.UseNoSniff();
 app.UseCors();
+app.UseAuthentication();
+app.UseAuthorization();
 
 RouteGroupBuilder api = app.MapGroup("/api");
+api.MapSessionEndpoints();
 api.MapHealthEndpoints();
 api.MapShopEndpoints();
 api.MapBookingEndpoints();
 
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi("/api/openapi/{documentName}.json");
+    app.MapOpenApi("/api/openapi/{documentName}.json").AllowAnonymous();
     app.UseSwaggerUI(options =>
     {
         options.SwaggerEndpoint("/api/openapi/v1.json", "Thad the Barber API");
