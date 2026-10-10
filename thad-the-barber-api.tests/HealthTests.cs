@@ -1,6 +1,11 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Testing;
+using ThadTheBarber.Api.Square.Exceptions;
 using ThadTheBarber.Api.Square.Models;
 using ThadTheBarber.Api.Tests.Fakes;
 
@@ -38,6 +43,36 @@ public sealed class HealthTests(ApiFactory factory) : IClassFixture<ApiFactory>
         JsonElement body = await response.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken);
         Assert.Equal("healthy", body.GetProperty("status").GetString());
         Assert.Equal("healthy", body.GetProperty("checks").GetProperty("square").GetString());
+        Assert.Equal("healthy", body.GetProperty("checks").GetProperty("bookableService").GetString());
+    }
+
+    [Fact]
+    public async Task DeepHealthIs503AndLogsAnErrorWhenTheCatalogHasSeveralBookableServices()
+    {
+        BookableService bookableService = new FakeSquareService().BookableServices.Single();
+        using ApiFactory ambiguous = new(square: new FakeSquareService
+        {
+            BookableServices =
+            [
+                bookableService,
+                bookableService with
+                {
+                    VariationId = "OTHER-VARIATION",
+                },
+            ],
+        });
+        using WebApplicationFactory<Program> logged = ambiguous.WithWebHostBuilder(builder => builder.ConfigureServices(
+            services => services.AddLogging(logging => logging.AddFakeLogging())));
+
+        using HttpResponseMessage response = await logged.CreateClient().GetAsync("/api/health?deep=true", TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+        JsonElement body = await response.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken);
+        Assert.Equal("healthy", body.GetProperty("checks").GetProperty("square").GetString());
+        Assert.Equal("unhealthy", body.GetProperty("checks").GetProperty("bookableService").GetString());
+        Assert.Contains(
+            logged.Services.GetFakeLogCollector().GetSnapshot(),
+            record => record.Level == LogLevel.Error && record.Exception is BookableServiceNotResolvedException);
     }
 
     [Fact]
