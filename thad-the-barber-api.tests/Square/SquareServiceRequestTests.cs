@@ -50,6 +50,19 @@ public sealed class SquareServiceRequestTests
     }
 
     [Fact]
+    public async Task BookableServicesComeFromTheCatalogsAppointmentServices()
+    {
+        using SquareHarness harness = new();
+        harness.Http.Responses["/v2/catalog/search-catalog-items"] = SquareFixture.ReadText("search-catalog-items.json");
+
+        List<BookableService> services = await harness.Square.GetBookableServicesAsync(Cancellation);
+
+        JsonElement productTypes = Body(harness, "/v2/catalog/search-catalog-items").GetProperty("product_types");
+        Assert.Equal(["APPOINTMENTS_SERVICE"], productTypes.EnumerateArray().Select(productType => productType.GetString()));
+        Assert.Equal("TC6VHEWA3WPRAXH6HDMQ5DJN", Assert.Single(services).VariationId);
+    }
+
+    [Fact]
     public async Task AShortDaySearchesTwentyFourHoursAndKeepsOnlyItsOwnSlots()
     {
         using SquareHarness harness = new();
@@ -59,7 +72,7 @@ public sealed class SquareServiceRequestTests
             new DateTimeOffset(2026, 10, 6, 3, 0, 0, TimeSpan.Zero)
         );
 
-        List<TimeSlot> slots = await harness.Square.SearchAvailableTimeSlotsAsync("LVF9Q8XN61NA4", new FakeSquareService().BookableService, range, Cancellation);
+        List<TimeSlot> slots = await harness.Square.SearchAvailableTimeSlotsAsync("LVF9Q8XN61NA4", new FakeSquareService().BookableServices.Single(), range, Cancellation);
 
         JsonElement startAtRange = Body(harness, "/v2/bookings/availability/search").GetProperty("query").GetProperty("filter").GetProperty("start_at_range");
         Assert.Equal("2026-10-05T04:00:00Z", startAtRange.GetProperty("start_at").GetString());
