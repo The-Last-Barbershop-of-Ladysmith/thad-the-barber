@@ -3,12 +3,17 @@ using System.Text;
 
 namespace ThadTheBarber.Api.Tests.TestSupport.Fakes;
 
-/// <summary>Google's reCAPTCHA API for tests: records the one request it gets and answers with <see cref="Status"/> and <see cref="Body"/>.</summary>
+/// <summary>
+/// Google's reCAPTCHA API for tests: records the one request it gets and answers with <see cref="Status"/> and
+/// <see cref="Body"/>, or throws <see cref="Failure"/>.
+/// </summary>
 public sealed class FakeRecaptchaHttp : HttpMessageHandler
 {
     public HttpStatusCode Status { get; set; } = HttpStatusCode.OK;
 
     public string Body { get; set; } = """{"tokenProperties":{"valid":true,"hostname":"app.example.com","action":"session"},"riskAnalysis":{"score":0.9}}""";
+
+    public Exception? Failure { get; set; }
 
     public HttpRequestMessage? Request { get; private set; }
 
@@ -17,7 +22,12 @@ public sealed class FakeRecaptchaHttp : HttpMessageHandler
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         Request = request;
-        RequestBody = request.Content is null ? null : await request.Content.ReadAsStringAsync(cancellationToken);
+        RequestBody = await request.Content!.ReadAsStringAsync(cancellationToken);
+        if (Failure is not null)
+        {
+            throw Failure;
+        }
+
         return new HttpResponseMessage(Status) { Content = new StringContent(Body, Encoding.UTF8, "application/json") };
     }
 }

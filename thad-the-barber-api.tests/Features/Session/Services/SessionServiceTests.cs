@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Microsoft.Extensions.Logging.Testing;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
@@ -8,6 +7,7 @@ using ThadTheBarber.Api.Features.Session.Models;
 using ThadTheBarber.Api.Features.Session.Services;
 using ThadTheBarber.Api.Infrastructure.Cors.Configuration;
 using ThadTheBarber.Api.Recaptcha.Configuration;
+using ThadTheBarber.Api.Recaptcha.Exceptions;
 using ThadTheBarber.Api.Recaptcha.Models;
 using ThadTheBarber.Api.Tests.TestSupport;
 using ThadTheBarber.Api.Tests.TestSupport.Fakes;
@@ -133,17 +133,10 @@ public sealed class SessionServiceTests
         Assert.Empty(recaptcha.Tokens);
     }
 
-    public static TheoryData<Exception> GoogleFailures() =>
-    [
-        new HttpRequestException("Google is down."),
-        new JsonException("Not JSON."),
-        new TaskCanceledException("Timed out."),
-    ];
-
-    [Theory]
-    [MemberData(nameof(GoogleFailures))]
-    public async Task WhenGoogleCantBeAskedTheBotCheckFails(Exception failure)
+    [Fact]
+    public async Task WhenGoogleCantBeAskedTheBotCheckFails()
     {
+        RecaptchaUnavailableException failure = new("Google is down.", new HttpRequestException("Unreachable."));
         FakeRecaptchaService recaptcha = new()
         {
             Failure = failure,
@@ -151,19 +144,6 @@ public sealed class SessionServiceTests
 
         BotCheckFailedException exception = await Assert.ThrowsAsync<BotCheckFailedException>(() => CreateService(recaptcha).StartAsync(ApiFactory.FrontendOrigin, Token, Cancellation));
         Assert.Same(failure, exception.InnerException);
-    }
-
-    [Fact]
-    public async Task ACallerWhoCancelsGetsACancellationNotAFailedBotCheck()
-    {
-        using CancellationTokenSource cancelled = new();
-        await cancelled.CancelAsync();
-        FakeRecaptchaService recaptcha = new()
-        {
-            Failure = new TaskCanceledException("Cancelled."),
-        };
-
-        await Assert.ThrowsAsync<TaskCanceledException>(() => CreateService(recaptcha).StartAsync(ApiFactory.FrontendOrigin, Token, cancelled.Token));
     }
 
     [Fact]

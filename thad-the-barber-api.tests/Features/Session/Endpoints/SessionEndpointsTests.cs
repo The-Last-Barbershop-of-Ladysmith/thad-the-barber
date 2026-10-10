@@ -11,6 +11,8 @@ namespace ThadTheBarber.Api.Tests.Features.Session.Endpoints;
 
 public sealed class SessionEndpointsTests
 {
+    private const string ValidBody = """{"recaptchaToken":"token-1"}""";
+
     private static CancellationToken Cancellation => TestContext.Current.CancellationToken;
 
     [Fact]
@@ -19,7 +21,7 @@ public sealed class SessionEndpointsTests
         using ApiFactory api = new();
         using HttpClient client = api.CreateClientWithoutToken();
 
-        using HttpResponseMessage response = await client.SendAsync(SessionRequest(ApiFactory.FrontendOrigin, """{"recaptchaToken":"token-1"}"""), Cancellation);
+        using HttpResponseMessage response = await PostSessionAsync(client, ApiFactory.FrontendOrigin, ValidBody);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.True(response.Headers.CacheControl?.NoStore);
@@ -38,7 +40,7 @@ public sealed class SessionEndpointsTests
             Assessment = FakeRecaptchaService.Pass with { Score = 0.1 },
         });
 
-        using HttpResponseMessage response = await api.CreateClientWithoutToken().SendAsync(SessionRequest(ApiFactory.FrontendOrigin, """{"recaptchaToken":"token-1"}"""), Cancellation);
+        using HttpResponseMessage response = await PostSessionAsync(api.CreateClientWithoutToken(), ApiFactory.FrontendOrigin, ValidBody);
 
         await AssertProblemAsync(response, "bot_check_failed");
     }
@@ -51,7 +53,7 @@ public sealed class SessionEndpointsTests
     {
         using ApiFactory api = new();
 
-        using HttpResponseMessage response = await api.CreateClientWithoutToken().SendAsync(SessionRequest(ApiFactory.FrontendOrigin, body), Cancellation);
+        using HttpResponseMessage response = await PostSessionAsync(api.CreateClientWithoutToken(), ApiFactory.FrontendOrigin, body);
 
         await AssertProblemAsync(response, "bot_check_failed");
     }
@@ -62,7 +64,7 @@ public sealed class SessionEndpointsTests
         using ApiFactory api = new();
         using WebApplicationFactory<Program> strict = api.WithWebHostBuilder(builder => builder.UseSetting("Recaptcha:MinScore", "0.95"));
 
-        using HttpResponseMessage response = await strict.CreateClient().SendAsync(SessionRequest(ApiFactory.FrontendOrigin, """{"recaptchaToken":"token-1"}"""), Cancellation);
+        using HttpResponseMessage response = await PostSessionAsync(strict.CreateClient(), ApiFactory.FrontendOrigin, ValidBody);
 
         await AssertProblemAsync(response, "bot_check_failed");
     }
@@ -74,14 +76,14 @@ public sealed class SessionEndpointsTests
     {
         using ApiFactory api = new();
 
-        using HttpResponseMessage response = await api.CreateClientWithoutToken().SendAsync(SessionRequest(origin, """{"recaptchaToken":"token-1"}"""), Cancellation);
+        using HttpResponseMessage response = await PostSessionAsync(api.CreateClientWithoutToken(), origin, ValidBody);
 
         await AssertProblemAsync(response, "origin_not_allowed");
     }
 
-    private static HttpRequestMessage SessionRequest(string? origin, string body)
+    private static async Task<HttpResponseMessage> PostSessionAsync(HttpClient client, string? origin, string body)
     {
-        HttpRequestMessage request = new(HttpMethod.Post, "/api/session")
+        using HttpRequestMessage request = new(HttpMethod.Post, "/api/session")
         {
             Content = new StringContent(body, MediaTypeHeaderValue.Parse("application/json")),
         };
@@ -90,7 +92,7 @@ public sealed class SessionEndpointsTests
             request.Headers.Add("Origin", origin);
         }
 
-        return request;
+        return await client.SendAsync(request, Cancellation);
     }
 
     private static async Task AssertProblemAsync(HttpResponseMessage response, string code)

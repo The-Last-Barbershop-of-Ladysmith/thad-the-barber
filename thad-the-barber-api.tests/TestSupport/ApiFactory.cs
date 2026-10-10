@@ -27,6 +27,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
     private readonly string[] _origins;
     private readonly ISquareService _square;
     private readonly TimeProvider _time;
+    private readonly FakeRecaptchaService _recaptcha;
 
     public ApiFactory()
         : this(null, null, null, null)
@@ -48,10 +49,8 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
         _origins = origins ?? [FrontendOrigin, CustomDomainOrigin];
         _square = square ?? new FakeSquareService();
         _time = time ?? TimeProvider.System;
-        Recaptcha = recaptcha ?? new FakeRecaptchaService();
+        _recaptcha = recaptcha ?? new FakeRecaptchaService();
     }
-
-    public FakeRecaptchaService Recaptcha { get; }
 
     public FakeSessionSigningKey SigningKey { get; } = new();
 
@@ -91,7 +90,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
         {
             services.AddSingleton(_square);
             services.AddSingleton(_time);
-            services.AddSingleton<IRecaptchaService>(Recaptcha);
+            services.AddSingleton<IRecaptchaService>(_recaptcha);
             services.AddSingleton<ISessionSigningKey>(SigningKey);
         });
     }

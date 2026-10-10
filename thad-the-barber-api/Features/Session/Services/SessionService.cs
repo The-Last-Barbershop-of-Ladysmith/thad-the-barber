@@ -1,9 +1,9 @@
-using System.Text.Json;
 using Microsoft.Extensions.Options;
 using ThadTheBarber.Api.Features.Session.Exceptions;
 using ThadTheBarber.Api.Features.Session.Models;
 using ThadTheBarber.Api.Infrastructure.Cors.Configuration;
 using ThadTheBarber.Api.Recaptcha.Configuration;
+using ThadTheBarber.Api.Recaptcha.Exceptions;
 using ThadTheBarber.Api.Recaptcha.Models;
 using ThadTheBarber.Api.Recaptcha.Services;
 
@@ -52,11 +52,10 @@ public sealed partial class SessionService(
         {
             return await recaptcha.AssessAsync(recaptchaToken, RecaptchaAction, cancellationToken);
         }
-        catch (Exception exception) when (exception is HttpRequestException or JsonException
-            || (exception is TaskCanceledException && !cancellationToken.IsCancellationRequested))
+        catch (RecaptchaUnavailableException exception)
         {
             LogRecaptchaUnavailable(logger, exception);
-            throw new BotCheckFailedException("reCAPTCHA couldn't assess the token.", exception);
+            throw new BotCheckFailedException(exception.Message, exception);
         }
     }
 

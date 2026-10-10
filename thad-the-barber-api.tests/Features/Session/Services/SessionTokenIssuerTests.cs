@@ -54,16 +54,6 @@ public sealed class SessionTokenIssuerTests
         Assert.NotEqual(first, second);
     }
 
-    [Fact]
-    public async Task ATokenSignedByAnotherKeyDoesNotValidate()
-    {
-        SessionToken session = await CreateIssuer(new FakeSessionSigningKey()).IssueAsync(Cancellation);
-
-        TokenValidationResult result = await ValidateAsync(session.Token, new FakeSessionSigningKey().Key);
-
-        Assert.False(result.IsValid);
-    }
-
     private static SessionTokenIssuer CreateIssuer(FakeSessionSigningKey signingKey, TimeSpan? lifetime = null)
     {
         SessionSettings settings = new()

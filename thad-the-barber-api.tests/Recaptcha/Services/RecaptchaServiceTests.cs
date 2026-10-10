@@ -2,6 +2,7 @@ using System.Net;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
 using ThadTheBarber.Api.Recaptcha.Configuration;
+using ThadTheBarber.Api.Recaptcha.Exceptions;
 using ThadTheBarber.Api.Recaptcha.Models;
 using ThadTheBarber.Api.Recaptcha.Services;
 using ThadTheBarber.Api.Tests.TestSupport.Fakes;
@@ -63,7 +64,7 @@ public sealed class RecaptchaServiceTests
     [InlineData(HttpStatusCode.BadRequest)]
     [InlineData(HttpStatusCode.Forbidden)]
     [InlineData(HttpStatusCode.ServiceUnavailable)]
-    public async Task AssessThrowsWhenGoogleRefuses(HttpStatusCode status)
+    public async Task GoogleRefusingIsUnavailable(HttpStatusCode status)
     {
         FakeRecaptchaHttp google = new()
         {
@@ -71,18 +72,52 @@ public sealed class RecaptchaServiceTests
             Body = """{"error":{"code":403}}""",
         };
 
-        await Assert.ThrowsAsync<HttpRequestException>(() => CreateService(google).AssessAsync("token-1", "session", Cancellation));
+        await Assert.ThrowsAsync<RecaptchaUnavailableException>(() => CreateService(google).AssessAsync("token-1", "session", Cancellation));
     }
 
-    [Fact]
-    public async Task AssessThrowsOnAnEmptyJsonBody()
+    [Theory]
+    [InlineData("null")]
+    [InlineData("not json")]
+    public async Task ANonsenseAnswerIsUnavailable(string body)
     {
         FakeRecaptchaHttp google = new()
         {
-            Body = "null",
+            Body = body,
         };
 
-        await Assert.ThrowsAsync<HttpRequestException>(() => CreateService(google).AssessAsync("token-1", "session", Cancellation));
+        await Assert.ThrowsAsync<RecaptchaUnavailableException>(() => CreateService(google).AssessAsync("token-1", "session", Cancellation));
+    }
+
+    public static TheoryData<Exception> SendFailures() =>
+    [
+        new HttpRequestException("Google is unreachable."),
+        new TaskCanceledException("The HttpClient timed out."),
+    ];
+
+    [Theory]
+    [MemberData(nameof(SendFailures))]
+    public async Task AnUnreachableOrSlowGoogleIsUnavailable(Exception failure)
+    {
+        FakeRecaptchaHttp google = new()
+        {
+            Failure = failure,
+        };
+
+        RecaptchaUnavailableException exception = await Assert.ThrowsAsync<RecaptchaUnavailableException>(() => CreateService(google).AssessAsync("token-1", "session", Cancellation));
+        Assert.Same(failure, exception.InnerException);
+    }
+
+    [Fact]
+    public async Task ACallerWhoCancelsGetsACancellation()
+    {
+        using CancellationTokenSource cancelled = new();
+        await cancelled.CancelAsync();
+        FakeRecaptchaHttp google = new()
+        {
+            Failure = new TaskCanceledException("Cancelled."),
+        };
+
+        await Assert.ThrowsAsync<TaskCanceledException>(() => CreateService(google).AssessAsync("token-1", "session", cancelled.Token));
     }
 
     private static RecaptchaService CreateService(FakeRecaptchaHttp google) =>
