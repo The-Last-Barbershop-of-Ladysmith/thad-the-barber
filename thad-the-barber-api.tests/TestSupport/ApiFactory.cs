@@ -20,7 +20,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
 
     private readonly string[] _origins;
     private readonly ISquareService _square;
-    private readonly TimeProvider? _time;
+    private readonly TimeProvider _time;
 
     public ApiFactory()
         : this(null, null, null)
@@ -36,7 +36,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
     {
         _origins = origins ?? [FrontendOrigin, CustomDomainOrigin];
         _square = square ?? new FakeSquareService();
-        _time = time;
+        _time = time ?? TimeProvider.System;
     }
 
     /// <summary>This host with its logs collected; read them from <c>Services.GetFakeLogCollector()</c>.</summary>
@@ -55,10 +55,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
         builder.ConfigureTestServices(services =>
         {
             services.AddSingleton(_square);
-            if (_time is not null)
-            {
-                services.AddSingleton(_time);
-            }
+            services.AddSingleton(_time);
         });
     }
 }
