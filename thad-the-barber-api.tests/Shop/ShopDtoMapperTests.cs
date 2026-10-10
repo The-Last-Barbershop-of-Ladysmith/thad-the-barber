@@ -18,7 +18,7 @@ public sealed class ShopDtoMapperTests
     [Fact]
     public void DetailsProfileAndServiceBecomeShopInfo()
     {
-        ShopInfo shop = _square.ShopDetails.ToShopInfo(_square.BookingProfile, _square.BookableService);
+        ShopInfo shop = _square.ShopDetails.ToShopInfo(_square.BookingProfile, _square.BookableServices.Single());
 
         Assert.Equal("Thad the Barber", shop.Name);
         Assert.Equal("+15406212143", shop.Phone);
@@ -65,7 +65,7 @@ public sealed class ShopDtoMapperTests
         using ApiFactory api = new();
         JsonSerializerOptions json = api.Services.GetRequiredService<IOptions<JsonOptions>>().Value.SerializerOptions;
 
-        JsonNode hours = JsonSerializer.SerializeToNode(_square.ShopDetails.ToShopInfo(_square.BookingProfile, _square.BookableService), json)!["hours"]![1]!;
+        JsonNode hours = JsonSerializer.SerializeToNode(_square.ShopDetails.ToShopInfo(_square.BookingProfile, _square.BookableServices.Single()), json)!["hours"]![1]!;
 
         Assert.Equal("""{"day":6,"opens":"10:00:00","closes":"19:00:00"}""", hours.ToJsonString());
     }

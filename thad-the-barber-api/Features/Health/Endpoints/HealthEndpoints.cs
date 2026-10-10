@@ -14,7 +14,8 @@ public static class HealthEndpoints
         services.AddSingleton(BuildInfo.FromAssembly(typeof(HealthEndpoints).Assembly));
         services.AddMemoryCache();
         services.AddHealthChecks()
-            .AddCheck<SquareHealthCheck>(SquareHealthCheck.Name);
+            .AddCheck<SquareHealthCheck>(SquareHealthCheck.Name)
+            .AddCheck<BookableServiceHealthCheck>(BookableServiceHealthCheck.Name);
         return services;
     }
 

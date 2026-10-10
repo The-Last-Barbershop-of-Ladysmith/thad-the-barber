@@ -1,6 +1,10 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Testing;
+using ThadTheBarber.Api.Square.Exceptions;
 using ThadTheBarber.Api.Square.Models;
 using ThadTheBarber.Api.Tests.Fakes;
 
@@ -38,6 +42,27 @@ public sealed class HealthTests(ApiFactory factory) : IClassFixture<ApiFactory>
         JsonElement body = await response.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken);
         Assert.Equal("healthy", body.GetProperty("status").GetString());
         Assert.Equal("healthy", body.GetProperty("checks").GetProperty("square").GetString());
+        Assert.Equal("healthy", body.GetProperty("checks").GetProperty("bookableService").GetString());
+    }
+
+    [Fact]
+    public async Task DeepHealthIs503AndLogsAnErrorWhenTheCatalogHasSeveralBookableServices()
+    {
+        using ApiFactory ambiguous = new(square: new FakeSquareService
+        {
+            BookableServices = FakeSquareService.TwoBookableServices,
+        });
+        using WebApplicationFactory<Program> logged = ambiguous.WithFakeLogging();
+
+        using HttpResponseMessage response = await logged.CreateClient().GetAsync("/api/health?deep=true", TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+        JsonElement body = await response.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken);
+        Assert.Equal("healthy", body.GetProperty("checks").GetProperty("square").GetString());
+        Assert.Equal("unhealthy", body.GetProperty("checks").GetProperty("bookableService").GetString());
+        Assert.Contains(
+            logged.Services.GetFakeLogCollector().GetSnapshot(),
+            record => record.Level == LogLevel.Error && record.Exception is BookableServiceNotResolvedException);
     }
 
     [Fact]
@@ -51,6 +76,22 @@ public sealed class HealthTests(ApiFactory factory) : IClassFixture<ApiFactory>
         await client.GetAsync("/api/health?deep=true", TestContext.Current.CancellationToken);
 
         Assert.Equal(1, square.Checks);
+    }
+
+    [Fact]
+    public async Task DeepHealthReusesAFailedBookableServiceLookupForRepeatedProbes()
+    {
+        FakeSquareService square = new()
+        {
+            BookableServices = [],
+        };
+        using ApiFactory probed = new(square: square);
+        using HttpClient client = probed.CreateClient();
+
+        await client.GetAsync("/api/health?deep=true", TestContext.Current.CancellationToken);
+        await client.GetAsync("/api/health?deep=true", TestContext.Current.CancellationToken);
+
+        Assert.Equal(1, square.CatalogSearches);
     }
 
     [Theory]

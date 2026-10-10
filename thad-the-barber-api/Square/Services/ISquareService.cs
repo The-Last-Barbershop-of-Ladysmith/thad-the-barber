@@ -13,7 +13,8 @@ public interface ISquareService
 
     Task<BookingProfile> GetBookingProfileAsync(string locationId, CancellationToken cancellationToken);
 
-    Task<BookableService> GetBookableServiceAsync(CancellationToken cancellationToken);
+    /// <summary>Every catalog service variation open for online booking. <see cref="BookableServiceResolver"/> picks the shop's one.</summary>
+    Task<List<BookableService>> GetBookableServicesAsync(CancellationToken cancellationToken);
 
     Task<List<TimeSlot>> SearchAvailableTimeSlotsAsync(string locationId, BookableService bookableService, DateTimeRange dateTimeRange, CancellationToken cancellationToken);
 

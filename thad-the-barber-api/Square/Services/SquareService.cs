@@ -71,7 +71,7 @@ public sealed class SquareService : ISquareService
         return businessProfile.ToBookingProfile(locationProfileTask.Result);
     }
 
-    public async Task<BookableService> GetBookableServiceAsync(CancellationToken cancellationToken)
+    public async Task<List<BookableService>> GetBookableServicesAsync(CancellationToken cancellationToken)
     {
         SearchCatalogItemsRequest catalogRequest = new()
         {
@@ -80,8 +80,7 @@ public sealed class SquareService : ISquareService
 
         SearchCatalogItemsResponse catalogResponse = await squareClient.Catalog.SearchItemsAsync(catalogRequest, cancellationToken: cancellationToken);
 
-        // The shop offers one service (BR-01), so a second bookable one is a Dashboard mistake worth failing on.
-        return (catalogResponse.Items ?? []).SelectMany(catalogItem => catalogItem.ToBookableServices()).Single();
+        return (catalogResponse.Items ?? []).SelectMany(catalogItem => catalogItem.ToBookableServices()).ToList();
     }
 
     /// <summary>

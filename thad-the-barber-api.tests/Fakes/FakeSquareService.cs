@@ -14,6 +14,7 @@ namespace ThadTheBarber.Api.Tests.Fakes;
 public sealed class FakeSquareService : ISquareService
 {
     private int _checks;
+    private int _catalogSearches;
 
     public SquareConnection Connection { get; init; } = SquareConnection.Connected;
 
@@ -24,8 +25,25 @@ public sealed class FakeSquareService : ISquareService
         SquareFixture.ReadAs<GetBusinessBookingProfileResponse>("business-booking-profile.json").BusinessBookingProfile!
             .ToBookingProfile(SquareFixture.ReadAs<ListLocationBookingProfilesResponse>("location-booking-profiles.json").LocationBookingProfiles!.Single());
 
-    public BookableService BookableService { get; init; } =
-        SquareFixture.ReadAs<SearchCatalogItemsResponse>("search-catalog-items.json").Items!.SelectMany(item => item.ToBookableServices()).Single();
+    public List<BookableService> BookableServices { get; init; } =
+        [.. SquareFixture.ReadAs<SearchCatalogItemsResponse>("search-catalog-items.json").Items!.SelectMany(item => item.ToBookableServices())];
+
+    /// <summary>The fixture's service plus a second variation, which the one-service rule (BR-01) rejects unless one is pinned.</summary>
+    public static List<BookableService> TwoBookableServices
+    {
+        get
+        {
+            BookableService fixtureService = new FakeSquareService().BookableServices.Single();
+            return
+            [
+                fixtureService,
+                fixtureService with
+                {
+                    VariationId = "OTHER-VARIATION",
+                },
+            ];
+        }
+    }
 
     public List<TimeSlot> TimeSlots { get; init; } =
         [.. SquareFixture.ReadAs<SearchAvailabilityResponse>("search-availability.json").Availabilities!.Select(availability => availability.ToTimeSlot())];
@@ -47,6 +65,8 @@ public sealed class FakeSquareService : ISquareService
 
     public int Checks => _checks;
 
+    public int CatalogSearches => _catalogSearches;
+
     public Task<SquareConnection> CheckConnectionAsync(CancellationToken cancellationToken)
     {
         Interlocked.Increment(ref _checks);
@@ -57,7 +77,11 @@ public sealed class FakeSquareService : ISquareService
 
     public Task<BookingProfile> GetBookingProfileAsync(string locationId, CancellationToken cancellationToken) => Task.FromResult(BookingProfile);
 
-    public Task<BookableService> GetBookableServiceAsync(CancellationToken cancellationToken) => Task.FromResult(BookableService);
+    public Task<List<BookableService>> GetBookableServicesAsync(CancellationToken cancellationToken)
+    {
+        Interlocked.Increment(ref _catalogSearches);
+        return Task.FromResult(BookableServices);
+    }
 
     public Task<List<TimeSlot>> SearchAvailableTimeSlotsAsync(string locationId, BookableService bookableService, DateTimeRange dateTimeRange, CancellationToken cancellationToken) =>
         Task.FromResult(TimeSlots.Where(timeSlot => timeSlot.StartAt >= dateTimeRange.Start && timeSlot.StartAt < dateTimeRange.End).ToList());

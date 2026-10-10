@@ -33,11 +33,8 @@ public sealed class ExceptionLoggingTests(ApiFactory factory) : IClassFixture<Ap
 
     private async Task<FakeLogCollector> RequestAsync(string path)
     {
-        using WebApplicationFactory<Program> throwing = factory.WithWebHostBuilder(builder => builder.ConfigureServices(services =>
-        {
-            services.AddLogging(logging => logging.AddFakeLogging());
-            services.AddSingleton<IStartupFilter, ThrowingFilter>();
-        }));
+        using WebApplicationFactory<Program> throwing = factory.WithFakeLogging().WithWebHostBuilder(builder => builder.ConfigureServices(
+            services => services.AddSingleton<IStartupFilter, ThrowingFilter>()));
 
         using HttpResponseMessage response = await throwing.CreateClient().GetAsync(path, TestContext.Current.CancellationToken);
 
