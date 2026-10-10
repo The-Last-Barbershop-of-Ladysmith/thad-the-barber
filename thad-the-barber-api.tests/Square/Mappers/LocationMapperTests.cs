@@ -13,20 +13,25 @@ public sealed class LocationMapperTests
     {
         ShopDetails details = ReadLocation().ToShopDetails();
 
-        Assert.Equal("LVF9Q8XN61NA4", details.LocationId);
-        Assert.Equal("Thad the Barber", details.Name);
-        Assert.Equal("+15406212143", details.Phone);
+        Assert.Equal("LOCATION0TEST", details.LocationId);
+        Assert.Equal("O'Neil & Søn Barbershop", details.Name);
+        Assert.Equal("+15550100199", details.Phone);
         Assert.Equal("America/New_York", details.TimeZone);
         Assert.Equal(
             new ShopAddress(
-                "2022 Augustine Ave",
-                "Fredericksburg",
-                "VA",
-                "22401-4419"
+                "100 Example St Ste #2",
+                "Winston-Salem",
+                "NC",
+                "27101-0001"
             ),
             details.Address);
         Assert.Equal(
             [
+                new OpeningPeriod(
+                    System.DayOfWeek.Saturday,
+                    new TimeOnly(9, 30),
+                    new TimeOnly(12, 0)
+                ),
                 new OpeningPeriod(
                     System.DayOfWeek.Sunday,
                     new TimeOnly(10, 0),
@@ -34,17 +39,17 @@ public sealed class LocationMapperTests
                 ),
                 new OpeningPeriod(
                     System.DayOfWeek.Saturday,
-                    new TimeOnly(10, 0),
-                    new TimeOnly(19, 0)
+                    new TimeOnly(13, 0),
+                    new TimeOnly(19, 45)
                 ),
             ],
             details.Hours);
-        Assert.StartsWith("❗Important", details.Description, StringComparison.Ordinal);
+        Assert.Equal("❗Important: read before booking❗\n\nQuestions? Text 555-010-0199.\n\nPrices stay the same for now 💈\n", details.Description);
     }
 
     [Theory]
-    [InlineData("+1 540-621-2143", "+15406212143")]
-    [InlineData("(540) 621-2143", "+15406212143")]
+    [InlineData("+1 (555) 010-0199", "+15550100199")]
+    [InlineData("555.010.0199", "+15550100199")]
     [InlineData("+44 20 7946 0958", "+442079460958")]
     public void LocationPhoneBecomesE164(string squarePhone, string e164)
     {
@@ -68,7 +73,7 @@ public sealed class LocationMapperTests
     {
         Location location = ReadLocation() with { BusinessName = null };
 
-        Assert.Equal("Thad", location.ToShopDetails().Name);
+        Assert.Equal("Test Location", location.ToShopDetails().Name);
     }
 
     [Fact]

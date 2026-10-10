@@ -18,7 +18,7 @@ public sealed class BookingProfileMapperTests
                 MinimumNotice: TimeSpan.Zero,
                 MaximumAdvance: TimeSpan.FromDays(365),
                 CanCustomersCancel: true,
-                SquareBookingSiteUrl: "https://square.site/book/LVF9Q8XN61NA4/thad-the-barber-sandbox-washington-dc"
+                SquareBookingSiteUrl: "https://square.site/book/LOCATION0TEST/test-shop"
             ),
             ReadBusinessProfile().ToBookingProfile(location));
     }

@@ -17,7 +17,7 @@ public sealed class BookableServiceResolverTests
     {
         BookableService resolved = await Resolver(new FakeSquareService()).ResolveAsync(Cancellation);
 
-        Assert.Equal("TC6VHEWA3WPRAXH6HDMQ5DJN", resolved.VariationId);
+        Assert.Equal("VARIATION0HAIRCUT000TEST", resolved.VariationId);
         Assert.Equal(TimeSpan.FromMinutes(30), resolved.Duration);
     }
 

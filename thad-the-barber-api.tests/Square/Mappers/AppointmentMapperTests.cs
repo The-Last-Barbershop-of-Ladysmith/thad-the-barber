@@ -19,7 +19,7 @@ public sealed class AppointmentMapperTests
 
         Assert.Equal(
             new Appointment(
-                "r1h5tfnj3ybo31",
+                "bk_test-0001ab",
                 version,
                 status,
                 DateTimeOffset.Parse(startAt, CultureInfo.InvariantCulture)

@@ -22,7 +22,7 @@ public sealed class SquareServiceRequestTests
 
         ShopDetails details = await harness.Square.GetShopDetailsAsync(Cancellation);
 
-        Assert.Equal("LVF9Q8XN61NA4", details.LocationId);
+        Assert.Equal("LOCATION0TEST", details.LocationId);
     }
 
     [Fact]
@@ -32,9 +32,9 @@ public sealed class SquareServiceRequestTests
         harness.Http.Responses["/v2/bookings/business-booking-profile"] = SquareFixture.ReadText("business-booking-profile.json");
         harness.Http.Responses["/v2/bookings/location-booking-profiles"] = SquareFixture.ReadText("location-booking-profiles.json");
 
-        BookingProfile profile = await harness.Square.GetBookingProfileAsync("LVF9Q8XN61NA4", Cancellation);
+        BookingProfile profile = await harness.Square.GetBookingProfileAsync("LOCATION0TEST", Cancellation);
 
-        Assert.Equal("https://square.site/book/LVF9Q8XN61NA4/thad-the-barber-sandbox-washington-dc", profile.SquareBookingSiteUrl);
+        Assert.Equal("https://square.site/book/LOCATION0TEST/test-shop", profile.SquareBookingSiteUrl);
     }
 
     [Fact]
@@ -60,7 +60,7 @@ public sealed class SquareServiceRequestTests
 
         JsonElement productTypes = Body(harness, "/v2/catalog/search-catalog-items").GetProperty("product_types");
         Assert.Equal(["APPOINTMENTS_SERVICE"], productTypes.EnumerateArray().Select(productType => productType.GetString()));
-        Assert.Equal("TC6VHEWA3WPRAXH6HDMQ5DJN", Assert.Single(services).VariationId);
+        Assert.Equal("VARIATION0HAIRCUT000TEST", Assert.Single(services).VariationId);
     }
 
     [Fact]
@@ -73,7 +73,7 @@ public sealed class SquareServiceRequestTests
             new DateTimeOffset(2026, 10, 6, 3, 0, 0, TimeSpan.Zero)
         );
 
-        List<TimeSlot> slots = await harness.Square.SearchAvailableTimeSlotsAsync("LVF9Q8XN61NA4", new FakeSquareService().BookableServices.Single(), range, Cancellation);
+        List<TimeSlot> slots = await harness.Square.SearchAvailableTimeSlotsAsync("LOCATION0TEST", new FakeSquareService().BookableServices.Single(), range, Cancellation);
 
         JsonElement startAtRange = Body(harness, "/v2/bookings/availability/search").GetProperty("query").GetProperty("filter").GetProperty("start_at_range");
         Assert.Equal("2026-10-05T04:00:00Z", startAtRange.GetProperty("start_at").GetString());
@@ -94,7 +94,7 @@ public sealed class SquareServiceRequestTests
         Assert.Equal("+18045550123", query.GetProperty("filter").GetProperty("phone_number").GetProperty("exact").GetString());
         Assert.Equal("CREATED_AT", query.GetProperty("sort").GetProperty("field").GetString());
         Assert.Equal("ASC", query.GetProperty("sort").GetProperty("order").GetString());
-        Assert.Equal("X0ZH4DE1DVN5P1261RKAE8JPDM", customerId);
+        Assert.Equal("CUSTOMER0TEST0000000000001", customerId);
     }
 
     [Theory]
@@ -119,7 +119,7 @@ public sealed class SquareServiceRequestTests
         }
 
         Assert.Equal(familyName, sentFamilyName);
-        Assert.Equal("KCAYNMXV36K477WJYDVANJSVVG", customerId);
+        Assert.Equal("CUSTOMER0TEST0000000000005", customerId);
     }
 
     [Fact]
@@ -136,27 +136,27 @@ public sealed class SquareServiceRequestTests
         JsonElement segment = booking.GetProperty("appointment_segments").EnumerateArray().Single();
         Assert.Equal("key-1", body.GetProperty("idempotency_key").GetString());
         Assert.Equal("CUSTOMER-1", booking.GetProperty("customer_id").GetString());
-        Assert.Equal("LVF9Q8XN61NA4", booking.GetProperty("location_id").GetString());
+        Assert.Equal("LOCATION0TEST", booking.GetProperty("location_id").GetString());
         Assert.Equal("2026-10-05T13:00:00Z", booking.GetProperty("start_at").GetString());
-        Assert.Equal("TMN76Ik4Cpv-ToYe", segment.GetProperty("team_member_id").GetString());
-        Assert.Equal("TC6VHEWA3WPRAXH6HDMQ5DJN", segment.GetProperty("service_variation_id").GetString());
+        Assert.Equal("TM_test-Barber01", segment.GetProperty("team_member_id").GetString());
+        Assert.Equal("VARIATION0HAIRCUT000TEST", segment.GetProperty("service_variation_id").GetString());
         Assert.Equal(1791077615792, segment.GetProperty("service_variation_version").GetInt64());
-        Assert.Equal("r1h5tfnj3ybo31", appointment.Id);
+        Assert.Equal("bk_test-0001ab", appointment.Id);
     }
 
     [Fact]
     public async Task ARescheduleSendsOnlyTheVersionAndNewStart()
     {
         using SquareHarness harness = new();
-        harness.Http.Responses["/v2/bookings/r1h5tfnj3ybo31"] = SquareFixture.ReadText("update-booking.json");
+        harness.Http.Responses["/v2/bookings/bk_test-0001ab"] = SquareFixture.ReadText("update-booking.json");
 
         Appointment appointment = await harness.Square.RescheduleBookingAsync(
-            "r1h5tfnj3ybo31",
+            "bk_test-0001ab",
             0,
             new DateTimeOffset(2026, 10, 5, 9, 30, 0, TimeSpan.FromHours(-4)),
             Cancellation);
 
-        JsonElement booking = Body(harness, "/v2/bookings/r1h5tfnj3ybo31").GetProperty("booking");
+        JsonElement booking = Body(harness, "/v2/bookings/bk_test-0001ab").GetProperty("booking");
         Assert.Equal(
             ["start_at", "version"],
             booking.EnumerateObject().Select(property => property.Name).Order());
@@ -179,11 +179,11 @@ public sealed class SquareServiceRequestTests
     public async Task ATakenTimeOnRescheduleIsASlotUnavailableError()
     {
         using SquareHarness harness = new();
-        harness.Http.Responses["/v2/bookings/r1h5tfnj3ybo31"] = SquareFixture.ReadText("error-slot-no-longer-available.json");
-        harness.Http.ResponseStatuses["/v2/bookings/r1h5tfnj3ybo31"] = HttpStatusCode.BadRequest;
+        harness.Http.Responses["/v2/bookings/bk_test-0001ab"] = SquareFixture.ReadText("error-slot-no-longer-available.json");
+        harness.Http.ResponseStatuses["/v2/bookings/bk_test-0001ab"] = HttpStatusCode.BadRequest;
 
         await Assert.ThrowsAsync<SlotUnavailableException>(() => harness.Square.RescheduleBookingAsync(
-            "r1h5tfnj3ybo31",
+            "bk_test-0001ab",
             0,
             new DateTimeOffset(2026, 10, 5, 13, 30, 0, TimeSpan.Zero),
             Cancellation));
@@ -235,11 +235,11 @@ public sealed class SquareServiceRequestTests
     public async Task ACancelSendsTheVersion()
     {
         using SquareHarness harness = new();
-        harness.Http.Responses["/v2/bookings/r1h5tfnj3ybo31/cancel"] = SquareFixture.ReadText("cancel-booking.json");
+        harness.Http.Responses["/v2/bookings/bk_test-0001ab/cancel"] = SquareFixture.ReadText("cancel-booking.json");
 
-        Appointment appointment = await harness.Square.CancelBookingAsync("r1h5tfnj3ybo31", 1, Cancellation);
+        Appointment appointment = await harness.Square.CancelBookingAsync("bk_test-0001ab", 1, Cancellation);
 
-        Assert.Equal(1, Body(harness, "/v2/bookings/r1h5tfnj3ybo31/cancel").GetProperty("booking_version").GetInt32());
+        Assert.Equal(1, Body(harness, "/v2/bookings/bk_test-0001ab/cancel").GetProperty("booking_version").GetInt32());
         Assert.Equal(AppointmentStatus.CancelledByCustomer, appointment.Status);
     }
 

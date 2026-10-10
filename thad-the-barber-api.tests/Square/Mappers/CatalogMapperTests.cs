@@ -16,10 +16,10 @@ public sealed class CatalogMapperTests
         BookableService service = Assert.Single(item.ToBookableServices());
 
         Assert.Equal("Men's haircut", service.Name);
-        Assert.Equal("TC6VHEWA3WPRAXH6HDMQ5DJN", service.VariationId);
+        Assert.Equal("VARIATION0HAIRCUT000TEST", service.VariationId);
         Assert.Equal(1791077615792, service.VariationVersion);
         Assert.Equal(TimeSpan.FromMinutes(30), service.Duration);
-        Assert.Equal(["TMN76Ik4Cpv-ToYe"], service.TeamMemberIds);
+        Assert.Equal(["TM_test-Barber01"], service.TeamMemberIds);
     }
 
     [Theory]

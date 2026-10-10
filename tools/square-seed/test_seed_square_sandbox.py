@@ -3,6 +3,7 @@ import json
 import unittest
 from pathlib import Path
 
+from location import get_phone_digits
 from plan import Plan, format_plan
 from seed_square_sandbox import SEED_FILE, plan_seed
 from square_api import Json, SquareState
@@ -19,7 +20,7 @@ def spike_sandbox() -> SquareState:
     """The sandbox as the #21 spike left it."""
     return SquareState(
         location={
-            "id": "LVF9Q8XN61NA4",
+            "id": "LOCATION0TEST",
             "name": "Thad the Barber Sandbox",
             "business_name": "Thad the Barber Sandbox",
             "phone_number": "+1 202-555-0100",
@@ -37,7 +38,7 @@ def seeded_sandbox() -> SquareState:
     """The sandbox after --apply and the Dashboard steps."""
     state: SquareState = spike_sandbox()
     state.location.update(copy.deepcopy(SEED["location"]))
-    state.location["phone_number"] = "+15406212143"
+    state.location["phone_number"] = "+" + get_phone_digits(SEED["location"]["phone_number"])
     state.location["business_hours"]["periods"].reverse()
     state.service_items = [plan_seed(SEED, spike_sandbox()).service_object]
     state.business_booking_profile = copy.deepcopy(SEED["booking_settings"])
@@ -64,7 +65,7 @@ class DryRunTests(unittest.TestCase):
         self.assertIsNone(plan.service_object)
         self.assertEqual([], plan.dashboard_steps)
         self.assertEqual(
-            "Location LVF9Q8XN61NA4:\n  up to date\nService:\n  up to date\nNothing to write.",
+            "Location LOCATION0TEST:\n  up to date\nService:\n  up to date\nNothing to write.",
             format_plan(plan, applied=False))
 
     def test_missing_service_is_created_for_the_bookable_team_member(self) -> None:
@@ -76,7 +77,7 @@ class DryRunTests(unittest.TestCase):
         assert plan.service_object is not None
         variation: Json = plan.service_object["item_data"]["variations"][0]["item_variation_data"]
         self.assertEqual("APPOINTMENTS_SERVICE", plan.service_object["item_data"]["product_type"])
-        self.assertEqual(["TMN76Ik4Cpv-ToYe"], variation["team_member_ids"])
+        self.assertEqual(["TM_test-Barber01"], variation["team_member_ids"])
         self.assertEqual(["create \"Haircut w/ Thad\""], plan.service_change_lines)
 
     def test_extra_bookable_service_and_team_members_are_dashboard_steps(self) -> None:
@@ -89,13 +90,13 @@ class DryRunTests(unittest.TestCase):
         steps: list[str] = plan_seed(SEED, state).dashboard_steps
 
         self.assertIn('Turn off online booking for the extra service "Beard trim" (the site books one service)', steps)
-        self.assertIn("Make exactly one team member bookable (now 2: TM2, TMN76Ik4Cpv-ToYe)", steps)
+        self.assertIn("Make exactly one team member bookable (now 2: TM2, TM_test-Barber01)", steps)
 
     def test_team_member_order_from_square_is_not_a_change(self) -> None:
         state: SquareState = seeded_sandbox()
-        state.bookable_team_member_ids = ["TMN76Ik4Cpv-ToYe", "TM2"]
+        state.bookable_team_member_ids = ["TM_test-Barber01", "TM2"]
         variation: Json = state.service_items[0]["item_data"]["variations"][0]["item_variation_data"]
-        variation["team_member_ids"] = ["TMN76Ik4Cpv-ToYe", "TM2"]
+        variation["team_member_ids"] = ["TM_test-Barber01", "TM2"]
 
         self.assertIsNone(plan_seed(SEED, state).service_object)
 

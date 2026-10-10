@@ -1,21 +1,21 @@
 {
   "booking": {
-    "id": "xso2240jl9afq0",
+    "id": "bk_test-0005ab",
     "version": 1,
     "status": "ACCEPTED",
     "created_at": "2026-10-04T04:07:16Z",
     "updated_at": "2026-10-04T04:07:55Z",
-    "location_id": "LVF9Q8XN61NA4",
-    "customer_id": "S884HZ7AGPKP1ZBHZC7H0JVZAR",
+    "location_id": "LOCATION0TEST",
+    "customer_id": "CUSTOMER0TEST0000000000002",
     "start_at": "2026-10-06T13:00:00Z",
     "all_day": false,
     "appointment_segments": [
       {
         "duration_minutes": 30,
-        "service_variation_id": "TC6VHEWA3WPRAXH6HDMQ5DJN",
-        "team_member_id": "TMN76Ik4Cpv-ToYe",
+        "service_variation_id": "VARIATION0HAIRCUT000TEST",
+        "team_member_id": "TM_test-Barber01",
         "service_variation_version": 1791077615792,
-        "service_variation_client_id": "TC6VHEWA3WPRAXH6HDMQ5DJN",
+        "service_variation_client_id": "VARIATION0HAIRCUT000TEST",
         "any_team_member": false,
         "intermission_minutes": 0,
         "modifier_ids": []
@@ -31,7 +31,7 @@
     "transition_time_minutes": 0,
     "creator_details": {
       "creator_type": "TEAM_MEMBER",
-      "team_member_id": "TMN76Ik4Cpv-ToYe"
+      "team_member_id": "TM_test-Barber01"
     },
     "source": "FIRST_PARTY_MERCHANT",
     "location_type": "BUSINESS_LOCATION"

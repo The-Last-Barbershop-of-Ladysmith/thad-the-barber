@@ -11,7 +11,7 @@ public sealed class BookingDtoMapperTests
     {
         Assert.Equal(
             new BookingConfirmation(
-                "r1h5tfnj3ybo31",
+                "bk_test-0001ab",
                 new DateTimeOffset(2026, 10, 5, 13, 0, 0, TimeSpan.Zero)
             ),
             new FakeSquareService().CreatedAppointment.ToConfirmation());

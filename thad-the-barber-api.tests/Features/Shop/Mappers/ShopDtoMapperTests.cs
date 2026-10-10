@@ -21,23 +21,28 @@ public sealed class ShopDtoMapperTests
     {
         ShopInfo shop = _square.ShopDetails.ToShopInfo(_square.BookingProfile, _square.BookableServices.Single());
 
-        Assert.Equal("Thad the Barber", shop.Name);
-        Assert.Equal("+15406212143", shop.Phone);
+        Assert.Equal("O'Neil & Søn Barbershop", shop.Name);
+        Assert.Equal("+15550100199", shop.Phone);
         Assert.Equal("America/New_York", shop.TimeZone);
-        Assert.Equal("https://square.site/book/LVF9Q8XN61NA4/thad-the-barber-sandbox-washington-dc", shop.SquareBookingSiteUrl);
+        Assert.Equal("https://square.site/book/LOCATION0TEST/test-shop", shop.SquareBookingSiteUrl);
         Assert.Equal(
             new Address(
-                "2022 Augustine Ave",
-                "Fredericksburg",
-                "VA",
-                "22401-4419"
+                "100 Example St Ste #2",
+                "Winston-Salem",
+                "NC",
+                "27101-0001"
             ),
             shop.Address);
-        Assert.StartsWith("❗Important", shop.Notice, StringComparison.Ordinal);
+        Assert.Equal("❗Important: read before booking❗\n\nQuestions? Text 555-010-0199.\n\nPrices stay the same for now 💈\n", shop.Notice);
         Assert.Null(shop.InstagramUsername);
         Assert.Null(shop.FacebookUrl);
         Assert.Equal(
             [
+                new OpeningHours(
+                    DayOfWeek.Saturday,
+                    new TimeOnly(9, 30),
+                    new TimeOnly(12, 0)
+                ),
                 new OpeningHours(
                     DayOfWeek.Sunday,
                     new TimeOnly(10, 0),
@@ -45,8 +50,8 @@ public sealed class ShopDtoMapperTests
                 ),
                 new OpeningHours(
                     DayOfWeek.Saturday,
-                    new TimeOnly(10, 0),
-                    new TimeOnly(19, 0)
+                    new TimeOnly(13, 0),
+                    new TimeOnly(19, 45)
                 ),
             ],
             shop.Hours);
@@ -66,8 +71,8 @@ public sealed class ShopDtoMapperTests
         using ApiFactory api = new();
         JsonSerializerOptions json = api.Services.GetRequiredService<IOptions<JsonOptions>>().Value.SerializerOptions;
 
-        JsonNode hours = JsonSerializer.SerializeToNode(_square.ShopDetails.ToShopInfo(_square.BookingProfile, _square.BookableServices.Single()), json)!["hours"]![1]!;
+        JsonNode hours = JsonSerializer.SerializeToNode(_square.ShopDetails.ToShopInfo(_square.BookingProfile, _square.BookableServices.Single()), json)!["hours"]![2]!;
 
-        Assert.Equal("""{"day":6,"opens":"10:00:00","closes":"19:00:00"}""", hours.ToJsonString());
+        Assert.Equal("""{"day":6,"opens":"13:00:00","closes":"19:45:00"}""", hours.ToJsonString());
     }
 }

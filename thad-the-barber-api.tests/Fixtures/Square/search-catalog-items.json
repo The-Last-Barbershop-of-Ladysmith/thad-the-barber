@@ -2,7 +2,7 @@
   "items": [
     {
       "type": "ITEM",
-      "id": "GTVG646AOD66JJI2XWNPIQHX",
+      "id": "ITEM0HAIRCUT0000000TEST0",
       "updated_at": "2026-10-04T01:35:02.222Z",
       "created_at": "2026-10-04T01:33:35.839Z",
       "version": 1791077702222,
@@ -16,14 +16,14 @@
         "variations": [
           {
             "type": "ITEM_VARIATION",
-            "id": "TC6VHEWA3WPRAXH6HDMQ5DJN",
+            "id": "VARIATION0HAIRCUT000TEST",
             "updated_at": "2026-10-04T01:33:35.792Z",
             "created_at": "2026-10-04T01:33:35.839Z",
             "version": 1791077615792,
             "is_deleted": false,
             "present_at_all_locations": true,
             "item_variation_data": {
-              "item_id": "GTVG646AOD66JJI2XWNPIQHX",
+              "item_id": "ITEM0HAIRCUT0000000TEST0",
               "name": "Regular",
               "ordinal": 0,
               "pricing_type": "VARIABLE_PRICING",
@@ -33,7 +33,7 @@
               "sellable": true,
               "stockable": true,
               "team_member_ids": [
-                "TMN76Ik4Cpv-ToYe"
+                "TM_test-Barber01"
               ]
             }
           }
@@ -49,6 +49,6 @@
   ],
   "cursor": "",
   "matched_variation_ids": [
-    "TC6VHEWA3WPRAXH6HDMQ5DJN"
+    "VARIATION0HAIRCUT000TEST"
   ]
 }

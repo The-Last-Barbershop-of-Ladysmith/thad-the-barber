@@ -13,9 +13,9 @@ public sealed class AvailabilityMapperTests
         Assert.Equal(
             new TimeSlot(
                 new DateTimeOffset(2026, 10, 5, 13, 0, 0, TimeSpan.Zero),
-                "LVF9Q8XN61NA4",
-                "TMN76Ik4Cpv-ToYe",
-                "TC6VHEWA3WPRAXH6HDMQ5DJN",
+                "LOCATION0TEST",
+                "TM_test-Barber01",
+                "VARIATION0HAIRCUT000TEST",
                 1791077615792
             ),
             ReadAvailability().ToTimeSlot());
