@@ -2,6 +2,7 @@ using System.Globalization;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
 using ThadTheBarber.Api.Features.Booking.Exceptions;
+using ThadTheBarber.Api.Features.Booking.Models;
 using ThadTheBarber.Api.Features.Booking.Services;
 using ThadTheBarber.Api.Square.Configuration;
 using ThadTheBarber.Api.Square.Models;
@@ -21,9 +22,9 @@ public sealed class AvailabilityServiceTests
     private static CancellationToken Cancellation => TestContext.Current.CancellationToken;
 
     [Fact]
-    public async Task TheMonthListsOnlyDaysWithAnOpenTimeFromNowOn()
+    public async Task TheMonthListsDaysWithTheirOpenTimesFromNowOn()
     {
-        List<DateOnly> dates = await Service(new FakeSquareService()).GetAvailableDatesAsync(Date("2026-10-01"), Cancellation);
+        List<AvailableDay> days = await Service(new FakeSquareService()).GetAvailableDaysAsync(Date("2026-10-01"), Cancellation);
 
         Assert.Equal(
             [
@@ -32,40 +33,36 @@ public sealed class AvailabilityServiceTests
                 Date("2026-10-08"),
                 Date("2026-10-09"),
             ],
-            dates);
+            days.Select(day => day.Date));
+        Assert.Equal(Instant("2026-10-06T15:30:00Z"), days[0].Times[0]);
+        Assert.Equal(11, days[0].Times.Count);
+        Assert.Equal(16, days[3].Times.Count);
     }
 
     [Fact]
-    public async Task TheMonthGroupsTimesByTheShopsCalendarDayAcrossTheDstChange()
+    public async Task TimesAreGroupedInOrderByTheShopsCalendarDayAcrossTheDstChange()
     {
         FakeSquareService square = new()
         {
             TimeSlots = SlotsAt(
-                "2026-11-01T03:59:00Z",
-                "2026-11-01T04:00:00Z",
+                "2026-12-01T05:00:00Z",
                 "2026-11-03T03:30:00Z",
                 "2026-12-01T04:59:00Z",
-                "2026-12-01T05:00:00Z"),
+                "2026-11-01T04:00:00Z",
+                "2026-11-01T03:59:00Z",
+                "2026-11-02T15:00:00Z"),
         };
 
-        List<DateOnly> dates = await Service(square).GetAvailableDatesAsync(Date("2026-11-01"), Cancellation);
+        List<AvailableDay> days = await Service(square).GetAvailableDaysAsync(Date("2026-11-01"), Cancellation);
 
         Assert.Equal(
             [
-                Date("2026-11-01"),
-                Date("2026-11-02"),
-                Date("2026-11-30"),
+                Day("2026-11-01", "2026-11-01T04:00:00Z"),
+                Day("2026-11-02", "2026-11-02T15:00:00Z", "2026-11-03T03:30:00Z"),
+                Day("2026-11-30", "2026-12-01T04:59:00Z"),
             ],
-            dates);
-    }
-
-    [Fact]
-    public async Task TodaysPastTimesArentReturned()
-    {
-        List<DateTimeOffset> times = await Service(new FakeSquareService()).GetAvailableTimesAsync(Date("2026-10-06"), Cancellation);
-
-        Assert.Equal(Instant("2026-10-06T15:30:00Z"), times[0]);
-        Assert.Equal(11, times.Count);
+            days,
+            SameDay);
     }
 
     [Fact]
@@ -79,53 +76,13 @@ public sealed class AvailabilityServiceTests
             },
         };
 
-        List<DateTimeOffset> times = await Service(square).GetAvailableTimesAsync(Date("2026-10-06"), Cancellation);
+        List<AvailableDay> days = await Service(square).GetAvailableDaysAsync(Date("2026-10-01"), Cancellation);
 
-        Assert.Equal(Instant("2026-10-06T17:30:00Z"), times[0]);
+        Assert.Equal(Instant("2026-10-06T17:30:00Z"), days[0].Times[0]);
     }
 
     [Fact]
-    public async Task ADaysTimesStayWithinItsShopCalendarDay()
-    {
-        FakeSquareService square = new()
-        {
-            TimeSlots = SlotsAt(
-                "2026-10-08T03:59:00Z",
-                "2026-10-08T04:00:00Z",
-                "2026-10-09T03:59:00Z",
-                "2026-10-09T04:00:00Z"),
-        };
-
-        List<DateTimeOffset> times = await Service(square).GetAvailableTimesAsync(Date("2026-10-08"), Cancellation);
-
-        Assert.Equal(
-            [
-                Instant("2026-10-08T04:00:00Z"),
-                Instant("2026-10-09T03:59:00Z"),
-            ],
-            times);
-    }
-
-    [Theory]
-    [InlineData("2026-10-05")]
-    [InlineData("2027-10-07")]
-    public async Task ADayOutsideTheBookingWindowIsRejected(string date)
-    {
-        await Assert.ThrowsAsync<OutsideBookingWindowException>(
-            () => Service(new FakeSquareService()).GetAvailableTimesAsync(Date(date), Cancellation));
-    }
-
-    [Theory]
-    [InlineData("2026-09-01")]
-    [InlineData("2027-11-01")]
-    public async Task AMonthOutsideTheBookingWindowIsRejected(string month)
-    {
-        await Assert.ThrowsAsync<OutsideBookingWindowException>(
-            () => Service(new FakeSquareService()).GetAvailableDatesAsync(Date(month), Cancellation));
-    }
-
-    [Fact]
-    public async Task TheLastDayOfTheBookingWindowIsSearchedUpToItsEnd()
+    public async Task TheLastMonthOfTheBookingWindowIsSearchedUpToItsEnd()
     {
         FakeSquareService square = new()
         {
@@ -134,9 +91,18 @@ public sealed class AvailabilityServiceTests
                 "2027-10-06T15:30:00Z"),
         };
 
-        List<DateTimeOffset> times = await Service(square).GetAvailableTimesAsync(Date("2027-10-06"), Cancellation);
+        List<AvailableDay> days = await Service(square).GetAvailableDaysAsync(Date("2027-10-01"), Cancellation);
 
-        Assert.Equal([Instant("2027-10-06T15:00:00Z")], times);
+        Assert.Equal([Day("2027-10-06", "2027-10-06T15:00:00Z")], days, SameDay);
+    }
+
+    [Theory]
+    [InlineData("2026-09-01")]
+    [InlineData("2027-11-01")]
+    public async Task AMonthOutsideTheBookingWindowIsRejected(string month)
+    {
+        await Assert.ThrowsAsync<OutsideBookingWindowException>(
+            () => Service(new FakeSquareService()).GetAvailableDaysAsync(Date(month), Cancellation));
     }
 
     private static AvailabilityService Service(FakeSquareService square) => new(
@@ -150,6 +116,14 @@ public sealed class AvailabilityServiceTests
         TimeSlot fixtureSlot = new FakeSquareService().TimeSlots[0];
         return [.. instants.Select(instant => fixtureSlot with { StartAt = Instant(instant) })];
     }
+
+    private static AvailableDay Day(string date, params string[] times) => new(
+        Date(date),
+        [.. times.Select(Instant)]
+    );
+
+    private static bool SameDay(AvailableDay expected, AvailableDay actual) =>
+        expected.Date == actual.Date && expected.Times.SequenceEqual(actual.Times);
 
     private static DateOnly Date(string date) => DateOnly.ParseExact(date, "yyyy-MM-dd", CultureInfo.InvariantCulture);
 

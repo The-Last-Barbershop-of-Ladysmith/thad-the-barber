@@ -13,86 +13,63 @@ public sealed class BookingEndpointsTests
     private static CancellationToken Cancellation => TestContext.Current.CancellationToken;
 
     [Fact]
-    public async Task DatesListsTheMonthsOpenDaysAsIsoDates()
+    public async Task AvailabilityListsOpenDaysAsIsoDatesWithUtcTimes()
     {
         using ApiFactory api = Api();
 
-        using HttpResponseMessage response = await api.CreateClient().GetAsync("/api/availability/dates?month=2026-10", Cancellation);
+        using HttpResponseMessage response = await api.CreateClient().GetAsync("/api/bookings/availability?month=2026-10", Cancellation);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Equal(
-            [
-                "2026-10-06",
-                "2026-10-07",
-                "2026-10-08",
-                "2026-10-09",
-            ],
-            (await response.Content.ReadFromJsonAsync<string[]>(Cancellation))!);
+        JsonElement days = await response.Content.ReadFromJsonAsync<JsonElement>(Cancellation);
+        Assert.Equal(4, days.GetArrayLength());
+        Assert.Equal("2026-10-06", days[0].GetProperty("date").GetString());
+        Assert.Equal("2026-10-06T15:30:00+00:00", days[0].GetProperty("times")[0].GetString());
     }
 
     [Fact]
-    public async Task TimesListsTheDaysOpenTimesAsUtcInstants()
+    public async Task AvailabilityIsNeverStored()
     {
         using ApiFactory api = Api();
 
-        using HttpResponseMessage response = await api.CreateClient().GetAsync("/api/availability/times?date=2026-10-09", Cancellation);
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        string[] times = (await response.Content.ReadFromJsonAsync<string[]>(Cancellation))!;
-        Assert.Equal(16, times.Length);
-        Assert.Equal("2026-10-09T13:00:00+00:00", times[0]);
-    }
-
-    [Theory]
-    [InlineData("/api/availability/dates?month=2026-10")]
-    [InlineData("/api/availability/times?date=2026-10-09")]
-    public async Task AvailabilityIsNeverStored(string path)
-    {
-        using ApiFactory api = Api();
-
-        using HttpResponseMessage response = await api.CreateClient().GetAsync(path, Cancellation);
+        using HttpResponseMessage response = await api.CreateClient().GetAsync("/api/bookings/availability?month=2026-10", Cancellation);
 
         Assert.True(response.Headers.CacheControl?.NoStore);
     }
 
     [Theory]
-    [InlineData("/api/availability/dates?month=2026-1", "month")]
-    [InlineData("/api/availability/dates?month=2026-10-01", "month")]
-    [InlineData("/api/availability/dates?month=2026-13", "month")]
-    [InlineData("/api/availability/times?date=10/09/2026", "date")]
-    [InlineData("/api/availability/times?date=2026-02-30", "date")]
-    public async Task AMalformedMonthOrDateIs400ForThatParameter(string path, string parameter)
+    [InlineData("2026-1")]
+    [InlineData("2026-10-01")]
+    [InlineData("2026-13")]
+    [InlineData("10-2026")]
+    public async Task AMalformedMonthIs400ForTheMonth(string month)
     {
         using ApiFactory api = Api();
 
-        using HttpResponseMessage response = await api.CreateClient().GetAsync(path, Cancellation);
+        using HttpResponseMessage response = await api.CreateClient().GetAsync($"/api/bookings/availability?month={month}", Cancellation);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         JsonElement problem = await response.Content.ReadFromJsonAsync<JsonElement>(Cancellation);
-        Assert.True(problem.GetProperty("errors").TryGetProperty(parameter, out _));
+        Assert.True(problem.GetProperty("errors").TryGetProperty("month", out _));
     }
 
-    [Theory]
-    [InlineData("/api/availability/dates")]
-    [InlineData("/api/availability/times")]
-    public async Task AMissingMonthOrDateIs400(string path)
+    [Fact]
+    public async Task AMissingMonthIs400()
     {
         using ApiFactory api = Api();
 
-        using HttpResponseMessage response = await api.CreateClient().GetAsync(path, Cancellation);
+        using HttpResponseMessage response = await api.CreateClient().GetAsync("/api/bookings/availability", Cancellation);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [Theory]
-    [InlineData("/api/availability/dates?month=2026-09")]
-    [InlineData("/api/availability/times?date=2026-10-05")]
-    [InlineData("/api/availability/times?date=2027-10-07")]
-    public async Task OutsideTheBookingWindowIs400WithItsCode(string path)
+    [InlineData("2026-09")]
+    [InlineData("2027-11")]
+    public async Task AMonthOutsideTheBookingWindowIs400WithItsCode(string month)
     {
         using ApiFactory api = Api();
 
-        using HttpResponseMessage response = await api.CreateClient().GetAsync(path, Cancellation);
+        using HttpResponseMessage response = await api.CreateClient().GetAsync($"/api/bookings/availability?month={month}", Cancellation);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         JsonElement problem = await response.Content.ReadFromJsonAsync<JsonElement>(Cancellation);
