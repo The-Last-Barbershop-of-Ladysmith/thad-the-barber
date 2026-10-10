@@ -122,7 +122,7 @@ gcloud recaptcha keys create --display-name=ttb-test --web --integration-type=sc
 gcloud services api-keys create --display-name=ttb-api-recaptcha --api-target=service=recaptchaenterprise.googleapis.com
 ```
 
-- Put the project ID and each key's ID (the site key) in that environment's `appsettings.{Environment}.json` under `Recaptcha`, and the site key in the UI's `environment.*.ts` (`recaptchaSiteKey`).
+- The project, `thad-the-barber`, is `Recaptcha:ProjectId` in `appsettings.json`. Put each key's ID (the site key) in that environment's `appsettings.{Environment}.json` as `Recaptcha:SiteKey`, and in the UI's `environment.*.ts` as `recaptchaSiteKey`.
 - Save the API key with `./infra/scripts/Set-TtbSecrets.ps1 -Environment dev` (then `test`) as `Recaptcha--ApiKey`. One key serves every environment; it can only call the reCAPTCHA API. The API sends it in a header, never the URL.
 - `Recaptcha:MinScore` (default 0.5) is the threshold; override it in `appsettings.{Environment}.json`.
 
