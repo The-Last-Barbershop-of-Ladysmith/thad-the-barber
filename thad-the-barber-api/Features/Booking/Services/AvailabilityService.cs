@@ -1,10 +1,10 @@
 using ThadTheBarber.Api.Common.Extensions;
 using ThadTheBarber.Api.Common.Models;
-using ThadTheBarber.Api.Features.Availability.Exceptions;
+using ThadTheBarber.Api.Features.Booking.Exceptions;
 using ThadTheBarber.Api.Square.Models;
 using ThadTheBarber.Api.Square.Services;
 
-namespace ThadTheBarber.Api.Features.Availability.Services;
+namespace ThadTheBarber.Api.Features.Booking.Services;
 
 /// <summary>
 /// Open times for the shop's one service, from Thad's whole Square calendar. Never cached: a time booked anywhere should

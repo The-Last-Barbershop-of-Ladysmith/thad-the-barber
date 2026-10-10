@@ -2,7 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Azure.Monitor.OpenTelemetry.AspNetCore;
 using ThadTheBarber.Api.Common.Exceptions;
-using ThadTheBarber.Api.Features.Availability.Endpoints;
+using ThadTheBarber.Api.Features.Booking.Endpoints;
 using ThadTheBarber.Api.Features.Health.Endpoints;
 using ThadTheBarber.Api.Features.Shop.Endpoints;
 using ThadTheBarber.Api.Infrastructure.Cors.Configuration;
@@ -28,7 +28,7 @@ builder.Services.AddHsts(options => options.MaxAge = TimeSpan.FromDays(365));
 builder.Services.AddFrontendCors(builder.Configuration);
 builder.Services.AddSquareService(builder.Configuration);
 builder.Services.AddHealth();
-builder.Services.AddAvailability();
+builder.Services.AddBooking();
 builder.Services.AddOpenApi();
 builder.Services.AddSwaggerGen();
 
@@ -53,7 +53,7 @@ app.UseCors();
 RouteGroupBuilder api = app.MapGroup("/api");
 api.MapHealthEndpoints();
 api.MapShopEndpoints();
-api.MapAvailabilityEndpoints();
+api.MapBookingEndpoints();
 
 if (app.Environment.IsDevelopment())
 {

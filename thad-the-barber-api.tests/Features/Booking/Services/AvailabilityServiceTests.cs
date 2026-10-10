@@ -1,14 +1,14 @@
 using System.Globalization;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
-using ThadTheBarber.Api.Features.Availability.Exceptions;
-using ThadTheBarber.Api.Features.Availability.Services;
+using ThadTheBarber.Api.Features.Booking.Exceptions;
+using ThadTheBarber.Api.Features.Booking.Services;
 using ThadTheBarber.Api.Square.Configuration;
 using ThadTheBarber.Api.Square.Models;
 using ThadTheBarber.Api.Square.Services;
 using ThadTheBarber.Api.Tests.TestSupport.Fakes;
 
-namespace ThadTheBarber.Api.Tests.Features.Availability.Services;
+namespace ThadTheBarber.Api.Tests.Features.Booking.Services;
 
 /// <summary>
 /// The fixture shop is in America/New_York with no minimum notice and a 365-day maximum advance; its open times run

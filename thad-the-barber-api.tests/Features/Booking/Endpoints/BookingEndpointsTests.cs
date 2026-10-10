@@ -5,10 +5,10 @@ using System.Text.Json;
 using Microsoft.Extensions.Time.Testing;
 using ThadTheBarber.Api.Tests.TestSupport;
 
-namespace ThadTheBarber.Api.Tests.Features.Availability.Endpoints;
+namespace ThadTheBarber.Api.Tests.Features.Booking.Endpoints;
 
 /// <summary>The clock sits at 11:10 shop time (America/New_York) on 2026-10-06; see <c>AvailabilityServiceTests</c>.</summary>
-public sealed class AvailabilityEndpointsTests
+public sealed class BookingEndpointsTests
 {
     private static CancellationToken Cancellation => TestContext.Current.CancellationToken;
 

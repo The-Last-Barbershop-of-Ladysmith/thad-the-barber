@@ -1,16 +1,16 @@
 using System.Globalization;
 using Microsoft.AspNetCore.Http.HttpResults;
-using ThadTheBarber.Api.Features.Availability.Services;
+using ThadTheBarber.Api.Features.Booking.Services;
 using ThadTheBarber.Api.Infrastructure.Headers.Middleware;
 
-namespace ThadTheBarber.Api.Features.Availability.Endpoints;
+namespace ThadTheBarber.Api.Features.Booking.Endpoints;
 
-public static class AvailabilityEndpoints
+public static class BookingEndpoints
 {
-    public static IServiceCollection AddAvailability(this IServiceCollection services) =>
+    public static IServiceCollection AddBooking(this IServiceCollection services) =>
         services.AddSingleton<AvailabilityService>();
 
-    public static IEndpointRouteBuilder MapAvailabilityEndpoints(this IEndpointRouteBuilder api)
+    public static IEndpointRouteBuilder MapBookingEndpoints(this IEndpointRouteBuilder api)
     {
         RouteGroupBuilder availability = api.MapGroup("/availability")
             .WithTags("Availability")
