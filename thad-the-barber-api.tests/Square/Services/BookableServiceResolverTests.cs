@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using ThadTheBarber.Api.Square.Configuration;
 using ThadTheBarber.Api.Square.Exceptions;
@@ -54,36 +53,19 @@ public sealed class BookableServiceResolverTests
     }
 
     [Fact]
-    public async Task ASecondLookupIsServedFromTheCache()
-    {
-        FakeSquareService square = new();
-        BookableServiceResolver resolver = Resolver(square);
-
-        await resolver.ResolveAsync(Cancellation);
-        await resolver.ResolveAsync(Cancellation);
-
-        Assert.Equal(1, square.CatalogSearches);
-    }
-
-    [Fact]
-    public async Task AFailedLookupIsntCached()
+    public async Task AnEmptyCatalogIsNotResolved()
     {
         FakeSquareService square = new()
         {
             BookableServices = [],
         };
-        BookableServiceResolver resolver = Resolver(square);
 
-        await Assert.ThrowsAsync<BookableServiceNotResolvedException>(() => resolver.ResolveAsync(Cancellation));
-        await Assert.ThrowsAsync<BookableServiceNotResolvedException>(() => resolver.ResolveAsync(Cancellation));
-
-        Assert.Equal(2, square.CatalogSearches);
+        await Assert.ThrowsAsync<BookableServiceNotResolvedException>(() => Resolver(square).ResolveAsync(Cancellation));
     }
 
     private static BookableServiceResolver Resolver(FakeSquareService square, string? pinnedVariationId = null) =>
         new(
             square,
-            new MemoryCache(new MemoryCacheOptions()),
             Options.Create(new SquareSettings
             {
                 ServiceVariationId = pinnedVariationId,

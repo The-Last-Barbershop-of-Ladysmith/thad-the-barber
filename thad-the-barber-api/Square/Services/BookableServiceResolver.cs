@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using ThadTheBarber.Api.Square.Configuration;
 using ThadTheBarber.Api.Square.Exceptions;
@@ -6,25 +5,13 @@ using ThadTheBarber.Api.Square.Models;
 
 namespace ThadTheBarber.Api.Square.Services;
 
-/// <summary>
-/// The shop's one service (BR-01), which availability and booking calls need. Cached for <see cref="CacheFor"/>; a
-/// failed lookup isn't cached, so a fixed catalog is picked up on the next call.
-/// </summary>
-public sealed class BookableServiceResolver(ISquareService square, IMemoryCache cache, IOptions<SquareSettings> settings)
+/// <summary>The shop's one service (BR-01), which availability and booking calls need.</summary>
+public sealed class BookableServiceResolver(ISquareService square, IOptions<SquareSettings> settings)
 {
-    public static readonly TimeSpan CacheFor = TimeSpan.FromMinutes(60);
-    private const string CacheKey = "square:bookable-service";
-
     public async Task<BookableService> ResolveAsync(CancellationToken cancellationToken)
     {
-        BookableService? bookableService = await cache.GetOrCreateAsync(CacheKey, async entry =>
-        {
-            entry.AbsoluteExpirationRelativeToNow = CacheFor;
-            List<BookableService> bookableServices = await square.GetBookableServicesAsync(cancellationToken);
-            return Select(bookableServices, settings.Value.ServiceVariationId);
-        });
-
-        return bookableService!;
+        List<BookableService> bookableServices = await square.GetBookableServicesAsync(cancellationToken);
+        return Select(bookableServices, settings.Value.ServiceVariationId);
     }
 
     /// <summary>
