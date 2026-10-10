@@ -10,6 +10,7 @@ public static class SquareSetup
 {
     public const string HttpClientName = "Square";
     public const string OAuthHttpClientName = "SquareOAuth";
+    public const string UncachedServiceKey = "SquareUncached";
     private static readonly TimeSpan httpClientTimeout = TimeSpan.FromSeconds(10);
 
     // The SDK clients live for the app's lifetime, so their connections are recycled instead of their handlers, which
@@ -35,7 +36,8 @@ public static class SquareSetup
         AddLongLivedHttpClient(services, OAuthHttpClientName).AddHttpMessageHandler<NoAuthorizationHandler>();
         services.AddSingleton(provider => CreateClient(provider, HttpClientName));
         services.AddKeyedSingleton(OAuthHttpClientName, (provider, _) => CreateClient(provider, OAuthHttpClientName));
-        services.AddSingleton<ISquareService, SquareService>();
+        services.AddKeyedSingleton<ISquareService, SquareService>(UncachedServiceKey);
+        services.AddSingleton<ISquareService, CachingSquareService>();
         services.AddMemoryCache();
         services.AddSingleton<BookableServiceResolver>();
         services.AddExceptionHandler<SquareExceptionHandler>();
