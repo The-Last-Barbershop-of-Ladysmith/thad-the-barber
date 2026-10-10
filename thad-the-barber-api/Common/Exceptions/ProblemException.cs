@@ -2,8 +2,8 @@ namespace ThadTheBarber.Api.Common.Exceptions;
 
 /// <summary>
 /// An outcome the caller can act on, such as a taken time. <see cref="Infrastructure.Problems.Handlers.ProblemExceptionHandler"/>
-/// turns it into ProblemDetails with <see cref="Code"/>, so the UI reacts to the code, not the title. The message stays in
-/// the logs.
+/// turns it into ProblemDetails with <see cref="Code"/>, so the UI reacts to the code, not the title. The message and
+/// inner exception are logged at Information, since these are expected outcomes, not app errors.
 /// </summary>
 public abstract class ProblemException(
     int statusCode,

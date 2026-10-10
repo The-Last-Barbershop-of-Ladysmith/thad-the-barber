@@ -4,7 +4,10 @@ using ThadTheBarber.Api.Common.Exceptions;
 
 namespace ThadTheBarber.Api.Infrastructure.Problems.Handlers;
 
-public sealed class ProblemExceptionHandler(IProblemDetailsService problemDetails) : IExceptionHandler
+public sealed partial class ProblemExceptionHandler(
+    IProblemDetailsService problemDetails,
+    ILogger<ProblemExceptionHandler> logger
+) : IExceptionHandler
 {
     public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
     {
@@ -13,6 +16,7 @@ public sealed class ProblemExceptionHandler(IProblemDetailsService problemDetail
             return false;
         }
 
+        LogProblemReturned(logger, problemException, problemException.StatusCode, problemException.Code);
         ProblemDetails problem = new()
         {
             Status = problemException.StatusCode,
@@ -28,4 +32,7 @@ public sealed class ProblemExceptionHandler(IProblemDetailsService problemDetail
             ProblemDetails = problem,
         });
     }
+
+    [LoggerMessage(EventName = "ProblemReturned", Level = LogLevel.Information, Message = "Returned {StatusCode} {Code}.")]
+    private static partial void LogProblemReturned(ILogger logger, Exception exception, int statusCode, string code);
 }

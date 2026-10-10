@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Square;
 using ThadTheBarber.Api.Infrastructure.Problems.Handlers;
 using ThadTheBarber.Api.Square.Exceptions;
@@ -45,5 +46,8 @@ public sealed class ProblemExceptionHandlerTests
     }
 
     private static ProblemExceptionHandler Handler(HttpContext context) =>
-        new(context.RequestServices.GetRequiredService<IProblemDetailsService>());
+        new(
+            context.RequestServices.GetRequiredService<IProblemDetailsService>(),
+            context.RequestServices.GetRequiredService<ILogger<ProblemExceptionHandler>>()
+        );
 }
