@@ -65,6 +65,7 @@ The API reads all its secrets through the Key Vault configuration provider, so t
 | --- | --- | --- |
 | web + api identities | Key Vault Secrets User | their environment's vault |
 | api identity | Key Vault Crypto User | the `session-jwt-signing` key only |
+| you (`TTB_ADMIN_OBJECT_ID`) | Key Vault Crypto User | dev's `session-jwt-signing` key only (`canAdminSignSessions`), so local runs can issue session tokens |
 | you (`TTB_ADMIN_OBJECT_ID`) | Key Vault Secrets Officer | each vault |
 | `id-ttb-deploy-<env>-<region>` (GitHub, #10) | Website Contributor | its environment's web and API apps only |
 | `id-ttb-deploy-<env>-<region>` (GitHub, #10) | Storage Blob Data Contributor | its environment's media container only |
@@ -106,6 +107,25 @@ az deployment sub create --name reports --location centralus --parameters infra/
 Personal values come from environment variables, so they never land in this public repo. A second `create` should report no changes in `what-if`. `budgetStartDate` is fixed in the param file; Azure rejects a monthly budget whose start date is before the current month, so if the first deploy happens after October 2026, move it to the first of that month.
 
 CI (`.github/workflows/infra.yml`) builds and lints the Bicep on every PR that touches `infra/`, then runs what-if as the read-only preview identity (below). It never deploys: `create` is still run by hand.
+
+### Google reCAPTCHA (#34)
+
+`POST /api/session` asks Google's reCAPTCHA `createAssessment` API about each visitor. The API won't start without `Recaptcha:ProjectId` and `Recaptcha:SiteKey` (not secret: `appsettings.{Environment}.json`) and the `Recaptcha--ApiKey` secret, so set these up before a build with #34 deploys. It's free up to 10,000 assessments a month. One Google Cloud project serves every environment (the same one the reviews API will use, #36):
+
+```powershell
+gcloud services enable recaptchaenterprise.googleapis.com apikeys.googleapis.com
+# One score key per environment. Nonprod keys return a fixed score, so dev and test never depend on real traffic;
+# rerun with --testing-score=0.1 to try the call/text fallback.
+gcloud recaptcha keys create --display-name=ttb-dev  --web --integration-type=score --domains=as-ttb-ui-dev-centralus.azurewebsites.net,localhost --testing-score=0.9
+gcloud recaptcha keys create --display-name=ttb-test --web --integration-type=score --domains=as-ttb-ui-test-centralus.azurewebsites.net --testing-score=0.9
+# Prod (M5): no --testing-score, domains = the custom domain.
+```
+
+In PowerShell, quote the `--domains` list: an unquoted comma splits it into separate arguments.
+
+- The project, `thad-the-barber`, is `Recaptcha:ProjectId` in `appsettings.json`. Put each key's ID (the site key) in that environment's `appsettings.{Environment}.json` as `Recaptcha:SiteKey`, and in the UI's `environment.*.ts` as `recaptchaSiteKey`.
+- Each environment has its own API key (`Development`, `Test`, `Production`), restricted to the reCAPTCHA API. Copy one to the clipboard without printing it, then save it as `Recaptcha--ApiKey` with `./infra/scripts/Set-TtbSecrets.ps1 -Environment <env>`: `gcloud services api-keys get-key-string <uid> --format="value(keyString)" | Set-Clipboard` (`gcloud services api-keys list` shows the uids). The API sends the key in a header, never the URL.
+- `Recaptcha:MinScore` (default 0.5) is the threshold; override it in `appsettings.{Environment}.json`.
 
 ### GitHub → Azure sign-in (OIDC)
 

@@ -1,14 +1,15 @@
 using Azure.Identity;
+using Azure.Security.KeyVault.Keys;
 using Azure.Security.KeyVault.Secrets;
 
 namespace ThadTheBarber.Api.Infrastructure.KeyVault.Configuration;
 
 /// <summary>
 /// Loads Key Vault secrets into configuration ("--" in secret names maps to ":", so <c>Cors--AllowedOrigins--0</c>
-/// becomes <c>Cors:AllowedOrigins:0</c>) and registers a <see cref="SecretClient"/> for secrets read on demand. The
-/// vault is named by <c>KeyVault:Name</c> in <c>appsettings.{Environment}.json</c>, picked by
-/// <c>ASPNETCORE_ENVIRONMENT</c>. Development (local runs and the Azure dev app) uses the dev vault; empty (tests)
-/// skips Key Vault.
+/// becomes <c>Cors:AllowedOrigins:0</c>) and registers a <see cref="SecretClient"/> for secrets read on demand and a
+/// <see cref="KeyClient"/> for the session-token signing key. The vault is named by <c>KeyVault:Name</c> in
+/// <c>appsettings.{Environment}.json</c>, picked by <c>ASPNETCORE_ENVIRONMENT</c>. Development (local runs and the
+/// Azure dev app) uses the dev vault; empty (tests) skips Key Vault.
 /// </summary>
 public static class KeyVaultSetup
 {
@@ -20,6 +21,7 @@ public static class KeyVaultSetup
             DefaultAzureCredential credential = new();
             builder.Configuration.AddAzureKeyVault(vaultUri, credential, new SkipSecretsManager(onDemandSecrets));
             builder.Services.AddSingleton(new SecretClient(vaultUri, credential));
+            builder.Services.AddSingleton(new KeyClient(vaultUri, credential));
         }
 
         return builder;

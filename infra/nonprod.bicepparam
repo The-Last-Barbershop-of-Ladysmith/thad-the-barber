@@ -26,6 +26,8 @@ param environments = [
     extraCorsOrigins: [
       'http://localhost:4200'
     ]
+    // Local runs also sign session tokens with the dev key, under your az login.
+    canAdminSignSessions: true
   }
   {
     name: 'test'

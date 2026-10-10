@@ -24,6 +24,7 @@ public static class HealthEndpoints
         api.MapGet("/health", GetHealthAsync)
             .WithName("GetHealth")
             .WithTags("Health")
+            .AllowAnonymous()
             .NoStore();
         return api;
     }
