@@ -1,6 +1,8 @@
 using System.Globalization;
+using FsCheck.Xunit;
 using ThadTheBarber.Api.Common.Extensions;
 using ThadTheBarber.Api.Common.Models;
+using ThadTheBarber.Api.Tests.TestSupport.Generators;
 
 namespace ThadTheBarber.Api.Tests.Common.Extensions;
 
@@ -36,6 +38,17 @@ public sealed class TimeZoneInfoExtensionsTests
             ),
             day);
         Assert.Equal(TimeSpan.FromHours(hours), day.End - day.Start);
+    }
+
+    [Property(Arbitrary = new[] { typeof(TimeZoneArbitraries) })]
+    public void EveryDayStartsAndEndsOnItsOwnDate(ZonedDate zonedDate)
+    {
+        DateTimeRange day = zonedDate.TimeZone.GetDayRange(zonedDate.Date);
+
+        Assert.Equal(zonedDate.Date, zonedDate.TimeZone.ToLocalDate(day.Start));
+        Assert.Equal(zonedDate.Date, zonedDate.TimeZone.ToLocalDate(day.End.AddSeconds(-1)));
+        Assert.Equal(zonedDate.Date.AddDays(-1), zonedDate.TimeZone.ToLocalDate(day.Start.AddSeconds(-1)));
+        Assert.InRange(day.End - day.Start, TimeSpan.FromHours(23), TimeSpan.FromHours(25));
     }
 
     [Fact]

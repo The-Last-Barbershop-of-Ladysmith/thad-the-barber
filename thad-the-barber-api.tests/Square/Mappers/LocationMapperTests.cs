@@ -1,7 +1,9 @@
+using FsCheck.Xunit;
 using Square;
 using ThadTheBarber.Api.Square.Mappers;
 using ThadTheBarber.Api.Square.Models;
 using ThadTheBarber.Api.Tests.TestSupport;
+using ThadTheBarber.Api.Tests.TestSupport.Generators;
 using SquareDayOfWeek = Square.DayOfWeek;
 
 namespace ThadTheBarber.Api.Tests.Square.Mappers;
@@ -56,6 +58,16 @@ public sealed class LocationMapperTests
         Location location = ReadLocation() with { PhoneNumber = squarePhone };
 
         Assert.Equal(e164, location.ToShopDetails().Phone);
+    }
+
+    [Property(Arbitrary = new[] { typeof(PhoneArbitraries) })]
+    public void OnlyAPhonesDigitsMatter(FormattedPhone phone)
+    {
+        string formatted = (ReadLocation() with { PhoneNumber = phone.Text }).ToShopDetails().Phone;
+
+        Assert.Equal((ReadLocation() with { PhoneNumber = phone.Digits }).ToShopDetails().Phone, formatted);
+        Assert.Matches("^\\+[0-9]+$", formatted);
+        Assert.EndsWith(phone.Digits, formatted, StringComparison.Ordinal);
     }
 
     [Theory]
