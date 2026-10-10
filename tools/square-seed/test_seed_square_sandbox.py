@@ -3,7 +3,6 @@ import json
 import unittest
 from pathlib import Path
 
-from location import get_phone_digits
 from plan import Plan, format_plan
 from seed_square_sandbox import SEED_FILE, plan_seed
 from square_api import Json, SquareState
@@ -38,7 +37,7 @@ def seeded_sandbox() -> SquareState:
     """The sandbox after --apply and the Dashboard steps."""
     state: SquareState = spike_sandbox()
     state.location.update(copy.deepcopy(SEED["location"]))
-    state.location["phone_number"] = "+" + get_phone_digits(SEED["location"]["phone_number"])
+    state.location["phone_number"] = SEED["location"]["phone_number"].replace(" ", "").replace("-", "")
     state.location["business_hours"]["periods"].reverse()
     state.service_items = [plan_seed(SEED, spike_sandbox()).service_object]
     state.business_booking_profile = copy.deepcopy(SEED["booking_settings"])

@@ -45,7 +45,8 @@ public sealed class AvailabilityMapperTests
             "StartAt" => availability with { StartAt = null },
             "LocationId" => availability with { LocationId = null },
             "ServiceVariationId" => availability with { AppointmentSegments = [segment with { ServiceVariationId = null }] },
-            _ => availability with { AppointmentSegments = [segment with { ServiceVariationVersion = null }] },
+            "ServiceVariationVersion" => availability with { AppointmentSegments = [segment with { ServiceVariationVersion = null }] },
+            _ => throw new ArgumentOutOfRangeException(nameof(field), field, "No such Square availability field."),
         };
 
         Assert.Throws<InvalidOperationException>(incomplete.ToTimeSlot);

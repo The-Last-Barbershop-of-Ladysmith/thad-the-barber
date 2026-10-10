@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using FsCheck;
 using FsCheck.Fluent;
 
@@ -20,6 +21,8 @@ public static class TimeZoneArbitraries
         "Pacific/Chatham",
     ];
 
+    private static readonly ConcurrentDictionary<(string TimeZoneId, int Year), List<DateOnly>> clockChangeDays = new();
+
     public static Arbitrary<ZonedDate> ZonedDates() => Arb.From(
         from timeZone in Gen.Elements(timeZoneIds.Select(TimeZoneInfo.FindSystemTimeZoneById))
         from year in Gen.Choose(2000, 2060)
@@ -33,17 +36,19 @@ public static class TimeZoneArbitraries
         )
     );
 
-    /// <summary>Each day whose clocks change, with the days either side.</summary>
-    private static List<DateOnly> GetClockChangeDays(TimeZoneInfo timeZone, int year)
-    {
-        DateOnly firstDay = new(year, 1, 1);
+    /// <summary>
+    /// Each day whose clocks change, with the days either side. A skipped or repeated midnight also shows up as an
+    /// offset change between two midnights.
+    /// </summary>
+    private static List<DateOnly> GetClockChangeDays(TimeZoneInfo timeZone, int year) =>
+        clockChangeDays.GetOrAdd((timeZone.Id, year), _ =>
+        {
+            DateOnly firstDay = new(year, 1, 1);
 
-        return Enumerable.Range(0, 365)
-            .Select(firstDay.AddDays)
-            .Where(day => timeZone.GetUtcOffset(day.ToDateTime(TimeOnly.MinValue)) != timeZone.GetUtcOffset(day.AddDays(1).ToDateTime(TimeOnly.MinValue))
-                || timeZone.IsInvalidTime(day.ToDateTime(TimeOnly.MinValue))
-                || timeZone.IsAmbiguousTime(day.ToDateTime(TimeOnly.MinValue)))
-            .SelectMany(day => new[] { day.AddDays(-1), day, day.AddDays(1) })
-            .ToList();
-    }
+            return Enumerable.Range(0, 365)
+                .Select(firstDay.AddDays)
+                .Where(day => timeZone.GetUtcOffset(day.ToDateTime(TimeOnly.MinValue)) != timeZone.GetUtcOffset(day.AddDays(1).ToDateTime(TimeOnly.MinValue)))
+                .SelectMany(day => new[] { day.AddDays(-1), day, day.AddDays(1) })
+                .ToList();
+        });
 }

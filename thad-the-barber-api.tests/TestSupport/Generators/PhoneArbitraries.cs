@@ -25,7 +25,7 @@ public static class PhoneArbitraries
         from gaps in Gen.ArrayOf(Gen.Elements(separators), length + 1)
         select new FormattedPhone(
             string.Concat(digits),
-            string.Concat(digits.Select((digit, index) => gaps[index] + digit.ToString(CultureInfo.InvariantCulture))) + gaps[length]
+            string.Concat(gaps.Zip(digits, (gap, digit) => gap + digit.ToString(CultureInfo.InvariantCulture))) + gaps[^1]
         )
     );
 }

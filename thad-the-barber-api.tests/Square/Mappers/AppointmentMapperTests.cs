@@ -48,7 +48,8 @@ public sealed class AppointmentMapperTests
             "Id" => booking with { Id = null },
             "Status" => booking with { Status = null },
             "Version" => booking with { Version = null },
-            _ => booking with { StartAt = null },
+            "StartAt" => booking with { StartAt = null },
+            _ => throw new ArgumentOutOfRangeException(nameof(field), field, "No such Square booking field."),
         };
 
         Assert.Throws<InvalidOperationException>(incomplete.ToAppointment);

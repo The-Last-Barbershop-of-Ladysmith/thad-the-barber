@@ -151,14 +151,13 @@ jobs:
           import sys
           import xml.etree.ElementTree as ET
           root = ET.parse('thad-the-barber-api.tests/TestResults/coverage.cobertura.xml').getroot()
-          line, branch = float(root.get('line-rate')), float(root.get('branch-rate'))
-          is_line_passed, is_branch_passed = line >= 0.8, branch >= 0.8
-          mark = lambda passed: '✅' if passed else '❌'
+          rates = {'Line': float(root.get('line-rate')), 'Branch': float(root.get('branch-rate'))}
+          failures = [name for name, rate in rates.items() if rate < 0.8]
+          cells = [f"{'❌' if name in failures else '✅'} {rate:.1%} (min 80%)" for name, rate in rates.items()]
           with open('coverage-summary.md', 'w') as summary:
               summary.write('### API coverage\n\n| Lines | Branches |\n| --- | --- |\n')
-              summary.write(f'| {mark(is_line_passed)} {line:.1%} (min 80%) | {mark(is_branch_passed)} {branch:.1%} (min 80%) |\n')
-          print(f'Line coverage: {line:.1%}, branch coverage: {branch:.1%}')
-          failures = [name for name, passed in [('Line', is_line_passed), ('Branch', is_branch_passed)] if not passed]
+              summary.write(f"| {' | '.join(cells)} |\n")
+          print(', '.join(f'{name} coverage: {rate:.1%}' for name, rate in rates.items()))
           sys.exit(f"{' and '.join(failures)} coverage below 80%" if failures else 0)
           EOF
 

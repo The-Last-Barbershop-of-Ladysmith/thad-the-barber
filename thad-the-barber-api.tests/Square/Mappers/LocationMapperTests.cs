@@ -63,9 +63,10 @@ public sealed class LocationMapperTests
     [Property(Arbitrary = new[] { typeof(PhoneArbitraries) })]
     public void OnlyAPhonesDigitsMatter(FormattedPhone phone)
     {
-        string formatted = (ReadLocation() with { PhoneNumber = phone.Text }).ToShopDetails().Phone;
+        Location location = ReadLocation();
+        string formatted = (location with { PhoneNumber = phone.Text }).ToShopDetails().Phone;
 
-        Assert.Equal((ReadLocation() with { PhoneNumber = phone.Digits }).ToShopDetails().Phone, formatted);
+        Assert.Equal((location with { PhoneNumber = phone.Digits }).ToShopDetails().Phone, formatted);
         Assert.Matches("^\\+[0-9]+$", formatted);
         Assert.EndsWith(phone.Digits, formatted, StringComparison.Ordinal);
     }
@@ -180,7 +181,8 @@ public sealed class LocationMapperTests
             "AdministrativeDistrictLevel1" => location with { Address = location.Address! with { AdministrativeDistrictLevel1 = null } },
             "PostalCode" => location with { Address = location.Address! with { PostalCode = null } },
             "StartLocalTime" => location with { BusinessHours = new BusinessHours { Periods = [period with { StartLocalTime = null }] } },
-            _ => location with { BusinessHours = new BusinessHours { Periods = [period with { EndLocalTime = null }] } },
+            "EndLocalTime" => location with { BusinessHours = new BusinessHours { Periods = [period with { EndLocalTime = null }] } },
+            _ => throw new ArgumentOutOfRangeException(nameof(field), field, "No such Square location field."),
         };
     }
 }
