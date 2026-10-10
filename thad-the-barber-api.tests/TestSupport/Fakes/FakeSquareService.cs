@@ -14,6 +14,8 @@ namespace ThadTheBarber.Api.Tests.TestSupport.Fakes;
 public sealed class FakeSquareService : ISquareService
 {
     private int _checks;
+    private int _shopDetailsReads;
+    private int _bookingProfileReads;
     private int _catalogSearches;
 
     public SquareConnection Connection { get; init; } = SquareConnection.Connected;
@@ -63,7 +65,14 @@ public sealed class FakeSquareService : ISquareService
     public Appointment RescheduledAppointment { get; init; } =
         SquareFixture.ReadAs<UpdateBookingResponse>("update-booking.json").Booking!.ToAppointment();
 
+    /// <summary>When set, the shop, booking profile and catalog reads throw it, as if Square were down.</summary>
+    public Exception? Failure { get; set; }
+
     public int Checks => _checks;
+
+    public int ShopDetailsReads => _shopDetailsReads;
+
+    public int BookingProfileReads => _bookingProfileReads;
 
     public int CatalogSearches => _catalogSearches;
 
@@ -73,14 +82,22 @@ public sealed class FakeSquareService : ISquareService
         return Task.FromResult(Connection);
     }
 
-    public Task<ShopDetails> GetShopDetailsAsync(CancellationToken cancellationToken) => Task.FromResult(ShopDetails);
+    public Task<ShopDetails> GetShopDetailsAsync(CancellationToken cancellationToken)
+    {
+        Interlocked.Increment(ref _shopDetailsReads);
+        return FailOr(ShopDetails);
+    }
 
-    public Task<BookingProfile> GetBookingProfileAsync(string locationId, CancellationToken cancellationToken) => Task.FromResult(BookingProfile);
+    public Task<BookingProfile> GetBookingProfileAsync(string locationId, CancellationToken cancellationToken)
+    {
+        Interlocked.Increment(ref _bookingProfileReads);
+        return FailOr(BookingProfile);
+    }
 
     public Task<List<BookableService>> GetBookableServicesAsync(CancellationToken cancellationToken)
     {
         Interlocked.Increment(ref _catalogSearches);
-        return Task.FromResult(BookableServices);
+        return FailOr(BookableServices);
     }
 
     public Task<List<TimeSlot>> SearchAvailableTimeSlotsAsync(string locationId, BookableService bookableService, DateTimeRange dateTimeRange, CancellationToken cancellationToken) =>
@@ -98,4 +115,14 @@ public sealed class FakeSquareService : ISquareService
 
     public Task<Appointment> RescheduleBookingAsync(string bookingId, int bookingVersion, DateTimeOffset newStartAt, CancellationToken cancellationToken) =>
         Task.FromResult(RescheduledAppointment);
+
+    private Task<T> FailOr<T>(T value)
+    {
+        if (Failure is not null)
+        {
+            return Task.FromException<T>(Failure);
+        }
+
+        return Task.FromResult(value);
+    }
 }
