@@ -184,7 +184,7 @@ Every Playwright, Lighthouse and API coverage report opens in the browser from a
 | --- | --- |
 | `ui` | `npm ci` → `npm audit` → `ng lint` → `ng test` (Vitest) → `build:express:test`, uploaded for `e2e` and `lighthouse` |
 | `express` | Express `npm ci` → `npm audit` → `npm test` (Vitest + supertest) |
-| `api` | `dotnet build` → `dotnet test` (xUnit) → report viewer tests → ReportGenerator coverage (line and branch per class) → line coverage ≥ 80% |
+| `api` | `dotnet build` → `dotnet test` (xUnit) → report viewer tests → ReportGenerator coverage (line and branch per class) → line and branch coverage ≥ 80% |
 | `e2e` | Playwright with a mocked API and `@axe-core/playwright`, on Chromium + WebKit, desktop + mobile, against the `ui` job's `test` build served by Express (real CSP header and 404s) |
 | `lighthouse` | Lighthouse on `/` and `/book` of the `ui` job's build, served by Express with prod's headers (`NOINDEX=false`): accessibility ≥ 95, best practices and SEO ≥ 90, performance reported only |
 
