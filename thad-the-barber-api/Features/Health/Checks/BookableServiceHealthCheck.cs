@@ -5,9 +5,9 @@ using ThadTheBarber.Api.Square.Services;
 namespace ThadTheBarber.Api.Features.Health.Checks;
 
 /// <summary>
-/// Unhealthy when the Square catalog doesn't name the shop's one bookable service, so nobody can book. A failed lookup
-/// isn't cached by the resolver, so the result is reused for <see cref="SquareHealthCheck.CacheFor"/> to keep frequent
-/// probes from each calling Square.
+/// Unhealthy when the Square catalog doesn't name the shop's one bookable service, so nobody can book. The result is
+/// reused for <see cref="SquareHealthCheck.CacheFor"/>: with nothing cached yet, a Square outage would otherwise make
+/// every probe wait for Square's timeout.
 /// </summary>
 public sealed class BookableServiceHealthCheck(BookableServiceResolver resolver, IMemoryCache cache) : IHealthCheck
 {

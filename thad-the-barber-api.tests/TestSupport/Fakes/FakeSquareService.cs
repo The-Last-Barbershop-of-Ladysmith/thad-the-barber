@@ -63,6 +63,9 @@ public sealed class FakeSquareService : ISquareService
     public Appointment RescheduledAppointment { get; init; } =
         SquareFixture.ReadAs<UpdateBookingResponse>("update-booking.json").Booking!.ToAppointment();
 
+    /// <summary>When set, the shop, booking profile and catalog reads throw it, as if Square were down.</summary>
+    public Exception? ReadFailure { get; set; }
+
     public int Checks => _checks;
 
     public int CatalogSearches => _catalogSearches;
@@ -73,14 +76,14 @@ public sealed class FakeSquareService : ISquareService
         return Task.FromResult(Connection);
     }
 
-    public Task<ShopDetails> GetShopDetailsAsync(CancellationToken cancellationToken) => Task.FromResult(ShopDetails);
+    public Task<ShopDetails> GetShopDetailsAsync(CancellationToken cancellationToken) => FailOr(ShopDetails);
 
-    public Task<BookingProfile> GetBookingProfileAsync(string locationId, CancellationToken cancellationToken) => Task.FromResult(BookingProfile);
+    public Task<BookingProfile> GetBookingProfileAsync(string locationId, CancellationToken cancellationToken) => FailOr(BookingProfile);
 
     public Task<List<BookableService>> GetBookableServicesAsync(CancellationToken cancellationToken)
     {
         Interlocked.Increment(ref _catalogSearches);
-        return Task.FromResult(BookableServices);
+        return FailOr(BookableServices);
     }
 
     public Task<List<TimeSlot>> SearchAvailableTimeSlotsAsync(string locationId, BookableService bookableService, DateTimeRange dateTimeRange, CancellationToken cancellationToken) =>
@@ -98,4 +101,14 @@ public sealed class FakeSquareService : ISquareService
 
     public Task<Appointment> RescheduleBookingAsync(string bookingId, int bookingVersion, DateTimeOffset newStartAt, CancellationToken cancellationToken) =>
         Task.FromResult(RescheduledAppointment);
+
+    private Task<T> FailOr<T>(T value)
+    {
+        if (ReadFailure is not null)
+        {
+            return Task.FromException<T>(ReadFailure);
+        }
+
+        return Task.FromResult(value);
+    }
 }

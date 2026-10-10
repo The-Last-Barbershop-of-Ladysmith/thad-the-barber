@@ -35,8 +35,9 @@ public static class SquareSetup
         AddLongLivedHttpClient(services, OAuthHttpClientName).AddHttpMessageHandler<NoAuthorizationHandler>();
         services.AddSingleton(provider => CreateClient(provider, HttpClientName));
         services.AddKeyedSingleton(OAuthHttpClientName, (provider, _) => CreateClient(provider, OAuthHttpClientName));
-        services.AddSingleton<ISquareService, SquareService>();
         services.AddMemoryCache();
+        services.AddSingleton<SquareCache>();
+        services.AddSingleton<ISquareService, SquareService>();
         services.AddSingleton<BookableServiceResolver>();
         services.AddExceptionHandler<SquareExceptionHandler>();
         return services;

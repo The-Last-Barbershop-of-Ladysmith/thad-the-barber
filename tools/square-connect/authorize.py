@@ -10,6 +10,7 @@ SCOPES: tuple[str, ...] = (
     "CUSTOMERS_READ",
     "CUSTOMERS_WRITE",
     "ITEMS_READ",
+    "MERCHANT_PROFILE_READ",
 )
 
 

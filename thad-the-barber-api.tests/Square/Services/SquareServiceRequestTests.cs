@@ -17,8 +17,7 @@ public sealed class SquareServiceRequestTests
     [Fact]
     public async Task ShopDetailsComeFromTheMainLocation()
     {
-        using SquareHarness harness = new();
-        harness.Http.Responses["/v2/locations/main"] = SquareFixture.ReadText("retrieve-location.json");
+        using SquareHarness harness = new SquareHarness().WithShopResponses();
 
         ShopDetails details = await harness.Square.GetShopDetailsAsync(Cancellation);
 
@@ -28,9 +27,7 @@ public sealed class SquareServiceRequestTests
     [Fact]
     public async Task BookingProfileIncludesTheLocationsBookingSite()
     {
-        using SquareHarness harness = new();
-        harness.Http.Responses["/v2/bookings/business-booking-profile"] = SquareFixture.ReadText("business-booking-profile.json");
-        harness.Http.Responses["/v2/bookings/location-booking-profiles"] = SquareFixture.ReadText("location-booking-profiles.json");
+        using SquareHarness harness = new SquareHarness().WithShopResponses();
 
         BookingProfile profile = await harness.Square.GetBookingProfileAsync("LOCATION0TEST", Cancellation);
 
@@ -40,9 +37,7 @@ public sealed class SquareServiceRequestTests
     [Fact]
     public async Task AnotherLocationsBookingProfileIsIgnored()
     {
-        using SquareHarness harness = new();
-        harness.Http.Responses["/v2/bookings/business-booking-profile"] = SquareFixture.ReadText("business-booking-profile.json");
-        harness.Http.Responses["/v2/bookings/location-booking-profiles"] = SquareFixture.ReadText("location-booking-profiles.json");
+        using SquareHarness harness = new SquareHarness().WithShopResponses();
 
         BookingProfile profile = await harness.Square.GetBookingProfileAsync("OTHER-LOCATION", Cancellation);
 
@@ -53,8 +48,7 @@ public sealed class SquareServiceRequestTests
     [Fact]
     public async Task BookableServicesComeFromTheCatalogsAppointmentServices()
     {
-        using SquareHarness harness = new();
-        harness.Http.Responses["/v2/catalog/search-catalog-items"] = SquareFixture.ReadText("search-catalog-items.json");
+        using SquareHarness harness = new SquareHarness().WithShopResponses();
 
         List<BookableService> services = await harness.Square.GetBookableServicesAsync(Cancellation);
 

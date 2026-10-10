@@ -15,16 +15,25 @@ using ThadTheBarber.Api.Square.Models;
 
 namespace ThadTheBarber.Api.Square.Services;
 
+/// <summary>
+/// The shop's details, booking profile and bookable services go through <see cref="SquareCache"/>; availability and
+/// booking calls always reach Square.
+/// </summary>
 public sealed class SquareService : ISquareService
 {
     private const string MainLocationId = "main";
+    private const string ShopDetailsKey = "square:shop-details";
+    private const string BookingProfileKeyPrefix = "square:booking-profile:";
+    private const string BookableServicesKey = "square:bookable-services";
     private static readonly TimeSpan minimumAvailabilitySearchLength = TimeSpan.FromHours(24);
 
     private readonly SquareClient squareClient;
+    private readonly SquareCache squareCache;
 
-    public SquareService(SquareClient squareClient)
+    public SquareService(SquareClient squareClient, SquareCache squareCache)
     {
         this.squareClient = squareClient;
+        this.squareCache = squareCache;
     }
 
     public async Task<SquareConnection> CheckConnectionAsync(CancellationToken cancellationToken)
@@ -46,42 +55,17 @@ public sealed class SquareService : ISquareService
         }
     }
 
-    public async Task<ShopDetails> GetShopDetailsAsync(CancellationToken cancellationToken)
-    {
-        GetLocationsRequest locationRequest = new()
-        {
-            LocationId = MainLocationId,
-        };
+    public Task<ShopDetails> GetShopDetailsAsync(CancellationToken cancellationToken) =>
+        squareCache.GetOrRefreshAsync(ShopDetailsKey, () => FetchShopDetailsAsync(cancellationToken), cancellationToken);
 
-        GetLocationResponse locationResponse = await squareClient.Locations.GetAsync(locationRequest, cancellationToken: cancellationToken);
-        Location location = locationResponse.Location ?? throw new InvalidOperationException("Square returned no location.");
+    public Task<BookingProfile> GetBookingProfileAsync(string locationId, CancellationToken cancellationToken) =>
+        squareCache.GetOrRefreshAsync(
+            BookingProfileKeyPrefix + locationId,
+            () => FetchBookingProfileAsync(locationId, cancellationToken),
+            cancellationToken);
 
-        return location.ToShopDetails();
-    }
-
-    public async Task<BookingProfile> GetBookingProfileAsync(string locationId, CancellationToken cancellationToken)
-    {
-        Task<GetBusinessBookingProfileResponse> businessProfileTask = squareClient.Bookings.GetBusinessProfileAsync(cancellationToken: cancellationToken);
-        Task<LocationBookingProfile?> locationProfileTask = FindLocationProfileAsync(locationId, cancellationToken);
-        await Task.WhenAll(businessProfileTask, locationProfileTask);
-
-        BusinessBookingProfile businessProfile = businessProfileTask.Result.BusinessBookingProfile
-            ?? throw new InvalidOperationException("Square returned no business booking profile.");
-
-        return businessProfile.ToBookingProfile(locationProfileTask.Result);
-    }
-
-    public async Task<List<BookableService>> GetBookableServicesAsync(CancellationToken cancellationToken)
-    {
-        SearchCatalogItemsRequest catalogRequest = new()
-        {
-            ProductTypes = [CatalogItemProductType.AppointmentsService]
-        };
-
-        SearchCatalogItemsResponse catalogResponse = await squareClient.Catalog.SearchItemsAsync(catalogRequest, cancellationToken: cancellationToken);
-
-        return (catalogResponse.Items ?? []).SelectMany(catalogItem => catalogItem.ToBookableServices()).ToList();
-    }
+    public Task<List<BookableService>> GetBookableServicesAsync(CancellationToken cancellationToken) =>
+        squareCache.GetOrRefreshAsync(BookableServicesKey, () => FetchBookableServicesAsync(cancellationToken), cancellationToken);
 
     /// <summary>
     /// Square rejects ranges shorter than 24 hours, and a day with a DST jump has 23, so the search covers at least 24
@@ -265,6 +249,43 @@ public sealed class SquareService : ISquareService
         Booking rescheduledBooking = updateBookingResponse.Booking ?? throw new InvalidOperationException("Square returned no booking.");
 
         return rescheduledBooking.ToAppointment();
+    }
+
+    private async Task<ShopDetails> FetchShopDetailsAsync(CancellationToken cancellationToken)
+    {
+        GetLocationsRequest locationRequest = new()
+        {
+            LocationId = MainLocationId,
+        };
+
+        GetLocationResponse locationResponse = await squareClient.Locations.GetAsync(locationRequest, cancellationToken: cancellationToken);
+        Location location = locationResponse.Location ?? throw new InvalidOperationException("Square returned no location.");
+
+        return location.ToShopDetails();
+    }
+
+    private async Task<BookingProfile> FetchBookingProfileAsync(string locationId, CancellationToken cancellationToken)
+    {
+        Task<GetBusinessBookingProfileResponse> businessProfileTask = squareClient.Bookings.GetBusinessProfileAsync(cancellationToken: cancellationToken);
+        Task<LocationBookingProfile?> locationProfileTask = FindLocationProfileAsync(locationId, cancellationToken);
+        await Task.WhenAll(businessProfileTask, locationProfileTask);
+
+        BusinessBookingProfile businessProfile = businessProfileTask.Result.BusinessBookingProfile
+            ?? throw new InvalidOperationException("Square returned no business booking profile.");
+
+        return businessProfile.ToBookingProfile(locationProfileTask.Result);
+    }
+
+    private async Task<List<BookableService>> FetchBookableServicesAsync(CancellationToken cancellationToken)
+    {
+        SearchCatalogItemsRequest catalogRequest = new()
+        {
+            ProductTypes = [CatalogItemProductType.AppointmentsService]
+        };
+
+        SearchCatalogItemsResponse catalogResponse = await squareClient.Catalog.SearchItemsAsync(catalogRequest, cancellationToken: cancellationToken);
+
+        return (catalogResponse.Items ?? []).SelectMany(catalogItem => catalogItem.ToBookableServices()).ToList();
     }
 
     private async Task<LocationBookingProfile?> FindLocationProfileAsync(string locationId, CancellationToken cancellationToken)
