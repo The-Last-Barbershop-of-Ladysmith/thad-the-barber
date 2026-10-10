@@ -22,11 +22,7 @@ public sealed class AvailabilityService(ISquareService square, BookableServiceRe
         ShopDetails shopDetails = await square.GetShopDetailsAsync(cancellationToken);
         BookingProfile bookingProfile = await square.GetBookingProfileAsync(shopDetails.LocationId, cancellationToken);
         TimeZoneInfo shopTimeZone = TimeZoneInfo.FindSystemTimeZoneById(shopDetails.TimeZone);
-        DateOnly firstDay = new(month.Year, month.Month, 1);
-        DateTimeRange monthRange = new(
-            shopTimeZone.GetDayRange(firstDay).Start,
-            shopTimeZone.GetDayRange(firstDay.AddMonths(1)).Start
-        );
+        DateTimeRange monthRange = shopTimeZone.GetMonthRange(month);
         DateTimeOffset now = time.GetUtcNow();
         DateTimeRange bookingWindow = new(
             now + bookingProfile.MinimumNotice,

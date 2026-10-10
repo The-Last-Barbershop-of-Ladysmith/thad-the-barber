@@ -40,6 +40,21 @@ public sealed class TimeZoneInfoExtensionsTests
         Assert.Equal(TimeSpan.FromHours(hours), day.End - day.Start);
     }
 
+    [Theory]
+    [InlineData("2026-10-17", "2026-10-01T04:00:00Z", "2026-11-01T04:00:00Z")]
+    [InlineData("2026-11-01", "2026-11-01T04:00:00Z", "2026-12-01T05:00:00Z")]
+    [InlineData("2026-12-31", "2026-12-01T05:00:00Z", "2027-01-01T05:00:00Z")]
+    [InlineData("2028-02-29", "2028-02-01T05:00:00Z", "2028-03-01T05:00:00Z")]
+    public void AMonthCoversItsUtcRangeAcrossDstAndYearEnd(string anyDate, string start, string end)
+    {
+        Assert.Equal(
+            new DateTimeRange(
+                ParseInstant(start),
+                ParseInstant(end)
+            ),
+            _newYork.GetMonthRange(ParseDate(anyDate)));
+    }
+
     [Property(Arbitrary = new[] { typeof(TimeZoneArbitraries) })]
     public void EveryDayStartsAndEndsOnItsOwnDate(ZonedDate zonedDate)
     {
