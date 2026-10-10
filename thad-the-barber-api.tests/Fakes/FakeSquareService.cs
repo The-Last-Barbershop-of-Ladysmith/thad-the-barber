@@ -28,6 +28,23 @@ public sealed class FakeSquareService : ISquareService
     public List<BookableService> BookableServices { get; init; } =
         [.. SquareFixture.ReadAs<SearchCatalogItemsResponse>("search-catalog-items.json").Items!.SelectMany(item => item.ToBookableServices())];
 
+    /// <summary>The fixture's service plus a second variation, which the one-service rule (BR-01) rejects unless one is pinned.</summary>
+    public static List<BookableService> TwoBookableServices
+    {
+        get
+        {
+            BookableService fixtureService = new FakeSquareService().BookableServices.Single();
+            return
+            [
+                fixtureService,
+                fixtureService with
+                {
+                    VariationId = "OTHER-VARIATION",
+                },
+            ];
+        }
+    }
+
     public List<TimeSlot> TimeSlots { get; init; } =
         [.. SquareFixture.ReadAs<SearchAvailabilityResponse>("search-availability.json").Availabilities!.Select(availability => availability.ToTimeSlot())];
 

@@ -2,7 +2,6 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
 using ThadTheBarber.Api.Square.Exceptions;
@@ -49,20 +48,11 @@ public sealed class HealthTests(ApiFactory factory) : IClassFixture<ApiFactory>
     [Fact]
     public async Task DeepHealthIs503AndLogsAnErrorWhenTheCatalogHasSeveralBookableServices()
     {
-        BookableService bookableService = new FakeSquareService().BookableServices.Single();
         using ApiFactory ambiguous = new(square: new FakeSquareService
         {
-            BookableServices =
-            [
-                bookableService,
-                bookableService with
-                {
-                    VariationId = "OTHER-VARIATION",
-                },
-            ],
+            BookableServices = FakeSquareService.TwoBookableServices,
         });
-        using WebApplicationFactory<Program> logged = ambiguous.WithWebHostBuilder(builder => builder.ConfigureServices(
-            services => services.AddLogging(logging => logging.AddFakeLogging())));
+        using WebApplicationFactory<Program> logged = ambiguous.WithFakeLogging();
 
         using HttpResponseMessage response = await logged.CreateClient().GetAsync("/api/health?deep=true", TestContext.Current.CancellationToken);
 
@@ -86,6 +76,22 @@ public sealed class HealthTests(ApiFactory factory) : IClassFixture<ApiFactory>
         await client.GetAsync("/api/health?deep=true", TestContext.Current.CancellationToken);
 
         Assert.Equal(1, square.Checks);
+    }
+
+    [Fact]
+    public async Task DeepHealthReusesAFailedBookableServiceLookupForRepeatedProbes()
+    {
+        FakeSquareService square = new()
+        {
+            BookableServices = [],
+        };
+        using ApiFactory probed = new(square: square);
+        using HttpClient client = probed.CreateClient();
+
+        await client.GetAsync("/api/health?deep=true", TestContext.Current.CancellationToken);
+        await client.GetAsync("/api/health?deep=true", TestContext.Current.CancellationToken);
+
+        Assert.Equal(1, square.CatalogSearches);
     }
 
     [Theory]

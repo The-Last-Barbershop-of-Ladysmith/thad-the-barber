@@ -10,12 +10,6 @@ namespace ThadTheBarber.Api.Tests.Square;
 
 public sealed class BookableServiceResolverTests
 {
-    private static readonly BookableService fixtureService = new FakeSquareService().BookableServices.Single();
-    private static readonly BookableService otherService = fixtureService with
-    {
-        VariationId = "OTHER-VARIATION",
-    };
-
     private static CancellationToken Cancellation => TestContext.Current.CancellationToken;
 
     [Fact]
@@ -32,12 +26,13 @@ public sealed class BookableServiceResolverTests
     {
         FakeSquareService square = new()
         {
-            BookableServices = [fixtureService, otherService],
+            BookableServices = FakeSquareService.TwoBookableServices,
         };
+        BookableService pinnedService = square.BookableServices[1];
 
-        BookableService resolved = await Resolver(square, otherService.VariationId).ResolveAsync(Cancellation);
+        BookableService resolved = await Resolver(square, pinnedService.VariationId).ResolveAsync(Cancellation);
 
-        Assert.Equal(otherService, resolved);
+        Assert.Equal(pinnedService, resolved);
     }
 
     [Fact]
@@ -47,14 +42,12 @@ public sealed class BookableServiceResolverTests
             () => Resolver(new FakeSquareService(), "MISSING-VARIATION").ResolveAsync(Cancellation));
     }
 
-    [Theory]
-    [InlineData(0)]
-    [InlineData(2)]
-    public async Task NoneOrSeveralBookableServicesAreNotResolved(int count)
+    [Fact]
+    public async Task SeveralBookableServicesAreNotResolved()
     {
         FakeSquareService square = new()
         {
-            BookableServices = [.. new[] { fixtureService, otherService }.Take(count)],
+            BookableServices = FakeSquareService.TwoBookableServices,
         };
 
         await Assert.ThrowsAsync<BookableServiceNotResolvedException>(() => Resolver(square).ResolveAsync(Cancellation));
