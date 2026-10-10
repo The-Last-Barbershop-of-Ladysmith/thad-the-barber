@@ -1,4 +1,3 @@
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Square;
 using ThadTheBarber.Api.Square.Handlers;
@@ -19,7 +18,8 @@ public static class SquareSetup
 
     /// <summary>
     /// Square's settings, the in-memory access token, and the SDK client behind <see cref="ISquareService"/>. Needs a
-    /// <see cref="Azure.Security.KeyVault.Secrets.SecretClient"/> (registered by <c>KeyVaultSetup</c>).
+    /// <see cref="Azure.Security.KeyVault.Secrets.SecretClient"/> (registered by <c>KeyVaultSetup</c>) and a
+    /// <see cref="TimeProvider"/>.
     /// </summary>
     public static IServiceCollection AddSquareService(this IServiceCollection services, IConfiguration configuration)
     {
@@ -27,7 +27,6 @@ public static class SquareSetup
             .Bind(configuration.GetSection(SquareSettings.SectionName))
             .ValidateDataAnnotations()
             .ValidateOnStart();
-        services.TryAddSingleton(TimeProvider.System);
         services.AddSingleton<SquareAccessTokenProvider>();
         services.AddTransient<SquareAuthHandler>();
         services.AddTransient<NoAuthorizationHandler>();

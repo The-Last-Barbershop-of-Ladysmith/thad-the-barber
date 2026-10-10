@@ -65,7 +65,7 @@ Endpoints (each replaces a mocked Angular service without changing its NgRx effe
 | Endpoint | Square | Replaces |
 | --- | --- | --- |
 | `GET /api/shop` | Locations (name, phone, address, timezone, hours, socials, description) + Business Booking Profile + the single service's duration as `bookingSettings.slotMinutes` (no name or price, BR-11) | `SHOP_INFO`, `OPENING_HOURS`, `SOCIAL_LINKS`, `BOOKING_RULES` |
-| `GET /api/availability?month=` / `?date=` | Bookings `SearchAvailability` (for the single service) | `AvailabilityService` mock |
+| `GET /api/bookings/availability?month=YYYY-MM` | Bookings `SearchAvailability` (for the single service), one call per month, clipped to the booking window (now + minimum notice to now + maximum advance; no overlap is a 400 `outside_booking_window`). Returns `[{ date, times }]`: the shop-timezone days with an open time, each with its times as UTC instants, so picking a day needs no second request. Never cached and `no-store`: a time booked anywhere disappears right away, and `CreateBooking` re-checks; no slot holds (#27) | `AvailabilityService` mock |
 | `POST /api/bookings` | `SearchCustomers` → create customer if missing → `CreateBooking` (idempotency key) | `BookingService` mock |
 | `POST /api/bookings/{id}/cancel` / `reschedule` | `CancelBooking` / `UpdateBooking` | New |
 | `GET /api/content/announcements` | None (`content/announcements.json`) | `HOME_CONTENT.announcements` |

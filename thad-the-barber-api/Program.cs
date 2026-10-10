@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Azure.Monitor.OpenTelemetry.AspNetCore;
 using ThadTheBarber.Api.Common.Exceptions;
+using ThadTheBarber.Api.Features.Booking.Endpoints;
 using ThadTheBarber.Api.Features.Health.Endpoints;
 using ThadTheBarber.Api.Features.Shop.Endpoints;
 using ThadTheBarber.Api.Infrastructure.Cors.Configuration;
@@ -21,12 +22,14 @@ if (builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"] is { Length: 
 
 builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)));
+builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<ProblemExceptionHandler>();
 builder.Services.AddHsts(options => options.MaxAge = TimeSpan.FromDays(365));
 builder.Services.AddFrontendCors(builder.Configuration);
 builder.Services.AddSquareService(builder.Configuration);
 builder.Services.AddHealth();
+builder.Services.AddBooking();
 builder.Services.AddOpenApi();
 builder.Services.AddSwaggerGen();
 
@@ -51,6 +54,7 @@ app.UseCors();
 RouteGroupBuilder api = app.MapGroup("/api");
 api.MapHealthEndpoints();
 api.MapShopEndpoints();
+api.MapBookingEndpoints();
 
 if (app.Environment.IsDevelopment())
 {
