@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using ThadTheBarber.Api.Square.Services;
 using ThadTheBarber.Api.Tests.Fakes;
 using ThadTheBarber.Api.Tests.Square;
@@ -33,6 +34,10 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
         _origins = origins ?? [FrontendOrigin, CustomDomainOrigin];
         _square = square ?? new FakeSquareService();
     }
+
+    /// <summary>This host with its logs collected; read them from <c>Services.GetFakeLogCollector()</c>.</summary>
+    public WebApplicationFactory<Program> WithFakeLogging() =>
+        WithWebHostBuilder(builder => builder.ConfigureServices(services => services.AddLogging(logging => logging.AddFakeLogging())));
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
