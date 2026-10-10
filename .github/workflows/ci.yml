@@ -145,19 +145,20 @@ jobs:
             -reporttypes:'Html;MarkdownSummaryGithub'
 
       # Microsoft's coverage extension can't fail a run below a threshold, so the gate reads the Cobertura root.
-      - name: Line coverage at least 80%
+      - name: Line and branch coverage at least 80%
         run: |
           python3 - <<'EOF'
           import sys
           import xml.etree.ElementTree as ET
           root = ET.parse('thad-the-barber-api.tests/TestResults/coverage.cobertura.xml').getroot()
-          line, branch = float(root.get('line-rate')), float(root.get('branch-rate'))
-          passed = line >= 0.8
+          rates = {'Line': float(root.get('line-rate')), 'Branch': float(root.get('branch-rate'))}
+          failures = [name for name, rate in rates.items() if rate < 0.8]
+          cells = [f"{'❌' if name in failures else '✅'} {rate:.1%} (min 80%)" for name, rate in rates.items()]
           with open('coverage-summary.md', 'w') as summary:
               summary.write('### API coverage\n\n| Lines | Branches |\n| --- | --- |\n')
-              summary.write(f"| {'✅' if passed else '❌'} {line:.1%} (min 80%) | {branch:.1%} |\n")
-          print(f'Line coverage: {line:.1%}, branch coverage: {branch:.1%}')
-          sys.exit(0 if passed else 'Line coverage is below 80%')
+              summary.write(f"| {' | '.join(cells)} |\n")
+          print(', '.join(f'{name} coverage: {rate:.1%}' for name, rate in rates.items()))
+          sys.exit(f"{' and '.join(failures)} coverage below 80%" if failures else 0)
           EOF
 
       # ReportGenerator's summary repeats the totals under its own "# Summary" heading; keep only the per-class table.

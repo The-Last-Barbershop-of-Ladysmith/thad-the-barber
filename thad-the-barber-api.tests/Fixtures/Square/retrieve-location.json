@@ -1,12 +1,12 @@
 {
   "location": {
-    "id": "LVF9Q8XN61NA4",
-    "name": "Thad",
+    "id": "LOCATION0TEST",
+    "name": "Test Location",
     "address": {
-      "address_line_1": "2022 Augustine Ave",
-      "locality": "Fredericksburg",
-      "administrative_district_level_1": "VA",
-      "postal_code": "22401-4419",
+      "address_line_1": "100 Example St Ste #2",
+      "locality": "Winston-Salem",
+      "administrative_district_level_1": "NC",
+      "postal_code": "27101-0001",
       "country": "US"
     },
     "timezone": "America/New_York",
@@ -16,15 +16,20 @@
     ],
     "status": "ACTIVE",
     "created_at": "2023-03-09T08:02:40.004Z",
-    "merchant_id": "MLGC8X89QXEAF",
+    "merchant_id": "MERCHANT0TEST",
     "country": "US",
     "language_code": "en-US",
     "currency": "USD",
-    "phone_number": "+1 540-621-2143",
-    "business_name": "Thad the Barber",
+    "phone_number": "+1 (555) 010-0199",
+    "business_name": "O'Neil & Søn Barbershop",
     "type": "PHYSICAL",
     "business_hours": {
       "periods": [
+        {
+          "day_of_week": "SAT",
+          "start_local_time": "09:30:00",
+          "end_local_time": "12:00:00"
+        },
         {
           "day_of_week": "SUN",
           "start_local_time": "10:00:00",
@@ -32,13 +37,13 @@
         },
         {
           "day_of_week": "SAT",
-          "start_local_time": "10:00:00",
-          "end_local_time": "19:00:00"
+          "start_local_time": "13:00:00",
+          "end_local_time": "19:45:00"
         }
       ]
     },
-    "business_email": "sandbox-merchant+mb2xom2das1lsg5xibtwt0s6ii6cmu2g@squareup.com",
-    "description": "❗Important: Read Before Booking❗\n\nI'm now cutting in a new shop on Route 1 in Fredericksburg, so allow enough time for the drive.\n\nHave questions? TEXT 540-621-2143.\n\nPrices and everything else will stay the same for now.\n\nThank you for your continued support.\n",
+    "business_email": "test-merchant@example.com",
+    "description": "❗Important: read before booking❗\n\nQuestions? Text 555-010-0199.\n\nPrices stay the same for now 💈\n",
     "mcc": "7299"
   }
 }

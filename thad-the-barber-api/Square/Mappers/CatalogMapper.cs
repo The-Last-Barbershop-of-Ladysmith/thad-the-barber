@@ -21,7 +21,7 @@ public static class CatalogMapper
             .Where(variation => variation is { IsDeleted: not true, ItemVariationData.AvailableForBooking: true })
             .Select(variation => new BookableService(
                 item.Name ?? string.Empty,
-                variation.Id ?? throw new InvalidOperationException("A Square catalog variation has no id."),
+                variation.Id,
                 variation.Version ?? throw new InvalidOperationException($"Square variation {variation.Id} has no version."),
                 TimeSpan.FromMilliseconds(variation.ItemVariationData!.ServiceDuration
                     ?? throw new InvalidOperationException($"Square variation {variation.Id} has no service duration.")),

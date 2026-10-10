@@ -28,7 +28,7 @@ public static class LocationMapper
         );
     }
 
-    /// <summary>Square keeps the number as typed in the Dashboard, e.g. <c>+1 540-621-2143</c>; 10 digits are US.</summary>
+    /// <summary>Square keeps the number as typed in the Dashboard, e.g. <c>+1 (555) 010-0199</c>; 10 digits are US.</summary>
     private static string ToE164Phone(string phone)
     {
         string digits = string.Concat(phone.Where(char.IsAsciiDigit));

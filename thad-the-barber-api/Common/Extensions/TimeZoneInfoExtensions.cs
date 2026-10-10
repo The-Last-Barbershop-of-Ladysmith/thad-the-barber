@@ -19,18 +19,14 @@ public static class TimeZoneInfoExtensions
     );
 
     /// <summary>
-    /// Midnight; where clocks spring forward at midnight, the moment they jump; where they fall back at midnight, its
-    /// first occurrence.
+    /// Midnight; where clocks spring forward at midnight, the moment they jump (a skipped time gets the standard
+    /// offset, the one before the jump); where they fall back at midnight, its first occurrence.
     /// </summary>
     private static DateTimeOffset GetStartOfDay(this TimeZoneInfo timeZone, DateOnly date)
     {
         DateTime midnight = date.ToDateTime(TimeOnly.MinValue);
         TimeSpan offset = timeZone.GetUtcOffset(midnight);
-        if (timeZone.IsInvalidTime(midnight))
-        {
-            offset = timeZone.GetUtcOffset(midnight.AddTicks(-1));
-        }
-        else if (timeZone.IsAmbiguousTime(midnight))
+        if (timeZone.IsAmbiguousTime(midnight))
         {
             offset = timeZone.GetAmbiguousTimeOffsets(midnight).Max();
         }
