@@ -22,10 +22,9 @@ public static class ShopEndpoints
         CancellationToken cancellationToken)
     {
         ShopDetails shopDetails = await square.GetShopDetailsAsync(cancellationToken);
-        Task<BookingProfile> bookingProfileTask = square.GetBookingProfileAsync(shopDetails.LocationId, cancellationToken);
-        Task<BookableService> bookableServiceTask = resolver.ResolveAsync(cancellationToken);
-        await Task.WhenAll(bookingProfileTask, bookableServiceTask);
+        BookingProfile bookingProfile = await square.GetBookingProfileAsync(shopDetails.LocationId, cancellationToken);
+        BookableService bookableService = await resolver.ResolveAsync(cancellationToken);
 
-        return TypedResults.Ok(shopDetails.ToShopInfoDto(bookingProfileTask.Result, bookableServiceTask.Result));
+        return TypedResults.Ok(shopDetails.ToShopInfoDto(bookingProfile, bookableService));
     }
 }
