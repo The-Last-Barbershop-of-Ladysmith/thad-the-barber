@@ -65,6 +65,7 @@ The API reads all its secrets through the Key Vault configuration provider, so t
 | --- | --- | --- |
 | web + api identities | Key Vault Secrets User | their environment's vault |
 | api identity | Key Vault Crypto User | the `session-jwt-signing` key only |
+| you (`TTB_ADMIN_OBJECT_ID`) | Key Vault Crypto User | dev's `session-jwt-signing` key only (`canAdminSignSessions`), so local runs can issue session tokens |
 | you (`TTB_ADMIN_OBJECT_ID`) | Key Vault Secrets Officer | each vault |
 | `id-ttb-deploy-<env>-<region>` (GitHub, #10) | Website Contributor | its environment's web and API apps only |
 | `id-ttb-deploy-<env>-<region>` (GitHub, #10) | Storage Blob Data Contributor | its environment's media container only |

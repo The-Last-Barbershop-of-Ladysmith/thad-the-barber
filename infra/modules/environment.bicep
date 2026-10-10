@@ -30,6 +30,9 @@ param allowedIpRanges string[]
 @description('Deploy the Square alerts (prod only; nonprod uses the Square sandbox).')
 param squareAlerts bool
 
+@description('Gives adminPrincipalId Key Vault Crypto User on the session-JWT key, for local runs (dev only).')
+param canAdminSignSessions bool
+
 param actionGroupId string
 param tags object
 
@@ -220,6 +223,16 @@ resource apiJwtSigner 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   properties: {
     principalId: api.outputs.principalId
     principalType: 'ServicePrincipal'
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', keyVaultCryptoUser)
+  }
+}
+
+resource adminJwtSigner 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (canAdminSignSessions && !empty(adminPrincipalId)) {
+  name: guid(sessionJwtKey.id, 'admin', keyVaultCryptoUser)
+  scope: sessionJwtKey
+  properties: {
+    principalId: adminPrincipalId
+    principalType: 'User'
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', keyVaultCryptoUser)
   }
 }
