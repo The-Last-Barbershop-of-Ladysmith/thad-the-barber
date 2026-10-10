@@ -64,5 +64,15 @@ public sealed class SquareHarness : IDisposable
 
     public FakeLogCollector Logs => _services.GetFakeLogCollector();
 
+    /// <summary>Answers the location, booking profile and catalog reads with the recorded fixtures.</summary>
+    public SquareHarness WithShopResponses()
+    {
+        Http.Responses["/v2/locations/main"] = SquareFixture.ReadText("retrieve-location.json");
+        Http.Responses["/v2/bookings/business-booking-profile"] = SquareFixture.ReadText("business-booking-profile.json");
+        Http.Responses["/v2/bookings/location-booking-profiles"] = SquareFixture.ReadText("location-booking-profiles.json");
+        Http.Responses["/v2/catalog/search-catalog-items"] = SquareFixture.ReadText("search-catalog-items.json");
+        return this;
+    }
+
     public void Dispose() => _services.Dispose();
 }

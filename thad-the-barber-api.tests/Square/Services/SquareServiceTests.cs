@@ -72,7 +72,7 @@ public sealed class SquareServiceTests
     [Fact]
     public async Task ShopDetailsBookingProfileAndServicesAreReadFromSquareOnceWithinTheCacheTime()
     {
-        using SquareHarness harness = WithShopResponses();
+        using SquareHarness harness = new SquareHarness().WithShopResponses();
 
         await ReadShopAsync(harness);
         harness.Time.Advance(SquareCache.CacheFor - TimeSpan.FromSeconds(1));
@@ -91,7 +91,7 @@ public sealed class SquareServiceTests
     [Fact]
     public async Task WhenSquareIsDownTheLastShopDetailsAreServed()
     {
-        using SquareHarness harness = WithShopResponses();
+        using SquareHarness harness = new SquareHarness().WithShopResponses();
         ShopDetails fetched = await harness.Square.GetShopDetailsAsync(Cancellation);
         harness.Time.Advance(SquareCache.CacheFor);
         harness.Http.Down = true;
@@ -99,16 +99,6 @@ public sealed class SquareServiceTests
         ShopDetails served = await harness.Square.GetShopDetailsAsync(Cancellation);
 
         Assert.Same(fetched, served);
-    }
-
-    private static SquareHarness WithShopResponses()
-    {
-        SquareHarness harness = new();
-        harness.Http.Responses["/v2/locations/main"] = SquareFixture.ReadText("retrieve-location.json");
-        harness.Http.Responses["/v2/bookings/business-booking-profile"] = SquareFixture.ReadText("business-booking-profile.json");
-        harness.Http.Responses["/v2/bookings/location-booking-profiles"] = SquareFixture.ReadText("location-booking-profiles.json");
-        harness.Http.Responses["/v2/catalog/search-catalog-items"] = SquareFixture.ReadText("search-catalog-items.json");
-        return harness;
     }
 
     private static async Task ReadShopAsync(SquareHarness harness)
