@@ -64,7 +64,7 @@ Endpoints (each replaces a mocked Angular service without changing its NgRx effe
 
 | Endpoint | Square | Replaces |
 | --- | --- | --- |
-| `GET /api/shop` | Locations (name, phone, address, timezone, hours, socials, description) + Business Booking Profile + the single service's public details (name, duration; no price, BR-11) | `SHOP_INFO`, `OPENING_HOURS`, `SOCIAL_LINKS`, `BOOKING_RULES` |
+| `GET /api/shop` | Locations (name, phone, address, timezone, hours, socials, description) + Business Booking Profile + the single service's duration as `bookingSettings.slotMinutes` (no name or price, BR-11) | `SHOP_INFO`, `OPENING_HOURS`, `SOCIAL_LINKS`, `BOOKING_RULES` |
 | `GET /api/availability?month=` / `?date=` | Bookings `SearchAvailability` (for the single service) | `AvailabilityService` mock |
 | `POST /api/bookings` | `SearchCustomers` → create customer if missing → `CreateBooking` (idempotency key) | `BookingService` mock |
 | `POST /api/bookings/{id}/cancel` / `reschedule` | `CancelBooking` / `UpdateBooking` | New |
@@ -98,7 +98,7 @@ Endpoints (each replaces a mocked Angular service without changing its NgRx effe
 - Thad's Square settings must allow customer cancellation with no window and no fee.
 - Customers act through a **signed manage link**, `/book/manage/{id}#t={hmac}`, so a guessed ID can't change someone else's booking. The token lives in the URL fragment, which is never sent to servers or put in the Referer, and the UI sends it in an `X-Manage-Token` header, so it never shows up in logs.
 
-**One service:** the shop offers a single service, and that isn't expected to change. There's no services page, no service step, and no public services endpoint. The API still **reads that service from the Square Catalog** (cached, refreshed by the `catalog.version.updated` webhook), because `SearchAvailability` needs its variation ID and `CreateBooking` needs its variation ID, **version**, team member and duration. Only its public details (name and duration; no price, per BR-11) are passed to the UI, through `GET /api/shop`.
+**One service:** the shop offers a single service, and that isn't expected to change. There's no services page, no service step, and no public services endpoint. The API still **reads that service from the Square Catalog** (`BookableServiceResolver`, cached for 60 minutes and refreshed by the `catalog.version.updated` webhook), because `SearchAvailability` needs its variation ID and `CreateBooking` needs its variation ID, **version**, team member and duration. It takes the one appointment-service variation open for online booking; the optional `Square:ServiceVariationId` setting pins one. With none, or more than one and no pin, booking calls return 503 and the deep health check (`bookableService`) reports unhealthy with an error logged. Only its duration reaches the UI, as `bookingSettings.slotMinutes` in `GET /api/shop` (no name or price, BR-11).
 
 **Booking UI:** our own UI, not Square's hosted booking page. It keeps the site's design and makes room for the admin portal.
 
@@ -197,7 +197,7 @@ Every change ships with its tests:
 | Shop name, phone, address, timezone, socials, logo, description (shown as a notice, BR-42) | Square Location | `GET /api/shop` → root `shop` slice |
 | Opening hours | Square Location `business_hours` | `GET /api/shop` |
 | Map and directions URLs | Derived by the API from the Square address | `GET /api/shop` |
-| The single service's name and duration (no price, BR-11) | Square Catalog | `GET /api/shop` (`service`) |
+| The single service's duration (no name or price, BR-11) | Square Catalog | `GET /api/shop` (`bookingSettings.slotMinutes`) |
 | Booking window, lead time, cancel rules | Square Business Booking Profile + service durations | `GET /api/shop` |
 | Announcements, gallery list, `reviewsToShow`, shop area text, tagline | Content files owned by the API: `content/announcements.json`, `gallery.json`, `reviews.json`, `shop.json`, each with a JSON schema (the admin portal takes over later) | One endpoint per type. Announcements → **root** `announcements` slice; gallery and reviews → **lazy** feature slices (`features/gallery`, `features/reviews`) loaded only where shown; `shop.json` fields merged into `/api/shop` |
 | Gallery, announcement and backdrop images | **Azure Blob Storage**, one public container per environment; originals in `media/`, and a pipeline makes WebP variants (480/960/1600w, EXIF stripped). Content refers to images by key | `environment.mediaBaseUrl` + key + size |
