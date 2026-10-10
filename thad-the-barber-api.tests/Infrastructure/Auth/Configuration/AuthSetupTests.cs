@@ -3,11 +3,16 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text;
+using Azure;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
+using ThadTheBarber.Api.Features.Session.Configuration;
+using ThadTheBarber.Api.Features.Session.Services;
+using ThadTheBarber.Api.Infrastructure.Auth.Configuration;
 using ThadTheBarber.Api.Tests.TestSupport;
 using ThadTheBarber.Api.Tests.TestSupport.Fakes;
 
@@ -70,12 +75,40 @@ public sealed class AuthSetupTests(ApiFactory factory) : IClassFixture<ApiFactor
         [
             .. factory.Services.GetRequiredService<EndpointDataSource>().Endpoints
                 .OfType<RouteEndpoint>()
-                .Where(endpoint => endpoint.Metadata.GetMetadata<IAllowAnonymous>() is not null)
+                .Where(endpoint => endpoint.Metadata.GetMetadata<IAuthorizeData>() is null
+                    || endpoint.Metadata.GetMetadata<IAllowAnonymous>() is not null)
                 .Select(endpoint => $"/{endpoint.RoutePattern.RawText!.TrimStart('/')}")
                 .Order(StringComparer.Ordinal),
         ];
 
         Assert.Equal(exemptRoutes, openRoutes);
+    }
+
+    [Fact]
+    public async Task AnUnknownPathIs404NotA401()
+    {
+        using HttpResponseMessage response = await factory.CreateClientWithoutToken().GetAsync("/api/no-such-thing", Cancellation);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public void StartupFailsWhenTheSigningKeyCantBeRead()
+    {
+        using ServiceProvider services = new ServiceCollection()
+            .AddLogging()
+            .AddSingleton(new FakeKeyClient("session-key") { FailWith = 403 })
+            .AddSingleton<ISessionSigningKey>(provider => new KeyVaultSessionSigningKey(
+                provider.GetRequiredService<FakeKeyClient>(),
+                Options.Create(new SessionSettings
+                {
+                    SigningKeyName = "session-key",
+                })
+            ))
+            .AddSessionBearerAuth()
+            .BuildServiceProvider();
+
+        Assert.Throws<RequestFailedException>(() => services.GetRequiredService<IStartupValidator>().Validate());
     }
 
     // Browsers never send Authorization on a preflight, so CORS must answer it before authorization runs.

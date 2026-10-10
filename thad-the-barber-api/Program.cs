@@ -60,7 +60,7 @@ app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 
-RouteGroupBuilder api = app.MapGroup("/api");
+RouteGroupBuilder api = app.MapGroup("/api").RequireAuthorization();
 api.MapSessionEndpoints();
 api.MapHealthEndpoints();
 api.MapShopEndpoints();
@@ -68,7 +68,7 @@ api.MapBookingEndpoints();
 
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi("/api/openapi/{documentName}.json").AllowAnonymous();
+    app.MapOpenApi("/api/openapi/{documentName}.json");
     app.UseSwaggerUI(options =>
     {
         options.SwaggerEndpoint("/api/openapi/v1.json", "Thad the Barber API");
