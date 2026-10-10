@@ -4,8 +4,8 @@ using Square;
 using ThadTheBarber.Api.Common.Models;
 using ThadTheBarber.Api.Square.Exceptions;
 using ThadTheBarber.Api.Square.Models;
-using ThadTheBarber.Api.Tests.TestSupport.Fakes;
 using ThadTheBarber.Api.Tests.TestSupport;
+using ThadTheBarber.Api.Tests.TestSupport.Fakes;
 
 namespace ThadTheBarber.Api.Tests.Square.Services;
 

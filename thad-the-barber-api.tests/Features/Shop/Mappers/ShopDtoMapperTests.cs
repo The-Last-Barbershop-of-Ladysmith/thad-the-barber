@@ -1,12 +1,12 @@
-using System.Text.Json.Nodes;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using ThadTheBarber.Api.Features.Shop.Mappers;
 using ThadTheBarber.Api.Features.Shop.Models;
-using ThadTheBarber.Api.Tests.TestSupport.Fakes;
 using ThadTheBarber.Api.Tests.TestSupport;
+using ThadTheBarber.Api.Tests.TestSupport.Fakes;
 using Address = ThadTheBarber.Api.Features.Shop.Models.Address;
 using DayOfWeek = System.DayOfWeek;
 

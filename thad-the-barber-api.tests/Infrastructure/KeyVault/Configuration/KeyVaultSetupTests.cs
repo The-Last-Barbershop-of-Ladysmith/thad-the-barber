@@ -1,5 +1,5 @@
-using Microsoft.Extensions.Configuration;
 using Azure.Security.KeyVault.Secrets;
+using Microsoft.Extensions.Configuration;
 using ThadTheBarber.Api.Infrastructure.KeyVault.Configuration;
 using ThadTheBarber.Api.Square.Configuration;
 

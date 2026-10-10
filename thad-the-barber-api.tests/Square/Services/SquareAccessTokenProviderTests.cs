@@ -1,8 +1,8 @@
 using System.Net;
 using ThadTheBarber.Api.Square.Exceptions;
 using ThadTheBarber.Api.Square.Services;
-using ThadTheBarber.Api.Tests.TestSupport.Fakes;
 using ThadTheBarber.Api.Tests.TestSupport;
+using ThadTheBarber.Api.Tests.TestSupport.Fakes;
 
 namespace ThadTheBarber.Api.Tests.Square.Services;
 

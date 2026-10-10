@@ -3,12 +3,12 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging.Testing;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Testing;
 using Square;
 using ThadTheBarber.Api.Square.Exceptions;
-using ThadTheBarber.Api.Tests.TestSupport.Fakes;
 using ThadTheBarber.Api.Tests.TestSupport;
+using ThadTheBarber.Api.Tests.TestSupport.Fakes;
 
 namespace ThadTheBarber.Api.Tests.Infrastructure.Problems;
 
