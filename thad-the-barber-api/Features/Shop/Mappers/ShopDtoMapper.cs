@@ -5,7 +5,7 @@ namespace ThadTheBarber.Api.Features.Shop.Mappers;
 
 public static class ShopDtoMapper
 {
-    public static ShopInfo ToShopInfo(this ShopDetails shopDetails, BookingProfile bookingProfile, BookableService bookableService)
+    public static ShopInfo ToShopInfoDto(this ShopDetails shopDetails, BookingProfile bookingProfile, BookableService bookableService)
     {
         return new ShopInfo(
             shopDetails.Name,
