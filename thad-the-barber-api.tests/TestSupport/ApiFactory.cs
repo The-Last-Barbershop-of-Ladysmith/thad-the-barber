@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using ThadTheBarber.Api.Square.Configuration;
 using ThadTheBarber.Api.Square.Services;
 using ThadTheBarber.Api.Tests.TestSupport.Fakes;
 
@@ -29,7 +28,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
 
     /// <param name="origins">The CORS allow-list; defaults to <see cref="FrontendOrigin"/> and <see cref="CustomDomainOrigin"/>.</param>
     /// <param name="square">
-    /// Replaces Square under the caching decorator for this host; defaults to a connected <see cref="FakeSquareService"/>.
+    /// Replaces Square for this host, cache included; defaults to a connected <see cref="FakeSquareService"/>.
     /// </param>
     internal ApiFactory(string[]? origins = null, ISquareService? square = null)
     {
@@ -50,6 +49,6 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
             builder.UseSetting($"Cors:AllowedOrigins:{i}", _origins[i]);
         }
 
-        builder.ConfigureTestServices(services => services.AddKeyedSingleton(SquareSetup.UncachedServiceKey, _square));
+        builder.ConfigureTestServices(services => services.AddSingleton(_square));
     }
 }
