@@ -80,11 +80,11 @@ public sealed class HealthTests(ApiFactory factory) : IClassFixture<ApiFactory>
     }
 
     [Fact]
-    public async Task DeepHealthReusesTheCachedCatalogForRepeatedProbes()
+    public async Task DeepHealthReusesAFailedCatalogReadForRepeatedProbes()
     {
         FakeSquareService square = new()
         {
-            BookableServices = [],
+            ReadFailure = new HttpRequestException("Square is down."),
         };
         using ApiFactory probed = new(square: square);
         using HttpClient client = probed.CreateClient();
