@@ -20,9 +20,10 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
 
     private readonly string[] _origins;
     private readonly ISquareService _square;
+    private readonly TimeProvider? _time;
 
     public ApiFactory()
-        : this(null, null)
+        : this(null, null, null)
     {
     }
 
@@ -30,10 +31,12 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
     /// <param name="square">
     /// Replaces Square for this host, cache included; defaults to a connected <see cref="FakeSquareService"/>.
     /// </param>
-    internal ApiFactory(string[]? origins = null, ISquareService? square = null)
+    /// <param name="time">Replaces the clock; defaults to the real one.</param>
+    internal ApiFactory(string[]? origins = null, ISquareService? square = null, TimeProvider? time = null)
     {
         _origins = origins ?? [FrontendOrigin, CustomDomainOrigin];
         _square = square ?? new FakeSquareService();
+        _time = time;
     }
 
     /// <summary>This host with its logs collected; read them from <c>Services.GetFakeLogCollector()</c>.</summary>
@@ -49,6 +52,13 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
             builder.UseSetting($"Cors:AllowedOrigins:{i}", _origins[i]);
         }
 
-        builder.ConfigureTestServices(services => services.AddSingleton(_square));
+        builder.ConfigureTestServices(services =>
+        {
+            services.AddSingleton(_square);
+            if (_time is not null)
+            {
+                services.AddSingleton(_time);
+            }
+        });
     }
 }
