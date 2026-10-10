@@ -39,16 +39,28 @@ public static class HealthEndpoints
     {
         if (!deep)
         {
-            return TypedResults.Ok(new HealthResponse(HealthStatus.Healthy, build.Version, build.Commit));
+            return TypedResults.Ok(new HealthResponse(
+                HealthStatus.Healthy,
+                build.Version,
+                build.Commit
+            ));
         }
 
         HealthReport report = await health.CheckHealthAsync(cancellationToken);
         Dictionary<string, HealthStatus> checks = report.Entries.ToDictionary(
             entry => entry.Key,
             entry => entry.Value.Status);
-        HealthResponse body = new(report.Status, build.Version, build.Commit, checks);
-        return report.Status == HealthStatus.Unhealthy
-            ? TypedResults.Json(body, statusCode: StatusCodes.Status503ServiceUnavailable)
-            : TypedResults.Ok(body);
+        HealthResponse body = new(
+            report.Status,
+            build.Version,
+            build.Commit,
+            checks
+        );
+        if (report.Status == HealthStatus.Unhealthy)
+        {
+            return TypedResults.Json(body, statusCode: StatusCodes.Status503ServiceUnavailable);
+        }
+
+        return TypedResults.Ok(body);
     }
 }

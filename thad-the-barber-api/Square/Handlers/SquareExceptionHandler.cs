@@ -9,35 +9,42 @@ namespace ThadTheBarber.Api.Square.Handlers;
 
 /// <summary>
 /// Turns Square failures from any endpoint into ProblemDetails, so endpoints call Square without catching:
-/// not connected, Key Vault unreachable, Square down or timed out → 503 (try later or use the fallbacks, BR-14); Square rejecting our request
-/// → 502.
+/// not connected, Key Vault unreachable, Square down or timed out → 503 (try later or use the fallbacks, BR-14); Square
+/// rejecting our request → 502. Outcomes the customer can act on are <see cref="Common.Exceptions.ProblemException"/>s
+/// with their own handler.
 /// </summary>
 public sealed class SquareExceptionHandler(IProblemDetailsService problemDetails) : IExceptionHandler
 {
     public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
     {
-        (int status, string title)? problem = exception switch
+        ProblemDetails? problem = exception switch
         {
             SquareNotConnectedException or RequestFailedException or AuthenticationFailedException
-                => (StatusCodes.Status503ServiceUnavailable, "Booking is unavailable right now."),
+                => Problem(StatusCodes.Status503ServiceUnavailable, "Booking is unavailable right now."),
             SquareApiException { StatusCode: >= StatusCodes.Status500InternalServerError } or HttpRequestException
-                => (StatusCodes.Status503ServiceUnavailable, "Square is unavailable right now."),
+                => Problem(StatusCodes.Status503ServiceUnavailable, "Square is unavailable right now."),
             TaskCanceledException when !httpContext.RequestAborted.IsCancellationRequested
-                => (StatusCodes.Status503ServiceUnavailable, "Square is unavailable right now."),
-            SquareApiException => (StatusCodes.Status502BadGateway, "Square couldn't complete the request."),
+                => Problem(StatusCodes.Status503ServiceUnavailable, "Square is unavailable right now."),
+            SquareApiException => Problem(StatusCodes.Status502BadGateway, "Square couldn't complete the request."),
             _ => null,
         };
-        if (problem is not (int status, string title))
+        if (problem is null)
         {
             return false;
         }
 
-        httpContext.Response.StatusCode = status;
+        httpContext.Response.StatusCode = problem.Status!.Value;
         return await problemDetails.TryWriteAsync(new ProblemDetailsContext
         {
             HttpContext = httpContext,
             Exception = exception,
-            ProblemDetails = new ProblemDetails { Status = status, Title = title },
+            ProblemDetails = problem,
         });
     }
+
+    private static ProblemDetails Problem(int status, string title) => new()
+    {
+        Status = status,
+        Title = title,
+    };
 }

@@ -23,38 +23,35 @@ public sealed class SquareExceptionHandlerTests
     [MemberData(nameof(SquareFailures))]
     public async Task SquareFailuresBecomeProblemDetails(Exception exception, int expectedStatus)
     {
-        DefaultHttpContext context = NewContext();
+        DefaultHttpContext context = ExceptionHandlerHarness.NewContext();
 
         bool handled = await Handler(context).TryHandleAsync(context, exception, TestContext.Current.CancellationToken);
 
         Assert.True(handled);
         Assert.Equal(expectedStatus, context.Response.StatusCode);
-        context.Response.Body.Position = 0;
-        JsonElement body = await JsonSerializer.DeserializeAsync<JsonElement>(context.Response.Body, cancellationToken: TestContext.Current.CancellationToken);
+        JsonElement body = await ExceptionHandlerHarness.ReadBodyAsync(context);
         Assert.Equal(expectedStatus, body.GetProperty("status").GetInt32());
         Assert.DoesNotContain(exception.Message, body.GetRawText());
     }
 
     [Fact]
-    public async Task OtherExceptionsAreLeftToTheDefaultHandler()
+    public async Task ProblemExceptionsAreLeftToTheirOwnHandler()
     {
-        DefaultHttpContext context = NewContext();
+        DefaultHttpContext context = ExceptionHandlerHarness.NewContext();
 
-        bool handled = await Handler(context).TryHandleAsync(context, new InvalidOperationException(), TestContext.Current.CancellationToken);
+        bool handled = await Handler(context).TryHandleAsync(context, new SlotUnavailableException("Taken."), TestContext.Current.CancellationToken);
 
         Assert.False(handled);
     }
 
-    private static DefaultHttpContext NewContext()
+    [Fact]
+    public async Task OtherExceptionsAreLeftToTheDefaultHandler()
     {
-        ServiceCollection services = new();
-        services.AddLogging();
-        services.AddProblemDetails();
-        return new DefaultHttpContext
-        {
-            RequestServices = services.BuildServiceProvider(),
-            Response = { Body = new MemoryStream() },
-        };
+        DefaultHttpContext context = ExceptionHandlerHarness.NewContext();
+
+        bool handled = await Handler(context).TryHandleAsync(context, new InvalidOperationException(), TestContext.Current.CancellationToken);
+
+        Assert.False(handled);
     }
 
     private static SquareExceptionHandler Handler(HttpContext context) =>

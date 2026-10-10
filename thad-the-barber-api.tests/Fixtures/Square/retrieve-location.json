@@ -1,0 +1,44 @@
+{
+  "location": {
+    "id": "LVF9Q8XN61NA4",
+    "name": "Thad",
+    "address": {
+      "address_line_1": "2022 Augustine Ave",
+      "locality": "Fredericksburg",
+      "administrative_district_level_1": "VA",
+      "postal_code": "22401-4419",
+      "country": "US"
+    },
+    "timezone": "America/New_York",
+    "capabilities": [
+      "CREDIT_CARD_PROCESSING",
+      "AUTOMATIC_TRANSFERS"
+    ],
+    "status": "ACTIVE",
+    "created_at": "2023-03-09T08:02:40.004Z",
+    "merchant_id": "MLGC8X89QXEAF",
+    "country": "US",
+    "language_code": "en-US",
+    "currency": "USD",
+    "phone_number": "+1 540-621-2143",
+    "business_name": "Thad the Barber",
+    "type": "PHYSICAL",
+    "business_hours": {
+      "periods": [
+        {
+          "day_of_week": "SUN",
+          "start_local_time": "10:00:00",
+          "end_local_time": "16:00:00"
+        },
+        {
+          "day_of_week": "SAT",
+          "start_local_time": "10:00:00",
+          "end_local_time": "19:00:00"
+        }
+      ]
+    },
+    "business_email": "sandbox-merchant+mb2xom2das1lsg5xibtwt0s6ii6cmu2g@squareup.com",
+    "description": "❗Important: Read Before Booking❗\n\nI'm now cutting in a new shop on Route 1 in Fredericksburg, so allow enough time for the drive.\n\nHave questions? TEXT 540-621-2143.\n\nPrices and everything else will stay the same for now.\n\nThank you for your continued support.\n",
+    "mcc": "7299"
+  }
+}
