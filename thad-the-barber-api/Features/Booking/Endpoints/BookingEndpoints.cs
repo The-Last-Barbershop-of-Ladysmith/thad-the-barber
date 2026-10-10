@@ -21,13 +21,18 @@ public static class BookingEndpoints
         return api;
     }
 
-    /// <summary>The open days in <c>?month=YYYY-MM</c> (shop timezone), each with its open times as UTC instants.</summary>
+    /// <summary>
+    /// The open days in <c>?month=YYYY-MM</c> (shop timezone), each with its open times as UTC instants. Years 1 and
+    /// 9999 are rejected because their month ranges in UTC can overflow <see cref="DateTimeOffset"/>.
+    /// </summary>
     internal static async Task<Results<Ok<List<AvailableDay>>, ValidationProblem>> GetAvailabilityAsync(
         string month,
         AvailabilityService availability,
         CancellationToken cancellationToken)
     {
-        if (!DateOnly.TryParseExact(month, "yyyy-MM", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateOnly firstDay))
+        if (!DateOnly.TryParseExact(month, "yyyy-MM", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateOnly firstDay)
+            || firstDay.Year == DateOnly.MinValue.Year
+            || firstDay.Year == DateOnly.MaxValue.Year)
         {
             return TypedResults.ValidationProblem(new Dictionary<string, string[]>
             {

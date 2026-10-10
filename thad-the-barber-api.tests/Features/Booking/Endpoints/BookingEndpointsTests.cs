@@ -41,6 +41,8 @@ public sealed class BookingEndpointsTests
     [InlineData("2026-10-01")]
     [InlineData("2026-13")]
     [InlineData("10-2026")]
+    [InlineData("0001-01")]
+    [InlineData("9999-12")]
     public async Task AMalformedMonthIs400ForTheMonth(string month)
     {
         using ApiFactory api = Api();
