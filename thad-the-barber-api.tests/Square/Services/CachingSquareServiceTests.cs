@@ -81,6 +81,23 @@ public sealed class CachingSquareServiceTests
     }
 
     [Fact]
+    public async Task WhileSquareIsDownItIsRetriedOnlyAfterTheRetryWait()
+    {
+        await _cached.GetShopDetailsAsync(Cancellation);
+        _time.Advance(CachingSquareService.CacheFor);
+        _square.ReadFailure = new HttpRequestException("Square is down.");
+        await _cached.GetShopDetailsAsync(Cancellation);
+
+        _time.Advance(CachingSquareService.RetryAfter - TimeSpan.FromSeconds(1));
+        await _cached.GetShopDetailsAsync(Cancellation);
+        Assert.Equal(2, _square.ShopDetailsReads);
+
+        _time.Advance(TimeSpan.FromSeconds(1));
+        await _cached.GetShopDetailsAsync(Cancellation);
+        Assert.Equal(3, _square.ShopDetailsReads);
+    }
+
+    [Fact]
     public async Task WhenSquareFailsWithNothingCachedTheCallerGetsTheFailure()
     {
         _square.ReadFailure = new HttpRequestException("Square is down.");
