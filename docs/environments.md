@@ -119,11 +119,12 @@ gcloud services enable recaptchaenterprise.googleapis.com apikeys.googleapis.com
 gcloud recaptcha keys create --display-name=ttb-dev  --web --integration-type=score --domains=as-ttb-ui-dev-centralus.azurewebsites.net,localhost --testing-score=0.9
 gcloud recaptcha keys create --display-name=ttb-test --web --integration-type=score --domains=as-ttb-ui-test-centralus.azurewebsites.net --testing-score=0.9
 # Prod (M5): no --testing-score, domains = the custom domain.
-gcloud services api-keys create --display-name=ttb-api-recaptcha --api-target=service=recaptchaenterprise.googleapis.com
 ```
 
+In PowerShell, quote the `--domains` list: an unquoted comma splits it into separate arguments.
+
 - The project, `thad-the-barber`, is `Recaptcha:ProjectId` in `appsettings.json`. Put each key's ID (the site key) in that environment's `appsettings.{Environment}.json` as `Recaptcha:SiteKey`, and in the UI's `environment.*.ts` as `recaptchaSiteKey`.
-- Save the API key with `./infra/scripts/Set-TtbSecrets.ps1 -Environment dev` (then `test`) as `Recaptcha--ApiKey`. One key serves every environment; it can only call the reCAPTCHA API. The API sends it in a header, never the URL.
+- Each environment has its own API key (`Development`, `Test`, `Production`), restricted to the reCAPTCHA API. Copy one to the clipboard without printing it, then save it as `Recaptcha--ApiKey` with `./infra/scripts/Set-TtbSecrets.ps1 -Environment <env>`: `gcloud services api-keys get-key-string <uid> --format="value(keyString)" | Set-Clipboard` (`gcloud services api-keys list` shows the uids). The API sends the key in a header, never the URL.
 - `Recaptcha:MinScore` (default 0.5) is the threshold; override it in `appsettings.{Environment}.json`.
 
 ### GitHub → Azure sign-in (OIDC)
