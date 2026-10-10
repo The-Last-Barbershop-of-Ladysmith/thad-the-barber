@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using Azure.Monitor.OpenTelemetry.AspNetCore;
 using ThadTheBarber.Api.Common.Exceptions;
 using ThadTheBarber.Api.Features.Health.Endpoints;
+using ThadTheBarber.Api.Features.Shop.Endpoints;
 using ThadTheBarber.Api.Infrastructure.Cors.Configuration;
 using ThadTheBarber.Api.Infrastructure.Headers.Middleware;
 using ThadTheBarber.Api.Infrastructure.KeyVault.Configuration;
@@ -49,6 +50,7 @@ app.UseCors();
 
 RouteGroupBuilder api = app.MapGroup("/api");
 api.MapHealthEndpoints();
+api.MapShopEndpoints();
 
 if (app.Environment.IsDevelopment())
 {
