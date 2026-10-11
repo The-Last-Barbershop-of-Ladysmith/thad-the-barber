@@ -10,7 +10,15 @@ import { HomeState, initialHomeState } from './home.state';
 export const homeReducer: ActionReducer<HomeState> = createReducer(
   initialHomeState,
   on(HomePageActions.stateReset, (): HomeState => initialHomeState),
-  on(HomePageActions.opened, (state: HomeState): HomeState => ({ ...state, contentStatus: 'pending' })),
+  // A saved gallery may point at images that are gone or be in an older shape, so it never renders.
+  on(
+    HomePageActions.opened,
+    (state: HomeState): HomeState => ({
+      ...state,
+      contentStatus: 'pending',
+      gallery: [],
+    }),
+  ),
   on(
     HomeApiActions.contentLoaded,
     (state: HomeState, { content }: { content: HomeContent; }): HomeState => ({
@@ -24,8 +32,6 @@ export const homeReducer: ActionReducer<HomeState> = createReducer(
     HomeApiActions.galleryLoaded,
     (state: HomeState, { photos }: { photos: GalleryPhoto[]; }): HomeState => ({ ...state, gallery: photos }),
   ),
-  // A saved copy could point at images that are gone, so the section hides instead.
-  on(HomeApiActions.galleryLoadFailed, (state: HomeState): HomeState => ({ ...state, gallery: [] })),
   on(
     HomePageActions.smsSignupSubmitted,
     (state: HomeState, { phone }: { phone: string; }): HomeState => ({

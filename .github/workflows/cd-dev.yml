@@ -40,7 +40,7 @@ jobs:
           fi
           changed=$(git diff --name-only "$BEFORE" "$GITHUB_SHA")
           shared='^(\.github/workflows/(cd-dev|build|deploy)\.yml)$'
-          grep -qE "^thad-the-barber-(ui|express)/|$shared" <<< "$changed" && echo "ui=true" >> "$GITHUB_OUTPUT"
+          grep -qE "^thad-the-barber-(ui|express)/|^media/variant-widths\.json$|$shared" <<< "$changed" && echo "ui=true" >> "$GITHUB_OUTPUT"
           grep -qE "^thad-the-barber-api/|^(Directory\.Build\.props|global\.json)$|$shared" <<< "$changed" && echo "api=true" >> "$GITHUB_OUTPUT"
           grep -qE "^tools/report-viewer/|^(Directory\.Build\.props|global\.json|\.github/workflows/cd-dev\.yml)$" <<< "$changed" && echo "viewer=true" >> "$GITHUB_OUTPUT"
           grep -qE "^(media|content|tools/media)/|^\.github/workflows/(cd-dev|media)\.yml$" <<< "$changed" && echo "media=true" >> "$GITHUB_OUTPUT"

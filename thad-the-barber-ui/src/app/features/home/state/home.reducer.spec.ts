@@ -1,5 +1,5 @@
 import { GalleryPhoto } from '../models/home.models';
-import { HomeApiActions } from './home.actions';
+import { HomeApiActions, HomePageActions } from './home.actions';
 import { homeReducer } from './home.reducer';
 import { HomeState, initialHomeState } from './home.state';
 
@@ -35,11 +35,12 @@ describe(
     );
 
     it(
-      'empties a saved gallery when loading fails, so the section hides',
+      'drops a saved gallery when the page opens, even one in an older shape',
       (): void => {
-        const before: HomeState = { ...initialHomeState, gallery: photos };
+        const saved: unknown[] = [{ src: 'assets/gallery/old-01.webp', alt: 'Saved before the media container' }];
+        const before: HomeState = { ...initialHomeState, gallery: saved as GalleryPhoto[] };
 
-        const state: HomeState = homeReducer(before, HomeApiActions.galleryLoadFailed());
+        const state: HomeState = homeReducer(before, HomePageActions.opened());
 
         expect(state.gallery).toEqual([]);
       },
