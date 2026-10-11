@@ -3,20 +3,27 @@ import {
   createReducer,
   on,
 } from '@ngrx/store';
-import { GalleryPhoto, HomeContent } from '../models/home.models';
+import {
+  Announcement,
+  GalleryPhoto,
+  HomeContent,
+} from '../models/home.models';
 import { HomeApiActions, HomePageActions } from './home.actions';
 import { HomeState, initialHomeState } from './home.state';
 
 export const homeReducer: ActionReducer<HomeState> = createReducer(
   initialHomeState,
   on(HomePageActions.stateReset, (): HomeState => initialHomeState),
-  // A saved gallery may point at images that are gone or be in an older shape, so it never renders.
+  // Saved storage content may be outdated (a deleted announcement or photo) or in an older shape, so it never renders.
   on(
     HomePageActions.opened,
     (state: HomeState): HomeState => ({
       ...state,
       contentStatus: 'pending',
+      announcements: [],
+      announcementsStatus: 'pending',
       gallery: [],
+      galleryStatus: 'pending',
     }),
   ),
   on(
@@ -29,9 +36,26 @@ export const homeReducer: ActionReducer<HomeState> = createReducer(
   ),
   on(HomeApiActions.contentLoadFailed, (state: HomeState): HomeState => ({ ...state, contentStatus: 'error' })),
   on(
-    HomeApiActions.galleryLoaded,
-    (state: HomeState, { photos }: { photos: GalleryPhoto[]; }): HomeState => ({ ...state, gallery: photos }),
+    HomeApiActions.announcementsLoaded,
+    (state: HomeState, { announcements }: { announcements: Announcement[]; }): HomeState => ({
+      ...state,
+      announcements,
+      announcementsStatus: 'success',
+    }),
   ),
+  on(
+    HomeApiActions.announcementsLoadFailed,
+    (state: HomeState): HomeState => ({ ...state, announcementsStatus: 'error' }),
+  ),
+  on(
+    HomeApiActions.galleryLoaded,
+    (state: HomeState, { photos }: { photos: GalleryPhoto[]; }): HomeState => ({
+      ...state,
+      gallery: photos,
+      galleryStatus: 'success',
+    }),
+  ),
+  on(HomeApiActions.galleryLoadFailed, (state: HomeState): HomeState => ({ ...state, galleryStatus: 'error' })),
   on(
     HomePageActions.smsSignupSubmitted,
     (state: HomeState, { phone }: { phone: string; }): HomeState => ({

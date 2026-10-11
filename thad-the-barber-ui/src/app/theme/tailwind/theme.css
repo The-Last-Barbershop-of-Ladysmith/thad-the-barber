@@ -95,6 +95,26 @@
   color: var(--p-surface-100);
 }
 
+/* Formatting inside rich text from content (announcement bodies); the markup comes in through [innerHTML] */
+@utility rich-text {
+  & > * + * {
+    margin-top: 0.75em;
+  }
+  & a {
+    color: var(--p-primary-color);
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+  }
+  & ul {
+    padding-left: 1.25em;
+    list-style: disc;
+  }
+  & ol {
+    padding-left: 1.25em;
+    list-style: decimal;
+  }
+}
+
 /* Intro paragraph under a heading */
 @utility lead {
   margin: 0;
@@ -177,15 +197,4 @@
   background: #fbfaf6;
   padding: clamp(6px, 1vw, 10px);
   box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.06), inset 0 2px 6px rgb(0 0 0 / 0.12);
-}
-
-/* Placeholder well for images that haven't been shot yet */
-@utility media-placeholder {
-  border-radius: var(--p-border-radius-lg);
-  border: 1px solid var(--p-content-border-color);
-  background: repeating-linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--p-surface-50) 5%, transparent) 0 10px,
-    color-mix(in srgb, var(--p-surface-50) 10%, transparent) 10px 20px
-  );
 }

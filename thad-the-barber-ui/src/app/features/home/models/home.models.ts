@@ -1,19 +1,41 @@
+import { LinkKind } from '../../../shared/models/link.models';
+
+export type AnnouncementImagePosition = 'left' | 'right';
+
+export const ANNOUNCEMENT_BUTTON_VARIANTS: readonly ['primary', 'secondary', 'outlined', 'text'] = [
+  'primary',
+  'secondary',
+  'outlined',
+  'text',
+] as const;
+
+export type AnnouncementButtonVariant = typeof ANNOUNCEMENT_BUTTON_VARIANTS[number];
+
+export interface AnnouncementImage {
+  src: string;
+  /** Empty when Thad gives no alt text, so screen readers skip the image. */
+  alt: string;
+  position: AnnouncementImagePosition;
+}
+
+export interface AnnouncementButton {
+  label: string;
+  url: string;
+  kind: LinkKind;
+  variant: AnnouncementButtonVariant;
+}
+
+/** An item of `content/announcements.json` in the media container, checked and ready to show. */
 export interface Announcement {
-  id: string;
-  tag: string;
-  date: string;
   title: string;
-  body: string;
-  /** Show the text-alert sign-up form in this slide. */
-  signup?: boolean;
-  /** Placeholder caption until real photography exists. */
-  imageNote?: string;
-  imageUrl?: string;
-  link?: {
-    label: string;
-    route: string;
-    fragment?: string;
-  };
+  /** Rich text from Thad (later the admin portal's editor); Angular's sanitizer cleans it when it renders. */
+  bodyHtml: string;
+  /** First day it shows, `YYYY-MM-DD`. */
+  startDate: string;
+  /** Last day it shows, `YYYY-MM-DD`. */
+  endDate: string;
+  image: AnnouncementImage | null;
+  buttons: AnnouncementButton[];
 }
 
 export interface Testimonial {
@@ -30,7 +52,4 @@ export interface GalleryPhoto {
   alt: string;
 }
 
-export interface HomeContent {
-  announcements: Announcement[];
-  testimonials: Testimonial[];
-}
+export interface HomeContent { testimonials: Testimonial[]; }

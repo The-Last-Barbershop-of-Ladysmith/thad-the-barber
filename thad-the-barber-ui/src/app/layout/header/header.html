@@ -9,7 +9,7 @@
     </a>
   } @else {
     <nav class="section-nav hidden md:flex" aria-label="Page sections" data-testid="header-nav">
-      @for (item of sections; track item.fragment) {
+      @for (item of sections(); track item.fragment) {
         <a routerLink="/" [fragment]="item.fragment" class="nav-link bar-link">{{ item.label }}</a>
       }
     </nav>
@@ -38,7 +38,7 @@
   styleClass="w-[min(20rem,85vw)]"
 >
   <nav class="stack gap-1" aria-label="Page sections" data-testid="drawer-nav">
-    @for (item of sections; track item.fragment) {
+    @for (item of sections(); track item.fragment) {
       <a
         routerLink="/"
         [fragment]="item.fragment"

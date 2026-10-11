@@ -189,16 +189,15 @@ Lint config lives in `eslint.config.js`; `npm run lint` checks and `npm run lint
 
 These return local data until a backend exists. Each has a note on the endpoint it should call:
 
-- `HomeContentService`: announcements and testimonials (`features/home/data`)
+- `HomeContentService`: testimonials (`features/home/data`), until `GET /api/reviews` (#37)
 - `SmsSignupService`: text-alert opt-in
 - `AvailabilityService`: open dates and slots, using a fixed pseudo-random "booked" pattern like the wireframe
 - `BookingService`: creates the appointment
 
-`GalleryService` is real: it lists the `gallery/` folder of the environment's media container (`environment.mediaBaseUrl`), in the browser only, so the prerendered page never holds a stale gallery. Supported images show as uploaded, newest first, with alt text from the file name. The mocked Playwright suite serves a made-up listing for the media host (`e2e/support/media.ts`).
+`GalleryService` is real: it lists the `gallery/` folder of the environment's media container (`environment.mediaBaseUrl`), in the browser only, so the prerendered page never holds a stale gallery. Supported images show as uploaded, newest first, with alt text from the file name. `AnnouncementsService` is real too: it reads `content/announcements.json` from the same container, in the browser only and revalidated on every load, skipping items without a title or valid dates; the home page shows the active ones (BR-30 to BR-33). The mocked Playwright suite serves a made-up listing and announcements for the media host (`e2e/support/media.ts`).
 
 ## Not in this version yet
 
 - **Scroll-scrubbed video background.** The wireframe plays 847 extracted frames (52 MB) on a canvas. `shared/components/backdrop` crossfades the 7 keyframe stills for now. The frame scrubber can replace it without touching the pages.
 - **Real profile links** for Instagram and Facebook (`SOCIAL_LINKS`)
-- **Real photos** for the "Back-to-school" and "Hot towel" announcements (set `imageUrl`)
 - **SSR / prerendering**

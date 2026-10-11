@@ -8,10 +8,11 @@ import {
   of,
   throwError,
 } from 'rxjs';
-import { GalleryPhoto } from '../models/home.models';
+import { Announcement, GalleryPhoto } from '../models/home.models';
+import { AnnouncementsService } from '../services/announcements.service';
 import { GalleryService } from '../services/gallery.service';
 import { HomeApiActions, HomePageActions } from './home.actions';
-import { loadGallery } from './home.effects';
+import { loadAnnouncements, loadGallery } from './home.effects';
 
 describe(
   'loadGallery',
@@ -60,6 +61,70 @@ describe(
 
         expect(run('server', getPhotos)).toEqual([]);
         expect(getPhotos).not.toHaveBeenCalled();
+      },
+    );
+  },
+);
+
+describe(
+  'loadAnnouncements',
+  (): void => {
+    const announcements: Announcement[] = [
+      {
+        title: 'Closed for a made-up holiday',
+        bodyHtml: '',
+        startDate: '2026-10-01',
+        endDate: '2026-10-02',
+        image: null,
+        buttons: [],
+      },
+    ];
+
+    function run(platform: string, getAnnouncements: () => Observable<Announcement[]>): Action[] {
+      const actions$: Subject<Action> = new Subject<Action>();
+      TestBed.configureTestingModule({
+        providers: [
+          { provide: Actions, useValue: new Actions(actions$) },
+          { provide: AnnouncementsService, useValue: { getAnnouncements } },
+          { provide: PLATFORM_ID, useValue: platform },
+        ],
+      });
+      const emitted: Action[] = [];
+      TestBed.runInInjectionContext((): Observable<Action> => loadAnnouncements() as Observable<Action>)
+        .subscribe((action: Action): void => {
+          emitted.push(action);
+        });
+      actions$.next(HomePageActions.opened());
+      return emitted;
+    }
+
+    it(
+      'loads the announcements when the home page opens in the browser',
+      (): void => {
+        expect(run('browser', (): Observable<Announcement[]> => of(announcements)))
+          .toEqual([HomeApiActions.announcementsLoaded({ announcements })]);
+      },
+    );
+
+    it(
+      'reports a failed load',
+      (): void => {
+        const failing: () => Observable<Announcement[]> = (): Observable<Announcement[]> =>
+          throwError((): Error => new Error('404'));
+
+        expect(run('browser', failing)).toEqual([HomeApiActions.announcementsLoadFailed()]);
+      },
+    );
+
+    it(
+      'does nothing while prerendering, so announcements are never baked into the page',
+      (): void => {
+        const getAnnouncements: () => Observable<Announcement[]> = vi.fn(
+          (): Observable<Announcement[]> => of(announcements),
+        );
+
+        expect(run('server', getAnnouncements)).toEqual([]);
+        expect(getAnnouncements).not.toHaveBeenCalled();
       },
     );
   },

@@ -52,7 +52,9 @@ export class Home implements OnInit {
     'app-footer',
   ];
 
-  protected readonly announcements: Signal<Announcement[]> = this.store.selectSignal(homeFeature.selectAnnouncements);
+  protected readonly announcements: Signal<Announcement[]> = this.store.selectSignal(
+    homeFeature.selectActiveAnnouncements,
+  );
   protected readonly testimonials: Signal<Testimonial[]> = this.store.selectSignal(homeFeature.selectTestimonials);
   protected readonly gallery: Signal<GalleryPhoto[]> = this.store.selectSignal(homeFeature.selectGallery);
 

@@ -162,7 +162,7 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 
 | Wireframe | Route | Feature | Components |
 | --- | --- | --- | --- |
-| `index.html` / `mobile.html` | `/` | `features/home` | `hero`, `announcements` (+ `sms-signup`), `schedule-cta`, `visit`, `testimonials`, `gallery` |
+| `index.html` / `mobile.html` | `/` | `features/home` | `hero`, `announcements`, `schedule-cta`, `visit`, `testimonials`, `gallery` |
 | `book.html` | `/book` | `features/booking` | `date-step`, `time-step`, `details-step`, `booking-summary` |
 | Header / footer on all pages | Shell | `layout/` | `header`, `footer` |
 
@@ -179,7 +179,8 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 | Phone number, address, map/directions URLs, socials (hard-coded in 3 places) | `core/config/shop-info.ts` → `SHOP_INFO`, `SOCIAL_LINKS`, `HOME_SECTIONS` | Single source of truth |
 | Hours rows repeated in schedule, visit, footer | `OPENING_HOURS` + `ShopHoursService.rows` | Rows are built from data |
 | `openLabel` / `openColor` (`index.html` `renderVals`) | `ShopHoursService.statusAt()` / `status` signal | Refreshes every minute; unit tested |
-| `ANNS`, testimonials markup, `GAL` array | `features/home/data/home-content.data.ts` via `HomeContentService` | Ready to swap for an API |
+| `ANNS` | `content/announcements.json` in the media container via `AnnouncementsService` (#30) | The seed announcements and the text-alerts slide are dropped (BR-35) |
+| Testimonials markup | `features/home/data/home-content.data.ts` via `HomeContentService` | Ready to swap for `GET /api/reviews` (#37) |
 | `subscribe` / `setPhone` / `phoneErr` | `SmsSignup` component + `HomePageActions.smsSignupSubmitted` → `subscribeToSms` effect → `SmsSignupService` | Mocked 400ms |
 | `slots()`, `available()`, `hash()`, `daysAhead`, `slotMinutes` (`book.html`) | `AvailabilityService` + `BOOKING_RULES` | Same deterministic "booked" pattern; mocked |
 | Month nav, `canPrev` / `canNext` | DatePicker `minDate` / `maxDate` + `monthViewed` → `loadMonthAvailability` effect | |
@@ -227,7 +228,7 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 | Announcement arrows | At panel sides on desktop; beside the dots on mobile | Confirm with design |
 | Lightbox arrows | Inside the photo edges (Galleria default) rather than at the viewport sides | Adjust `galleria.ts` if needed |
 | Instagram / Facebook URLs (`href="#"`) | Still placeholders | Fill in `SOCIAL_LINKS` |
-| Announcement photos ("kid in the chair", "hot towel") | Striped placeholders | Set `imageUrl` in content data |
+| Announcement photos ("kid in the chair", "hot towel") | Placeholders dropped; images come from the media container | Thad uploads to `announcements/` and names the file in `image.fileName` |
 | Booking page monospace styling | Replaced with the brand sans | Intentional; the wireframe mono was a placeholder style |
 | Booking API, SMS provider, content API | Mocked services | Swap each service body for `HttpClient` calls (`environment.apiBaseUrl`) |
 | SSR / prerender | Not set up | Add `@angular/ssr` when hosting is decided |

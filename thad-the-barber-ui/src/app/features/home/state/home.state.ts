@@ -14,16 +14,20 @@ export interface SmsSignupState {
 
 export interface HomeState {
   announcements: Announcement[];
+  announcementsStatus: RequestStatus;
   testimonials: Testimonial[];
   gallery: GalleryPhoto[];
+  galleryStatus: RequestStatus;
   contentStatus: RequestStatus;
   smsSignup: SmsSignupState;
 }
 
 export const initialHomeState: HomeState = {
   announcements: [],
+  announcementsStatus: 'idle',
   testimonials: [],
   gallery: [],
+  galleryStatus: 'idle',
   contentStatus: 'idle',
   smsSignup: {
     status: 'idle',

@@ -9,6 +9,7 @@ import {
   TEST_GALLERY,
   galleryListing,
 } from '../support/media';
+import { collectPageErrors } from '../support/page-errors';
 
 const HIDING_RESPONSES: Record<string, Parameters<Route['fulfill']>[0]> = {
   'an empty gallery folder': { body: galleryListing([]), contentType: 'application/xml' },
@@ -41,10 +42,7 @@ test.describe(
       test(
         `hides the gallery for ${outage}, and the rest of the page still works`,
         async ({ page }: { page: Page; }): Promise<void> => {
-          const pageErrors: Error[] = [];
-          page.on('pageerror', (error: Error): void => {
-            pageErrors.push(error);
-          });
+          const pageErrors: Error[] = collectPageErrors(page);
           await page.route(GALLERY_LISTING_URL, (route: Route): Promise<void> => route.fulfill(response));
           const listingResponse: Promise<unknown> = page.waitForResponse(GALLERY_LISTING_URL);
 
