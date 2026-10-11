@@ -77,11 +77,12 @@ foreach ($secretName in $secrets.Keys) {
             continue
         }
 
-        $existing = az keyvault secret list --vault-name $vault --query "length([?name=='$secretName'])" --output tsv
+        # A JMESPath filter here breaks: az is a .cmd script, and cmd mangles its quotes and brackets.
+        $existing = az keyvault secret list --vault-name $vault --query '[].name' --output tsv
         if ($LASTEXITCODE -ne 0) {
             throw "Failed to list the secrets in $vault."
         }
-        if ($existing -ne '0') {
+        if ($existing -contains $secretName) {
             Write-Host "$secretName - already set, kept"
             continue
         }
