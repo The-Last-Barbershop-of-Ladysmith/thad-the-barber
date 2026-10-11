@@ -9,11 +9,11 @@ account=storttbnonprodcentralus
 container="media-$env"
 
 az storage blob upload-batch --auth-mode login --account-name "$account" --destination "$container" \
-  --source out/media --overwrite --only-show-errors \
+  --source out/media --overwrite --only-show-errors --no-progress --output none \
   --content-type image/webp --content-cache-control 'public, max-age=31536000, immutable'
 
 az storage blob upload-batch --auth-mode login --account-name "$account" --destination "$container" \
-  --source out/content --destination-path content --overwrite --only-show-errors \
+  --source out/content --destination-path content --overwrite --only-show-errors --no-progress --output none \
   --content-type application/json --content-cache-control 'public, max-age=300'
 
 echo "Uploaded to https://$account.blob.core.windows.net/$container"
