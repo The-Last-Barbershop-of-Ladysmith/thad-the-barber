@@ -340,8 +340,7 @@ public sealed class SquareService : ISquareService
         && exception.Errors.Any(error => error.Field is "start_at" or "booking.start_at");
 
     private static bool IsHeldAt(Appointment appointment, DateTimeOffset startAt) =>
-        appointment.Status is AppointmentStatus.Pending or AppointmentStatus.Accepted
-        && appointment.StartAt == startAt;
+        appointment.IsActive && appointment.StartAt == startAt;
 
     private static bool IsCustomerInputRejected(SquareApiException exception) =>
         exception.StatusCode == StatusCodes.Status400BadRequest

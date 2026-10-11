@@ -27,7 +27,7 @@ public sealed class ManageBookingService(
     public async Task<ManagedBooking> CancelAsync(string bookingId, string? manageToken, CancellationToken cancellationToken)
     {
         Appointment appointment = await FindAsync(bookingId, manageToken, cancellationToken);
-        if (IsCancelled(appointment))
+        if (appointment.IsCancelled)
         {
             return ToManagedBooking(appointment);
         }
@@ -41,7 +41,7 @@ public sealed class ManageBookingService(
     public async Task<ManagedBooking> RescheduleAsync(string bookingId, string? manageToken, RescheduleRequest request, CancellationToken cancellationToken)
     {
         Appointment appointment = await FindAsync(bookingId, manageToken, cancellationToken);
-        if (IsCancelled(appointment))
+        if (appointment.IsCancelled)
         {
             throw new BookingCancelledException($"Booking {bookingId} is {appointment.Status}.");
         }
@@ -79,13 +79,8 @@ public sealed class ManageBookingService(
     }
 
     private ManagedBooking ToManagedBooking(Appointment appointment) =>
-        appointment.ToManagedBookingDto(IsCancelled(appointment), CanChange(appointment));
+        appointment.ToManagedBookingDto(CanChange(appointment));
 
-    private static bool IsCancelled(Appointment appointment) =>
-        appointment.Status is AppointmentStatus.CancelledByCustomer or AppointmentStatus.CancelledBySeller or AppointmentStatus.Declined;
-
-    /// <summary>A no-show is past its start time too, so only a pending or accepted booking still ahead can change.</summary>
     private bool CanChange(Appointment appointment) =>
-        appointment.Status is AppointmentStatus.Pending or AppointmentStatus.Accepted
-        && time.GetUtcNow() < appointment.StartAt;
+        appointment.IsActive && time.GetUtcNow() < appointment.StartAt;
 }
