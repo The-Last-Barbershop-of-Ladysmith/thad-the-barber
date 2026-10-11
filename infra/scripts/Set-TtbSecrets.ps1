@@ -6,6 +6,8 @@ Adds or replaces the sensitive values in one environment's Key Vault (issue #9).
 Bicep creates the vaults, the CORS origin secrets and the session-JWT signing key, but never the sensitive values:
 you add those here, after the first deploy. Each value is read as a SecureString, written to a temp file for
 `az keyvault secret set --file`, and the file is deleted straight away. Leave a prompt blank to keep the current value.
+-Generate creates the random keys instead (64 random bytes, base64) and never replaces one that exists: replacing the
+manage-link key breaks every manage link already sent.
 Requires the Azure CLI, `az login`, and Key Vault Secrets Officer on the vault (set TTB_ADMIN_OBJECT_ID before deploying).
 
 .EXAMPLE
@@ -13,6 +15,9 @@ Requires the Azure CLI, `az login`, and Key Vault Secrets Officer on the vault (
 
 .EXAMPLE
 ./infra/scripts/Set-TtbSecrets.ps1 -Environment test -Name Square--RefreshToken
+
+.EXAMPLE
+./infra/scripts/Set-TtbSecrets.ps1 -Environment dev -Generate
 #>
 [CmdletBinding()]
 param(
@@ -24,7 +29,10 @@ param(
     [string[]] $Name,
 
     # Region in the vault name (kv-ttb-<env>-<region>). Defaults to centralus for dev/test, eastus for prod.
-    [string] $Location
+    [string] $Location,
+
+    # Create the missing random keys (ManageLink--HmacKey) instead of prompting.
+    [switch] $Generate
 )
 
 $ErrorActionPreference = 'Stop'
@@ -38,11 +46,12 @@ $secrets = [ordered]@{
     'Square--ApplicationSecret'   = 'Square application secret (OAuth)'
     'Square--RefreshToken'        = 'Square OAuth refresh token (normally saved by tools/square-connect instead)'
     'Square--WebhookSignatureKey' = 'Square webhook signature key'
-    'ManageLink--HmacKey'         = 'Manage-link HMAC key (e.g. 64 random bytes, base64)'
+    'ManageLink--HmacKey'         = 'Manage-link HMAC key (64 random bytes, base64; use -Generate)'
     'Recaptcha--ApiKey'           = 'reCAPTCHA API key for server-side verification'
     'Google--ClientSecret'        = 'Google OAuth client secret (reviews)'
     'Google--RefreshToken'        = 'Google OAuth refresh token (reviews)'
 }
+$generated = @('ManageLink--HmacKey')
 
 if ($Name) {
     $unknown = $Name | Where-Object { -not $secrets.Contains($_) }
@@ -63,11 +72,33 @@ foreach ($secretName in $secrets.Keys) {
         continue
     }
 
-    $secure = Read-Host -AsSecureString "$secretName - $($secrets[$secretName]) (blank = keep)"
-    $plain = [Net.NetworkCredential]::new('', $secure).Password
-    if (-not $plain) {
-        Write-Host "  kept"
-        continue
+    if ($Generate) {
+        if ($secretName -notin $generated) {
+            continue
+        }
+
+        $existing = az keyvault secret list --vault-name $vault --query "length([?name=='$secretName'])" --output tsv
+        if ($LASTEXITCODE -ne 0) {
+            throw "Failed to list the secrets in $vault."
+        }
+        if ($existing -ne '0') {
+            Write-Host "$secretName - already set, kept"
+            continue
+        }
+
+        $bytes = New-Object byte[] 64
+        [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
+        $plain = [Convert]::ToBase64String($bytes)
+        [Array]::Clear($bytes, 0, $bytes.Length)
+        Write-Host "$secretName - generated"
+    }
+    else {
+        $secure = Read-Host -AsSecureString "$secretName - $($secrets[$secretName]) (blank = keep)"
+        $plain = [Net.NetworkCredential]::new('', $secure).Password
+        if (-not $plain) {
+            Write-Host "  kept"
+            continue
+        }
     }
 
     $file = New-TemporaryFile
