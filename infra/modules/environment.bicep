@@ -265,7 +265,7 @@ resource adminMedia 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!
 }
 
 // GitHub Actions deploys with this identity (issue #10): OIDC, no stored secret. It trusts only jobs that run in
-// this environment's GitHub environment, and can deploy only this environment's two apps and media container.
+// this environment's GitHub environment, and can deploy only this environment's two apps.
 resource deployIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2024-11-30' = {
   name: 'id-ttb-deploy-${envName}-${location}'
   location: location
@@ -314,17 +314,6 @@ resource deployApi 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
     principalId: deployIdentity.properties.principalId
     principalType: 'ServicePrincipal'
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', websiteContributor)
-  }
-}
-
-// Uploads media (backdrop frames, gallery) to this environment's container only.
-resource deployMedia 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(mediaContainer.id, 'github-deploy', storageBlobDataContributor)
-  scope: mediaContainer
-  properties: {
-    principalId: deployIdentity.properties.principalId
-    principalType: 'ServicePrincipal'
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageBlobDataContributor)
   }
 }
 
