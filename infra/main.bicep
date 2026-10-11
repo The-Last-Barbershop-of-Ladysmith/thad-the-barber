@@ -24,6 +24,9 @@ type environmentConfig = {
 
   @description('Lets the admin (adminPrincipalId) sign with this environment\'s session-JWT key, so local runs under az login can issue session tokens. Dev only.')
   canAdminSignSessions: bool?
+
+  @description('Gives the admin Storage Blob Data Contributor on this environment\'s media container, for uploads with `npm run upload` in tools/media. Otherwise Reader.')
+  canAdminWriteMedia: bool?
 }
 
 @description('Stage used in shared resource names.')
@@ -136,6 +139,7 @@ module env 'modules/environment.bicep' = [
       adminPrincipalId: adminPrincipalId
       squareAlerts: e.?squareAlerts ?? false
       canAdminSignSessions: e.?canAdminSignSessions ?? false
+      canAdminWriteMedia: e.?canAdminWriteMedia ?? false
       actionGroupId: shared.outputs.actionGroupId
       tags: tags
     }

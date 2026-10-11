@@ -24,13 +24,25 @@ export interface Testimonial {
   rating: number;
 }
 
+/** One entry in `content/gallery.json`. `image` is a media key: the site loads `gallery/<image>-<size>.webp`. */
 export interface GalleryPhoto {
-  src: string;
+  id: string;
+  image: string;
   alt: string;
+  /** The original's size; no variant is wider than `width`. */
+  width: number;
+  height: number;
 }
+
+/** A gallery photo with its media URLs, as the template renders it. */
+export interface GalleryImage extends GalleryPhoto {
+  src: string;
+  srcset: string;
+}
+
+export interface GalleryContent { photos: GalleryPhoto[]; }
 
 export interface HomeContent {
   announcements: Announcement[];
   testimonials: Testimonial[];
-  gallery: GalleryPhoto[];
 }

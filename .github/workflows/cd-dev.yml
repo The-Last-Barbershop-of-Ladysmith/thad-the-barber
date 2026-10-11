@@ -1,6 +1,6 @@
 # Deploys every merge into dev/* to the dev environment, then runs the smoke tests (issue #16).
 # Only the app(s) the push changed are built and deployed; a manual run deploys all of them. The CI reports viewer
-# (#137) deploys here too, when tools/report-viewer/ changes.
+# (#137) deploys here too, when tools/report-viewer/ changes, and media/ and content/ upload to media-dev (#38).
 # No rollback: a red run notifies the owner and the fix rolls forward with the next merge.
 name: cd-dev
 
@@ -25,6 +25,7 @@ jobs:
       ui: ${{ steps.diff.outputs.ui }}
       api: ${{ steps.diff.outputs.api }}
       viewer: ${{ steps.diff.outputs.viewer }}
+      media: ${{ steps.diff.outputs.media }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -34,14 +35,15 @@ jobs:
       - id: diff
         run: |
           if [[ "$EVENT" != push || "$BEFORE" =~ ^0+$ ]] || ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
-            printf '%s\n' ui=true api=true viewer=true >> "$GITHUB_OUTPUT"
+            printf '%s\n' ui=true api=true viewer=true media=true >> "$GITHUB_OUTPUT"
             exit 0
           fi
           changed=$(git diff --name-only "$BEFORE" "$GITHUB_SHA")
           shared='^(\.github/workflows/(cd-dev|build|deploy)\.yml)$'
-          grep -qE "^thad-the-barber-(ui|express)/|$shared" <<< "$changed" && echo "ui=true" >> "$GITHUB_OUTPUT"
+          grep -qE "^thad-the-barber-(ui|express)/|^media/variant-widths\.json$|$shared" <<< "$changed" && echo "ui=true" >> "$GITHUB_OUTPUT"
           grep -qE "^thad-the-barber-api/|^(Directory\.Build\.props|global\.json)$|$shared" <<< "$changed" && echo "api=true" >> "$GITHUB_OUTPUT"
           grep -qE "^tools/report-viewer/|^(Directory\.Build\.props|global\.json|\.github/workflows/cd-dev\.yml)$" <<< "$changed" && echo "viewer=true" >> "$GITHUB_OUTPUT"
+          grep -qE "^(media|content|tools/media)/|^\.github/workflows/(cd-dev|media)\.yml$" <<< "$changed" && echo "media=true" >> "$GITHUB_OUTPUT"
           true
         env:
           EVENT: ${{ github.event_name }}
@@ -68,6 +70,16 @@ jobs:
       environment: dev
       ui-artifact: ${{ needs.changes.outputs.ui == 'true' && format('ttb-ui-dev-{0}', needs.build.outputs.suffix) || '' }}
       api-artifact: ${{ needs.changes.outputs.api == 'true' && format('ttb-api-{0}', needs.build.outputs.suffix) || '' }}
+
+  media:
+    needs: changes
+    if: needs.changes.outputs.media == 'true'
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/media.yml
+    with:
+      environment: dev
 
   # The viewer runs on the nonprod plan; the dev deploy identity has Website Contributor on it (infra/reports.bicep).
   viewer:

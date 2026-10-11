@@ -211,7 +211,7 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 | Wireframe asset | App | Status |
 | --- | --- | --- |
 | `assets/logo-1c.png` | `public/assets/logo.png` | Copied |
-| `assets/gallery/cut-01…15.webp` (1.3 MB) | `public/assets/gallery/` | Copied |
+| `assets/gallery/cut-01…15.webp` (1.3 MB) | `media/gallery/` (repo root), served from the media container with `content/gallery.json` (#38) | Moved |
 | `assets/keys/k1…k7.webp` (2.9 MB) | `public/assets/keys/` | Copied; used by `Backdrop` |
 | `assets/icon-instagram.svg`, `icon-facebook.svg` | Replaced by `pi pi-instagram` / `pi pi-facebook` | Not copied |
 | `assets/frames3/c1…c7` (847 frames, 52 MB) | none | Not copied (see §8) |
@@ -231,7 +231,7 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 | Booking page monospace styling | Replaced with the brand sans | Intentional; the wireframe mono was a placeholder style |
 | Booking API, SMS provider, content API | Mocked services | Swap each service body for `HttpClient` calls (`environment.apiBaseUrl`) |
 | SSR / prerender | Not set up | Add `@angular/ssr` when hosting is decided |
-| Gallery images | Larger than their rendered size (Angular NG0913 warning) | Generate thumbnails or use `NgOptimizedImage` |
+| Gallery images | Served as sm/md/lg WebP variants with a `srcset` (#38) | Replace with Thad's full-size originals under new keys |
 
 ---
 

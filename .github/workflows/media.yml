@@ -1,0 +1,49 @@
+# Publishes media/ and content/ to one environment's public media container (issue #38), without deploying either app.
+# tools/media checks the content files, writes each original's WebP variants (sm/md/lg, EXIF stripped) and copies
+# the content files; then upload.sh uploads them as the environment's deploy identity, which can write only its own
+# container. `npm run upload -- dev` does the same from your machine.
+name: media
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: dev or test (the GitHub environment and the container name segment).
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: ${{ inputs.environment }}
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      ENV_NAME: ${{ inputs.environment }}
+    defaults:
+      run:
+        working-directory: tools/media
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: tools/media/package-lock.json
+
+      - run: npm ci
+      - run: npm run build -- out
+
+      - uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - run: bash upload.sh "$ENV_NAME"

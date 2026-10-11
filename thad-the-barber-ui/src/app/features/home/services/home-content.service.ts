@@ -4,7 +4,7 @@ import { HOME_CONTENT } from '../data/home-content.data';
 import { HomeContent } from '../models/home.models';
 
 /**
- * Announcements, testimonials and gallery photos.
+ * Announcements and testimonials.
  * Returns the bundled seed data for now; swap the body for an HttpClient call
  * (`${environment.apiBaseUrl}/content/home`) when the content API exists.
  */

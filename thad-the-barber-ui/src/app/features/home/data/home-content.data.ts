@@ -1,4 +1,4 @@
-import { GalleryPhoto, HomeContent } from '../models/home.models';
+import { HomeContent } from '../models/home.models';
 
 /** Seed content from the wireframe. HomeContentService serves this until a CMS/API exists. */
 export const HOME_CONTENT: HomeContent = {
@@ -68,11 +68,4 @@ export const HOME_CONTENT: HomeContent = {
       rating: 5,
     },
   ],
-  gallery: Array.from(
-    { length: 15 },
-    (_: unknown, i: number): GalleryPhoto => {
-      const n: string = String(i + 1).padStart(2, '0');
-      return { src: `assets/gallery/cut-${n}.webp`, alt: `Haircut ${i + 1}` };
-    },
-  ),
 };
