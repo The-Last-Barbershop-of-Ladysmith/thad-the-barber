@@ -61,7 +61,7 @@
         >© {{ year }} {{ shop.name }} · Fredericksburg, VA</span
       >
       <nav class="bottom-nav" aria-label="Footer">
-        @for (item of sections; track item.fragment) {
+        @for (item of sections(); track item.fragment) {
           <a routerLink="/" [fragment]="item.fragment" class="nav-link">{{ item.label }}</a>
         }
         <button type="button" class="nav-link to-top" (click)="scrollToTop()">Back to top ↑</button>
