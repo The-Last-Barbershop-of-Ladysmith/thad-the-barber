@@ -49,16 +49,6 @@ jobs:
       ui-artifact: ttb-ui-test-${{ needs.build.outputs.suffix }}
       api-artifact: ttb-api-${{ needs.build.outputs.suffix }}
 
-  # Content and media upload with every release push; a rollback leaves them as they are.
-  media:
-    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.run-id == '')
-    permissions:
-      contents: read
-      id-token: write
-    uses: ./.github/workflows/media.yml
-    with:
-      environment: test
-
   # Finds the earlier run's artifact names, which end in that build's version and SHA.
   rollback-artifacts:
     if: github.event_name == 'workflow_dispatch' && inputs.run-id != ''
