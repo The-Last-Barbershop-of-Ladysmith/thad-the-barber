@@ -2,15 +2,15 @@
 
 `session_token.py` prints a session token for calling the API from Swagger or a REST client ([#162](https://github.com/The-Last-Barbershop-of-Ladysmith/thad-the-barber/issues/162)). Since [#34](https://github.com/The-Last-Barbershop-of-Ladysmith/thad-the-barber/issues/34), every `/api` call except `/api/session` and `/api/health` needs one, and the site gets it through reCAPTCHA, which Swagger can't do.
 
-It builds the same JWT `POST /api/session` issues and has the environment's Key Vault sign it with `session-jwt-signing` under your own `az login`, so the key never leaves the vault. The vault and key names come from the API's appsettings. Standard library only; nothing to install.
+It builds the same JWT `POST /api/session` issues and has dev's Key Vault sign it with `session-jwt-signing` under your own `az login`, so the key never leaves the vault. The vault and key names come from the API's appsettings. Standard library only; nothing to install.
 
-**Dev only.** Your Key Vault Crypto User role is on dev's key alone (Bicep's `canAdminSignSessions`), so `--env test`/`prod` fail with Key Vault's "Forbidden". Those environments only issue tokens through reCAPTCHA.
+**Dev only.** Your Key Vault Crypto User role is on dev's key alone (Bicep's `canAdminSignSessions`), so the script reads dev's vault from the API's `appsettings.Development.json`. Test and prod only issue tokens through reCAPTCHA.
 
 ## Run it
 
 ```bash
 az login
-python tools/session-token/session_token.py              # 60 minutes, dev
+python tools/session-token/session_token.py              # 60 minutes
 python tools/session-token/session_token.py --minutes 15
 ```
 

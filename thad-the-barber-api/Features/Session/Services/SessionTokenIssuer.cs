@@ -11,6 +11,7 @@ namespace ThadTheBarber.Api.Features.Session.Services;
 /// Builds the anonymous session JWT by hand, because the signature comes from Key Vault: the token libraries sign
 /// synchronously with a key they hold, and this key never leaves the vault.
 /// </summary>
+/// <remarks>tools/session-token builds the same token for Swagger in dev; change it there too.</remarks>
 public sealed class SessionTokenIssuer(ISessionSigningKey signingKey, TimeProvider time, IOptions<SessionSettings> settings)
 {
     public const string Issuer = "ttb-api";

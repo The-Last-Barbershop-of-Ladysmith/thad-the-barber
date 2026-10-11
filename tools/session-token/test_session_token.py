@@ -9,7 +9,7 @@ from unittest import mock
 import session_token
 from key_vault import sign_es256
 from session_jwt import build_token
-from settings import read_settings
+from settings import SigningSettings, read_settings
 
 FAKE_SIGNATURE: bytes = bytes(range(64))
 
@@ -49,19 +49,18 @@ class BuildTokenTests(unittest.TestCase):
         self.assertNotRegex(token, r"[=+/]")
 
 
+@mock.patch("key_vault.shutil.which", new=mock.Mock(return_value="az"))
 class SignTests(unittest.TestCase):
-    @mock.patch("key_vault.shutil.which", return_value="az")
     @mock.patch("key_vault.subprocess.run")
-    def test_returns_the_raw_signature_whichever_base64_key_vault_uses(self, run: mock.Mock, _which: mock.Mock) -> None:
+    def test_returns_the_raw_signature_whichever_base64_key_vault_uses(self, run: mock.Mock) -> None:
         for encoded in (base64.b64encode(b"\xfb\xff" * 32).decode(), base64.urlsafe_b64encode(b"\xfb\xff" * 32).decode().rstrip("=")):
             with self.subTest(encoded=encoded):
                 run.return_value = az_result(json.dumps({"signature": encoded}))
 
                 self.assertEqual(sign_es256("kv-example", "signing-key", b"data"), b"\xfb\xff" * 32)
 
-    @mock.patch("key_vault.shutil.which", return_value="az")
     @mock.patch("key_vault.subprocess.run", return_value=az_result(json.dumps({"signature": base64.b64encode(FAKE_SIGNATURE).decode()})))
-    def test_sends_the_sha256_digest_to_the_named_key(self, run: mock.Mock, _which: mock.Mock) -> None:
+    def test_sends_the_sha256_digest_to_the_named_key(self, run: mock.Mock) -> None:
         sign_es256("kv-example", "signing-key", b"abc")
 
         args: list[str] = run.call_args.args[0]
@@ -70,21 +69,18 @@ class SignTests(unittest.TestCase):
         self.assertEqual(args[args.index("--algorithm") + 1], "ES256")
         self.assertEqual(args[args.index("--digest") + 1], "ungWv48Bz+pBQUDeXa4iI7ADYaOWF3qctBD/YfIAFa0=")
 
-    @mock.patch("key_vault.shutil.which", return_value="az")
     @mock.patch("key_vault.subprocess.run", return_value=az_result(returncode=1, stderr="Forbidden"))
-    def test_a_refused_signature_stops_with_the_reason(self, _run: mock.Mock, _which: mock.Mock) -> None:
+    def test_a_refused_signature_stops_with_the_reason(self, _run: mock.Mock) -> None:
         with self.assertRaisesRegex(SystemExit, "Forbidden"):
             sign_es256("kv-example", "signing-key", b"data")
 
-    @mock.patch("key_vault.shutil.which", return_value="az")
     @mock.patch("key_vault.subprocess.run", return_value=az_result(json.dumps({"signature": base64.b64encode(b"short").decode()})))
-    def test_a_signature_of_the_wrong_length_stops(self, _run: mock.Mock, _which: mock.Mock) -> None:
+    def test_a_signature_of_the_wrong_length_stops(self, _run: mock.Mock) -> None:
         with self.assertRaisesRegex(SystemExit, "64"):
             sign_es256("kv-example", "signing-key", b"data")
 
-    @mock.patch("key_vault.shutil.which", return_value=None)
-    def test_a_missing_az_cli_stops(self, _which: mock.Mock) -> None:
-        with self.assertRaisesRegex(SystemExit, "az"):
+    def test_a_missing_az_cli_stops(self) -> None:
+        with mock.patch("key_vault.shutil.which", return_value=None), self.assertRaisesRegex(SystemExit, "az"):
             sign_es256("kv-example", "signing-key", b"data")
 
 
@@ -115,8 +111,8 @@ class MainTests(unittest.TestCase):
 
 
 class SettingsTests(unittest.TestCase):
-    def test_reads_devs_vault_and_the_shared_key_name_from_the_apis_appsettings(self) -> None:
-        settings = read_settings("dev")
+    def test_reads_devs_vault_and_key_name_from_the_apis_appsettings(self) -> None:
+        settings: SigningSettings = read_settings()
 
         self.assertTrue(settings.vault_name.startswith("kv-ttb-dev"))
         self.assertEqual(settings.signing_key_name, "session-jwt-signing")
