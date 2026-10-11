@@ -89,7 +89,6 @@ foreach ($secretName in $secrets.Keys) {
         $bytes = New-Object byte[] 64
         [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
         $plain = [Convert]::ToBase64String($bytes)
-        [Array]::Clear($bytes, 0, $bytes.Length)
         Write-Host "$secretName - generated"
     }
     else {
