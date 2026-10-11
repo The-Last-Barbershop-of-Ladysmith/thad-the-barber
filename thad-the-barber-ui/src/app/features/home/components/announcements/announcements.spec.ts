@@ -1,7 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
+import { MockInstance } from 'vitest';
 import { Announcement } from '../../models/home.models';
 import { Announcements } from './announcements';
+import { LinkKind } from '../../../../shared/models/link.models';
 
 describe(
   'Announcements',
@@ -23,8 +25,8 @@ describe(
       return fixture.nativeElement as HTMLElement;
     }
 
-    function query<T extends Element>(host: HTMLElement, selector: string): T {
-      const element: T | null = host.querySelector<T>(selector);
+    function query(host: HTMLElement, selector: string): Element {
+      const element: Element | null = host.querySelector(selector);
       if (!element) {
         throw new Error(`Nothing matches ${selector}`);
       }
@@ -51,9 +53,16 @@ describe(
     it(
       'labels a multi-day announcement by its last day and a one-day one by its day',
       (): void => {
-        const host: HTMLElement = render([base, { ...base, startDate: '2026-11-26', endDate: '2026-11-26' }]);
+        const host: HTMLElement = render([
+          base,
+          {
+            ...base,
+            startDate: '2026-11-26',
+            endDate: '2026-11-26',
+          },
+        ]);
         const labels: string[] = Array.from(host.querySelectorAll('.eyebrow'))
-          .map((label: Element): string => label.textContent?.trim() ?? '');
+          .map((label: Element): string => label.textContent.trim());
 
         expect(labels[0]).toContain('Oct 31');
         expect(labels[0]).not.toBe('Oct 31');
@@ -65,7 +74,7 @@ describe(
       'renders the body as HTML with scripts and handlers stripped',
       (): void => {
         const bodyHtml: string = '<p>Walk-ins <strong>welcome</strong></p><script>window.hacked = true</script><img src="x" onerror="window.hacked = true">';
-        const body: HTMLElement = query(render([{ ...base, bodyHtml }]), '[data-testid="announcement-body"]');
+        const body: Element = query(render([{ ...base, bodyHtml }]), '[data-testid="announcement-body"]');
 
         expect(body.querySelector('strong')?.textContent).toBe('welcome');
         expect(body.querySelector('script')).toBeNull();
@@ -77,8 +86,20 @@ describe(
       'places the image after the text, moving it first on wide screens only when asked',
       (): void => {
         const host: HTMLElement = render([
-          { ...base, image: { src: 'https://media.test/announcements/right.webp', alt: '', position: 'right' } },
-          { ...base, image: { src: 'https://media.test/announcements/left.webp', alt: 'A chair', position: 'left' } },
+          {
+            ...base, image: {
+              src: 'https://media.test/announcements/right.webp',
+              alt: '',
+              position: 'right',
+            },
+          },
+          {
+            ...base, image: {
+              src: 'https://media.test/announcements/left.webp',
+              alt: 'A chair',
+              position: 'left',
+            },
+          },
         ]);
         const images: HTMLImageElement[] = Array.from(host.querySelectorAll<HTMLImageElement>('[data-testid="announcement-image"]'));
 
@@ -95,10 +116,30 @@ describe(
           {
             ...base,
             buttons: [
-              { label: 'Book', url: '/book', kind: 'internal', variant: 'primary' },
-              { label: 'Menu', url: 'https://example.test/menu', kind: 'external', variant: 'outlined' },
-              { label: 'Call', url: 'tel:+15550100000', kind: 'device', variant: 'text' },
-              { label: 'Mail', url: 'mailto:owner@example.test', kind: 'device', variant: 'secondary' },
+              {
+                label: 'Book',
+                url: '/book',
+                kind: LinkKind.Internal,
+                variant: 'primary',
+              },
+              {
+                label: 'Menu',
+                url: 'https://example.test/menu',
+                kind: LinkKind.External,
+                variant: 'outlined',
+              },
+              {
+                label: 'Call',
+                url: 'tel:+15550100000',
+                kind: LinkKind.Device,
+                variant: 'text',
+              },
+              {
+                label: 'Mail',
+                url: 'mailto:owner@example.test',
+                kind: LinkKind.Device,
+                variant: 'secondary',
+              },
             ],
           },
         ]);
@@ -130,10 +171,18 @@ describe(
           {
             ...base,
             bodyHtml: '<p>See <a href="/#visit">our <em>hours</em></a></p>',
-            buttons: [{ label: 'Book', url: '/book', kind: 'internal', variant: 'primary' }],
+            buttons: [
+              {
+                label: 'Book',
+                url: '/book',
+                kind: LinkKind.Internal,
+                variant: 'primary',
+              },
+            ],
           },
         ]);
-        const navigate: ReturnType<typeof vi.spyOn> = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+        const navigate: MockInstance<Router['navigateByUrl']> = vi.spyOn(TestBed.inject(Router), 'navigateByUrl')
+          .mockResolvedValue(true);
 
         const bodyClick: MouseEvent = click(query(host, '[data-testid="announcement-body"] em'));
         const buttonClick: MouseEvent = click(query(host, '.actions a'));
@@ -153,12 +202,14 @@ describe(
             bodyHtml: '<a href="/book">Book</a> <a href="https://example.test">Elsewhere</a> <a href="//other.test">Other</a>',
           },
         ]);
-        const navigate: ReturnType<typeof vi.spyOn> = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+        const navigate: MockInstance<Router['navigateByUrl']> = vi.spyOn(TestBed.inject(Router), 'navigateByUrl')
+          .mockResolvedValue(true);
         const [
           internal,
           external,
           protocolRelative,
-        ]: HTMLAnchorElement[] = Array.from(host.querySelectorAll<HTMLAnchorElement>('[data-testid="announcement-body"] a'));
+        ]: HTMLAnchorElement[
+        ] = Array.from(host.querySelectorAll<HTMLAnchorElement>('[data-testid="announcement-body"] a'));
         if (!internal || !external || !protocolRelative) {
           throw new Error('Links did not render');
         }

@@ -3,7 +3,8 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { fromIsoDate, toIsoDate } from '../../../shared/utils/date.utils';
-import { LinkKind, linkKind } from '../../../shared/utils/link.utils';
+import { LinkKind } from '../../../shared/models/link.models';
+import { linkKind } from '../../../shared/utils/link.utils';
 import {
   Announcement,
   AnnouncementButton,

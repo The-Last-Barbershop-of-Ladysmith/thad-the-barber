@@ -1,5 +1,4 @@
-/** How a link from content opens: through the Router, in a new tab, or by the device's phone or mail app. */
-export type LinkKind = 'internal' | 'external' | 'device';
+import { LinkKind } from '../models/link.models';
 
 /**
  * `/book#hours` → internal, `https://…` → external, `tel:` and `mailto:` → device, anything else → null.
@@ -7,13 +6,13 @@ export type LinkKind = 'internal' | 'external' | 'device';
  */
 export function linkKind(url: string): LinkKind | null {
   if (/^\/(?![/\\])/.test(url)) {
-    return 'internal';
+    return LinkKind.Internal;
   }
   if (/^https:\/\//i.test(url)) {
-    return 'external';
+    return LinkKind.External;
   }
   if (/^(tel|mailto):/i.test(url)) {
-    return 'device';
+    return LinkKind.Device;
   }
   return null;
 }

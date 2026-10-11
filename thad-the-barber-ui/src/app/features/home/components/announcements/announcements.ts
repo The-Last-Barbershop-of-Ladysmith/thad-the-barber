@@ -11,6 +11,7 @@ import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { CarouselModule } from 'primeng/carousel';
 import { ButtonSeverity, ButtonVariant } from 'primeng/types/button';
+import { LinkKind } from '../../../../shared/models/link.models';
 import { linkKind } from '../../../../shared/utils/link.utils';
 import { Announcement, AnnouncementButtonVariant } from '../../models/home.models';
 
@@ -48,6 +49,7 @@ export class Announcements {
 
   readonly announcements: InputSignal<Announcement[]> = input.required<Announcement[]>();
 
+  protected readonly linkKinds: typeof LinkKind = LinkKind;
   protected readonly buttonStyles: Record<AnnouncementButtonVariant, ButtonStyle> = BUTTON_STYLES;
 
   /** A plain click on an `/…` link routes in the app without a reload; modified clicks keep the browser's behavior. */
@@ -59,7 +61,7 @@ export class Announcements {
       && !event.metaKey
       && !event.shiftKey
       && !event.altKey;
-    if (href === null || !isPlainClick || anchor?.target === '_blank' || linkKind(href) !== 'internal') {
+    if (href === null || !isPlainClick || anchor?.target === '_blank' || linkKind(href) !== LinkKind.Internal) {
       return;
     }
     event.preventDefault();

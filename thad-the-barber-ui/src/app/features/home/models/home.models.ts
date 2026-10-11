@@ -1,4 +1,4 @@
-import { LinkKind } from '../../../shared/utils/link.utils';
+import { LinkKind } from '../../../shared/models/link.models';
 
 export type AnnouncementImagePosition = 'left' | 'right';
 

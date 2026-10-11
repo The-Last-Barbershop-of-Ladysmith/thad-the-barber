@@ -8,6 +8,7 @@ import { TestBed } from '@angular/core/testing';
 import { environment } from '../../../../environments/environment';
 import { Announcement } from '../models/home.models';
 import { AnnouncementsService } from './announcements.service';
+import { LinkKind } from '../../../shared/models/link.models';
 
 describe(
   'AnnouncementsService',
@@ -77,7 +78,7 @@ describe(
                 {
                   label: 'Book',
                   url: '/book',
-                  kind: 'internal',
+                  kind: LinkKind.Internal,
                   variant: 'primary',
                 },
               ],
@@ -100,7 +101,7 @@ describe(
               {
                 label: 'Book',
                 url: '/book',
-                kind: 'internal',
+                kind: LinkKind.Internal,
                 variant: 'primary',
               },
             ],
@@ -223,19 +224,19 @@ describe(
           {
             label: 'Call',
             url: 'tel:+15550100000',
-            kind: 'device',
+            kind: LinkKind.Device,
             variant: 'outlined',
           },
           {
             label: 'Menu',
             url: 'https://example.test/menu',
-            kind: 'external',
+            kind: LinkKind.External,
             variant: 'text',
           },
           {
             label: 'Write',
             url: 'mailto:owner@example.test',
-            kind: 'device',
+            kind: LinkKind.Device,
             variant: 'outlined',
           },
         ]);

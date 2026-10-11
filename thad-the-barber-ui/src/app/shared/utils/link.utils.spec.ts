@@ -1,4 +1,5 @@
 import { linkKind } from './link.utils';
+import { LinkKind } from '../models/link.models';
 
 describe(
   'linkKind',
@@ -6,9 +7,9 @@ describe(
     it(
       'routes paths on this site in the app',
       (): void => {
-        expect(linkKind('/book')).toBe('internal');
-        expect(linkKind('/#visit')).toBe('internal');
-        expect(linkKind('/')).toBe('internal');
+        expect(linkKind('/book')).toBe(LinkKind.Internal);
+        expect(linkKind('/#visit')).toBe(LinkKind.Internal);
+        expect(linkKind('/')).toBe(LinkKind.Internal);
       },
     );
 
@@ -23,9 +24,9 @@ describe(
     it(
       'opens https links in a new tab and hands phone and mail links to the device',
       (): void => {
-        expect(linkKind('HTTPS://example.test/menu')).toBe('external');
-        expect(linkKind('tel:+15550100000')).toBe('device');
-        expect(linkKind('mailto:owner@example.test')).toBe('device');
+        expect(linkKind('HTTPS://example.test/menu')).toBe(LinkKind.External);
+        expect(linkKind('tel:+15550100000')).toBe(LinkKind.Device);
+        expect(linkKind('mailto:owner@example.test')).toBe(LinkKind.Device);
       },
     );
 
