@@ -68,6 +68,9 @@ public sealed class FakeSquareService : ISquareService
 
     public List<FakeBooking> Bookings { get; } = [];
 
+    /// <summary>False makes a created customer unfindable by phone, like Square's search lagging behind a new customer.</summary>
+    public bool IsNewCustomerSearchable { get; init; } = true;
+
     /// <summary>When set, the shop, booking profile and catalog reads throw it, as if Square were down.</summary>
     public Exception? ReadFailure { get; set; }
 
@@ -101,7 +104,11 @@ public sealed class FakeSquareService : ISquareService
     public Task<string> CreateCustomerAsync(string name, string phone, string idempotencyKey, CancellationToken cancellationToken)
     {
         CustomersCreated++;
-        CustomerId = CreatedCustomerId;
+        if (IsNewCustomerSearchable)
+        {
+            CustomerId = CreatedCustomerId;
+        }
+
         return Task.FromResult(CreatedCustomerId);
     }
 

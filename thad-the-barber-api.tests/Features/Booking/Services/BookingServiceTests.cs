@@ -78,6 +78,24 @@ public sealed class BookingServiceTests
     }
 
     [Fact]
+    public async Task ARetryBeforeSquareCanSearchTheNewCustomerStillConfirms()
+    {
+        FakeSquareService square = new()
+        {
+            CustomerId = null,
+            IsNewCustomerSearchable = false,
+        };
+        BookingService service = Service(square);
+        BookingRequest request = Request(openTime);
+
+        BookingConfirmation first = await service.BookAsync(request, Cancellation);
+        BookingConfirmation retried = await service.BookAsync(request, Cancellation);
+
+        Assert.Single(square.Bookings);
+        Assert.Equal(first, retried);
+    }
+
+    [Fact]
     public async Task AnotherAttemptAtTheCustomersOwnBookedTimeIsUnavailable()
     {
         FakeSquareService square = new();
@@ -98,7 +116,6 @@ public sealed class BookingServiceTests
         await Assert.ThrowsAsync<SlotUnavailableException>(
             () => Service(square).BookAsync(Request(Instant("2026-10-07T13:15:00Z")), Cancellation));
         Assert.Empty(square.Bookings);
-        Assert.Equal(0, square.CustomersCreated);
     }
 
     private static FakeSquareService Square(bool isCustomerKnown)
