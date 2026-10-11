@@ -1,0 +1,68 @@
+# Publishes media/ and content/ to one environment's public media container (issue #38), without deploying either app.
+# tools/media checks content/gallery.json, writes each original's WebP variants (sm/md/lg, EXIF stripped) and copies
+# the content files; then the environment's deploy identity, which can write only its own container, uploads them.
+# Variants are immutable (a changed photo gets a new key), so browsers cache them for a year; content files for
+# 5 minutes, so an edit shows within minutes. Blobs removed from the repo stay in the container.
+name: media
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: dev or test (the GitHub environment and the container name segment).
+        type: string
+        required: true
+      region:
+        type: string
+        default: centralus
+
+permissions:
+  contents: read
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: ${{ inputs.environment }}
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      ACCOUNT: storttbnonprod${{ inputs.region }}
+      CONTAINER: media-${{ inputs.environment }}
+    defaults:
+      run:
+        working-directory: tools/media
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: tools/media/package-lock.json
+
+      - run: npm ci
+      - run: npm run build -- out
+
+      - uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Upload image variants
+        run: |
+          for folder in out/*/; do
+            folder=$(basename "$folder")
+            [[ "$folder" == content ]] && continue
+            az storage blob upload-batch --auth-mode login --account-name "$ACCOUNT" --destination "$CONTAINER" \
+              --source "out/$folder" --destination-path "$folder" --overwrite --only-show-errors \
+              --content-type image/webp --content-cache-control 'public, max-age=31536000, immutable'
+          done
+
+      - name: Upload content files
+        run: |
+          az storage blob upload-batch --auth-mode login --account-name "$ACCOUNT" --destination "$CONTAINER" \
+            --source out/content --destination-path content --overwrite --only-show-errors \
+            --content-type application/json --content-cache-control 'public, max-age=300'
