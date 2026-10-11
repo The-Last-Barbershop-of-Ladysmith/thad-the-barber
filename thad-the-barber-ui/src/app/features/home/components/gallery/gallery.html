@@ -1,26 +1,22 @@
-@if (images().length > 0) {
+@if (photos().length > 0) {
   <section class="page-section" data-testid="gallery">
     <p-card class="w-full max-w-300">
       <div class="stack gap-8">
         <app-section-heading eyebrow="Gallery" title="Fresh out the chair" />
 
-        <div class="columns-2 gap-5 md:columns-3 lg:columns-4">
-          @for (image of images(); track image.id; let i = $index) {
+        <div class="prints grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
+          @for (photo of photos(); track photo.src; let i = $index) {
             <button
               type="button"
               class="print"
-              [attr.aria-label]="'Open ' + image.alt"
+              [attr.aria-label]="'Open ' + photo.alt"
               (click)="open(i)"
             >
               <div class="photo-frame">
                 <div class="photo-mat">
                   <img
-                    [src]="image.src"
-                    [srcset]="image.srcset"
-                    sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
-                    [width]="image.width"
-                    [height]="image.height"
-                    [alt]="image.alt"
+                    [src]="photo.src"
+                    [alt]="photo.alt"
                     loading="lazy"
                     class="print-img"
                   />
@@ -34,7 +30,7 @@
   </section>
 
   <p-galleria
-    [value]="images()"
+    [value]="photos()"
     [(visible)]="lightboxOpen"
     [(activeIndex)]="activeIndex"
     [fullScreen]="true"
@@ -43,23 +39,15 @@
     [showThumbnails]="false"
     [containerStyle]="{ 'max-width': 'min(80vw, 1100px)' }"
   >
-    <ng-template #item let-image>
+    <ng-template #item let-photo>
       <div class="photo-frame">
         <div class="photo-mat">
-          <img
-            [src]="image.src"
-            [srcset]="image.srcset"
-            sizes="min(80vw, 1100px)"
-            [width]="image.width"
-            [height]="image.height"
-            [alt]="image.alt"
-            class="lightbox-img"
-          />
+          <img [src]="photo.src" [alt]="photo.alt" class="lightbox-img" />
         </div>
       </div>
     </ng-template>
     <ng-template #footer>
-      <div class="lightbox-count">{{ activeIndex() + 1 }} / {{ images().length }}</div>
+      <div class="lightbox-count">{{ activeIndex() + 1 }} / {{ photos().length }}</div>
     </ng-template>
   </p-galleria>
 }
