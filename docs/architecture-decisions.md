@@ -68,7 +68,7 @@ Endpoints (each replaces a mocked Angular service without changing its NgRx effe
 | `GET /api/bookings/availability?month=YYYY-MM` | Bookings `SearchAvailability` (for the single service), one call per month, clipped to the booking window (now + minimum notice to now + maximum advance; no overlap is a 400 `outside_booking_window`). Returns `[{ date, times }]`: the shop-timezone days with an open time, each with its times as UTC instants, so picking a day needs no second request. Never cached and `no-store`: a time booked anywhere disappears right away, and `CreateBooking` re-checks; no slot holds (#27) | `AvailabilityService` mock |
 | `POST /api/bookings` | Body `{ startAt, name, phone, idempotencyKey }`: phone in E.164 (`+1` and 10 digits) and name of 2+ characters (BR-09), checked by .NET's built-in validation (400 per field). `SearchAvailability` re-checks the time (inside the booking window) → `SearchCustomers` → create customer if missing → `CreateBooking`; customer and booking both use the client's idempotency key. A taken time is 409 `slot_unavailable`, unless this same attempt already booked it and lost the response: then `ListBookings` finds the customer's booking at that time and `CreateBooking` is sent again with the same key, so Square returns the original only when the key matches (any other key gets the 409, so phone and time alone never reveal a booking). Returns 201 `{ id, startAt }`, no customer details (#28) | `BookingService` mock |
 | `POST /api/bookings/{id}/cancel` / `reschedule` | `CancelBooking` / `UpdateBooking` | New |
-| `GET /api/content/announcements` | None (`content/announcements.json`) | `HOME_CONTENT.announcements` |
+| None: the UI reads `media-<env>/content/announcements.json` ([#30](https://github.com/The-Last-Barbershop-of-Ladysmith/thad-the-barber/issues/30)) | None | `HOME_CONTENT.announcements` |
 | None: the UI lists `media-<env>/gallery/` (#168) | None | `HOME_CONTENT.gallery` |
 | `GET /api/content/reviews` | Google Business Profile reviews (fallback `content/reviews.json`) | `HOME_CONTENT.testimonials`, `SHOP_INFO.reviews` |
 | `POST /api/webhooks/square` | Signature-verified webhooks | New (cache invalidation now, admin feed later) |
@@ -201,8 +201,9 @@ Every change ships with its tests:
 | Map and directions URLs | Derived by the API from the Square address | `GET /api/shop` |
 | The single service's duration (no name or price, BR-11) | Square Catalog | `GET /api/shop` (`bookingSettings.slotMinutes`) |
 | Booking window, lead time, cancel rules | Square Business Booking Profile + service durations | `GET /api/shop` |
-| Announcements, `reviewsToShow`, shop area text, tagline | Content files owned by the API: `content/announcements.json`, `reviews.json`, `shop.json`, each with a JSON schema (the admin portal takes over later) | One endpoint per type. Announcements → **root** `announcements` slice; gallery and reviews → **lazy** feature slices (`features/gallery`, `features/reviews`) loaded only where shown; `shop.json` fields merged into `/api/shop` |
-| Gallery and announcement images | **Azure Blob Storage**, one public container per environment, edited in the Azure portal until the admin portal exists (#168). The gallery is whatever is in `gallery/`, newest upload first, alt text from the file name; images are served as uploaded (no variants or EXIF stripping; a blob-triggered resize Function can be added if Lighthouse flags the weight) | The UI lists `gallery/` anonymously (`environment.mediaBaseUrl`) |
+| Announcements | `content/announcements.json` in the environment's media container, edited in the Azure portal until the admin portal exists ([#30](https://github.com/The-Last-Barbershop-of-Ladysmith/thad-the-barber/issues/30)). No schema: the UI skips items it can't show and hides the section for a missing or broken file | The UI reads it in the browser with `cache: 'no-cache'` (portal uploads carry no `Cache-Control`) → `home` slice |
+| `reviewsToShow`, shop area text, tagline | Content files owned by the API: `reviews.json`, `shop.json`, each with a JSON schema (the admin portal takes over later) | Reviews → **lazy** `reviews` slice loaded only where shown; `shop.json` fields merged into `/api/shop` |
+| Gallery and announcement images | **Azure Blob Storage**, one public container per environment, edited in the Azure portal until the admin portal exists (#168). The gallery is whatever is in `gallery/`, newest upload first, alt text from the file name; announcement images live in `announcements/`; images are served as uploaded (no variants or EXIF stripping; a blob-triggered resize Function can be added if Lighthouse flags the weight) | The UI lists `gallery/` anonymously (`environment.mediaBaseUrl`) |
 | Reviews, rating, review count | **Google Business Profile API** (owner sign-in, token in Key Vault, cached 24h); content-file fallback | `GET /api/content/reviews` → lazy `reviews` slice |
 | UI microcopy | The component | Template or component field |
 | API base URL, site URL, reCAPTCHA site key | `environment.*.ts` per environment (build time) | `environment` |
@@ -213,9 +214,10 @@ Every change ships with its tests:
 - Every audit issue carries a **Hardcoded values inventory** for its component.
 
 **Announcements:**
-- An announcement is *active* when `publishedAt ≤ today` and it has no `expiresAt`, or `expiresAt ≥ today`.
-- With no active announcements, the Announcements section, its menu items (header, drawer, footer), and the ticker bar are all hidden.
-- The ticker shows active announcements published within `tickerWindowDays` (30, set in the content file).
+- An announcement is *active* when `startDate ≤ today ≤ endDate`, by the visitor's local date (BR-30).
+- With no active announcements, or a missing or broken file, the Announcements section and its menu items (header, drawer, footer) are hidden (BR-32).
+- `bodyHtml` renders through `[innerHTML]` with Angular's sanitizer only; links to `/…` route in the app (BR-33).
+- The ticker is deferred (BR-31).
 
 ## L. Text alerts
 
