@@ -1,3 +1,4 @@
+import { Action } from '@ngrx/store';
 import { Announcement, GalleryPhoto } from '../models/home.models';
 import { HomeApiActions, HomePageActions } from './home.actions';
 import { homeReducer } from './home.reducer';
@@ -45,7 +46,9 @@ describe(
       (): void => {
         const before: HomeState = { ...initialHomeState, announcements: [{ ...announcement, title: 'Old' }] };
 
-        const state: HomeState = homeReducer(before, HomeApiActions.announcementsLoaded({ announcements: [announcement] }));
+        const loaded: Action = HomeApiActions.announcementsLoaded({ announcements: [announcement] });
+
+        const state: HomeState = homeReducer(before, loaded);
 
         expect(state.announcements).toEqual([announcement]);
       },

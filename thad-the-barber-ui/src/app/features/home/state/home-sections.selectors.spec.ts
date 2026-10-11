@@ -23,7 +23,15 @@ describe(
     }
 
     beforeEach((): void => {
-      vi.useFakeTimers({ now: new Date(2026, 9, 15, 12, 0) });
+      vi.useFakeTimers({
+        now: new Date(
+          2026,
+          9,
+          15,
+          12,
+          0,
+        ),
+      });
     });
 
     afterEach((): void => {

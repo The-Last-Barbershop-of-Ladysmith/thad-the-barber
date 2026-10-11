@@ -119,7 +119,9 @@ describe(
     it(
       'does nothing while prerendering, so announcements are never baked into the page',
       (): void => {
-        const getAnnouncements: () => Observable<Announcement[]> = vi.fn((): Observable<Announcement[]> => of(announcements));
+        const getAnnouncements: () => Observable<Announcement[]> = vi.fn(
+          (): Observable<Announcement[]> => of(announcements),
+        );
 
         expect(run('server', getAnnouncements)).toEqual([]);
         expect(getAnnouncements).not.toHaveBeenCalled();
