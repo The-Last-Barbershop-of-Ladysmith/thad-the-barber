@@ -33,7 +33,7 @@ param squareAlerts bool
 @description('Gives adminPrincipalId Key Vault Crypto User on the session-JWT key, for local runs (dev only).')
 param canAdminSignSessions bool
 
-@description('Gives adminPrincipalId Storage Blob Data Contributor on the media container (uploads from tools/media); otherwise Reader.')
+@description('Gives adminPrincipalId Storage Blob Data Contributor on the media container (gallery and content edits in the portal); otherwise Reader.')
 param canAdminWriteMedia bool
 
 param actionGroupId string
@@ -158,7 +158,8 @@ resource sessionJwtKey 'Microsoft.KeyVault/vaults/keys@2024-11-01' = {
 resource mediaContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2024-01-01' = {
   name: '${storageName}/default/media-${envName}'
   properties: {
-    publicAccess: 'Blob'
+    // The UI lists gallery/ anonymously (#168). Every blob here is public already, so listing exposes nothing new.
+    publicAccess: 'Container'
   }
 }
 
