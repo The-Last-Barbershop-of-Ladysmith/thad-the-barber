@@ -33,7 +33,7 @@ public sealed class ManageBookingServiceTests
     {
         Appointment appointment = await BookAsync(bookedTime);
 
-        ManagedBooking booking = await Service().GetAsync(appointment.Id, Token(appointment), Cancellation);
+        ManagedBooking booking = await Service().GetAsync(appointment.Id, ManageTokens.Signer.Sign(appointment.Id), Cancellation);
 
         Assert.Equal(
             new ManagedBooking(
@@ -66,7 +66,7 @@ public sealed class ManageBookingServiceTests
         Appointment appointment = await BookAsync(bookedTime);
         Appointment otherAppointment = await BookAsync(newTime);
 
-        await Assert.ThrowsAsync<BookingNotFoundException>(() => Service().CancelAsync(appointment.Id, Token(otherAppointment), Cancellation));
+        await Assert.ThrowsAsync<BookingNotFoundException>(() => Service().CancelAsync(appointment.Id, ManageTokens.Signer.Sign(otherAppointment.Id), Cancellation));
     }
 
     [Fact]
@@ -80,7 +80,7 @@ public sealed class ManageBookingServiceTests
     {
         Appointment appointment = await BookAsync(bookedTime);
 
-        ManagedBooking booking = await Service().CancelAsync(appointment.Id, Token(appointment), Cancellation);
+        ManagedBooking booking = await Service().CancelAsync(appointment.Id, ManageTokens.Signer.Sign(appointment.Id), Cancellation);
 
         Assert.True(booking.IsCancelled);
         Assert.False(booking.CanChange);
@@ -93,10 +93,10 @@ public sealed class ManageBookingServiceTests
     {
         Appointment appointment = await BookAsync(bookedTime);
         ManageBookingService service = Service();
-        ManagedBooking cancelled = await service.CancelAsync(appointment.Id, Token(appointment), Cancellation);
+        ManagedBooking cancelled = await service.CancelAsync(appointment.Id, ManageTokens.Signer.Sign(appointment.Id), Cancellation);
         int cancelledVersion = Assert.Single(_square.Bookings).Appointment.Version;
 
-        ManagedBooking cancelledAgain = await service.CancelAsync(appointment.Id, Token(appointment), Cancellation);
+        ManagedBooking cancelledAgain = await service.CancelAsync(appointment.Id, ManageTokens.Signer.Sign(appointment.Id), Cancellation);
 
         Assert.Equal(cancelled, cancelledAgain);
         Assert.Equal(cancelledVersion, Assert.Single(_square.Bookings).Appointment.Version);
@@ -106,9 +106,9 @@ public sealed class ManageBookingServiceTests
     public async Task ACancelledBookingShowsAsCancelled()
     {
         Appointment appointment = await BookAsync(bookedTime);
-        await Service().CancelAsync(appointment.Id, Token(appointment), Cancellation);
+        await Service().CancelAsync(appointment.Id, ManageTokens.Signer.Sign(appointment.Id), Cancellation);
 
-        ManagedBooking booking = await Service().GetAsync(appointment.Id, Token(appointment), Cancellation);
+        ManagedBooking booking = await Service().GetAsync(appointment.Id, ManageTokens.Signer.Sign(appointment.Id), Cancellation);
 
         Assert.True(booking.IsCancelled);
         Assert.False(booking.CanChange);
@@ -120,7 +120,7 @@ public sealed class ManageBookingServiceTests
         Appointment appointment = await BookAsync(bookedTime);
         _time.SetUtcNow(bookedTime - TimeSpan.FromTicks(1));
 
-        ManagedBooking booking = await Service().CancelAsync(appointment.Id, Token(appointment), Cancellation);
+        ManagedBooking booking = await Service().CancelAsync(appointment.Id, ManageTokens.Signer.Sign(appointment.Id), Cancellation);
 
         Assert.True(booking.IsCancelled);
     }
@@ -135,12 +135,12 @@ public sealed class ManageBookingServiceTests
         _time.SetUtcNow(bookedTime + TimeSpan.FromMinutes(minutesAfterStart));
         ManageBookingService service = Service();
 
-        ManagedBooking booking = await service.GetAsync(appointment.Id, Token(appointment), Cancellation);
+        ManagedBooking booking = await service.GetAsync(appointment.Id, ManageTokens.Signer.Sign(appointment.Id), Cancellation);
 
         Assert.False(booking.CanChange);
         Assert.False(booking.IsCancelled);
-        await Assert.ThrowsAsync<BookingStartedException>(() => service.CancelAsync(appointment.Id, Token(appointment), Cancellation));
-        await Assert.ThrowsAsync<BookingStartedException>(() => service.RescheduleAsync(appointment.Id, Token(appointment), new RescheduleRequest(newTime), Cancellation));
+        await Assert.ThrowsAsync<BookingStartedException>(() => service.CancelAsync(appointment.Id, ManageTokens.Signer.Sign(appointment.Id), Cancellation));
+        await Assert.ThrowsAsync<BookingStartedException>(() => service.RescheduleAsync(appointment.Id, ManageTokens.Signer.Sign(appointment.Id), new RescheduleRequest(newTime), Cancellation));
         Assert.Equal(appointment, Assert.Single(_square.Bookings).Appointment);
     }
 
@@ -149,7 +149,7 @@ public sealed class ManageBookingServiceTests
     {
         Appointment appointment = await BookAsync(bookedTime);
 
-        ManagedBooking booking = await Service().RescheduleAsync(appointment.Id, Token(appointment), new RescheduleRequest(newTime), Cancellation);
+        ManagedBooking booking = await Service().RescheduleAsync(appointment.Id, ManageTokens.Signer.Sign(appointment.Id), new RescheduleRequest(newTime), Cancellation);
 
         Assert.Equal(newTime, booking.StartAt);
         Assert.True(booking.CanChange);
@@ -163,10 +163,10 @@ public sealed class ManageBookingServiceTests
     {
         Appointment appointment = await BookAsync(bookedTime);
         ManageBookingService service = Service();
-        await service.RescheduleAsync(appointment.Id, Token(appointment), new RescheduleRequest(newTime), Cancellation);
+        await service.RescheduleAsync(appointment.Id, ManageTokens.Signer.Sign(appointment.Id), new RescheduleRequest(newTime), Cancellation);
         int rescheduledVersion = Assert.Single(_square.Bookings).Appointment.Version;
 
-        ManagedBooking booking = await service.RescheduleAsync(appointment.Id, Token(appointment), new RescheduleRequest(newTime), Cancellation);
+        ManagedBooking booking = await service.RescheduleAsync(appointment.Id, ManageTokens.Signer.Sign(appointment.Id), new RescheduleRequest(newTime), Cancellation);
 
         Assert.Equal(newTime, booking.StartAt);
         Assert.Equal(rescheduledVersion, Assert.Single(_square.Bookings).Appointment.Version);
@@ -179,7 +179,7 @@ public sealed class ManageBookingServiceTests
         await BookAsync(newTime);
 
         await Assert.ThrowsAsync<SlotUnavailableException>(
-            () => Service().RescheduleAsync(appointment.Id, Token(appointment), new RescheduleRequest(newTime), Cancellation));
+            () => Service().RescheduleAsync(appointment.Id, ManageTokens.Signer.Sign(appointment.Id), new RescheduleRequest(newTime), Cancellation));
         Assert.Equal(bookedTime, _square.Bookings[0].Appointment.StartAt);
     }
 
@@ -190,7 +190,7 @@ public sealed class ManageBookingServiceTests
         DateTimeOffset pastTime = Instant("2026-10-06T15:00:00Z");
 
         await Assert.ThrowsAsync<SlotUnavailableException>(
-            () => Service().RescheduleAsync(appointment.Id, Token(appointment), new RescheduleRequest(pastTime), Cancellation));
+            () => Service().RescheduleAsync(appointment.Id, ManageTokens.Signer.Sign(appointment.Id), new RescheduleRequest(pastTime), Cancellation));
     }
 
     [Fact]
@@ -198,10 +198,10 @@ public sealed class ManageBookingServiceTests
     {
         Appointment appointment = await BookAsync(bookedTime);
         ManageBookingService service = Service();
-        await service.CancelAsync(appointment.Id, Token(appointment), Cancellation);
+        await service.CancelAsync(appointment.Id, ManageTokens.Signer.Sign(appointment.Id), Cancellation);
 
         await Assert.ThrowsAsync<BookingCancelledException>(
-            () => service.RescheduleAsync(appointment.Id, Token(appointment), new RescheduleRequest(newTime), Cancellation));
+            () => service.RescheduleAsync(appointment.Id, ManageTokens.Signer.Sign(appointment.Id), new RescheduleRequest(newTime), Cancellation));
     }
 
     private async Task<Appointment> BookAsync(DateTimeOffset startAt) =>
@@ -221,8 +221,6 @@ public sealed class ManageBookingServiceTests
         ManageTokens.Signer,
         _time
     );
-
-    private static string Token(Appointment appointment) => ManageTokens.Signer.Sign(appointment.Id);
 
     private static DateTimeOffset Instant(string instant) => DateTimeOffset.Parse(instant, CultureInfo.InvariantCulture);
 }

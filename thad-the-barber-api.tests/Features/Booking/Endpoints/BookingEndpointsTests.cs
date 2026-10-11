@@ -11,6 +11,8 @@ namespace ThadTheBarber.Api.Tests.Features.Booking.Endpoints;
 /// <summary>The clock sits at 11:10 shop time (America/New_York) on 2026-10-06; see <c>AvailabilityServiceTests</c>.</summary>
 public sealed class BookingEndpointsTests
 {
+    private const string Now = "2026-10-06T15:10:00Z";
+
     private static CancellationToken Cancellation => TestContext.Current.CancellationToken;
 
     [Fact]
@@ -300,7 +302,7 @@ public sealed class BookingEndpointsTests
     [InlineData("/reschedule")]
     public async Task ChangingAStartedBookingIs409BookingStarted(string action)
     {
-        FakeTimeProvider time = new(DateTimeOffset.Parse("2026-10-06T15:10:00Z", CultureInfo.InvariantCulture));
+        FakeTimeProvider time = new(DateTimeOffset.Parse(Now, CultureInfo.InvariantCulture));
         using ApiFactory api = new(time: time);
         HttpClient client = api.CreateClient();
         (string id, string manageToken) = await BookAsync(client);
@@ -375,6 +377,6 @@ public sealed class BookingEndpointsTests
 
     private static ApiFactory Api(FakeSquareService? square = null) => new(
         square: square,
-        time: new FakeTimeProvider(DateTimeOffset.Parse("2026-10-06T15:10:00Z", CultureInfo.InvariantCulture))
+        time: new FakeTimeProvider(DateTimeOffset.Parse(Now, CultureInfo.InvariantCulture))
     );
 }

@@ -145,43 +145,23 @@ public sealed class FakeSquareService : ISquareService
     public Task<Appointment?> GetBookingAsync(string bookingId, CancellationToken cancellationToken) =>
         Task.FromResult(Bookings.Find(booking => booking.Appointment.Id == bookingId)?.Appointment);
 
-    public Task<Appointment> CancelBookingAsync(string bookingId, int bookingVersion, CancellationToken cancellationToken) =>
-        Task.FromResult(UpdateBooking(bookingId, bookingVersion, booking =>
-        {
-            TimeSlots.Add(booking.TimeSlot);
-            return booking with
-            {
-                Appointment = booking.Appointment with
-                {
-                    Status = AppointmentStatus.CancelledByCustomer,
-                },
-            };
-        }));
+    public Task<Appointment> CancelBookingAsync(string bookingId, int bookingVersion, CancellationToken cancellationToken)
+    {
+        FakeBooking booking = Bookings[FindBookingIndex(bookingId, bookingVersion)];
+        TimeSlots.Add(booking.TimeSlot);
+        return Task.FromResult(SaveBooking(booking, booking.TimeSlot, AppointmentStatus.CancelledByCustomer));
+    }
 
     public Task<Appointment> RescheduleBookingAsync(string bookingId, int bookingVersion, DateTimeOffset newStartAt, CancellationToken cancellationToken)
     {
-        TimeSlot? newTimeSlot = TimeSlots.Find(timeSlot => timeSlot.StartAt == newStartAt);
-        if (newTimeSlot is null)
-        {
-            return Task.FromException<Appointment>(new SlotUnavailableException("The fake's new time is taken."));
-        }
-
-        return Task.FromResult(UpdateBooking(bookingId, bookingVersion, booking =>
-        {
-            TimeSlots.Remove(newTimeSlot);
-            TimeSlots.Add(booking.TimeSlot);
-            return booking with
-            {
-                TimeSlot = newTimeSlot,
-                Appointment = booking.Appointment with
-                {
-                    StartAt = newStartAt,
-                },
-            };
-        }));
+        FakeBooking booking = Bookings[FindBookingIndex(bookingId, bookingVersion)];
+        TimeSlot newTimeSlot = TimeSlots.Single(timeSlot => timeSlot.StartAt == newStartAt);
+        TimeSlots.Remove(newTimeSlot);
+        TimeSlots.Add(booking.TimeSlot);
+        return Task.FromResult(SaveBooking(booking, newTimeSlot, booking.Appointment.Status));
     }
 
-    private Appointment UpdateBooking(string bookingId, int bookingVersion, Func<FakeBooking, FakeBooking> update)
+    private int FindBookingIndex(string bookingId, int bookingVersion)
     {
         int index = Bookings.FindIndex(booking => booking.Appointment.Id == bookingId);
         if (index < 0 || Bookings[index].Appointment.Version != bookingVersion)
@@ -189,15 +169,23 @@ public sealed class FakeSquareService : ISquareService
             throw new InvalidOperationException("Square refuses an unknown booking or a stale version.");
         }
 
-        FakeBooking updated = update(Bookings[index]);
-        Bookings[index] = updated with
+        return index;
+    }
+
+    private Appointment SaveBooking(FakeBooking booking, TimeSlot timeSlot, AppointmentStatus status)
+    {
+        Appointment appointment = booking.Appointment with
         {
-            Appointment = updated.Appointment with
-            {
-                Version = bookingVersion + 1,
-            },
+            Status = status,
+            StartAt = timeSlot.StartAt,
+            Version = booking.Appointment.Version + 1,
         };
-        return Bookings[index].Appointment;
+        Bookings[Bookings.IndexOf(booking)] = booking with
+        {
+            TimeSlot = timeSlot,
+            Appointment = appointment,
+        };
+        return appointment;
     }
 
     private Task<T> FailOr<T>(T value)
