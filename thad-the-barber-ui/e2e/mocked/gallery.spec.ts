@@ -35,8 +35,14 @@ test.describe(
           const naturalWidth: () => Promise<number> = (): Promise<number> =>
             image.evaluate((element: HTMLImageElement): number => element.naturalWidth);
           await expect.poll(naturalWidth).toBeGreaterThan(0);
-          expect(await image.evaluate((element: HTMLImageElement): string => element.currentSrc))
-            .toMatch(new RegExp(`^${MEDIA_BASE_URL}/gallery/${photo.image}-(sm|md|lg)\\.webp$`));
+          const variants: string[] = [
+            'sm',
+            'md',
+            'lg',
+          ].map(
+            (size: string): string => `${MEDIA_BASE_URL}/gallery/${photo.image}-${size}.webp`,
+          );
+          expect(variants).toContain(await image.evaluate((element: HTMLImageElement): string => element.currentSrc));
         }
 
         const narrow: GalleryPhoto | undefined = TEST_GALLERY.photos[0];
