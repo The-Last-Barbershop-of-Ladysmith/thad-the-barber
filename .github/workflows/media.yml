@@ -1,5 +1,5 @@
 # Publishes media/ and content/ to one environment's public media container (issue #38), without deploying either app.
-# tools/media checks content/gallery.json, writes each original's WebP variants (sm/md/lg, EXIF stripped) and copies
+# tools/media checks the content files, writes each original's WebP variants (sm/md/lg, EXIF stripped) and copies
 # the content files; then the environment's deploy identity, which can write only its own container, uploads them.
 # Variants are immutable (a changed photo gets a new key), so browsers cache them for a year; content files for
 # 5 minutes, so an edit shows within minutes. Blobs removed from the repo stay in the container.
@@ -12,9 +12,6 @@ on:
         description: dev or test (the GitHub environment and the container name segment).
         type: string
         required: true
-      region:
-        type: string
-        default: centralus
 
 permissions:
   contents: read
@@ -28,7 +25,7 @@ jobs:
       contents: read
       id-token: write
     env:
-      ACCOUNT: storttbnonprod${{ inputs.region }}
+      ACCOUNT: storttbnonprodcentralus
       CONTAINER: media-${{ inputs.environment }}
     defaults:
       run:
@@ -53,13 +50,9 @@ jobs:
 
       - name: Upload image variants
         run: |
-          for folder in out/*/; do
-            folder=$(basename "$folder")
-            [[ "$folder" == content ]] && continue
-            az storage blob upload-batch --auth-mode login --account-name "$ACCOUNT" --destination "$CONTAINER" \
-              --source "out/$folder" --destination-path "$folder" --overwrite --only-show-errors \
-              --content-type image/webp --content-cache-control 'public, max-age=31536000, immutable'
-          done
+          az storage blob upload-batch --auth-mode login --account-name "$ACCOUNT" --destination "$CONTAINER" \
+            --source out/media --overwrite --only-show-errors \
+            --content-type image/webp --content-cache-control 'public, max-age=31536000, immutable'
 
       - name: Upload content files
         run: |

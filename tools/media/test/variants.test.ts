@@ -13,6 +13,7 @@ import {
   it,
 } from 'node:test';
 import sharp, { type Metadata } from 'sharp';
+import variantWidths from '../../../media/variant-widths.json' with { type: 'json' };
 import { readSize, writeVariants } from '../src/variants.ts';
 import { writeTestJpeg } from './images.ts';
 
@@ -29,7 +30,7 @@ describe('variants', (): void => {
 
   it('writes sm, md and lg WebP files named <key>-<size>.webp', async (): Promise<void> => {
     const source: string = join(dir, 'wide.jpg');
-    await writeTestJpeg(source, { width: 2000, height: 1000 });
+    await writeTestJpeg(source, { width: 4000, height: 2000 });
 
     await writeVariants(source, join(dir, 'wide-out'), 'wide-01');
 
@@ -44,7 +45,7 @@ describe('variants', (): void => {
       assert.equal(metadata.format, 'webp');
       widths.push(metadata.width);
     }
-    assert.deepEqual(widths, [480, 960, 1600]);
+    assert.deepEqual(widths, [variantWidths.sm, variantWidths.md, variantWidths.lg]);
   });
 
   it('never makes a variant wider than its original', async (): Promise<void> => {

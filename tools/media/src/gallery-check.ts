@@ -1,32 +1,15 @@
-import { Ajv2020, type ErrorObject } from 'ajv/dist/2020.js';
+import type { GalleryContent } from '../../../thad-the-barber-ui/src/app/features/home/models/home.models.ts';
 import { readSize, type ImageSize } from './variants.ts';
 
-interface GalleryPhoto {
-  id: string;
-  image: string;
-  alt: string;
-  width: number;
-  height: number;
-}
-
-interface Gallery { photos: GalleryPhoto[]; }
-
 /**
- * Checks `gallery.json` against its schema, then each photo against the originals: the image key exists, ids and
- * images are unique, and width/height match the original (the site reserves that space before the image loads).
+ * Checks a schema-valid `gallery.json` against the originals: the image key exists, ids and images are unique, and
+ * width/height match the original (the site reserves that space before the image loads).
  */
-export async function checkGallery(gallery: unknown, schema: object, originals: Map<string, string>): Promise<string[]> {
-  const validate: ReturnType<Ajv2020['compile']> = new Ajv2020({ allErrors: true }).compile(schema);
-  if (!validate(gallery)) {
-    return (validate.errors ?? []).map(
-      (error: ErrorObject): string => `gallery.json${error.instancePath} ${error.message ?? 'is invalid'}`,
-    );
-  }
-
+export async function checkGallery(gallery: GalleryContent, originals: Map<string, string>): Promise<string[]> {
   const errors: string[] = [];
   const ids: Set<string> = new Set();
   const images: Set<string> = new Set();
-  for (const photo of (gallery as Gallery).photos) {
+  for (const photo of gallery.photos) {
     if (ids.has(photo.id)) {
       errors.push(`gallery.json: duplicate id "${photo.id}"`);
     }
