@@ -8,6 +8,7 @@
   "scripts": {
     "check": "node src/cli.ts check",
     "build": "node src/cli.ts build",
+    "upload": "node src/cli.ts build out && bash upload.sh",
     "typecheck": "tsc --noEmit",
     "test": "node --test \"test/**/*.test.ts\""
   },

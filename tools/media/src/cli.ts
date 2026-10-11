@@ -2,6 +2,7 @@ import {
   copyFile,
   mkdir,
   readdir,
+  rm,
 } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import type { GalleryContent } from '../../../thad-the-barber-ui/src/app/features/home/models/home.models.ts';
@@ -41,9 +42,13 @@ async function check(): Promise<CheckedMedia> {
   return { originalsByFolder, contentFiles: [...content.valid.keys()] };
 }
 
-/** Writes `<outDir>/media/<folder>/<key>-<size>.webp` for every original and copies the content files to `<outDir>/content/`. */
+/**
+ * Empties `outDir`, then writes `<outDir>/media/<folder>/<key>-<size>.webp` for every original and copies the content
+ * files to `<outDir>/content/`.
+ */
 async function build(outDir: string): Promise<void> {
   const { originalsByFolder, contentFiles }: CheckedMedia = await check();
+  await rm(outDir, { recursive: true, force: true });
   for (const [folder, originals] of originalsByFolder) {
     for (const [key, source] of originals.files) {
       await writeVariants(source, join(outDir, 'media', folder), key);
