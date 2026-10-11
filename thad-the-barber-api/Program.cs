@@ -2,7 +2,9 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Azure.Monitor.OpenTelemetry.AspNetCore;
 using ThadTheBarber.Api.Common.Exceptions;
+using ThadTheBarber.Api.Features.Booking.Configuration;
 using ThadTheBarber.Api.Features.Booking.Endpoints;
+using ThadTheBarber.Api.Features.Health.Configuration;
 using ThadTheBarber.Api.Features.Health.Endpoints;
 using ThadTheBarber.Api.Features.Session.Configuration;
 using ThadTheBarber.Api.Features.Session.Endpoints;
@@ -38,7 +40,7 @@ builder.Services.AddRecaptcha(builder.Configuration);
 builder.Services.AddSessionTokens(builder.Configuration);
 builder.Services.AddSessionBearerAuth();
 builder.Services.AddHealth();
-builder.Services.AddBooking();
+builder.Services.AddBooking(builder.Configuration);
 builder.Services.AddOpenApi(options =>
 {
     options.AddDocumentTransformer<BearerSecurityTransformer>();

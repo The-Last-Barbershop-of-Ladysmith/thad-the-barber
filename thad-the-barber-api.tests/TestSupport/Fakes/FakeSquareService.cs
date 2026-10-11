@@ -11,8 +11,9 @@ namespace ThadTheBarber.Api.Tests.TestSupport.Fakes;
 /// <summary>
 /// Stands in for Square in every test (see <see cref="ApiFactory"/>). Each <see cref="ISquareService"/> method returns
 /// a settable value that defaults to fixture data, so a test configures only what it checks. Customers and bookings
-/// behave like Square's: a created customer is found by phone, a booked time leaves <see cref="TimeSlots"/>, and
-/// booking again with the same idempotency key returns the first booking.
+/// behave like Square's: a created customer is found by phone, a booked time leaves <see cref="TimeSlots"/>, booking
+/// again with the same idempotency key returns the first booking, and cancelling or rescheduling needs the booking's
+/// current version, bumps it and frees the old time.
 /// </summary>
 public sealed class FakeSquareService : ISquareService
 {
@@ -59,12 +60,6 @@ public sealed class FakeSquareService : ISquareService
 
     public Appointment CreatedAppointment { get; init; } =
         SquareFixture.ReadAs<CreateBookingResponse>("create-booking.json").Booking!.ToAppointment();
-
-    public Appointment CancelledAppointment { get; init; } =
-        SquareFixture.ReadAs<CancelBookingResponse>("cancel-booking.json").Booking!.ToAppointment();
-
-    public Appointment RescheduledAppointment { get; init; } =
-        SquareFixture.ReadAs<UpdateBookingResponse>("update-booking.json").Booking!.ToAppointment();
 
     public List<FakeBooking> Bookings { get; } = [];
 
@@ -147,11 +142,51 @@ public sealed class FakeSquareService : ISquareService
     public Task<TimeSlot?> FindBookedTimeSlotAsync(string locationId, string customerId, DateTimeOffset startAt, CancellationToken cancellationToken) =>
         Task.FromResult(Bookings.Find(booking => booking.CustomerId == customerId && booking.TimeSlot.StartAt == startAt)?.TimeSlot);
 
-    public Task<Appointment> CancelBookingAsync(string bookingId, int bookingVersion, CancellationToken cancellationToken) =>
-        Task.FromResult(CancelledAppointment);
+    public Task<Appointment?> GetBookingAsync(string bookingId, CancellationToken cancellationToken) =>
+        Task.FromResult(Bookings.Find(booking => booking.Appointment.Id == bookingId)?.Appointment);
 
-    public Task<Appointment> RescheduleBookingAsync(string bookingId, int bookingVersion, DateTimeOffset newStartAt, CancellationToken cancellationToken) =>
-        Task.FromResult(RescheduledAppointment);
+    public Task<Appointment> CancelBookingAsync(string bookingId, int bookingVersion, CancellationToken cancellationToken)
+    {
+        FakeBooking booking = Bookings[FindBookingIndex(bookingId, bookingVersion)];
+        TimeSlots.Add(booking.TimeSlot);
+        return Task.FromResult(SaveBooking(booking, booking.TimeSlot, AppointmentStatus.CancelledByCustomer));
+    }
+
+    public Task<Appointment> RescheduleBookingAsync(string bookingId, int bookingVersion, DateTimeOffset newStartAt, CancellationToken cancellationToken)
+    {
+        FakeBooking booking = Bookings[FindBookingIndex(bookingId, bookingVersion)];
+        TimeSlot newTimeSlot = TimeSlots.Single(timeSlot => timeSlot.StartAt == newStartAt);
+        TimeSlots.Remove(newTimeSlot);
+        TimeSlots.Add(booking.TimeSlot);
+        return Task.FromResult(SaveBooking(booking, newTimeSlot, booking.Appointment.Status));
+    }
+
+    private int FindBookingIndex(string bookingId, int bookingVersion)
+    {
+        int index = Bookings.FindIndex(booking => booking.Appointment.Id == bookingId);
+        if (index < 0 || Bookings[index].Appointment.Version != bookingVersion)
+        {
+            throw new InvalidOperationException("Square refuses an unknown booking or a stale version.");
+        }
+
+        return index;
+    }
+
+    private Appointment SaveBooking(FakeBooking booking, TimeSlot timeSlot, AppointmentStatus status)
+    {
+        Appointment appointment = booking.Appointment with
+        {
+            Status = status,
+            StartAt = timeSlot.StartAt,
+            Version = booking.Appointment.Version + 1,
+        };
+        Bookings[Bookings.IndexOf(booking)] = booking with
+        {
+            TimeSlot = timeSlot,
+            Appointment = appointment,
+        };
+        return appointment;
+    }
 
     private Task<T> FailOr<T>(T value)
     {

@@ -29,3 +29,10 @@ condition = "AND"
 paths = ['''^thad-the-barber-api/appsettings\.\w+\.json$''', '''^thad-the-barber-ui/src/environments/environment[\w.-]*\.ts$''']
 regexTarget = "line"
 regexes = ['''^\s*("SiteKey":\s*"6L[\w-]{38}"|recaptchaSiteKey:\s*'6L[\w-]{38}',)\s*$''']
+
+[[allowlists]]
+description = "The test host's manage-link HMAC key is made up: base64 of 'test-only-manage-link-key-32byte' (#29)"
+condition = "AND"
+paths = ['''^thad-the-barber-api\.tests/TestSupport/ApiFactory\.cs$''']
+regexTarget = "line"
+regexes = ['''^\s*public const string ManageLinkHmacKey = "[A-Za-z0-9+/=]{44}";\s*$''']

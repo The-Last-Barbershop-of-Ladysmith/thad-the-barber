@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using ThadTheBarber.Api.Features.Health.Checks;
 using ThadTheBarber.Api.Features.Health.Models;
 using ThadTheBarber.Api.Infrastructure.Headers.Middleware;
 
@@ -8,17 +7,6 @@ namespace ThadTheBarber.Api.Features.Health.Endpoints;
 
 public static class HealthEndpoints
 {
-    /// <summary>Build info plus the dependency checks a deep health check runs. Register new checks here.</summary>
-    public static IServiceCollection AddHealth(this IServiceCollection services)
-    {
-        services.AddSingleton(BuildInfo.FromAssembly(typeof(HealthEndpoints).Assembly));
-        services.AddMemoryCache();
-        services.AddHealthChecks()
-            .AddCheck<SquareHealthCheck>(SquareHealthCheck.Name)
-            .AddCheck<BookableServiceHealthCheck>(BookableServiceHealthCheck.Name);
-        return services;
-    }
-
     public static IEndpointRouteBuilder MapHealthEndpoints(this IEndpointRouteBuilder api)
     {
         api.MapGet("/health", GetHealthAsync)

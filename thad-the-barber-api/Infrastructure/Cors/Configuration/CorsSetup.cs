@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.Extensions.Options;
+using ThadTheBarber.Api.Features.Booking.Endpoints;
 
 namespace ThadTheBarber.Api.Infrastructure.Cors.Configuration;
 
@@ -13,7 +14,7 @@ public static class CorsSetup
     [
         "Authorization",
         "Content-Type",
-        "X-Manage-Token",
+        BookingEndpoints.ManageTokenHeader,
         // W3C trace context, so a browser request can be followed end to end in App Insights.
         "traceparent",
         "tracestate",

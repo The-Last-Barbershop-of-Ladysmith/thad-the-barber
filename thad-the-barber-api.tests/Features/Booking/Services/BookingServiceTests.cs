@@ -6,6 +6,7 @@ using ThadTheBarber.Api.Features.Booking.Services;
 using ThadTheBarber.Api.Square.Configuration;
 using ThadTheBarber.Api.Square.Exceptions;
 using ThadTheBarber.Api.Square.Services;
+using ThadTheBarber.Api.Tests.TestSupport;
 using ThadTheBarber.Api.Tests.TestSupport.Fakes;
 
 namespace ThadTheBarber.Api.Tests.Features.Booking.Services;
@@ -33,6 +34,7 @@ public sealed class BookingServiceTests
         Assert.Equal(square.CustomerId, booking.CustomerId);
         Assert.Equal(booking.Appointment.Id, confirmation.Id);
         Assert.Equal(openTime, confirmation.StartAt);
+        Assert.True(ManageTokens.Signer.IsValid(confirmation.Id, confirmation.ManageToken));
     }
 
     [Fact]
@@ -135,7 +137,8 @@ public sealed class BookingServiceTests
             square,
             new BookableServiceResolver(square, Options.Create(new SquareSettings())),
             new FakeTimeProvider(now)
-        )
+        ),
+        ManageTokens.Signer
     );
 
     private static BookingRequest Request(DateTimeOffset startAt) => new(

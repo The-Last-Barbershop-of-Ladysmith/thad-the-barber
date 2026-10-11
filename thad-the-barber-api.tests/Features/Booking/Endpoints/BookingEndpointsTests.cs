@@ -11,6 +11,8 @@ namespace ThadTheBarber.Api.Tests.Features.Booking.Endpoints;
 /// <summary>The clock sits at 11:10 shop time (America/New_York) on 2026-10-06; see <c>AvailabilityServiceTests</c>.</summary>
 public sealed class BookingEndpointsTests
 {
+    private const string Now = "2026-10-06T15:10:00Z";
+
     private static CancellationToken Cancellation => TestContext.Current.CancellationToken;
 
     [Fact]
@@ -80,7 +82,7 @@ public sealed class BookingEndpointsTests
     }
 
     [Fact]
-    public async Task ABookingIs201WithOnlyItsIdAndUtcStart()
+    public async Task ABookingIs201WithOnlyItsIdUtcStartAndManageToken()
     {
         using ApiFactory api = Api();
 
@@ -92,10 +94,12 @@ public sealed class BookingEndpointsTests
         Assert.Equal(
             [
                 "id",
+                "manageToken",
                 "startAt",
             ],
             confirmation.EnumerateObject().Select(property => property.Name).Order());
         Assert.Equal("2026-10-07T13:30:00+00:00", confirmation.GetProperty("startAt").GetString());
+        Assert.True(ManageTokens.Signer.IsValid(confirmation.GetProperty("id").GetString()!, confirmation.GetProperty("manageToken").GetString()));
     }
 
     [Fact]
@@ -182,9 +186,190 @@ public sealed class BookingEndpointsTests
         Assert.Empty(square.Bookings);
     }
 
-    private static Dictionary<string, object?> BookingBody(string phone = "+15550100187") => new()
+    [Fact]
+    public async Task AManagedBookingIs200WithOnlyItsTimeAndStatus()
     {
-        ["startAt"] = "2026-10-07T13:30:00Z",
+        using ApiFactory api = Api();
+        HttpClient client = api.CreateClient();
+        (string id, string manageToken) = await BookAsync(client);
+
+        using HttpResponseMessage response = await client.SendAsync(ManageRequest(HttpMethod.Get, $"/api/bookings/{id}", manageToken), Cancellation);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.True(response.Headers.CacheControl?.NoStore);
+        JsonElement booking = await response.Content.ReadFromJsonAsync<JsonElement>(Cancellation);
+        Assert.Equal(
+            [
+                "canChange",
+                "id",
+                "isCancelled",
+                "startAt",
+            ],
+            booking.EnumerateObject().Select(property => property.Name).Order());
+        Assert.True(booking.GetProperty("canChange").GetBoolean());
+    }
+
+    [Theory]
+    [InlineData("GET", "")]
+    [InlineData("POST", "/cancel")]
+    [InlineData("POST", "/reschedule")]
+    public async Task AMissingOrWrongTokenIs404WithItsCode(string method, string action)
+    {
+        using ApiFactory api = Api();
+        HttpClient client = api.CreateClient();
+        (string id, string manageToken) = await BookAsync(client);
+        string?[] badTokens =
+        [
+            null,
+            ManageTokens.Signer.Sign("bk_test-other1"),
+            manageToken.ToUpperInvariant(),
+        ];
+
+        foreach (string? badToken in badTokens)
+        {
+            using HttpRequestMessage request = ManageRequest(new HttpMethod(method), $"/api/bookings/{id}{action}", badToken, new { startAt = "2026-10-08T14:00:00Z" });
+            using HttpResponseMessage response = await client.SendAsync(request, Cancellation);
+
+            Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+            JsonElement problem = await response.Content.ReadFromJsonAsync<JsonElement>(Cancellation);
+            Assert.Equal("booking_not_found", problem.GetProperty("code").GetString());
+        }
+    }
+
+    [Theory]
+    [InlineData("manageToken")]
+    [InlineData("X-Manage-Token")]
+    [InlineData("t")]
+    public async Task ATokenInTheQueryStringIsIgnored(string parameter)
+    {
+        using ApiFactory api = Api();
+        HttpClient client = api.CreateClient();
+        (string id, string manageToken) = await BookAsync(client);
+
+        using HttpResponseMessage response = await client.GetAsync($"/api/bookings/{id}?{parameter}={manageToken}", Cancellation);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task CancellingIs200AndShowsTheBookingCancelled()
+    {
+        using ApiFactory api = Api();
+        HttpClient client = api.CreateClient();
+        (string id, string manageToken) = await BookAsync(client);
+
+        using HttpResponseMessage response = await client.SendAsync(ManageRequest(HttpMethod.Post, $"/api/bookings/{id}/cancel", manageToken), Cancellation);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        JsonElement booking = await response.Content.ReadFromJsonAsync<JsonElement>(Cancellation);
+        Assert.True(booking.GetProperty("isCancelled").GetBoolean());
+        Assert.False(booking.GetProperty("canChange").GetBoolean());
+    }
+
+    [Fact]
+    public async Task ReschedulingIs200WithTheNewUtcStart()
+    {
+        using ApiFactory api = Api();
+        HttpClient client = api.CreateClient();
+        (string id, string manageToken) = await BookAsync(client);
+        using HttpRequestMessage request = ManageRequest(HttpMethod.Post, $"/api/bookings/{id}/reschedule", manageToken, new { startAt = "2026-10-08T14:00:00Z" });
+
+        using HttpResponseMessage response = await client.SendAsync(request, Cancellation);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        JsonElement booking = await response.Content.ReadFromJsonAsync<JsonElement>(Cancellation);
+        Assert.Equal("2026-10-08T14:00:00+00:00", booking.GetProperty("startAt").GetString());
+    }
+
+    [Fact]
+    public async Task ReschedulingToATakenTimeIs409SlotUnavailable()
+    {
+        using ApiFactory api = Api();
+        HttpClient client = api.CreateClient();
+        (string id, string manageToken) = await BookAsync(client);
+        using HttpResponseMessage taken = await client.PostAsJsonAsync("/api/bookings", BookingBody(startAt: "2026-10-08T14:00:00Z"), Cancellation);
+        using HttpRequestMessage request = ManageRequest(HttpMethod.Post, $"/api/bookings/{id}/reschedule", manageToken, new { startAt = "2026-10-08T14:00:00Z" });
+
+        using HttpResponseMessage response = await client.SendAsync(request, Cancellation);
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        JsonElement problem = await response.Content.ReadFromJsonAsync<JsonElement>(Cancellation);
+        Assert.Equal("slot_unavailable", problem.GetProperty("code").GetString());
+    }
+
+    [Theory]
+    [InlineData("/cancel")]
+    [InlineData("/reschedule")]
+    public async Task ChangingAStartedBookingIs409BookingStarted(string action)
+    {
+        FakeTimeProvider time = new(DateTimeOffset.Parse(Now, CultureInfo.InvariantCulture));
+        using ApiFactory api = new(time: time);
+        HttpClient client = api.CreateClient();
+        (string id, string manageToken) = await BookAsync(client);
+        time.SetUtcNow(DateTimeOffset.Parse("2026-10-07T13:30:00Z", CultureInfo.InvariantCulture));
+        using HttpRequestMessage request = ManageRequest(HttpMethod.Post, $"/api/bookings/{id}{action}", manageToken, new { startAt = "2026-10-08T14:00:00Z" });
+
+        using HttpResponseMessage response = await client.SendAsync(request, Cancellation);
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        JsonElement problem = await response.Content.ReadFromJsonAsync<JsonElement>(Cancellation);
+        Assert.Equal("booking_started", problem.GetProperty("code").GetString());
+    }
+
+    [Fact]
+    public async Task ReschedulingACancelledBookingIs409BookingCancelled()
+    {
+        using ApiFactory api = Api();
+        HttpClient client = api.CreateClient();
+        (string id, string manageToken) = await BookAsync(client);
+        using HttpResponseMessage cancelled = await client.SendAsync(ManageRequest(HttpMethod.Post, $"/api/bookings/{id}/cancel", manageToken), Cancellation);
+        using HttpRequestMessage request = ManageRequest(HttpMethod.Post, $"/api/bookings/{id}/reschedule", manageToken, new { startAt = "2026-10-08T14:00:00Z" });
+
+        using HttpResponseMessage response = await client.SendAsync(request, Cancellation);
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        JsonElement problem = await response.Content.ReadFromJsonAsync<JsonElement>(Cancellation);
+        Assert.Equal("booking_cancelled", problem.GetProperty("code").GetString());
+    }
+
+    [Fact]
+    public async Task ARescheduleWithoutANewTimeIs400()
+    {
+        using ApiFactory api = Api();
+        HttpClient client = api.CreateClient();
+        (string id, string manageToken) = await BookAsync(client);
+
+        using HttpResponseMessage response = await client.SendAsync(ManageRequest(HttpMethod.Post, $"/api/bookings/{id}/reschedule", manageToken, new { }), Cancellation);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    private static async Task<(string Id, string ManageToken)> BookAsync(HttpClient client)
+    {
+        using HttpResponseMessage response = await client.PostAsJsonAsync("/api/bookings", BookingBody(), Cancellation);
+        JsonElement confirmation = await response.Content.ReadFromJsonAsync<JsonElement>(Cancellation);
+        return (confirmation.GetProperty("id").GetString()!, confirmation.GetProperty("manageToken").GetString()!);
+    }
+
+    private static HttpRequestMessage ManageRequest(HttpMethod method, string path, string? manageToken, object? body = null)
+    {
+        HttpRequestMessage request = new(method, path);
+        if (manageToken is not null)
+        {
+            request.Headers.Add("X-Manage-Token", manageToken);
+        }
+
+        if (body is not null)
+        {
+            request.Content = JsonContent.Create(body);
+        }
+
+        return request;
+    }
+
+    private static Dictionary<string, object?> BookingBody(string phone = "+15550100187", string startAt = "2026-10-07T13:30:00Z") => new()
+    {
+        ["startAt"] = startAt,
         ["name"] = "Q Testperson-Example",
         ["phone"] = phone,
         ["idempotencyKey"] = Guid.NewGuid(),
@@ -192,6 +377,6 @@ public sealed class BookingEndpointsTests
 
     private static ApiFactory Api(FakeSquareService? square = null) => new(
         square: square,
-        time: new FakeTimeProvider(DateTimeOffset.Parse("2026-10-06T15:10:00Z", CultureInfo.InvariantCulture))
+        time: new FakeTimeProvider(DateTimeOffset.Parse(Now, CultureInfo.InvariantCulture))
     );
 }

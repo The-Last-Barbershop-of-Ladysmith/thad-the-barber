@@ -223,6 +223,24 @@ public sealed class SquareService : ISquareService
         return heldBooking?.ToTimeSlot();
     }
 
+    public async Task<Appointment?> GetBookingAsync(string bookingId, CancellationToken cancellationToken)
+    {
+        GetBookingsRequest getBookingRequest = new()
+        {
+            BookingId = bookingId,
+        };
+
+        try
+        {
+            GetBookingResponse getBookingResponse = await squareClient.Bookings.GetAsync(getBookingRequest, cancellationToken: cancellationToken);
+            return getBookingResponse.Booking?.ToAppointment();
+        }
+        catch (SquareApiException exception) when (exception.StatusCode == StatusCodes.Status404NotFound)
+        {
+            return null;
+        }
+    }
+
     public async Task<Appointment> CancelBookingAsync(string bookingId, int bookingVersion, CancellationToken cancellationToken)
     {
         CancelBookingRequest cancelBookingRequest = new()
@@ -322,8 +340,7 @@ public sealed class SquareService : ISquareService
         && exception.Errors.Any(error => error.Field is "start_at" or "booking.start_at");
 
     private static bool IsHeldAt(Appointment appointment, DateTimeOffset startAt) =>
-        appointment.Status is AppointmentStatus.Pending or AppointmentStatus.Accepted
-        && appointment.StartAt == startAt;
+        appointment.IsActive && appointment.StartAt == startAt;
 
     private static bool IsCustomerInputRejected(SquareApiException exception) =>
         exception.StatusCode == StatusCodes.Status400BadRequest
