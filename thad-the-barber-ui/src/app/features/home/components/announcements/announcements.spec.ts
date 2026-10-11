@@ -199,7 +199,8 @@ describe(
         const host: HTMLElement = render([
           {
             ...base,
-            bodyHtml: '<a href="/book">Book</a> <a href="https://example.test">Elsewhere</a> <a href="//other.test">Other</a>',
+            bodyHtml: '<a href="/book">Book</a> <a href="https://example.test">Elsewhere</a> <a href="//other.test">Other</a> '
+              + '<a href="/files/price-list.pdf" download>Price list</a>',
           },
         ]);
         const navigate: MockInstance<Router['navigateByUrl']> = vi.spyOn(TestBed.inject(Router), 'navigateByUrl')
@@ -208,9 +209,10 @@ describe(
           internal,
           external,
           protocolRelative,
+          download,
         ]: HTMLAnchorElement[
         ] = Array.from(host.querySelectorAll<HTMLAnchorElement>('[data-testid="announcement-body"] a'));
-        if (!internal || !external || !protocolRelative) {
+        if (!internal || !external || !protocolRelative || !download) {
           throw new Error('Links did not render');
         }
 
@@ -220,7 +222,11 @@ describe(
           click(internal, { button: 1 }),
           click(external),
           click(protocolRelative),
+          click(download),
         ];
+        const alreadyHandled: MouseEvent = new MouseEvent('click', { bubbles: true, cancelable: true });
+        alreadyHandled.preventDefault();
+        internal.dispatchEvent(alreadyHandled);
 
         expect(navigate).not.toHaveBeenCalled();
         expect(events.some((event: MouseEvent): boolean => event.defaultPrevented)).toBe(false);

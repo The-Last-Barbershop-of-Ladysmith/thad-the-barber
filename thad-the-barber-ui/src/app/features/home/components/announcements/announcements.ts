@@ -61,7 +61,10 @@ export class Announcements {
       && !event.metaKey
       && !event.shiftKey
       && !event.altKey;
-    if (href === null || !isPlainClick || anchor?.target === '_blank' || linkKind(href) !== LinkKind.Internal) {
+    const isLeftToBrowser: boolean = event.defaultPrevented
+      || anchor?.target === '_blank'
+      || anchor?.hasAttribute('download') === true;
+    if (href === null || !isPlainClick || isLeftToBrowser || linkKind(href) !== LinkKind.Internal) {
       return;
     }
     event.preventDefault();
