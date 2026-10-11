@@ -4,6 +4,7 @@ import {
   test as base,
   expect,
 } from '@playwright/test';
+import { fulfillMedia, isMedia } from './media';
 
 interface CspReporter { reportCspViolation: (violation: string) => void; }
 
@@ -13,7 +14,8 @@ export function isTelemetryIngestion(url: URL): boolean {
 
 /**
  * The mocked suite's `page`: any `/api/*` call a test hasn't routed fails the test, and so does any CSP violation.
- * Telemetry is accepted and dropped, so test runs never reach App Insights.
+ * Telemetry is accepted and dropped, so test runs never reach App Insights, and the media container serves the
+ * made-up gallery in `media.ts`.
  * Tests mock endpoints with their own `page.route`, which takes precedence over the catch-all.
  * Each test already gets a fresh browser context, so localStorage starts empty.
  * No fake clock: `page.clock` stalls PrimeNG's drawer animation.
@@ -30,6 +32,7 @@ export const test: typeof base = base.extend({
     );
 
     await page.route(isTelemetryIngestion, (route: Route): Promise<void> => route.fulfill({ status: 200, json: {} }));
+    await page.route(isMedia, fulfillMedia);
 
     const cspViolations: string[] = [];
     await page.exposeFunction('reportCspViolation', (violation: string): void => {

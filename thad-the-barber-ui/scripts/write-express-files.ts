@@ -93,7 +93,11 @@ const shop: ErrorPageShop = {
 
 const ingestionEndpoint: string | undefined = /IngestionEndpoint=([^;]+)/.exec(environment.appInsightsConnectionString)?.[1];
 const sources: Record<string, string[]> = {
-  'connect-src': [new URL(environment.apiBaseUrl).origin, ...(ingestionEndpoint ? [new URL(ingestionEndpoint).origin] : [])],
+  'connect-src': [
+    new URL(environment.apiBaseUrl).origin,
+    new URL(environment.mediaBaseUrl).origin,
+    ...(ingestionEndpoint ? [new URL(ingestionEndpoint).origin] : []),
+  ],
   'img-src': [new URL(environment.mediaBaseUrl).origin],
 };
 

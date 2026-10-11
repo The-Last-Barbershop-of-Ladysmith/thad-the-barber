@@ -3,7 +3,7 @@ import {
   createReducer,
   on,
 } from '@ngrx/store';
-import { HomeContent } from '../models/home.models';
+import { GalleryPhoto, HomeContent } from '../models/home.models';
 import { HomeApiActions, HomePageActions } from './home.actions';
 import { HomeState, initialHomeState } from './home.state';
 
@@ -20,6 +20,12 @@ export const homeReducer: ActionReducer<HomeState> = createReducer(
     }),
   ),
   on(HomeApiActions.contentLoadFailed, (state: HomeState): HomeState => ({ ...state, contentStatus: 'error' })),
+  on(
+    HomeApiActions.galleryLoaded,
+    (state: HomeState, { photos }: { photos: GalleryPhoto[]; }): HomeState => ({ ...state, gallery: photos }),
+  ),
+  // A saved copy could point at images that are gone, so the section hides instead.
+  on(HomeApiActions.galleryLoadFailed, (state: HomeState): HomeState => ({ ...state, gallery: [] })),
   on(
     HomePageActions.smsSignupSubmitted,
     (state: HomeState, { phone }: { phone: string; }): HomeState => ({
