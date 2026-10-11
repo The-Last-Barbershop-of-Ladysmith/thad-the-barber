@@ -1,4 +1,5 @@
 import { provideHttpClient } from '@angular/common/http';
+import { ButtonVariant } from '../../../shared/models/button.models';
 import {
   HttpTestingController,
   TestRequest,
@@ -6,7 +7,7 @@ import {
 } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { environment } from '../../../../environments/environment';
-import { Announcement } from '../models/home.models';
+import { Announcement, AnnouncementImagePosition } from '../models/home.models';
 import { AnnouncementsService } from './announcements.service';
 import { LinkKind } from '../../../shared/models/link.models';
 
@@ -95,14 +96,14 @@ describe(
             image: {
               src: `${environment.mediaBaseUrl}/announcements/chair%20photo%20%231.webp`,
               alt: 'An empty chair',
-              position: 'left',
+              position: AnnouncementImagePosition.Left,
             },
             buttons: [
               {
                 label: 'Book',
                 url: '/book',
                 kind: LinkKind.Internal,
-                variant: 'primary',
+                variant: ButtonVariant.Primary,
               },
             ],
           },
@@ -133,7 +134,7 @@ describe(
             image: {
               src: `${environment.mediaBaseUrl}/announcements/closed.png`,
               alt: '',
-              position: 'right',
+              position: AnnouncementImagePosition.Right,
             },
             buttons: [],
           },
@@ -225,19 +226,19 @@ describe(
             label: 'Call',
             url: 'tel:+15550100000',
             kind: LinkKind.Device,
-            variant: 'outlined',
+            variant: ButtonVariant.Outlined,
           },
           {
             label: 'Menu',
             url: 'https://example.test/menu',
             kind: LinkKind.External,
-            variant: 'text',
+            variant: ButtonVariant.Text,
           },
           {
             label: 'Write',
             url: 'mailto:owner@example.test',
             kind: LinkKind.Device,
-            variant: 'outlined',
+            variant: ButtonVariant.Outlined,
           },
         ]);
       },

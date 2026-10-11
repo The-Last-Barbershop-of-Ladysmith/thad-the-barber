@@ -10,22 +10,11 @@ import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { CarouselModule } from 'primeng/carousel';
-import { ButtonSeverity, ButtonVariant } from 'primeng/types/button';
+import { ButtonStyle, ButtonVariant } from '../../../../shared/models/button.models';
 import { LinkKind } from '../../../../shared/models/link.models';
+import { BUTTON_STYLES } from '../../../../shared/utils/button.utils';
 import { linkKind } from '../../../../shared/utils/link.utils';
-import { Announcement, AnnouncementButtonVariant } from '../../models/home.models';
-
-interface ButtonStyle {
-  severity: ButtonSeverity;
-  variant: ButtonVariant | undefined;
-}
-
-const BUTTON_STYLES: Record<AnnouncementButtonVariant, ButtonStyle> = {
-  primary: { severity: 'primary', variant: undefined },
-  secondary: { severity: 'secondary', variant: undefined },
-  outlined: { severity: 'primary', variant: 'outlined' },
-  text: { severity: 'primary', variant: 'text' },
-};
+import { Announcement, AnnouncementImagePosition } from '../../models/home.models';
 
 /**
  * Full-height announcement slider (PrimeNG composable carousel; swipe, arrows and dots are built in). Renders nothing
@@ -50,7 +39,8 @@ export class Announcements {
   readonly announcements: InputSignal<Announcement[]> = input.required<Announcement[]>();
 
   protected readonly linkKinds: typeof LinkKind = LinkKind;
-  protected readonly buttonStyles: Record<AnnouncementButtonVariant, ButtonStyle> = BUTTON_STYLES;
+  protected readonly imagePositions: typeof AnnouncementImagePosition = AnnouncementImagePosition;
+  protected readonly buttonStyles: Readonly<Record<ButtonVariant, ButtonStyle>> = BUTTON_STYLES;
 
   /** A plain click on an `/…` link routes in the app without a reload; modified clicks keep the browser's behavior. */
   protected followInternalLink(event: MouseEvent): void {

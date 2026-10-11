@@ -1,7 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ButtonVariant } from '../../../../shared/models/button.models';
 import { Router, provideRouter } from '@angular/router';
 import { MockInstance } from 'vitest';
-import { Announcement } from '../../models/home.models';
+import { Announcement, AnnouncementImagePosition } from '../../models/home.models';
 import { Announcements } from './announcements';
 import { LinkKind } from '../../../../shared/models/link.models';
 
@@ -90,14 +91,14 @@ describe(
             ...base, image: {
               src: 'https://media.test/announcements/right.webp',
               alt: '',
-              position: 'right',
+              position: AnnouncementImagePosition.Right,
             },
           },
           {
             ...base, image: {
               src: 'https://media.test/announcements/left.webp',
               alt: 'A chair',
-              position: 'left',
+              position: AnnouncementImagePosition.Left,
             },
           },
         ]);
@@ -120,25 +121,25 @@ describe(
                 label: 'Book',
                 url: '/book',
                 kind: LinkKind.Internal,
-                variant: 'primary',
+                variant: ButtonVariant.Primary,
               },
               {
                 label: 'Menu',
                 url: 'https://example.test/menu',
                 kind: LinkKind.External,
-                variant: 'outlined',
+                variant: ButtonVariant.Outlined,
               },
               {
                 label: 'Call',
                 url: 'tel:+15550100000',
                 kind: LinkKind.Device,
-                variant: 'text',
+                variant: ButtonVariant.Text,
               },
               {
                 label: 'Mail',
                 url: 'mailto:owner@example.test',
                 kind: LinkKind.Device,
-                variant: 'secondary',
+                variant: ButtonVariant.Secondary,
               },
             ],
           },
@@ -176,7 +177,7 @@ describe(
                 label: 'Book',
                 url: '/book',
                 kind: LinkKind.Internal,
-                variant: 'primary',
+                variant: ButtonVariant.Primary,
               },
             ],
           },
