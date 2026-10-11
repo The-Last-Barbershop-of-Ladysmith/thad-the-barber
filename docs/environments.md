@@ -57,7 +57,8 @@ The API reads all its secrets through the Key Vault configuration provider, so t
 | `Cors--AllowedOrigins--0…N` | secret | Bicep: the environment's web origin, then `extraCorsOrigins` (dev adds `http://localhost:4200` for local runs). If you remove an origin, delete its leftover secret by hand |
 | `session-jwt-signing` | EC P-256 key (ES256) | Bicep. Generated in the vault and never exported; re-runs don't rotate it |
 | `Square--RefreshToken` | secret | `tools/square-connect` (one-time connect, #23), under your `az login`. The API only reads it: Square's code flow never rotates it |
-| `Square--ApplicationSecret`, `Square--WebhookSignatureKey`, `ManageLink--HmacKey`, `Recaptcha--ApiKey`, `Google--ClientSecret`, `Google--RefreshToken` | secrets | You, with `infra/scripts/Set-TtbSecrets.ps1`. Bicep never writes them, so a re-run can't overwrite a real value |
+| `ManageLink--HmacKey` | secret | You, with `infra/scripts/Set-TtbSecrets.ps1 -Generate` (64 random bytes; it never replaces an existing key). Signs manage links (#29), and the API won't start without it. Replacing it breaks every manage link already sent |
+| `Square--ApplicationSecret`, `Square--WebhookSignatureKey`, `Recaptcha--ApiKey`, `Google--ClientSecret`, `Google--RefreshToken` | secrets | You, with `infra/scripts/Set-TtbSecrets.ps1`. Bicep never writes them, so a re-run can't overwrite a real value |
 
 **Role assignments:**
 
@@ -100,7 +101,8 @@ $env:TTB_ADMIN_OBJECT_ID = az ad signed-in-user show --query id -o tsv
 $env:TTB_ALLOWED_IPS     = (Invoke-RestMethod https://api.ipify.org)   # comma-separate more than one
 az deployment sub what-if --location centralus --parameters infra/nonprod.bicepparam
 az deployment sub create  --location centralus --parameters infra/nonprod.bicepparam
-./infra/scripts/Set-TtbSecrets.ps1 -Environment dev    # then -Environment test
+./infra/scripts/Set-TtbSecrets.ps1 -Environment dev -Generate    # random keys first; the API won't start without them
+./infra/scripts/Set-TtbSecrets.ps1 -Environment dev    # then both again with -Environment test
 az deployment sub create --name reports --location centralus --parameters infra/reports.bicepparam   # CI reports, see below
 ```
 
