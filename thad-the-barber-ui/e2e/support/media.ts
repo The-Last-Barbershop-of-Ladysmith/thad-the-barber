@@ -23,7 +23,10 @@ const TEST_GALLERY_FILES: ListedFile[] = [
 /** What the gallery should show for TEST_GALLERY_FILES, newest first. */
 export const TEST_GALLERY: GalleryPhoto[] = [{ src: `${MEDIA_BASE_URL}/gallery/e2e-newer-print.webp`, alt: 'E2e newer print' }, { src: `${MEDIA_BASE_URL}/gallery/e2e-older_print.webp`, alt: 'E2e older print' }];
 
-/** A local `YYYY-MM-DD` day relative to today: this suite has no fake clock, so announcements are dated around now. */
+/**
+ * A local `YYYY-MM-DD` day relative to today: this suite has no fake clock, so announcements are dated around now.
+ * (`shared/utils/date.utils` can't be imported here: it loads `@angular/common`, which needs the Angular compiler.)
+ */
 function daysFromToday(days: number): string {
   const day: Date = new Date();
   day.setDate(day.getDate() + days);
@@ -34,6 +37,8 @@ function daysFromToday(days: number): string {
   ].map((part: number): string => String(part).padStart(2, '0')).join('-');
 }
 
+const LONG_TITLE: string = 'E2E special 💈 with a title that runs well past sixty characters on purpose';
+
 /**
  * Made-up announcements: one with every field and a title past the 60-character portal limit, a plain-text one-day one,
  * and an expired one that never shows.
@@ -41,7 +46,7 @@ function daysFromToday(days: number): string {
 export const TEST_ANNOUNCEMENTS: { items: object[]; } = {
   items: [
     {
-      title: 'E2E special 💈 with a title that runs well past sixty characters on purpose',
+      title: LONG_TITLE,
       bodyHtml: '<p>E2E body with <a href="/#visit">a link to this site</a>.</p><ul><li>E2E item</li></ul>',
       startDate: daysFromToday(-10),
       endDate: daysFromToday(10),
@@ -77,7 +82,7 @@ export const TEST_ANNOUNCEMENTS: { items: object[]; } = {
   ],
 };
 
-export const ACTIVE_ANNOUNCEMENT_TITLES: string[] = ['E2E special 💈 with a title that runs well past sixty characters on purpose', 'E2E plain one-day post'];
+export const ACTIVE_ANNOUNCEMENT_TITLES: string[] = [LONG_TITLE, 'E2E plain one-day post'];
 
 export function galleryListing(files: ListedFile[]): string {
   const blobs: string = files

@@ -12,6 +12,7 @@ import {
   GALLERY_LISTING_URL,
   MEDIA_BASE_URL,
 } from '../support/media';
+import { collectPageErrors } from '../support/page-errors';
 
 interface ReloadMarker { e2eNoReload?: boolean; }
 
@@ -31,14 +32,6 @@ const HIDING_RESPONSES: Record<string, Parameters<Route['fulfill']>[0]> = {
   },
   'a missing file': { status: 404 },
 };
-
-function collectPageErrors(page: Page): Error[] {
-  const pageErrors: Error[] = [];
-  page.on('pageerror', (error: Error): void => {
-    pageErrors.push(error);
-  });
-  return pageErrors;
-}
 
 test.describe(
   'announcements',
