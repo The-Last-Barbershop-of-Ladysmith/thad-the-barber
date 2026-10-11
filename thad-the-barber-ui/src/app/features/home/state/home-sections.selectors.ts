@@ -2,8 +2,8 @@ import { MemoizedSelector, createSelector } from '@ngrx/store';
 import { HOME_SECTIONS } from '../../../core/config/shop-info';
 import { NavItem } from '../../../core/models/shop.models';
 import { AppState } from '../../../store/app.state';
+import { Announcement, GalleryPhoto } from '../models/home.models';
 import { activeAnnouncements } from './home.feature';
-import { HomeState } from './home.state';
 
 /**
  * The home sections the header and footer link to, without the ones that are hidden for lack of content (BR-32 and the
@@ -11,18 +11,14 @@ import { HomeState } from './home.state';
  * link shows.
  */
 export const selectHomeSections: MemoizedSelector<AppState, readonly NavItem[]> = createSelector(
-  (state: AppState): HomeState | undefined => state.home,
-  (home: HomeState | undefined): readonly NavItem[] => {
-    if (home === undefined) {
+  (state: AppState): Announcement[] | undefined => state.home?.announcements,
+  (state: AppState): GalleryPhoto[] | undefined => state.home?.gallery,
+  (announcements: Announcement[] | undefined, gallery: GalleryPhoto[] | undefined): readonly NavItem[] => {
+    if (announcements === undefined || gallery === undefined) {
       return HOME_SECTIONS;
     }
-    const hiddenSections: Set<string> = new Set<string>();
-    if (activeAnnouncements(home.announcements).length === 0) {
-      hiddenSections.add('announcements');
-    }
-    if (home.gallery.length === 0) {
-      hiddenSections.add('gallery');
-    }
-    return HOME_SECTIONS.filter((section: NavItem): boolean => !hiddenSections.has(section.fragment));
+    const hasAnnouncements: boolean = activeAnnouncements(announcements).length > 0;
+    return HOME_SECTIONS.filter((section: NavItem): boolean =>
+      (section.fragment !== 'announcements' || hasAnnouncements) && (section.fragment !== 'gallery' || gallery.length > 0));
   },
 );

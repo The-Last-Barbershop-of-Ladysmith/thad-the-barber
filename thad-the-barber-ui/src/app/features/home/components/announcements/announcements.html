@@ -26,28 +26,20 @@
                   @if (item.buttons.length > 0) {
                     <div class="actions">
                       @for (button of item.buttons; track $index) {
-                        @if (button.kind === linkKinds.External) {
-                          <a
-                            pButton
-                            [href]="button.url"
-                            target="_blank"
-                            rel="noopener"
-                            [severity]="buttonStyles[button.variant].severity"
-                            [variant]="buttonStyles[button.variant].variant"
-                          >
-                            <span pButtonLabel>{{ button.label }}</span>
+                        @let isExternal = button.kind === linkKinds.External;
+                        <a
+                          pButton
+                          [href]="button.url"
+                          [attr.target]="isExternal ? '_blank' : null"
+                          [attr.rel]="isExternal ? 'noopener' : null"
+                          [severity]="buttonStyles[button.variant].severity"
+                          [variant]="buttonStyles[button.variant].variant"
+                        >
+                          <span pButtonLabel>{{ button.label }}</span>
+                          @if (isExternal) {
                             <i pButtonIcon class="pi pi-external-link"></i>
-                          </a>
-                        } @else {
-                          <a
-                            pButton
-                            [href]="button.url"
-                            [severity]="buttonStyles[button.variant].severity"
-                            [variant]="buttonStyles[button.variant].variant"
-                          >
-                            <span pButtonLabel>{{ button.label }}</span>
-                          </a>
-                        }
+                          }
+                        </a>
                       }
                     </div>
                   }

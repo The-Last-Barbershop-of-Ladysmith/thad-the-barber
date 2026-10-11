@@ -2,7 +2,14 @@ import { LinkKind } from '../../../shared/models/link.models';
 
 export type AnnouncementImagePosition = 'left' | 'right';
 
-export type AnnouncementButtonVariant = 'primary' | 'secondary' | 'outlined' | 'text';
+export const ANNOUNCEMENT_BUTTON_VARIANTS: readonly ['primary', 'secondary', 'outlined', 'text'] = [
+  'primary',
+  'secondary',
+  'outlined',
+  'text',
+] as const;
+
+export type AnnouncementButtonVariant = typeof ANNOUNCEMENT_BUTTON_VARIANTS[number];
 
 export interface AnnouncementImage {
   src: string;

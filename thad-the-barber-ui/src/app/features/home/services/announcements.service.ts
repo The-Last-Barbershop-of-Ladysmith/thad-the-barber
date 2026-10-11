@@ -6,6 +6,7 @@ import { fromIsoDate, toIsoDate } from '../../../shared/utils/date.utils';
 import { LinkKind } from '../../../shared/models/link.models';
 import { linkKind } from '../../../shared/utils/link.utils';
 import {
+  ANNOUNCEMENT_BUTTON_VARIANTS,
   Announcement,
   AnnouncementButton,
   AnnouncementButtonVariant,
@@ -13,13 +14,6 @@ import {
 } from '../models/home.models';
 
 type Entry = Record<string, unknown>;
-
-const VARIANTS: readonly string[] = [
-  'primary',
-  'secondary',
-  'outlined',
-  'text',
-];
 
 /**
  * The announcements in the media container's `content/announcements.json` (issue #30), which Thad edits in the Azure
@@ -95,8 +89,11 @@ function toButtons(value: unknown): AnnouncementButton[] {
 function toButton(entry: Entry): AnnouncementButton | null {
   const label: string | null = text(entry['label']);
   const url: string | null = text(entry['url']);
-  const kind: LinkKind | null = url === null ? null : linkKind(url);
-  if (label === null || url === null || kind === null) {
+  if (label === null || url === null) {
+    return null;
+  }
+  const kind: LinkKind | null = linkKind(url);
+  if (kind === null) {
     return null;
   }
   const variant: unknown = entry['variant'];
@@ -104,8 +101,12 @@ function toButton(entry: Entry): AnnouncementButton | null {
     label,
     url,
     kind,
-    variant: typeof variant === 'string' && VARIANTS.includes(variant) ? variant as AnnouncementButtonVariant : 'outlined',
+    variant: isVariant(variant) ? variant : 'outlined',
   };
+}
+
+function isVariant(value: unknown): value is AnnouncementButtonVariant {
+  return ANNOUNCEMENT_BUTTON_VARIANTS.some((variant: AnnouncementButtonVariant): boolean => variant === value);
 }
 
 function isEntry(value: unknown): value is Entry {
