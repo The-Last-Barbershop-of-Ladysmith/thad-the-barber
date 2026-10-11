@@ -16,15 +16,7 @@ import { loadGallery } from './home.effects';
 describe(
   'loadGallery',
   (): void => {
-    const photos: GalleryPhoto[] = [
-      {
-        id: 'crop-05',
-        image: 'crop-05',
-        alt: 'Textured crop with a mid fade',
-        width: 640,
-        height: 800,
-      },
-    ];
+    const photos: GalleryPhoto[] = [{ src: 'https://media.test/gallery/textured-crop.jpg', alt: 'Textured crop' }];
 
     function run(platform: string, getPhotos: () => Observable<GalleryPhoto[]>): Action[] {
       const actions$: Subject<Action> = new Subject<Action>();

@@ -194,7 +194,7 @@ These return local data until a backend exists. Each has a note on the endpoint 
 - `AvailabilityService`: open dates and slots, using a fixed pseudo-random "booked" pattern like the wireframe
 - `BookingService`: creates the appointment
 
-`GalleryService` is real: it reads `content/gallery.json` from the environment's media container (`environment.mediaBaseUrl`), in the browser only, so the prerendered page never holds a stale gallery. `shared/utils/media.utils.ts` builds the variant URLs and `srcset`. The mocked Playwright suite serves a made-up gallery for the media host (`e2e/support/media.ts`).
+`GalleryService` is real: it lists the `gallery/` folder of the environment's media container (`environment.mediaBaseUrl`), in the browser only, so the prerendered page never holds a stale gallery. Supported images show as uploaded, newest first, with alt text from the file name. The mocked Playwright suite serves a made-up listing for the media host (`e2e/support/media.ts`).
 
 ## Not in this version yet
 

@@ -1,13 +1,15 @@
-// A framed print in the masonry columns; lifts slightly on hover.
+.prints {
+  display: grid;
+}
+
+// A framed print in the grid; lifts slightly on hover.
 .print {
   display: block;
   width: 100%;
-  margin-bottom: 1.25rem;
   padding: 0;
   border: 0;
   background: transparent;
   cursor: zoom-in;
-  break-inside: avoid;
   transition:
     transform 0.3s var(--p-brand-ease),
     filter 0.3s ease;
@@ -17,10 +19,12 @@
     filter: brightness(1.05);
   }
 
+  // Photos come in any size, so a fixed ratio keeps the grid from shifting while they load.
   .print-img {
     display: block;
     width: 100%;
-    height: auto;
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
     box-shadow: 0 0 0 1px rgb(0 0 0 / 0.15);
   }
 }

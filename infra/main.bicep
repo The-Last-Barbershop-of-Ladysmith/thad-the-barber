@@ -25,7 +25,7 @@ type environmentConfig = {
   @description('Lets the admin (adminPrincipalId) sign with this environment\'s session-JWT key, so local runs under az login can issue session tokens. Dev only.')
   canAdminSignSessions: bool?
 
-  @description('Gives the admin Storage Blob Data Contributor on this environment\'s media container, for uploads with `npm run upload` in tools/media. Otherwise Reader.')
+  @description('Gives the admin Storage Blob Data Contributor on this environment\'s media container, for gallery and content edits in the portal. Otherwise Reader.')
   canAdminWriteMedia: bool?
 }
 

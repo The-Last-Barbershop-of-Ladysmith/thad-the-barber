@@ -30,7 +30,7 @@ param environments = [
     ]
     // Local runs also sign session tokens with the dev key, under your az login.
     canAdminSignSessions: true
-    // Lets you try gallery and content changes with `npm run upload -- dev` in tools/media before a PR.
+    // Lets you edit the gallery and content in the portal, as Thad will.
     canAdminWriteMedia: true
   }
   {

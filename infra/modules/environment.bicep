@@ -33,7 +33,7 @@ param squareAlerts bool
 @description('Gives adminPrincipalId Key Vault Crypto User on the session-JWT key, for local runs (dev only).')
 param canAdminSignSessions bool
 
-@description('Gives adminPrincipalId Storage Blob Data Contributor on the media container (uploads from tools/media); otherwise Reader.')
+@description('Gives adminPrincipalId Storage Blob Data Contributor on the media container (gallery and content edits in the portal); otherwise Reader.')
 param canAdminWriteMedia bool
 
 param actionGroupId string
@@ -158,7 +158,8 @@ resource sessionJwtKey 'Microsoft.KeyVault/vaults/keys@2024-11-01' = {
 resource mediaContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2024-01-01' = {
   name: '${storageName}/default/media-${envName}'
   properties: {
-    publicAccess: 'Blob'
+    // The UI lists gallery/ anonymously (#168). Every blob here is public already, so listing exposes nothing new.
+    publicAccess: 'Container'
   }
 }
 
@@ -264,7 +265,7 @@ resource adminMedia 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!
 }
 
 // GitHub Actions deploys with this identity (issue #10): OIDC, no stored secret. It trusts only jobs that run in
-// this environment's GitHub environment, and can deploy only this environment's two apps and media container.
+// this environment's GitHub environment, and can deploy only this environment's two apps.
 resource deployIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2024-11-30' = {
   name: 'id-ttb-deploy-${envName}-${location}'
   location: location
@@ -313,17 +314,6 @@ resource deployApi 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
     principalId: deployIdentity.properties.principalId
     principalType: 'ServicePrincipal'
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', websiteContributor)
-  }
-}
-
-// Uploads media (backdrop frames, gallery) to this environment's container only.
-resource deployMedia 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(mediaContainer.id, 'github-deploy', storageBlobDataContributor)
-  scope: mediaContainer
-  properties: {
-    principalId: deployIdentity.properties.principalId
-    principalType: 'ServicePrincipal'
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageBlobDataContributor)
   }
 }
 
