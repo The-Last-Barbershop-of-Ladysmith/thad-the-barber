@@ -25,6 +25,9 @@ public interface ISquareService
 
     Task<Appointment> CreateBookingAsync(string customerId, TimeSlot timeSlot, string idempotencyKey, CancellationToken cancellationToken);
 
+    /// <summary>The time slot held by the customer's pending or accepted booking starting at <paramref name="startAt"/>, if any.</summary>
+    Task<TimeSlot?> FindBookedTimeSlotAsync(string locationId, string customerId, DateTimeOffset startAt, CancellationToken cancellationToken);
+
     Task<Appointment> CancelBookingAsync(string bookingId, int bookingVersion, CancellationToken cancellationToken);
 
     Task<Appointment> RescheduleBookingAsync(string bookingId, int bookingVersion, DateTimeOffset newStartAt, CancellationToken cancellationToken);

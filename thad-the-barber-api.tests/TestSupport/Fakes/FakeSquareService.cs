@@ -1,5 +1,6 @@
 using Square;
 using ThadTheBarber.Api.Common.Models;
+using ThadTheBarber.Api.Square.Exceptions;
 using ThadTheBarber.Api.Square.Mappers;
 using ThadTheBarber.Api.Square.Models;
 using ThadTheBarber.Api.Square.Services;
@@ -9,12 +10,15 @@ namespace ThadTheBarber.Api.Tests.TestSupport.Fakes;
 
 /// <summary>
 /// Stands in for Square in every test (see <see cref="ApiFactory"/>). Each <see cref="ISquareService"/> method returns
-/// a settable value that defaults to fixture data, so a test configures only what it checks.
+/// a settable value that defaults to fixture data, so a test configures only what it checks. Customers and bookings
+/// behave like Square's: a created customer is found by phone, a booked time leaves <see cref="TimeSlots"/>, and
+/// booking again with the same idempotency key returns the first booking.
 /// </summary>
 public sealed class FakeSquareService : ISquareService
 {
     private int _checks;
     private int _catalogSearches;
+    private int _customersCreated;
 
     public SquareConnection Connection { get; init; } = SquareConnection.Connected;
 
@@ -48,7 +52,7 @@ public sealed class FakeSquareService : ISquareService
     public List<TimeSlot> TimeSlots { get; init; } =
         [.. SquareFixture.ReadAs<SearchAvailabilityResponse>("search-availability.json").Availabilities!.Select(availability => availability.ToTimeSlot())];
 
-    public string? CustomerId { get; init; } =
+    public string? CustomerId { get; set; } =
         SquareFixture.ReadAs<SearchCustomersResponse>("search-customers-by-phone.json").Customers!.First().Id;
 
     public string CreatedCustomerId { get; init; } =
@@ -63,12 +67,16 @@ public sealed class FakeSquareService : ISquareService
     public Appointment RescheduledAppointment { get; init; } =
         SquareFixture.ReadAs<UpdateBookingResponse>("update-booking.json").Booking!.ToAppointment();
 
+    public List<FakeBooking> Bookings { get; } = [];
+
     /// <summary>When set, the shop, booking profile and catalog reads throw it, as if Square were down.</summary>
     public Exception? ReadFailure { get; set; }
 
     public int Checks => _checks;
 
     public int CatalogSearches => _catalogSearches;
+
+    public int CustomersCreated => _customersCreated;
 
     public Task<SquareConnection> CheckConnectionAsync(CancellationToken cancellationToken)
     {
@@ -91,10 +99,42 @@ public sealed class FakeSquareService : ISquareService
 
     public Task<string?> FindCustomerIdAsync(string phone, CancellationToken cancellationToken) => Task.FromResult(CustomerId);
 
-    public Task<string> CreateCustomerAsync(string name, string phone, string idempotencyKey, CancellationToken cancellationToken) => Task.FromResult(CreatedCustomerId);
+    public Task<string> CreateCustomerAsync(string name, string phone, string idempotencyKey, CancellationToken cancellationToken)
+    {
+        Interlocked.Increment(ref _customersCreated);
+        CustomerId = CreatedCustomerId;
+        return Task.FromResult(CreatedCustomerId);
+    }
 
-    public Task<Appointment> CreateBookingAsync(string customerId, TimeSlot timeSlot, string idempotencyKey, CancellationToken cancellationToken) =>
-        Task.FromResult(CreatedAppointment);
+    public Task<Appointment> CreateBookingAsync(string customerId, TimeSlot timeSlot, string idempotencyKey, CancellationToken cancellationToken)
+    {
+        FakeBooking? replayed = Bookings.Find(booking => booking.IdempotencyKey == idempotencyKey);
+        if (replayed is not null)
+        {
+            return Task.FromResult(replayed.Appointment);
+        }
+
+        if (!TimeSlots.Remove(timeSlot))
+        {
+            return Task.FromException<Appointment>(new SlotUnavailableException("The fake's time is taken."));
+        }
+
+        Appointment appointment = CreatedAppointment with
+        {
+            Id = $"bk_test-{Bookings.Count + 1:D4}fk",
+            StartAt = timeSlot.StartAt,
+        };
+        Bookings.Add(new FakeBooking(
+            customerId,
+            timeSlot,
+            idempotencyKey,
+            appointment
+        ));
+        return Task.FromResult(appointment);
+    }
+
+    public Task<TimeSlot?> FindBookedTimeSlotAsync(string locationId, string customerId, DateTimeOffset startAt, CancellationToken cancellationToken) =>
+        Task.FromResult(Bookings.Find(booking => booking.CustomerId == customerId && booking.TimeSlot.StartAt == startAt)?.TimeSlot);
 
     public Task<Appointment> CancelBookingAsync(string bookingId, int bookingVersion, CancellationToken cancellationToken) =>
         Task.FromResult(CancelledAppointment);

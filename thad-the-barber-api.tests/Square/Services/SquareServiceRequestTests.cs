@@ -1,5 +1,8 @@
+using System.Globalization;
 using System.Net;
 using System.Text.Json;
+using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Primitives;
 using Square;
 using ThadTheBarber.Api.Common.Models;
 using ThadTheBarber.Api.Square.Exceptions;
@@ -136,6 +139,43 @@ public sealed class SquareServiceRequestTests
         Assert.Equal("VARIATION0HAIRCUT000TEST", segment.GetProperty("service_variation_id").GetString());
         Assert.Equal(1791077615792, segment.GetProperty("service_variation_version").GetInt64());
         Assert.Equal("bk_test-0001ab", appointment.Id);
+    }
+
+    [Fact]
+    public async Task ABookedTimeSlotIsSearchedForInTheCustomersBookingsAtThatTime()
+    {
+        using SquareHarness harness = new();
+        harness.Http.Responses["/v2/bookings"] = SquareFixture.ReadText("list-bookings.json");
+
+        TimeSlot? timeSlot = await harness.Square.FindBookedTimeSlotAsync(
+            "LOCATION0TEST",
+            "CUSTOMER0TEST0000000000001",
+            new DateTimeOffset(2026, 10, 5, 13, 0, 0, TimeSpan.Zero),
+            Cancellation);
+
+        Dictionary<string, StringValues> query = QueryHelpers.ParseQuery(harness.Http.Requests.Single(request => request.Path == "/v2/bookings").Query);
+        Assert.Equal("LOCATION0TEST", query["location_id"]);
+        Assert.Equal("CUSTOMER0TEST0000000000001", query["customer_id"]);
+        Assert.Equal("2026-10-05T13:00:00Z", query["start_at_min"]);
+        Assert.Equal("2026-10-05T13:01:00Z", query["start_at_max"]);
+        Assert.Equal(new FakeSquareService().TimeSlots[0], timeSlot);
+    }
+
+    [Theory]
+    [InlineData("2026-10-05T13:30:00Z")]
+    [InlineData("2026-10-05T13:15:00Z")]
+    public async Task ACancelledBookingOrOneAtAnotherTimeHoldsNoTimeSlot(string startAt)
+    {
+        using SquareHarness harness = new();
+        harness.Http.Responses["/v2/bookings"] = SquareFixture.ReadText("list-bookings.json");
+
+        TimeSlot? timeSlot = await harness.Square.FindBookedTimeSlotAsync(
+            "LOCATION0TEST",
+            "CUSTOMER0TEST0000000000004",
+            DateTimeOffset.Parse(startAt, CultureInfo.InvariantCulture),
+            Cancellation);
+
+        Assert.Null(timeSlot);
     }
 
     [Fact]
