@@ -11,6 +11,7 @@ using ThadTheBarber.Api.Infrastructure.Auth.Configuration;
 using ThadTheBarber.Api.Infrastructure.Cors.Configuration;
 using ThadTheBarber.Api.Infrastructure.Headers.Middleware;
 using ThadTheBarber.Api.Infrastructure.KeyVault.Configuration;
+using ThadTheBarber.Api.Infrastructure.OpenApi.Transformers;
 using ThadTheBarber.Api.Infrastructure.Problems.Handlers;
 using ThadTheBarber.Api.Recaptcha.Configuration;
 using ThadTheBarber.Api.Square.Configuration;
@@ -37,7 +38,11 @@ builder.Services.AddSessionTokens(builder.Configuration);
 builder.Services.AddSessionBearerAuth();
 builder.Services.AddHealth();
 builder.Services.AddBooking();
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDocumentTransformer<BearerSecurityTransformer>();
+    options.AddOperationTransformer<BearerSecurityTransformer>();
+});
 builder.Services.AddSwaggerGen();
 
 WebApplication app = builder.Build();

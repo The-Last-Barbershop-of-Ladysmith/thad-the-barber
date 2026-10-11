@@ -133,6 +133,11 @@ jobs:
         working-directory: tools/square-connect
         run: python3 -m unittest -v
 
+      # The dev session token script (#162), also stdlib-only Python.
+      - name: Session token tests
+        working-directory: tools/session-token
+        run: python3 -m unittest -v
+
       # ReportGenerator (pinned in .config/dotnet-tools.json): per-class line and branch coverage for the summary,
       # and the HTML report the report job publishes.
       - name: Coverage report
