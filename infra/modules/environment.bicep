@@ -33,6 +33,9 @@ param squareAlerts bool
 @description('Gives adminPrincipalId Key Vault Crypto User on the session-JWT key, for local runs (dev only).')
 param canAdminSignSessions bool
 
+@description('Gives adminPrincipalId Storage Blob Data Contributor on the media container (uploads from tools/media); otherwise Reader.')
+param canAdminWriteMedia bool
+
 param actionGroupId string
 param tags object
 
@@ -41,6 +44,8 @@ var keyVaultSecretsOfficer = 'b86a8fe4-44ce-4948-aee5-eccb2c155cd7'
 var keyVaultCryptoUser = '12338af0-0e69-4776-bea7-57ae8d297424'
 var websiteContributor = 'de139f84-1756-47ae-9be6-808fbbe84772'
 var storageBlobDataContributor = 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
+var storageBlobDataReader = '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1'
+var adminMediaRole = canAdminWriteMedia ? storageBlobDataContributor : storageBlobDataReader
 
 var webAppName = 'as-ttb-ui-${envName}-${location}'
 var apiAppName = 'as-ttb-api-${envName}-${location}'
@@ -244,6 +249,17 @@ resource adminSecretsOfficer 'Microsoft.Authorization/roleAssignments@2022-04-01
     principalId: adminPrincipalId
     principalType: 'User'
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', keyVaultSecretsOfficer)
+  }
+}
+
+// The storage account has shared keys off, so even Owner needs a data role to see or upload blobs.
+resource adminMedia 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(adminPrincipalId)) {
+  name: guid(mediaContainer.id, 'admin', adminMediaRole)
+  scope: mediaContainer
+  properties: {
+    principalId: adminPrincipalId
+    principalType: 'User'
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', adminMediaRole)
   }
 }
 

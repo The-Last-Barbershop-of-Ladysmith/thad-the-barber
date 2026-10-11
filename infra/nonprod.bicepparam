@@ -2,7 +2,7 @@
 // Personal values come from environment variables so they stay out of this public repo:
 //   TTB_ALERT_EMAIL          (required) who gets every alert (the $5 budget, Square)
 //   TTB_ALERT_PHONE          (optional) US mobile number, 10 digits, for the same alerts by SMS
-//   TTB_ADMIN_OBJECT_ID      (optional) your Entra object ID, for Key Vault Secrets Officer
+//   TTB_ADMIN_OBJECT_ID      (optional) your Entra object ID, for Key Vault Secrets Officer and media container access
 //   TTB_ALLOWED_IPS          your public IP(s), comma-separated. Without it the dev/test apps and vaults refuse you.
 using 'main.bicep'
 
@@ -28,12 +28,15 @@ param environments = [
     ]
     // Local runs also sign session tokens with the dev key, under your az login.
     canAdminSignSessions: true
+    // Lets you try gallery and content changes with `npm run upload -- dev` in tools/media before a PR.
+    canAdminWriteMedia: true
   }
   {
     name: 'test'
     aspnetEnvironment: 'Test'
     githubEnvironment: 'test'
     extraCorsOrigins: []
+    canAdminWriteMedia: true
   }
 ]
 
