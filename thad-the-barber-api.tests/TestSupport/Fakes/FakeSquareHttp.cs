@@ -36,6 +36,7 @@ public sealed class FakeSquareHttp : HttpMessageHandler
         string body = request.Content is null ? string.Empty : await request.Content.ReadAsStringAsync(cancellationToken);
         RecordedRequest recorded = new(
             request.RequestUri!.AbsolutePath,
+            request.RequestUri.Query,
             request.Headers.Authorization?.Parameter,
             body
         );

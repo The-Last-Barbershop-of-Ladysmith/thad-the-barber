@@ -23,11 +23,7 @@ public sealed class AvailabilityService(ISquareService square, BookableServiceRe
         BookingProfile bookingProfile = await square.GetBookingProfileAsync(shopDetails.LocationId, cancellationToken);
         TimeZoneInfo shopTimeZone = TimeZoneInfo.FindSystemTimeZoneById(shopDetails.TimeZone);
         DateTimeRange monthRange = shopTimeZone.GetMonthRange(month);
-        DateTimeOffset now = time.GetUtcNow();
-        DateTimeRange bookingWindow = new(
-            now + bookingProfile.MinimumNotice,
-            now + bookingProfile.MaximumAdvance
-        );
+        DateTimeRange bookingWindow = GetBookingWindow(bookingProfile);
 
         DateTimeRange searchRange = monthRange.Intersect(bookingWindow)
             ?? throw new OutsideBookingWindowException($"{monthRange} doesn't overlap the booking window {bookingWindow}.");
@@ -42,5 +38,38 @@ public sealed class AvailabilityService(ISquareService square, BookableServiceRe
                 [.. day.Select(timeSlot => timeSlot.StartAt)]
             ))
             .ToList();
+    }
+
+    /// <summary>
+    /// The open time starting exactly at <paramref name="startAt"/>, or null when it's taken or now outside the booking
+    /// window (the minimum notice may have passed while the customer filled in the form).
+    /// </summary>
+    public async Task<TimeSlot?> FindTimeSlotAsync(DateTimeOffset startAt, CancellationToken cancellationToken)
+    {
+        ShopDetails shopDetails = await square.GetShopDetailsAsync(cancellationToken);
+        BookingProfile bookingProfile = await square.GetBookingProfileAsync(shopDetails.LocationId, cancellationToken);
+        DateTimeRange startMinute = new(
+            startAt,
+            startAt + TimeSpan.FromMinutes(1)
+        );
+        DateTimeRange? searchRange = startMinute.Intersect(GetBookingWindow(bookingProfile));
+        if (searchRange is null)
+        {
+            return null;
+        }
+
+        BookableService bookableService = await resolver.ResolveAsync(cancellationToken);
+        List<TimeSlot> timeSlots = await square.SearchAvailableTimeSlotsAsync(shopDetails.LocationId, bookableService, searchRange, cancellationToken);
+
+        return timeSlots.FirstOrDefault(timeSlot => timeSlot.StartAt == startAt);
+    }
+
+    private DateTimeRange GetBookingWindow(BookingProfile bookingProfile)
+    {
+        DateTimeOffset now = time.GetUtcNow();
+        return new DateTimeRange(
+            now + bookingProfile.MinimumNotice,
+            now + bookingProfile.MaximumAdvance
+        );
     }
 }

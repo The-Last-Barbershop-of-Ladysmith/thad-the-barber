@@ -105,6 +105,47 @@ public sealed class AvailabilityServiceTests
             () => Service(new FakeSquareService()).GetAvailableDaysAsync(Date(month), Cancellation));
     }
 
+    [Fact]
+    public async Task AnOpenTimeIsFoundWithEverythingABookingNeeds()
+    {
+        FakeSquareService square = new();
+
+        TimeSlot? timeSlot = await Service(square).FindTimeSlotAsync(Instant("2026-10-07T13:30:00Z"), Cancellation);
+
+        Assert.Equal(square.TimeSlots.Single(slot => slot.StartAt == Instant("2026-10-07T13:30:00Z")), timeSlot);
+    }
+
+    [Theory]
+    [InlineData("2026-10-07T13:15:00Z")]
+    [InlineData("2026-10-06T15:00:00Z")]
+    public async Task ATimeSquareDoesntOfferIsntFound(string startAt)
+    {
+        TimeSlot? timeSlot = await Service(new FakeSquareService()).FindTimeSlotAsync(Instant(startAt), Cancellation);
+
+        Assert.Null(timeSlot);
+    }
+
+    [Theory]
+    [InlineData("2026-10-06T17:09:00Z", false)]
+    [InlineData("2026-10-06T17:10:00Z", true)]
+    [InlineData("2027-10-06T15:09:00Z", true)]
+    [InlineData("2027-10-06T15:10:00Z", false)]
+    public async Task OnlyTimesInsideTheBookingWindowAreFoundEvenIfSquareOffersOthers(string startAt, bool isFound)
+    {
+        FakeSquareService square = new()
+        {
+            BookingProfile = new FakeSquareService().BookingProfile with
+            {
+                MinimumNotice = TimeSpan.FromHours(2),
+            },
+            TimeSlots = SlotsAt(startAt),
+        };
+
+        TimeSlot? timeSlot = await Service(square).FindTimeSlotAsync(Instant(startAt), Cancellation);
+
+        Assert.Equal(isFound, timeSlot is not null);
+    }
+
     private static AvailabilityService Service(FakeSquareService square) => new(
         square,
         new BookableServiceResolver(square, Options.Create(new SquareSettings())),

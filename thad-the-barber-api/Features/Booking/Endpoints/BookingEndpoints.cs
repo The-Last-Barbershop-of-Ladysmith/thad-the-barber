@@ -8,8 +8,9 @@ namespace ThadTheBarber.Api.Features.Booking.Endpoints;
 
 public static class BookingEndpoints
 {
-    public static IServiceCollection AddBooking(this IServiceCollection services) =>
-        services.AddSingleton<AvailabilityService>();
+    public static IServiceCollection AddBooking(this IServiceCollection services) => services
+        .AddSingleton<AvailabilityService>()
+        .AddSingleton<BookingService>();
 
     public static IEndpointRouteBuilder MapBookingEndpoints(this IEndpointRouteBuilder api)
     {
@@ -18,6 +19,8 @@ public static class BookingEndpoints
             .NoStore();
         bookings.MapGet("/availability", GetAvailabilityAsync)
             .WithName("GetAvailability");
+        bookings.MapPost("", CreateBookingAsync)
+            .WithName("CreateBooking");
         return api;
     }
 
@@ -42,4 +45,14 @@ public static class BookingEndpoints
 
         return TypedResults.Ok(await availability.GetAvailableDaysAsync(firstDay, cancellationToken));
     }
+
+    /// <summary>
+    /// Books the time for the customer. A taken time is 409 <c>slot_unavailable</c>; the request itself is checked by
+    /// <see cref="BookingRequest"/>'s attributes before this runs.
+    /// </summary>
+    internal static async Task<Created<BookingConfirmation>> CreateBookingAsync(
+        BookingRequest request,
+        BookingService booking,
+        CancellationToken cancellationToken) =>
+        TypedResults.Created((string?)null, await booking.BookAsync(request, cancellationToken));
 }

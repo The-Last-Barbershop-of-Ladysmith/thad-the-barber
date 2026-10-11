@@ -207,6 +207,22 @@ public sealed class SquareService : ISquareService
         return createdBooking.ToAppointment();
     }
 
+    public async Task<TimeSlot?> FindBookedTimeSlotAsync(string locationId, string customerId, DateTimeOffset startAt, CancellationToken cancellationToken)
+    {
+        ListBookingsRequest listBookingsRequest = new()
+        {
+            LocationId = locationId,
+            CustomerId = customerId,
+            StartAtMin = ToSquareTime(startAt),
+            StartAtMax = ToSquareTime(startAt + TimeSpan.FromMinutes(1)),
+        };
+
+        Pager<Booking> bookings = await squareClient.Bookings.ListAsync(listBookingsRequest, cancellationToken: cancellationToken);
+        Booking? heldBooking = await bookings.FirstOrDefaultAsync(booking => IsHeldAt(booking.ToAppointment(), startAt), cancellationToken);
+
+        return heldBooking?.ToTimeSlot();
+    }
+
     public async Task<Appointment> CancelBookingAsync(string bookingId, int bookingVersion, CancellationToken cancellationToken)
     {
         CancelBookingRequest cancelBookingRequest = new()
@@ -304,6 +320,10 @@ public sealed class SquareService : ISquareService
     private static bool IsSlotTaken(SquareApiException exception) =>
         exception.StatusCode == StatusCodes.Status400BadRequest
         && exception.Errors.Any(error => error.Field is "start_at" or "booking.start_at");
+
+    private static bool IsHeldAt(Appointment appointment, DateTimeOffset startAt) =>
+        appointment.Status is AppointmentStatus.Pending or AppointmentStatus.Accepted
+        && appointment.StartAt == startAt;
 
     private static bool IsCustomerInputRejected(SquareApiException exception) =>
         exception.StatusCode == StatusCodes.Status400BadRequest

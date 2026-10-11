@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.Extensions.Time.Testing;
 using ThadTheBarber.Api.Tests.TestSupport;
+using ThadTheBarber.Api.Tests.TestSupport.Fakes;
 
 namespace ThadTheBarber.Api.Tests.Features.Booking.Endpoints;
 
@@ -78,6 +79,119 @@ public sealed class BookingEndpointsTests
         Assert.Equal("outside_booking_window", problem.GetProperty("code").GetString());
     }
 
-    private static ApiFactory Api() =>
-        new(time: new FakeTimeProvider(DateTimeOffset.Parse("2026-10-06T15:10:00Z", CultureInfo.InvariantCulture)));
+    [Fact]
+    public async Task ABookingIs201WithOnlyItsIdAndUtcStart()
+    {
+        using ApiFactory api = Api();
+
+        using HttpResponseMessage response = await api.CreateClient().PostAsJsonAsync("/api/bookings", BookingBody(), Cancellation);
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        Assert.True(response.Headers.CacheControl?.NoStore);
+        JsonElement confirmation = await response.Content.ReadFromJsonAsync<JsonElement>(Cancellation);
+        Assert.Equal(
+            [
+                "id",
+                "startAt",
+            ],
+            confirmation.EnumerateObject().Select(property => property.Name).Order());
+        Assert.Equal("2026-10-07T13:30:00+00:00", confirmation.GetProperty("startAt").GetString());
+    }
+
+    [Fact]
+    public async Task ATakenTimeIs409WithItsCode()
+    {
+        using ApiFactory api = Api();
+        HttpClient client = api.CreateClient();
+        using HttpResponseMessage booked = await client.PostAsJsonAsync("/api/bookings", BookingBody(), Cancellation);
+
+        using HttpResponseMessage response = await client.PostAsJsonAsync("/api/bookings", BookingBody(phone: "+15550100142"), Cancellation);
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        JsonElement problem = await response.Content.ReadFromJsonAsync<JsonElement>(Cancellation);
+        Assert.Equal("slot_unavailable", problem.GetProperty("code").GetString());
+    }
+
+    [Fact]
+    public async Task TheSameAttemptTwiceBooksOnceAndConfirmsBoth()
+    {
+        FakeSquareService square = new();
+        using ApiFactory api = Api(square);
+        HttpClient client = api.CreateClient();
+        Dictionary<string, object?> body = BookingBody();
+
+        using HttpResponseMessage first = await client.PostAsJsonAsync("/api/bookings", body, Cancellation);
+        using HttpResponseMessage retried = await client.PostAsJsonAsync("/api/bookings", body, Cancellation);
+
+        Assert.Equal(HttpStatusCode.Created, retried.StatusCode);
+        Assert.Equal(await first.Content.ReadAsStringAsync(Cancellation), await retried.Content.ReadAsStringAsync(Cancellation));
+        Assert.Single(square.Bookings);
+    }
+
+    [Theory]
+    [InlineData("name", "J")]
+    [InlineData("name", "")]
+    [InlineData("name", null)]
+    [InlineData("phone", "(555) 010-0187")]
+    [InlineData("phone", "5550100187")]
+    [InlineData("phone", "+1555010018")]
+    [InlineData("phone", "+155501001870")]
+    [InlineData("phone", "+445550100187")]
+    [InlineData("phone", "+15550100187\n")]
+    [InlineData("phone", null)]
+    public async Task AnInvalidNameOrPhoneIs400ForThatFieldAndBooksNothing(string field, string? value)
+    {
+        FakeSquareService square = new();
+        using ApiFactory api = Api(square);
+        Dictionary<string, object?> body = BookingBody();
+        body[field] = value;
+
+        using HttpResponseMessage response = await api.CreateClient().PostAsJsonAsync("/api/bookings", body, Cancellation);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        JsonElement problem = await response.Content.ReadFromJsonAsync<JsonElement>(Cancellation);
+        Assert.Equal([field], problem.GetProperty("errors").EnumerateObject().Select(error => error.Name.ToLowerInvariant()));
+        Assert.Empty(square.Bookings);
+    }
+
+    [Theory]
+    [InlineData("startAt")]
+    [InlineData("idempotencyKey")]
+    public async Task AMissingStartOrIdempotencyKeyIs400(string field)
+    {
+        FakeSquareService square = new();
+        using ApiFactory api = Api(square);
+        Dictionary<string, object?> body = BookingBody();
+        body.Remove(field);
+
+        using HttpResponseMessage response = await api.CreateClient().PostAsJsonAsync("/api/bookings", body, Cancellation);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Empty(square.Bookings);
+    }
+
+    [Fact]
+    public async Task BookingWithoutASessionTokenIs401AndBooksNothing()
+    {
+        FakeSquareService square = new();
+        using ApiFactory api = Api(square);
+
+        using HttpResponseMessage response = await api.CreateClientWithoutToken().PostAsJsonAsync("/api/bookings", BookingBody(), Cancellation);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        Assert.Empty(square.Bookings);
+    }
+
+    private static Dictionary<string, object?> BookingBody(string phone = "+15550100187") => new()
+    {
+        ["startAt"] = "2026-10-07T13:30:00Z",
+        ["name"] = "Q Testperson-Example",
+        ["phone"] = phone,
+        ["idempotencyKey"] = Guid.NewGuid(),
+    };
+
+    private static ApiFactory Api(FakeSquareService? square = null) => new(
+        square: square,
+        time: new FakeTimeProvider(DateTimeOffset.Parse("2026-10-06T15:10:00Z", CultureInfo.InvariantCulture))
+    );
 }

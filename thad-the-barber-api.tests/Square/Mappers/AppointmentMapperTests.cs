@@ -35,6 +35,28 @@ public sealed class AppointmentMapperTests
         Assert.Equal(TimeSpan.Zero, booking.ToAppointment().StartAt.Offset);
     }
 
+    [Fact]
+    public void ABookingHoldsTheTimeSlotItWasCreatedFor()
+    {
+        Assert.Equal(
+            new TimeSlot(
+                new DateTimeOffset(2026, 10, 5, 13, 0, 0, TimeSpan.Zero),
+                "LOCATION0TEST",
+                "TM_test-Barber01",
+                "VARIATION0HAIRCUT000TEST",
+                1791077615792
+            ),
+            ReadBooking().ToTimeSlot());
+    }
+
+    [Fact]
+    public void ABookingWithoutAnAppointmentSegmentHasNoTimeSlot()
+    {
+        SquareBooking booking = ReadBooking() with { AppointmentSegments = [] };
+
+        Assert.Throws<InvalidOperationException>(booking.ToTimeSlot);
+    }
+
     [Theory]
     [InlineData("Id")]
     [InlineData("Status")]
