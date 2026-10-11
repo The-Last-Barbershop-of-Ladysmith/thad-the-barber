@@ -38,7 +38,7 @@ builder.Services.AddRecaptcha(builder.Configuration);
 builder.Services.AddSessionTokens(builder.Configuration);
 builder.Services.AddSessionBearerAuth();
 builder.Services.AddHealth();
-builder.Services.AddBooking();
+builder.Services.AddBooking(builder.Configuration);
 builder.Services.AddOpenApi(options =>
 {
     options.AddDocumentTransformer<BearerSecurityTransformer>();

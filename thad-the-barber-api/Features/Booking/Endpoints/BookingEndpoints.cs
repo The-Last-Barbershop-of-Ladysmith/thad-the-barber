@@ -1,5 +1,7 @@
 using System.Globalization;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.Extensions.Options;
+using ThadTheBarber.Api.Features.Booking.Configuration;
 using ThadTheBarber.Api.Features.Booking.Models;
 using ThadTheBarber.Api.Features.Booking.Services;
 using ThadTheBarber.Api.Infrastructure.Headers.Middleware;
@@ -8,9 +10,17 @@ namespace ThadTheBarber.Api.Features.Booking.Endpoints;
 
 public static class BookingEndpoints
 {
-    public static IServiceCollection AddBooking(this IServiceCollection services) => services
-        .AddSingleton<AvailabilityService>()
-        .AddSingleton<BookingService>();
+    public static IServiceCollection AddBooking(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddOptions<ManageLinkSettings>()
+            .Bind(configuration.GetSection(ManageLinkSettings.SectionName))
+            .ValidateOnStart();
+        services.AddSingleton<IValidateOptions<ManageLinkSettings>, ManageLinkSettingsValidator>();
+        services.AddSingleton<ManageTokenSigner>();
+        services.AddSingleton<AvailabilityService>();
+        services.AddSingleton<BookingService>();
+        return services;
+    }
 
     public static IEndpointRouteBuilder MapBookingEndpoints(this IEndpointRouteBuilder api)
     {

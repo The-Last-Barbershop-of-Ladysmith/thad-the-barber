@@ -24,6 +24,9 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
     public const string FrontendOrigin = "https://app.example.com";
     public const string CustomDomainOrigin = "https://www.example.com";
 
+    /// <summary>32 made-up bytes, base64; the shortest key <c>ManageLinkSettingsValidator</c> accepts.</summary>
+    public const string ManageLinkHmacKey = "dGVzdC1vbmx5LW1hbmFnZS1saW5rLWtleS0zMmJ5dGU=";
+
     private readonly string[] _origins;
     private readonly ISquareService _square;
     private readonly TimeProvider _time;
@@ -81,6 +84,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
         builder.UseSetting("Recaptcha:ProjectId", "fake-project");
         builder.UseSetting("Recaptcha:SiteKey", "fake-site-key");
         builder.UseSetting("Recaptcha:ApiKey", "fake-api-key");
+        builder.UseSetting("ManageLink:HmacKey", ManageLinkHmacKey);
         for (int i = 0; i < _origins.Length; i++)
         {
             builder.UseSetting($"Cors:AllowedOrigins:{i}", _origins[i]);
