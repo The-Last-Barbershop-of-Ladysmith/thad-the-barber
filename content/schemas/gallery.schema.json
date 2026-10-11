@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "gallery.schema.json",
+  "title": "Gallery",
+  "description": "The home page gallery. Each image is a key under media/gallery/; the site loads its WebP variants from the media container.",
+  "type": "object",
+  "required": ["photos"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "photos": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "image", "alt", "width", "height"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
+          "image": {
+            "description": "The original's file name in media/gallery/ without its extension.",
+            "type": "string",
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+          },
+          "alt": { "type": "string", "minLength": 1, "pattern": "\\S" },
+          "width": {
+            "description": "The original's width in pixels, after EXIF rotation.",
+            "type": "integer",
+            "minimum": 1
+          },
+          "height": {
+            "description": "The original's height in pixels, after EXIF rotation.",
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      }
+    }
+  }
+}
