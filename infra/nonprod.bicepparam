@@ -22,9 +22,11 @@ param environments = [
     name: 'dev'
     aspnetEnvironment: 'Development'
     githubEnvironment: 'dev'
-    // Local runs (ng serve) also use the dev vault, so its CORS list includes the local Angular origin.
+    // Local runs also use the dev vault and media container, so its CORS lists include ng serve (4200) and the
+    // local Express server (3000). Index 2 replaces the hand-made Cors--AllowedOrigins--2 with the same value.
     extraCorsOrigins: [
       'http://localhost:4200'
+      'http://localhost:3000'
     ]
     // Local runs also sign session tokens with the dev key, under your az login.
     canAdminSignSessions: true
