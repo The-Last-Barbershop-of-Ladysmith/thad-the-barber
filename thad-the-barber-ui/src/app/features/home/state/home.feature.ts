@@ -4,6 +4,8 @@ import {
   createSelector,
 } from '@ngrx/store';
 import { FeatureSelectors } from '../../../shared/models/ngrx.models';
+import { toIsoDate } from '../../../shared/utils/date.utils';
+import { Announcement } from '../models/home.models';
 import { homeReducer } from './home.reducer';
 import {
   HomeState,
@@ -17,6 +19,7 @@ export type HomeExtraSelectors = {
   selectIsSubscribed: MemoizedSelector<object, boolean>;
   selectIsSubscribing: MemoizedSelector<object, boolean>;
   selectContentLoading: MemoizedSelector<object, boolean>;
+  selectActiveAnnouncements: MemoizedSelector<object, Announcement[]>;
 };
 
 /** Store key for this slice; also names its localStorage entry (`ttb-home`). */
@@ -31,7 +34,11 @@ export const homeFeatureKey: 'home' = 'home' as const;
 export const homeFeature = createFeature({
   name: homeFeatureKey,
   reducer: homeReducer,
-  extraSelectors: ({ selectSmsSignup, selectContentStatus }: FeatureSelectors<HomeState>): HomeExtraSelectors => ({
+  extraSelectors: ({
+    selectSmsSignup,
+    selectContentStatus,
+    selectAnnouncements,
+  }: FeatureSelectors<HomeState>): HomeExtraSelectors => ({
     selectIsSubscribed: createSelector(
       selectSmsSignup,
       (signup: SmsSignupState): boolean => signup.status === 'success',
@@ -41,5 +48,13 @@ export const homeFeature = createFeature({
       (signup: SmsSignupState): boolean => signup.status === 'pending',
     ),
     selectContentLoading: createSelector(selectContentStatus, (status: RequestStatus): boolean => status === 'pending'),
+    selectActiveAnnouncements: createSelector(selectAnnouncements, activeAnnouncements),
   }),
 });
+
+/** BR-30: the ones showing today, from the first day through the last, by the visitor's local date. */
+export function activeAnnouncements(announcements: Announcement[]): Announcement[] {
+  const today: string = toIsoDate(new Date());
+  return announcements.filter((announcement: Announcement): boolean =>
+    announcement.startDate <= today && today <= announcement.endDate);
+}

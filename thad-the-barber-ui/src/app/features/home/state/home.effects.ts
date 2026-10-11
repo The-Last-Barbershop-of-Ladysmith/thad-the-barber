@@ -16,7 +16,12 @@ import {
   of,
   switchMap,
 } from 'rxjs';
-import { GalleryPhoto, HomeContent } from '../models/home.models';
+import {
+  Announcement,
+  GalleryPhoto,
+  HomeContent,
+} from '../models/home.models';
+import { AnnouncementsService } from '../services/announcements.service';
 import { GalleryService } from '../services/gallery.service';
 import { HomeContentService } from '../services/home-content.service';
 import { SmsSignupService } from '../services/sms-signup.service';
@@ -34,6 +39,25 @@ export const loadHomeContent: FunctionalEffect = createEffect(
           map((result: HomeContent): Action => HomeApiActions.contentLoaded({ content: result })),
           catchError((): Observable<Action> =>
             of(HomeApiActions.contentLoadFailed({ error: 'Could not load the latest news.' }))),
+        )),
+    ),
+  { functional: true },
+);
+
+/** Browser only, like the gallery: prerendered announcements would wait for the next deploy to change. */
+export const loadAnnouncements: FunctionalEffect = createEffect(
+  (
+    actions$: Actions = inject<Actions>(Actions),
+    announcements: AnnouncementsService = inject(AnnouncementsService),
+    platformId: object = inject(PLATFORM_ID),
+  ): Observable<Action> =>
+    actions$.pipe(
+      ofType(HomePageActions.opened),
+      filter((): boolean => isPlatformBrowser(platformId)),
+      switchMap((): Observable<Action> =>
+        announcements.getAnnouncements().pipe(
+          map((result: Announcement[]): Action => HomeApiActions.announcementsLoaded({ announcements: result })),
+          catchError((): Observable<Action> => of(HomeApiActions.announcementsLoadFailed())),
         )),
     ),
   { functional: true },

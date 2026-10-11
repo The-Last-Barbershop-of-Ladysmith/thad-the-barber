@@ -4,9 +4,9 @@ import { HOME_CONTENT } from '../data/home-content.data';
 import { HomeContent } from '../models/home.models';
 
 /**
- * Announcements and testimonials.
+ * Testimonials.
  * Returns the bundled seed data for now; swap the body for an HttpClient call
- * (`${environment.apiBaseUrl}/content/home`) when the content API exists.
+ * (`${environment.apiBaseUrl}/reviews`) when the reviews API exists (#37).
  */
 @Injectable({ providedIn: 'root' })
 export class HomeContentService {

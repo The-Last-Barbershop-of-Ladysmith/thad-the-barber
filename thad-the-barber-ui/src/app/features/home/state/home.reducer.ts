@@ -3,19 +3,24 @@ import {
   createReducer,
   on,
 } from '@ngrx/store';
-import { GalleryPhoto, HomeContent } from '../models/home.models';
+import {
+  Announcement,
+  GalleryPhoto,
+  HomeContent,
+} from '../models/home.models';
 import { HomeApiActions, HomePageActions } from './home.actions';
 import { HomeState, initialHomeState } from './home.state';
 
 export const homeReducer: ActionReducer<HomeState> = createReducer(
   initialHomeState,
   on(HomePageActions.stateReset, (): HomeState => initialHomeState),
-  // A saved gallery may point at images that are gone or be in an older shape, so it never renders.
+  // Saved storage content may be outdated (a deleted announcement or photo) or in an older shape, so it never renders.
   on(
     HomePageActions.opened,
     (state: HomeState): HomeState => ({
       ...state,
       contentStatus: 'pending',
+      announcements: [],
       gallery: [],
     }),
   ),
@@ -28,6 +33,11 @@ export const homeReducer: ActionReducer<HomeState> = createReducer(
     }),
   ),
   on(HomeApiActions.contentLoadFailed, (state: HomeState): HomeState => ({ ...state, contentStatus: 'error' })),
+  on(
+    HomeApiActions.announcementsLoaded,
+    (state: HomeState, { announcements }: { announcements: Announcement[]; }): HomeState =>
+      ({ ...state, announcements }),
+  ),
   on(
     HomeApiActions.galleryLoaded,
     (state: HomeState, { photos }: { photos: GalleryPhoto[]; }): HomeState => ({ ...state, gallery: photos }),

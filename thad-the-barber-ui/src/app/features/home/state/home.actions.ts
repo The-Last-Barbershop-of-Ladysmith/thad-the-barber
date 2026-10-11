@@ -3,7 +3,11 @@ import {
   emptyProps,
   props,
 } from '@ngrx/store';
-import { GalleryPhoto, HomeContent } from '../models/home.models';
+import {
+  Announcement,
+  GalleryPhoto,
+  HomeContent,
+} from '../models/home.models';
 
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionGroup type.
 export const HomePageActions = createActionGroup({
@@ -22,6 +26,8 @@ export const HomeApiActions = createActionGroup({
   events: {
     'Content Loaded': props<{ content: HomeContent; }>(),
     'Content Load Failed': props<{ error: string; }>(),
+    'Announcements Loaded': props<{ announcements: Announcement[]; }>(),
+    'Announcements Load Failed': emptyProps(),
     'Gallery Loaded': props<{ photos: GalleryPhoto[]; }>(),
     'Gallery Load Failed': emptyProps(),
     'Sms Signup Succeeded': props<{ phone: string; }>(),

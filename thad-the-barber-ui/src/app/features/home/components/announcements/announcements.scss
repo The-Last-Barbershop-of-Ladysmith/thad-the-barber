@@ -23,16 +23,10 @@
     align-items: flex-start;
     gap: 1.125rem;
 
-    .meta {
+    .actions {
       display: flex;
-      align-items: center;
+      flex-wrap: wrap;
       gap: 0.75rem;
-    }
-
-    .meta-rule {
-      width: 1.5rem;
-      height: 1px;
-      background: color-mix(in srgb, var(--p-primary-color) 60%, transparent);
     }
   }
 
@@ -42,17 +36,6 @@
     aspect-ratio: 4 / 3;
     border-radius: var(--p-border-radius-lg);
     object-fit: cover;
-
-    &.placeholder {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 1rem;
-      text-align: center;
-      font-family: ui-monospace, monospace;
-      font-size: 0.75rem;
-      color: var(--p-surface-300);
-    }
   }
 
   .controls {
