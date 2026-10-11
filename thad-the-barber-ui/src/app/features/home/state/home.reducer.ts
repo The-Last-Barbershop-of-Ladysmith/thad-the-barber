@@ -21,7 +21,9 @@ export const homeReducer: ActionReducer<HomeState> = createReducer(
       ...state,
       contentStatus: 'pending',
       announcements: [],
+      announcementsStatus: 'pending',
       gallery: [],
+      galleryStatus: 'pending',
     }),
   ),
   on(
@@ -35,13 +37,25 @@ export const homeReducer: ActionReducer<HomeState> = createReducer(
   on(HomeApiActions.contentLoadFailed, (state: HomeState): HomeState => ({ ...state, contentStatus: 'error' })),
   on(
     HomeApiActions.announcementsLoaded,
-    (state: HomeState, { announcements }: { announcements: Announcement[]; }): HomeState =>
-      ({ ...state, announcements }),
+    (state: HomeState, { announcements }: { announcements: Announcement[]; }): HomeState => ({
+      ...state,
+      announcements,
+      announcementsStatus: 'success',
+    }),
+  ),
+  on(
+    HomeApiActions.announcementsLoadFailed,
+    (state: HomeState): HomeState => ({ ...state, announcementsStatus: 'error' }),
   ),
   on(
     HomeApiActions.galleryLoaded,
-    (state: HomeState, { photos }: { photos: GalleryPhoto[]; }): HomeState => ({ ...state, gallery: photos }),
+    (state: HomeState, { photos }: { photos: GalleryPhoto[]; }): HomeState => ({
+      ...state,
+      gallery: photos,
+      galleryStatus: 'success',
+    }),
   ),
+  on(HomeApiActions.galleryLoadFailed, (state: HomeState): HomeState => ({ ...state, galleryStatus: 'error' })),
   on(
     HomePageActions.smsSignupSubmitted,
     (state: HomeState, { phone }: { phone: string; }): HomeState => ({

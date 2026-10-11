@@ -5,6 +5,14 @@ import { Announcement } from '../models/home.models';
 import { selectHomeSections } from './home-sections.selectors';
 import { HomeState, initialHomeState } from './home.state';
 
+const ALL_SECTIONS: string[] = HOME_SECTIONS.map((section: NavItem): string => section.fragment);
+
+const WITHOUT_STORAGE_CONTENT: string[] = [
+  'schedule',
+  'visit',
+  'testimonials',
+];
+
 describe(
   'selectHomeSections',
   (): void => {
@@ -41,20 +49,48 @@ describe(
     it(
       'links every section until the home slice registers',
       (): void => {
-        expect(fragments(undefined)).toEqual(HOME_SECTIONS.map((section: NavItem): string => section.fragment));
+        expect(fragments(undefined)).toEqual(ALL_SECTIONS);
       },
     );
 
     it(
-      'leaves out the announcements and gallery while they have nothing to show',
+      'links every section while the content loads, so the prerendered page keeps them all',
+      (): void => {
+        const loading: HomeState = {
+          ...initialHomeState,
+          announcementsStatus: 'pending',
+          galleryStatus: 'pending',
+        };
+
+        expect(fragments(loading)).toEqual(ALL_SECTIONS);
+      },
+    );
+
+    it(
+      'leaves out the announcements and gallery once they load with nothing to show',
       (): void => {
         const expired: Announcement = { ...current, endDate: '2026-10-14' };
+        const loaded: HomeState = {
+          ...initialHomeState,
+          announcements: [expired],
+          announcementsStatus: 'success',
+          galleryStatus: 'success',
+        };
 
-        expect(fragments({ ...initialHomeState, announcements: [expired] })).toEqual([
-          'schedule',
-          'visit',
-          'testimonials',
-        ]);
+        expect(fragments(loaded)).toEqual(WITHOUT_STORAGE_CONTENT);
+      },
+    );
+
+    it(
+      'leaves out the announcements and gallery when they fail to load',
+      (): void => {
+        const failed: HomeState = {
+          ...initialHomeState,
+          announcementsStatus: 'error',
+          galleryStatus: 'error',
+        };
+
+        expect(fragments(failed)).toEqual(WITHOUT_STORAGE_CONTENT);
       },
     );
 
@@ -64,10 +100,12 @@ describe(
         const home: HomeState = {
           ...initialHomeState,
           announcements: [current],
+          announcementsStatus: 'success',
           gallery: [{ src: 'https://media.test/gallery/taper.webp', alt: 'Taper' }],
+          galleryStatus: 'success',
         };
 
-        expect(fragments(home)).toEqual(HOME_SECTIONS.map((section: NavItem): string => section.fragment));
+        expect(fragments(home)).toEqual(ALL_SECTIONS);
       },
     );
   },

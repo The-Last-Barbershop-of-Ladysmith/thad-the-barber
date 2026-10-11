@@ -51,6 +51,7 @@ describe(
         const state: HomeState = homeReducer(before, loaded);
 
         expect(state.announcements).toEqual([announcement]);
+        expect(state.announcementsStatus).toBe('success');
       },
     );
 
@@ -62,6 +63,19 @@ describe(
         const state: HomeState = homeReducer(before, HomePageActions.opened());
 
         expect(state.announcements).toEqual([]);
+        expect(state.announcementsStatus).toBe('pending');
+        expect(state.galleryStatus).toBe('pending');
+      },
+    );
+
+    it(
+      'marks failed loads, so their nav links hide',
+      (): void => {
+        const afterAnnouncements: HomeState = homeReducer(initialHomeState, HomeApiActions.announcementsLoadFailed());
+        const state: HomeState = homeReducer(afterAnnouncements, HomeApiActions.galleryLoadFailed());
+
+        expect(state.announcementsStatus).toBe('error');
+        expect(state.galleryStatus).toBe('error');
       },
     );
   },
