@@ -1,15 +1,11 @@
+import { ButtonVariant } from '../../../shared/models/button.models';
 import { LinkKind } from '../../../shared/models/link.models';
 
-export type AnnouncementImagePosition = 'left' | 'right';
-
-export const ANNOUNCEMENT_BUTTON_VARIANTS: readonly ['primary', 'secondary', 'outlined', 'text'] = [
-  'primary',
-  'secondary',
-  'outlined',
-  'text',
-] as const;
-
-export type AnnouncementButtonVariant = typeof ANNOUNCEMENT_BUTTON_VARIANTS[number];
+/** Where the image sits beside the text on wide screens; on phones it's always below. */
+export enum AnnouncementImagePosition {
+  Left = 'left',
+  Right = 'right',
+}
 
 export interface AnnouncementImage {
   src: string;
@@ -22,7 +18,7 @@ export interface AnnouncementButton {
   label: string;
   url: string;
   kind: LinkKind;
-  variant: AnnouncementButtonVariant;
+  variant: ButtonVariant;
 }
 
 /** An item of `content/announcements.json` in the media container, checked and ready to show. */

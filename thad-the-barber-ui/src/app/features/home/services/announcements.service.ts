@@ -3,14 +3,15 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { fromIsoDate, toIsoDate } from '../../../shared/utils/date.utils';
+import { ButtonVariant } from '../../../shared/models/button.models';
 import { LinkKind } from '../../../shared/models/link.models';
+import { isButtonVariant } from '../../../shared/utils/button.utils';
 import { linkKind } from '../../../shared/utils/link.utils';
 import {
-  ANNOUNCEMENT_BUTTON_VARIANTS,
   Announcement,
   AnnouncementButton,
-  AnnouncementButtonVariant,
   AnnouncementImage,
+  AnnouncementImagePosition,
 } from '../models/home.models';
 
 type Entry = Record<string, unknown>;
@@ -71,7 +72,9 @@ function toImage(value: unknown): AnnouncementImage | null {
   return {
     src: `${environment.mediaBaseUrl}/announcements/${encodeURIComponent(fileName)}`,
     alt: text(value['altText']) ?? '',
-    position: value['position'] === 'left' ? 'left' : 'right',
+    position: value['position'] === AnnouncementImagePosition.Left
+      ? AnnouncementImagePosition.Left
+      : AnnouncementImagePosition.Right,
   };
 }
 
@@ -101,12 +104,8 @@ function toButton(entry: Entry): AnnouncementButton | null {
     label,
     url,
     kind,
-    variant: isVariant(variant) ? variant : 'outlined',
+    variant: isButtonVariant(variant) ? variant : ButtonVariant.Outlined,
   };
-}
-
-function isVariant(value: unknown): value is AnnouncementButtonVariant {
-  return ANNOUNCEMENT_BUTTON_VARIANTS.some((variant: AnnouncementButtonVariant): boolean => variant === value);
 }
 
 function isEntry(value: unknown): value is Entry {
