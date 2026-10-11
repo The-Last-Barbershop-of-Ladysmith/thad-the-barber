@@ -40,8 +40,8 @@ function daysFromToday(days: number): string {
 const LONG_TITLE: string = 'E2E special 💈 with a title that runs well past sixty characters on purpose';
 
 /**
- * Made-up announcements: one with every field and a title past the 60-character portal limit, a plain-text one-day one,
- * and an expired one that never shows.
+ * Made-up announcements: one with every field and a title past the 60-character portal limit, a plain-text one running
+ * a day either side of today (so a run across midnight still sees it), and an expired one that never shows.
  */
 export const TEST_ANNOUNCEMENTS: { items: object[]; } = {
   items: [
@@ -69,10 +69,10 @@ export const TEST_ANNOUNCEMENTS: { items: object[]; } = {
       ],
     },
     {
-      title: 'E2E plain one-day post',
+      title: 'E2E plain post',
       bodyHtml: 'E2E plain text',
-      startDate: daysFromToday(0),
-      endDate: daysFromToday(0),
+      startDate: daysFromToday(-1),
+      endDate: daysFromToday(1),
     },
     {
       title: 'E2E expired post',
@@ -82,7 +82,7 @@ export const TEST_ANNOUNCEMENTS: { items: object[]; } = {
   ],
 };
 
-export const ACTIVE_ANNOUNCEMENT_TITLES: string[] = [LONG_TITLE, 'E2E plain one-day post'];
+export const ACTIVE_ANNOUNCEMENT_TITLES: string[] = [LONG_TITLE, 'E2E plain post'];
 
 export function galleryListing(files: ListedFile[]): string {
   const blobs: string = files
