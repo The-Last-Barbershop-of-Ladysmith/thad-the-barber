@@ -1,8 +1,6 @@
 using System.Buffers.Text;
 using System.Security.Cryptography;
 using System.Text;
-using Microsoft.Extensions.Options;
-using ThadTheBarber.Api.Features.Booking.Configuration;
 using ThadTheBarber.Api.Features.Booking.Services;
 using ThadTheBarber.Api.Tests.TestSupport;
 
@@ -12,7 +10,7 @@ public sealed class ManageTokenSignerTests
 {
     private const string BookingId = "bk_test-0001ab";
 
-    private static readonly ManageTokenSigner signer = CreateSigner(ApiFactory.ManageLinkHmacKey);
+    private static readonly ManageTokenSigner signer = ManageTokens.Signer;
 
     [Fact]
     public void TheTokenIsTheBase64UrlHmacSha256OfTheBookingId()
@@ -40,7 +38,7 @@ public sealed class ManageTokenSignerTests
     [Fact]
     public void ATokenSignedWithAnotherKeyIsInvalid()
     {
-        ManageTokenSigner otherSigner = CreateSigner(Convert.ToBase64String(new byte[32]));
+        ManageTokenSigner otherSigner = ManageTokens.CreateSigner(Convert.ToBase64String(new byte[32]));
 
         Assert.False(signer.IsValid(BookingId, otherSigner.Sign(BookingId)));
     }
@@ -69,10 +67,4 @@ public sealed class ManageTokenSignerTests
     {
         Assert.False(signer.IsValid(BookingId, signer.Sign(BookingId)[..^1]));
     }
-
-    private static ManageTokenSigner CreateSigner(string hmacKey) =>
-        new(Options.Create(new ManageLinkSettings
-        {
-            HmacKey = hmacKey,
-        }));
 }

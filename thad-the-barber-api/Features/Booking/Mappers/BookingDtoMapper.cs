@@ -5,8 +5,9 @@ namespace ThadTheBarber.Api.Features.Booking.Mappers;
 
 public static class BookingDtoMapper
 {
-    public static BookingConfirmation ToBookingConfirmationDto(this Appointment appointment) => new(
+    public static BookingConfirmation ToBookingConfirmationDto(this Appointment appointment, string manageToken) => new(
         appointment.Id,
-        appointment.StartAt
+        appointment.StartAt,
+        manageToken
     );
 }

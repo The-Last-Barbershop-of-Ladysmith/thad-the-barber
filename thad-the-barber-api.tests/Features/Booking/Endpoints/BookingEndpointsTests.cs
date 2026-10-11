@@ -80,7 +80,7 @@ public sealed class BookingEndpointsTests
     }
 
     [Fact]
-    public async Task ABookingIs201WithOnlyItsIdAndUtcStart()
+    public async Task ABookingIs201WithOnlyItsIdUtcStartAndManageToken()
     {
         using ApiFactory api = Api();
 
@@ -92,10 +92,12 @@ public sealed class BookingEndpointsTests
         Assert.Equal(
             [
                 "id",
+                "manageToken",
                 "startAt",
             ],
             confirmation.EnumerateObject().Select(property => property.Name).Order());
         Assert.Equal("2026-10-07T13:30:00+00:00", confirmation.GetProperty("startAt").GetString());
+        Assert.True(ManageTokens.Signer.IsValid(confirmation.GetProperty("id").GetString()!, confirmation.GetProperty("manageToken").GetString()));
     }
 
     [Fact]

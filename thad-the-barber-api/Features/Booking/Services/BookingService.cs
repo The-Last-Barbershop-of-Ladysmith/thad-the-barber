@@ -10,7 +10,7 @@ namespace ThadTheBarber.Api.Features.Booking.Services;
 /// Books the shop's one service for a customer matched silently by phone (BR-21). The request's idempotency key goes
 /// to both <c>CreateCustomer</c> and <c>CreateBooking</c>, so a retried attempt never creates a second of either.
 /// </summary>
-public sealed class BookingService(ISquareService square, AvailabilityService availability)
+public sealed class BookingService(ISquareService square, AvailabilityService availability, ManageTokenSigner manageTokens)
 {
     public async Task<BookingConfirmation> BookAsync(BookingRequest request, CancellationToken cancellationToken)
     {
@@ -24,7 +24,7 @@ public sealed class BookingService(ISquareService square, AvailabilityService av
         string customerId = await FindOrCreateCustomerAsync(request, idempotencyKey, cancellationToken);
         Appointment appointment = await square.CreateBookingAsync(customerId, openTimeSlot, idempotencyKey, cancellationToken);
 
-        return appointment.ToBookingConfirmationDto();
+        return appointment.ToBookingConfirmationDto(manageTokens.Sign(appointment.Id));
     }
 
     /// <summary>
@@ -42,7 +42,7 @@ public sealed class BookingService(ISquareService square, AvailabilityService av
             ?? throw new SlotUnavailableException("The time is taken or outside the booking window.");
         Appointment appointment = await square.CreateBookingAsync(customerId, bookedTimeSlot, idempotencyKey, cancellationToken);
 
-        return appointment.ToBookingConfirmationDto();
+        return appointment.ToBookingConfirmationDto(manageTokens.Sign(appointment.Id));
     }
 
     private async Task<string> FindOrCreateCustomerAsync(BookingRequest request, string idempotencyKey, CancellationToken cancellationToken) =>
