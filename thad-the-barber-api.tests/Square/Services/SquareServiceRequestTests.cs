@@ -179,6 +179,34 @@ public sealed class SquareServiceRequestTests
     }
 
     [Fact]
+    public async Task ABookingIsReadById()
+    {
+        using SquareHarness harness = new();
+        harness.Http.Responses["/v2/bookings/bk_test-0001ab"] = SquareFixture.ReadText("retrieve-booking.json");
+
+        Appointment? appointment = await harness.Square.GetBookingAsync("bk_test-0001ab", Cancellation);
+
+        Assert.Equal(
+            new Appointment(
+                "bk_test-0001ab",
+                0,
+                AppointmentStatus.Accepted,
+                new DateTimeOffset(2026, 10, 5, 13, 0, 0, TimeSpan.Zero)
+            ),
+            appointment);
+    }
+
+    [Fact]
+    public async Task ABookingSquareDoesntHaveIsNull()
+    {
+        using SquareHarness harness = new();
+        harness.Http.Responses["/v2/bookings/bk_test-missing"] = """{"errors":[{"category":"INVALID_REQUEST_ERROR","code":"NOT_FOUND","detail":"Booking not found."}]}""";
+        harness.Http.ResponseStatuses["/v2/bookings/bk_test-missing"] = HttpStatusCode.NotFound;
+
+        Assert.Null(await harness.Square.GetBookingAsync("bk_test-missing", Cancellation));
+    }
+
+    [Fact]
     public async Task ARescheduleSendsOnlyTheVersionAndNewStart()
     {
         using SquareHarness harness = new();
