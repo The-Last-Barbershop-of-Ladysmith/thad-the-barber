@@ -48,17 +48,17 @@ public sealed class AvailabilityService(ISquareService square, BookableServiceRe
     {
         ShopDetails shopDetails = await square.GetShopDetailsAsync(cancellationToken);
         BookingProfile bookingProfile = await square.GetBookingProfileAsync(shopDetails.LocationId, cancellationToken);
-        DateTimeRange bookingWindow = GetBookingWindow(bookingProfile);
-        if (startAt < bookingWindow.Start || startAt >= bookingWindow.End)
+        DateTimeRange startMinute = new(
+            startAt,
+            startAt + TimeSpan.FromMinutes(1)
+        );
+        DateTimeRange? searchRange = startMinute.Intersect(GetBookingWindow(bookingProfile));
+        if (searchRange is null)
         {
             return null;
         }
 
         BookableService bookableService = await resolver.ResolveAsync(cancellationToken);
-        DateTimeRange searchRange = new(
-            startAt,
-            startAt + TimeSpan.FromMinutes(1)
-        );
         List<TimeSlot> timeSlots = await square.SearchAvailableTimeSlotsAsync(shopDetails.LocationId, bookableService, searchRange, cancellationToken);
 
         return timeSlots.FirstOrDefault(timeSlot => timeSlot.StartAt == startAt);

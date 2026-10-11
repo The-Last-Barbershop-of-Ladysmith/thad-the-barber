@@ -53,8 +53,6 @@ public static class BookingEndpoints
     internal static async Task<Created<BookingConfirmation>> CreateBookingAsync(
         BookingRequest request,
         BookingService booking,
-        CancellationToken cancellationToken)
-    {
-        return TypedResults.Created((string?)null, await booking.BookAsync(request, cancellationToken));
-    }
+        CancellationToken cancellationToken) =>
+        TypedResults.Created((string?)null, await booking.BookAsync(request, cancellationToken));
 }

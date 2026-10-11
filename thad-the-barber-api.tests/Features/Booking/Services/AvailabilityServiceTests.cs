@@ -126,9 +126,11 @@ public sealed class AvailabilityServiceTests
     }
 
     [Theory]
-    [InlineData("2026-10-06T17:09:00Z")]
-    [InlineData("2027-10-06T15:10:00Z")]
-    public async Task ATimeOutsideTheBookingWindowIsntFoundEvenIfSquareOffersIt(string startAt)
+    [InlineData("2026-10-06T17:09:00Z", false)]
+    [InlineData("2026-10-06T17:10:00Z", true)]
+    [InlineData("2027-10-06T15:09:00Z", true)]
+    [InlineData("2027-10-06T15:10:00Z", false)]
+    public async Task OnlyTimesInsideTheBookingWindowAreFoundEvenIfSquareOffersOthers(string startAt, bool isFound)
     {
         FakeSquareService square = new()
         {
@@ -141,26 +143,7 @@ public sealed class AvailabilityServiceTests
 
         TimeSlot? timeSlot = await Service(square).FindTimeSlotAsync(Instant(startAt), Cancellation);
 
-        Assert.Null(timeSlot);
-    }
-
-    [Theory]
-    [InlineData("2026-10-06T17:10:00Z")]
-    [InlineData("2027-10-06T15:09:00Z")]
-    public async Task TheBookingWindowsEdgesCanBeBooked(string startAt)
-    {
-        FakeSquareService square = new()
-        {
-            BookingProfile = new FakeSquareService().BookingProfile with
-            {
-                MinimumNotice = TimeSpan.FromHours(2),
-            },
-            TimeSlots = SlotsAt(startAt),
-        };
-
-        TimeSlot? timeSlot = await Service(square).FindTimeSlotAsync(Instant(startAt), Cancellation);
-
-        Assert.Equal(Instant(startAt), timeSlot?.StartAt);
+        Assert.Equal(isFound, timeSlot is not null);
     }
 
     private static AvailabilityService Service(FakeSquareService square) => new(

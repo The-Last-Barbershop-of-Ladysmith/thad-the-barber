@@ -30,7 +30,7 @@ public sealed class BookingServiceTests
 
         FakeBooking booking = Assert.Single(square.Bookings);
         Assert.Equal(0, square.CustomersCreated);
-        Assert.Equal(new FakeSquareService().CustomerId, booking.CustomerId);
+        Assert.Equal(square.CustomerId, booking.CustomerId);
         Assert.Equal(booking.Appointment.Id, confirmation.Id);
         Assert.Equal(openTime, confirmation.StartAt);
     }
@@ -65,12 +65,7 @@ public sealed class BookingServiceTests
     [InlineData(false, 1)]
     public async Task TheSameAttemptTwiceBooksOnceAndConfirmsBoth(bool isCustomerKnown, int customersCreated)
     {
-        FakeSquareService square = new();
-        if (!isCustomerKnown)
-        {
-            square.CustomerId = null;
-        }
-
+        FakeSquareService square = Square(isCustomerKnown);
         BookingService service = Service(square);
         BookingRequest request = Request(openTime);
 
@@ -98,16 +93,23 @@ public sealed class BookingServiceTests
     [InlineData(false)]
     public async Task ATimeThatIsntOpenIsUnavailable(bool isCustomerKnown)
     {
+        FakeSquareService square = Square(isCustomerKnown);
+
+        await Assert.ThrowsAsync<SlotUnavailableException>(
+            () => Service(square).BookAsync(Request(Instant("2026-10-07T13:15:00Z")), Cancellation));
+        Assert.Empty(square.Bookings);
+        Assert.Equal(0, square.CustomersCreated);
+    }
+
+    private static FakeSquareService Square(bool isCustomerKnown)
+    {
         FakeSquareService square = new();
         if (!isCustomerKnown)
         {
             square.CustomerId = null;
         }
 
-        await Assert.ThrowsAsync<SlotUnavailableException>(
-            () => Service(square).BookAsync(Request(Instant("2026-10-07T13:15:00Z")), Cancellation));
-        Assert.Empty(square.Bookings);
-        Assert.Equal(0, square.CustomersCreated);
+        return square;
     }
 
     private static BookingService Service(FakeSquareService square) => new(

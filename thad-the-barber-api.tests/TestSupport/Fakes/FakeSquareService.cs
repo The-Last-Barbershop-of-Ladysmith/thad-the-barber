@@ -18,7 +18,6 @@ public sealed class FakeSquareService : ISquareService
 {
     private int _checks;
     private int _catalogSearches;
-    private int _customersCreated;
 
     public SquareConnection Connection { get; init; } = SquareConnection.Connected;
 
@@ -76,7 +75,7 @@ public sealed class FakeSquareService : ISquareService
 
     public int CatalogSearches => _catalogSearches;
 
-    public int CustomersCreated => _customersCreated;
+    public int CustomersCreated { get; private set; }
 
     public Task<SquareConnection> CheckConnectionAsync(CancellationToken cancellationToken)
     {
@@ -101,7 +100,7 @@ public sealed class FakeSquareService : ISquareService
 
     public Task<string> CreateCustomerAsync(string name, string phone, string idempotencyKey, CancellationToken cancellationToken)
     {
-        Interlocked.Increment(ref _customersCreated);
+        CustomersCreated++;
         CustomerId = CreatedCustomerId;
         return Task.FromResult(CreatedCustomerId);
     }
@@ -111,6 +110,11 @@ public sealed class FakeSquareService : ISquareService
         FakeBooking? replayed = Bookings.Find(booking => booking.IdempotencyKey == idempotencyKey);
         if (replayed is not null)
         {
+            if (replayed.CustomerId != customerId || replayed.TimeSlot != timeSlot)
+            {
+                return Task.FromException<Appointment>(new InvalidOperationException("Square refuses a reused idempotency key with a different request."));
+            }
+
             return Task.FromResult(replayed.Appointment);
         }
 
