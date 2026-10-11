@@ -6,7 +6,7 @@ import { Announcement, GalleryPhoto } from '../models/home.models';
 import { activeAnnouncements } from './home.feature';
 import { RequestStatus } from './home.state';
 
-/** Hidden only once its load has settled with nothing to show, so prerendered pages and loading states keep the link. */
+/** Hidden only once its load settles with nothing to show, so prerendered pages and loading states keep the link. */
 function isSettledEmpty(status: RequestStatus | undefined, count: number): boolean {
   return status === 'error' || (status === 'success' && count === 0);
 }
