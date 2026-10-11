@@ -17,4 +17,17 @@ public sealed class BookingDtoMapperTests
             ),
             new FakeSquareService().CreatedAppointment.ToBookingConfirmationDto("token-0001"));
     }
+
+    [Fact]
+    public void AppointmentBecomesManagedBooking()
+    {
+        Assert.Equal(
+            new ManagedBooking(
+                "bk_test-0001ab",
+                new DateTimeOffset(2026, 10, 5, 13, 0, 0, TimeSpan.Zero),
+                true,
+                false
+            ),
+            new FakeSquareService().CreatedAppointment.ToManagedBookingDto(isCancelled: true, canChange: false));
+    }
 }

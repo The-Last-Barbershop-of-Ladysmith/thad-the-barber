@@ -10,4 +10,11 @@ public static class BookingDtoMapper
         appointment.StartAt,
         manageToken
     );
+
+    public static ManagedBooking ToManagedBookingDto(this Appointment appointment, bool isCancelled, bool canChange) => new(
+        appointment.Id,
+        appointment.StartAt,
+        isCancelled,
+        canChange
+    );
 }

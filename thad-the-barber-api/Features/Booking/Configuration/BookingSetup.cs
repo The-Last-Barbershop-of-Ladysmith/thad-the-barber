@@ -14,6 +14,7 @@ public static class BookingSetup
         services.AddSingleton<ManageTokenSigner>();
         services.AddSingleton<AvailabilityService>();
         services.AddSingleton<BookingService>();
+        services.AddSingleton<ManageBookingService>();
         return services;
     }
 }
