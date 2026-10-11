@@ -1,11 +1,5 @@
+import variantWidths from '../../../../../media/variant-widths.json';
 import { environment } from '../../../environments/environment';
-
-/** The variant widths `tools/media` writes (`<key>-<size>.webp`), smallest first. */
-export const MEDIA_SIZES: readonly (readonly [string, number])[] = [
-  ['sm', 480],
-  ['md', 960],
-  ['lg', 1600],
-];
 
 export function mediaUrl(
   folder: string,
@@ -16,8 +10,8 @@ export function mediaUrl(
 }
 
 /**
- * A `srcset` with each variant's real width. A variant is never wider than its original, so sizes past
- * `originalWidth` are the same file and are left out.
+ * A `srcset` with each variant's real width (`tools/media` writes the sizes in `media/variant-widths.json`). A variant
+ * is never wider than its original, so sizes past `originalWidth` are the same file and are left out.
  */
 export function mediaSrcset(
   folder: string,
@@ -25,7 +19,7 @@ export function mediaSrcset(
   originalWidth: number,
 ): string {
   const candidates: string[] = [];
-  for (const [size, width] of MEDIA_SIZES) {
+  for (const [size, width] of Object.entries(variantWidths)) {
     candidates.push(`${mediaUrl(
       folder,
       key,

@@ -92,13 +92,14 @@ const shop: ErrorPageShop = {
 };
 
 const ingestionEndpoint: string | undefined = /IngestionEndpoint=([^;]+)/.exec(environment.appInsightsConnectionString)?.[1];
+const mediaOrigin: string = new URL(environment.mediaBaseUrl).origin;
 const sources: Record<string, string[]> = {
   'connect-src': [
     new URL(environment.apiBaseUrl).origin,
-    new URL(environment.mediaBaseUrl).origin,
+    mediaOrigin,
     ...(ingestionEndpoint ? [new URL(ingestionEndpoint).origin] : []),
   ],
-  'img-src': [new URL(environment.mediaBaseUrl).origin],
+  'img-src': [mediaOrigin],
 };
 
 mkdirSync(outDir, { recursive: true });

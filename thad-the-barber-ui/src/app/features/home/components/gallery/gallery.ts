@@ -34,10 +34,7 @@ export class Gallery {
 
   protected readonly images: Signal<GalleryImage[]> = computed((): GalleryImage[] =>
     this.photos().map((photo: GalleryPhoto): GalleryImage => ({
-      id: photo.id,
-      alt: photo.alt,
-      width: photo.width,
-      height: photo.height,
+      ...photo,
       src: mediaUrl(
         'gallery',
         photo.image,

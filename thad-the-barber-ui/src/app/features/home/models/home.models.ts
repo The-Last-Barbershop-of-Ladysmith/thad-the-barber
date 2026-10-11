@@ -35,11 +35,7 @@ export interface GalleryPhoto {
 }
 
 /** A gallery photo with its media URLs, as the template renders it. */
-export interface GalleryImage {
-  id: string;
-  alt: string;
-  width: number;
-  height: number;
+export interface GalleryImage extends GalleryPhoto {
   src: string;
   srcset: string;
 }

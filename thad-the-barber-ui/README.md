@@ -190,11 +190,11 @@ Lint config lives in `eslint.config.js`; `npm run lint` checks and `npm run lint
 These return local data until a backend exists. Each has a note on the endpoint it should call:
 
 - `HomeContentService`: announcements and testimonials (`features/home/data`)
-
-`GalleryService` is real: it reads `content/gallery.json` from the environment's media container (`environment.mediaBaseUrl`), in the browser only, so the prerendered page never holds a stale gallery. `shared/utils/media.utils.ts` builds the variant URLs and `srcset`. The mocked Playwright suite serves a made-up gallery for the media host (`e2e/support/media.ts`).
 - `SmsSignupService`: text-alert opt-in
 - `AvailabilityService`: open dates and slots, using a fixed pseudo-random "booked" pattern like the wireframe
 - `BookingService`: creates the appointment
+
+`GalleryService` is real: it reads `content/gallery.json` from the environment's media container (`environment.mediaBaseUrl`), in the browser only, so the prerendered page never holds a stale gallery. `shared/utils/media.utils.ts` builds the variant URLs and `srcset`. The mocked Playwright suite serves a made-up gallery for the media host (`e2e/support/media.ts`).
 
 ## Not in this version yet
 
