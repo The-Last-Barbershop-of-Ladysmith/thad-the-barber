@@ -20,7 +20,7 @@ namespace ThadTheBarber.Api.Tests.Infrastructure.Auth.Configuration;
 
 public sealed class AuthSetupTests(ApiFactory factory) : IClassFixture<ApiFactory>
 {
-    private static readonly string[] exemptRoutes = ["/api/health", "/api/session"];
+    private static readonly string[] exemptRoutes = ["/api/health", "/api/session", "/api/webhooks/square"];
 
     private static CancellationToken Cancellation => TestContext.Current.CancellationToken;
 
@@ -69,7 +69,7 @@ public sealed class AuthSetupTests(ApiFactory factory) : IClassFixture<ApiFactor
     }
 
     [Fact]
-    public void OnlyHealthAndSessionAreOpenWithoutAToken()
+    public void OnlyHealthSessionAndTheSquareWebhookAreOpenWithoutAToken()
     {
         string[] openRoutes =
         [
