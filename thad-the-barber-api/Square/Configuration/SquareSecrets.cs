@@ -10,12 +10,6 @@ public static class SquareSecrets
     public const string RefreshToken = "Square--RefreshToken";
     public const string ApplicationSecret = "Square--ApplicationSecret";
     public const string SandboxSeedToken = "Square--SandboxAccessToken";
-    public const string WebhookSignatureKey = "Square--WebhookSignatureKey";
 
-    public static readonly IReadOnlySet<string> All = new HashSet<string>([
-        RefreshToken,
-        ApplicationSecret,
-        SandboxSeedToken,
-        WebhookSignatureKey
-    ]);
+    public static readonly IReadOnlySet<string> All = new HashSet<string>([RefreshToken, ApplicationSecret, SandboxSeedToken]);
 }
