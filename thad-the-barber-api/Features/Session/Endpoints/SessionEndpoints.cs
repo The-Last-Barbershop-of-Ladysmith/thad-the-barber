@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using ThadTheBarber.Api.Features.Session.Models;
 using ThadTheBarber.Api.Features.Session.Services;
 using ThadTheBarber.Api.Infrastructure.Headers.Middleware;
+using ThadTheBarber.Api.Infrastructure.RateLimiting.Configuration;
 
 namespace ThadTheBarber.Api.Features.Session.Endpoints;
 
@@ -13,6 +14,7 @@ public static class SessionEndpoints
             .WithName("StartSession")
             .WithTags("Session")
             .AllowAnonymous()
+            .RequireRateLimiting(RateLimitSetup.SessionPolicy)
             .NoStore();
         return api;
     }

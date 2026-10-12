@@ -1,6 +1,5 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Azure.Monitor.OpenTelemetry.AspNetCore;
 using ThadTheBarber.Api.Common.Exceptions;
 using ThadTheBarber.Api.Features.Booking.Configuration;
 using ThadTheBarber.Api.Features.Booking.Endpoints;
@@ -14,7 +13,9 @@ using ThadTheBarber.Api.Infrastructure.Cors.Configuration;
 using ThadTheBarber.Api.Infrastructure.Headers.Middleware;
 using ThadTheBarber.Api.Infrastructure.KeyVault.Configuration;
 using ThadTheBarber.Api.Infrastructure.OpenApi.Transformers;
-using ThadTheBarber.Api.Infrastructure.Problems.Handlers;
+using ThadTheBarber.Api.Infrastructure.Problems.Configuration;
+using ThadTheBarber.Api.Infrastructure.RateLimiting.Configuration;
+using ThadTheBarber.Api.Infrastructure.Telemetry.Configuration;
 using ThadTheBarber.Api.Recaptcha.Configuration;
 using ThadTheBarber.Api.Square.Configuration;
 
@@ -22,19 +23,15 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.AddKeyVaultIfConfigured(SquareSecrets.All);
 
-if (builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"] is { Length: > 0 })
-{
-    builder.Services.AddOpenTelemetry().UseAzureMonitor();
-}
-
+builder.AddTelemetry();
 builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)));
 builder.Services.AddSingleton(TimeProvider.System);
-builder.Services.AddProblemDetails();
+builder.Services.AddProblems();
 builder.Services.AddValidation();
-builder.Services.AddExceptionHandler<ProblemExceptionHandler>();
 builder.Services.AddHsts(options => options.MaxAge = TimeSpan.FromDays(365));
 builder.Services.AddFrontendCors(builder.Configuration);
+builder.Services.AddRateLimits(builder.Configuration);
 builder.Services.AddSquareService(builder.Configuration);
 builder.Services.AddRecaptcha(builder.Configuration);
 builder.Services.AddSessionTokens(builder.Configuration);
@@ -65,6 +62,7 @@ if (!app.Environment.IsDevelopment())
 app.UseStatusCodePages();
 app.UseNoSniff();
 app.UseCors();
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 

@@ -36,7 +36,7 @@ This is the single record of how the shop's booking and website behave. Each rul
 | BR-20 | The site **never shows customer information based on a phone number alone**. | ✅ | API |
 | BR-21 | Returning customers are **matched silently**: the booking is linked to their existing Square customer (found by phone) or a new one is created, and nothing about them is shown or prefilled. | ✅ 2026-09-28 | API |
 | BR-22 | Name and phone aren't kept in the browser after a booking is confirmed; the confirmation link is kept for 24 hours. | ✅ | UI (store persistence) |
-| BR-23 | Names and phone numbers are never written to logs. | ✅ | API logging |
+| BR-23 | Names and phone numbers are never written to logs. | ✅ | API: redacting log and span processors before export ([#32](https://github.com/The-Last-Barbershop-of-Ladysmith/thad-the-barber/issues/32)) |
 | BR-24 | Visitors pass an invisible **Google reCAPTCHA v3** check before they can book. If they fail it, they're asked to call or text instead. | ✅ 2026-09-28 | API (`Recaptcha:MinScore`, app config) + UI |
 
 ## Announcements and content

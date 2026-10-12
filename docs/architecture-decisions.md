@@ -252,7 +252,7 @@ The design for when it's picked up needs no database:
 - CORS (in the .NET app only) allows just the site's origin, so browsers on other sites can't call the API. Auth uses a header, not cookies, so there's no CSRF exposure.
 
 **Abuse:**
-- Rate limits per IP and per session.
+- Rate limits per client IP (#32): `POST /api/session`, `POST /api/bookings` (BR-13) and cancel/reschedule (a separate `Manage` limit, so used-up booking attempts never block managing a booking), from `RateLimits:*` in app config, refused with 429 `rate_limited` and `Retry-After`. App Service's `X-Forwarded-For` gives the client IP (`ASPNETCORE_FORWARDEDHEADERS_ENABLED`). Per-session limits come with #35.
 - A cap of 5 upcoming bookings per phone number and 5 booking attempts per device/IP per 10 minutes (BR-13, set in app config).
 - Strict request validation and size limits.
 
@@ -273,7 +273,7 @@ The design for when it's picked up needs no database:
 - Actions pinned to commit SHAs, with least-privilege workflow permissions.
 - `CODEOWNERS` for infra and the API.
 
-**Telemetry:** OpenTelemetry (Azure Monitor Distro) in the API and Express, the App Insights JS SDK in the browser, and end-to-end traces via `traceparent`. A redaction processor strips names and phones before export (BR-23). Code-based, not App Service auto-instrumentation, so redaction is possible. In the browser (#121), the Angular plugin supplies the `ErrorHandler`, but page views are tracked on `NavigationEnd` by our own code (the plugin's router tracking reads `router.url` before the first navigation ends and reports "/"), with a new trace per page. Telemetry loads only in the browser config, never during prerender.
+**Telemetry:** OpenTelemetry (Azure Monitor Distro) in the API and Express, the App Insights JS SDK in the browser, and end-to-end traces via `traceparent`. Redacting log and span processors run before the exporters (#32): phone numbers and emails are masked wherever they appear, Square's error bodies never leave `Square/` (the SDK puts its whole response in the exception message, and Square's error details can repeat the customer's input, so `SquareService` throws its own `SquareRequestFailedException` with only the status and Square's error codes and fields; the full response stays in Square's API Logs), and fields named like a name, phone or email lose their value (a record with one also loses its filled-in message, so App Insights shows the template). Names in free text can't be detected, so a test books with a made-up customer and checks nothing of it is exported. Sampling stays at the distro's default of up to 5 traces per second, which keeps every trace at the shop's traffic; the Log Analytics daily cap (`logDailyCapGb`, 0.15 GB ≈ 4.5 GB a month) bounds the cost. Head sampling can't keep errors selectively, so no custom sampler. (BR-23) Code-based, not App Service auto-instrumentation, so redaction is possible. In the browser (#121), the Angular plugin supplies the `ErrorHandler`, but page views are tracked on `NavigationEnd` by our own code (the plugin's router tracking reads `router.url` before the first navigation ends and reports "/"), with a new trace per page. Telemetry loads only in the browser config, never during prerender.
 
 **Later (admin portal):**
 - Google sign-in verified by the API (allowlist in Key Vault), and an `Admin` policy checked server-side on every `/api/admin/*` route.

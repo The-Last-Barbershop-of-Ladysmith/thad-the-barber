@@ -98,6 +98,18 @@ public sealed class SquareAccessTokenProviderTests
     }
 
     [Fact]
+    public async Task OtherRenewalErrorsAreSquareErrorsWithoutTheResponseBody()
+    {
+        using SquareHarness harness = new();
+        harness.Http.TokenStatus = HttpStatusCode.Forbidden;
+
+        SquareRequestFailedException failure = await Assert.ThrowsAsync<SquareRequestFailedException>(() => harness.Tokens.GetAccessTokenAsync(Cancellation));
+
+        Assert.Equal(403, failure.StatusCode);
+        Assert.Null(failure.InnerException);
+    }
+
+    [Fact]
     public async Task SecretsAndTokensNeverReachTheLogs()
     {
         using SquareHarness harness = new();
