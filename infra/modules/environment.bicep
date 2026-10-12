@@ -197,7 +197,8 @@ module api 'app-service.bicep' = {
     appSettings: {
       APPLICATIONINSIGHTS_CONNECTION_STRING: appInsights.properties.ConnectionString
       ASPNETCORE_ENVIRONMENT: aspnetEnvironment
-      // App Service terminates TLS; this lets the API see X-Forwarded-Proto so HSTS is sent on HTTPS requests.
+      // App Service terminates TLS; this lets the API see X-Forwarded-Proto (so HSTS is sent on HTTPS requests) and the
+      // client IP from X-Forwarded-For (the rate limits are per client IP).
       ASPNETCORE_FORWARDEDHEADERS_ENABLED: 'true'
     }
   }

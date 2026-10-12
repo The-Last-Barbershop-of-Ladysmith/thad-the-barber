@@ -15,6 +15,7 @@ using ThadTheBarber.Api.Infrastructure.Headers.Middleware;
 using ThadTheBarber.Api.Infrastructure.KeyVault.Configuration;
 using ThadTheBarber.Api.Infrastructure.OpenApi.Transformers;
 using ThadTheBarber.Api.Infrastructure.Problems.Configuration;
+using ThadTheBarber.Api.Infrastructure.RateLimiting.Configuration;
 using ThadTheBarber.Api.Recaptcha.Configuration;
 using ThadTheBarber.Api.Square.Configuration;
 
@@ -34,6 +35,7 @@ builder.Services.AddProblems();
 builder.Services.AddValidation();
 builder.Services.AddHsts(options => options.MaxAge = TimeSpan.FromDays(365));
 builder.Services.AddFrontendCors(builder.Configuration);
+builder.Services.AddRateLimits(builder.Configuration);
 builder.Services.AddSquareService(builder.Configuration);
 builder.Services.AddRecaptcha(builder.Configuration);
 builder.Services.AddSessionTokens(builder.Configuration);
@@ -64,6 +66,7 @@ if (!app.Environment.IsDevelopment())
 app.UseStatusCodePages();
 app.UseNoSniff();
 app.UseCors();
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 

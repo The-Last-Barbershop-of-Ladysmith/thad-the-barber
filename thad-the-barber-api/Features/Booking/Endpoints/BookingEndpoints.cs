@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using ThadTheBarber.Api.Features.Booking.Models;
 using ThadTheBarber.Api.Features.Booking.Services;
 using ThadTheBarber.Api.Infrastructure.Headers.Middleware;
+using ThadTheBarber.Api.Infrastructure.RateLimiting.Configuration;
 
 namespace ThadTheBarber.Api.Features.Booking.Endpoints;
 
@@ -19,13 +20,16 @@ public static class BookingEndpoints
         bookings.MapGet("/availability", GetAvailabilityAsync)
             .WithName("GetAvailability");
         bookings.MapPost("", CreateBookingAsync)
-            .WithName("CreateBooking");
+            .WithName("CreateBooking")
+            .RequireRateLimiting(RateLimitSetup.BookingPolicy);
         bookings.MapGet("/{id}", GetBookingAsync)
             .WithName("GetBooking");
         bookings.MapPost("/{id}/cancel", CancelBookingAsync)
-            .WithName("CancelBooking");
+            .WithName("CancelBooking")
+            .RequireRateLimiting(RateLimitSetup.BookingPolicy);
         bookings.MapPost("/{id}/reschedule", RescheduleBookingAsync)
-            .WithName("RescheduleBooking");
+            .WithName("RescheduleBooking")
+            .RequireRateLimiting(RateLimitSetup.BookingPolicy);
         return api;
     }
 
