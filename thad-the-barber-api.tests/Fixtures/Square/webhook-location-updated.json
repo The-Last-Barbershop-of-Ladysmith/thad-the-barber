@@ -1,0 +1,16 @@
+{
+  "merchant_id": "FAKEMERCHANT01",
+  "type": "location.updated",
+  "event_id": "0b0c3f0e-0000-4000-8000-000000000001",
+  "created_at": "2031-02-14T09:30:00.000Z",
+  "data": {
+    "type": "location",
+    "id": "FAKELOCATION01",
+    "object": {
+      "location": {
+        "id": "FAKELOCATION01",
+        "name": "Made-up Barbershop"
+      }
+    }
+  }
+}

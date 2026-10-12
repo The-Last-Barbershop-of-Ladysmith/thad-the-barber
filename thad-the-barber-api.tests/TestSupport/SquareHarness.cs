@@ -66,6 +66,8 @@ public sealed class SquareHarness : IDisposable
 
     public ISquareService Square => _services.GetRequiredService<ISquareService>();
 
+    public SquareWebhookService Webhooks => _services.GetRequiredService<SquareWebhookService>();
+
     public FakeLogCollector Logs => _services.GetFakeLogCollector();
 
     /// <summary>Answers the location, booking profile and catalog reads with the recorded fixtures.</summary>
