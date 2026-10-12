@@ -2,8 +2,13 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Net;
 using System.Net.Http.Json;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Console;
 using Microsoft.Extensions.Time.Testing;
+using OpenTelemetry.Logs;
 using ThadTheBarber.Api.Tests.TestSupport;
 using ThadTheBarber.Api.Tests.TestSupport.Fakes;
 
@@ -34,6 +39,27 @@ public sealed class TelemetrySetupTests
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         Assert.NotEmpty(capture.Spans);
         AssertNoCustomerData(capture);
+    }
+
+    [Fact]
+    public void WithAppInsightsOnlyOpenTelemetryWritesLogs()
+    {
+        using ApiFactory api = new();
+        using WebApplicationFactory<Program> inAzure = api.WithWebHostBuilder(builder => builder.UseSetting(
+            "APPLICATIONINSIGHTS_CONNECTION_STRING",
+            "InstrumentationKey=00000000-0000-0000-0000-000000000000;IngestionEndpoint=http://127.0.0.1:9/"));
+
+        ILoggerProvider provider = Assert.Single(inAzure.Services.GetServices<ILoggerProvider>());
+
+        Assert.IsType<OpenTelemetryLoggerProvider>(provider);
+    }
+
+    [Fact]
+    public void LocallyTheConsoleStillWritesLogs()
+    {
+        using ApiFactory api = new();
+
+        Assert.Contains(api.Services.GetServices<ILoggerProvider>(), provider => provider is ConsoleLoggerProvider);
     }
 
     [Fact]

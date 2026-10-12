@@ -9,21 +9,30 @@ namespace ThadTheBarber.Api.Infrastructure.Telemetry.Configuration;
 /// <summary>
 /// OpenTelemetry to App Insights when <c>APPLICATIONINSIGHTS_CONNECTION_STRING</c> is set. The redacting processors are
 /// added before Azure Monitor's exporters, and processors run in the order they're added, so nothing is exported
-/// unredacted. Sampling stays at the distro's default (up to 5 traces per second, which keeps every trace at the shop's
-/// traffic); the workspace's daily cap in Bicep bounds the cost.
+/// unredacted. In Azure, OpenTelemetry is the only log provider, so no log line skips redaction (the console would
+/// write it to App Service's log stream as is); local runs keep the console. Sampling stays at the distro's default (up
+/// to 5 traces per second, which keeps every trace at the shop's traffic); the workspace's daily cap in Bicep bounds
+/// the cost.
 /// </summary>
 public static class TelemetrySetup
 {
-    public static IServiceCollection AddTelemetry(this IServiceCollection services, IConfiguration configuration)
+    public static IHostApplicationBuilder AddTelemetry(this IHostApplicationBuilder builder)
     {
-        OpenTelemetryBuilder telemetry = services.AddOpenTelemetry()
+        bool isAppInsightsConfigured = builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"] is { Length: > 0 };
+        if (isAppInsightsConfigured)
+        {
+            // Before OpenTelemetry is added: clearing afterwards would remove its provider too.
+            builder.Logging.ClearProviders();
+        }
+
+        OpenTelemetryBuilder telemetry = builder.Services.AddOpenTelemetry()
             .WithLogging(logging => logging.AddProcessor<RedactingLogProcessor>())
             .WithTracing(tracing => tracing.AddProcessor<RedactingSpanProcessor>());
-        if (configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"] is { Length: > 0 })
+        if (isAppInsightsConfigured)
         {
             telemetry.UseAzureMonitor();
         }
 
-        return services;
+        return builder;
     }
 }

@@ -23,7 +23,7 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.AddKeyVaultIfConfigured(SquareSecrets.All);
 
-builder.Services.AddTelemetry(builder.Configuration);
+builder.AddTelemetry();
 builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)));
 builder.Services.AddSingleton(TimeProvider.System);
