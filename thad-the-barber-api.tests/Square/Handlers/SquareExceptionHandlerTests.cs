@@ -10,20 +10,20 @@ namespace ThadTheBarber.Api.Tests.Square.Handlers;
 
 public sealed class SquareExceptionHandlerTests
 {
-    public static TheoryData<Exception, int> SquareFailures => new()
+    public static TheoryData<Exception, int, string> SquareFailures => new()
     {
-        { new SquareNotConnectedException("Square refused the refresh token."), StatusCodes.Status503ServiceUnavailable },
-        { new BookableServiceNotResolvedException("Square has 2 services bookable online."), StatusCodes.Status503ServiceUnavailable },
-        { new SquareApiException("Square is down", StatusCodes.Status500InternalServerError, """{"errors":[]}"""), StatusCodes.Status503ServiceUnavailable },
-        { new HttpRequestException("No route to Square."), StatusCodes.Status503ServiceUnavailable },
-        { new TaskCanceledException("Square timed out."), StatusCodes.Status503ServiceUnavailable },
-        { new Azure.RequestFailedException(403, "Key Vault firewall."), StatusCodes.Status503ServiceUnavailable },
-        { new SquareApiException("Bad request", StatusCodes.Status400BadRequest, """{"errors":[]}"""), StatusCodes.Status502BadGateway },
+        { new SquareNotConnectedException("Square refused the refresh token."), StatusCodes.Status503ServiceUnavailable, "square_unavailable" },
+        { new BookableServiceNotResolvedException("Square has 2 services bookable online."), StatusCodes.Status503ServiceUnavailable, "square_unavailable" },
+        { new SquareApiException("Square is down", StatusCodes.Status500InternalServerError, """{"errors":[]}"""), StatusCodes.Status503ServiceUnavailable, "square_unavailable" },
+        { new HttpRequestException("No route to Square."), StatusCodes.Status503ServiceUnavailable, "square_unavailable" },
+        { new TaskCanceledException("Square timed out."), StatusCodes.Status503ServiceUnavailable, "square_unavailable" },
+        { new Azure.RequestFailedException(403, "Key Vault firewall."), StatusCodes.Status503ServiceUnavailable, "square_unavailable" },
+        { new SquareApiException("Bad request", StatusCodes.Status400BadRequest, """{"errors":[]}"""), StatusCodes.Status502BadGateway, "square_rejected" },
     };
 
     [Theory]
     [MemberData(nameof(SquareFailures))]
-    public async Task SquareFailuresBecomeProblemDetails(Exception exception, int expectedStatus)
+    public async Task SquareFailuresBecomeProblemDetailsWithTheirCode(Exception exception, int expectedStatus, string expectedCode)
     {
         DefaultHttpContext context = ExceptionHandlerHarness.NewContext();
 
@@ -33,6 +33,7 @@ public sealed class SquareExceptionHandlerTests
         Assert.Equal(expectedStatus, context.Response.StatusCode);
         JsonElement body = await ExceptionHandlerHarness.ReadBodyAsync(context);
         Assert.Equal(expectedStatus, body.GetProperty("status").GetInt32());
+        Assert.Equal(expectedCode, body.GetProperty("code").GetString());
         Assert.DoesNotContain(exception.Message, body.GetRawText());
     }
 

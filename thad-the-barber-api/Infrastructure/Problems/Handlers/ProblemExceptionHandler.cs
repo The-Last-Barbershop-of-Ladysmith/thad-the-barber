@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using ThadTheBarber.Api.Common.Exceptions;
+using ThadTheBarber.Api.Infrastructure.Problems.Configuration;
 
 namespace ThadTheBarber.Api.Infrastructure.Problems.Handlers;
 
@@ -22,7 +23,7 @@ public sealed partial class ProblemExceptionHandler(
             Status = problemException.StatusCode,
             Title = problemException.Title,
         };
-        problem.Extensions["code"] = problemException.Code;
+        problem.Extensions[ProblemsSetup.CodeKey] = problemException.Code;
 
         httpContext.Response.StatusCode = problemException.StatusCode;
         return await problemDetails.TryWriteAsync(new ProblemDetailsContext

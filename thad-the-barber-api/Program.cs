@@ -14,7 +14,7 @@ using ThadTheBarber.Api.Infrastructure.Cors.Configuration;
 using ThadTheBarber.Api.Infrastructure.Headers.Middleware;
 using ThadTheBarber.Api.Infrastructure.KeyVault.Configuration;
 using ThadTheBarber.Api.Infrastructure.OpenApi.Transformers;
-using ThadTheBarber.Api.Infrastructure.Problems.Handlers;
+using ThadTheBarber.Api.Infrastructure.Problems.Configuration;
 using ThadTheBarber.Api.Recaptcha.Configuration;
 using ThadTheBarber.Api.Square.Configuration;
 
@@ -30,9 +30,8 @@ if (builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"] is { Length: 
 builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)));
 builder.Services.AddSingleton(TimeProvider.System);
-builder.Services.AddProblemDetails();
+builder.Services.AddProblems();
 builder.Services.AddValidation();
-builder.Services.AddExceptionHandler<ProblemExceptionHandler>();
 builder.Services.AddHsts(options => options.MaxAge = TimeSpan.FromDays(365));
 builder.Services.AddFrontendCors(builder.Configuration);
 builder.Services.AddSquareService(builder.Configuration);
