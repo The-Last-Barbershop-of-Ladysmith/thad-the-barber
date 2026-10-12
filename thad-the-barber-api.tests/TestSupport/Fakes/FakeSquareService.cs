@@ -69,6 +69,9 @@ public sealed class FakeSquareService : ISquareService
     /// <summary>When set, the shop, booking profile and catalog reads throw it, as if Square were down.</summary>
     public Exception? ReadFailure { get; set; }
 
+    /// <summary>When set, creating a customer throws it, as Square does for details it refuses.</summary>
+    public Exception? CreateCustomerFailure { get; init; }
+
     public int Checks => _checks;
 
     public int CatalogSearches => _catalogSearches;
@@ -98,6 +101,11 @@ public sealed class FakeSquareService : ISquareService
 
     public Task<string> CreateCustomerAsync(string name, string phone, string idempotencyKey, CancellationToken cancellationToken)
     {
+        if (CreateCustomerFailure is not null)
+        {
+            return Task.FromException<string>(CreateCustomerFailure);
+        }
+
         CustomersCreated++;
         if (IsNewCustomerSearchable)
         {
