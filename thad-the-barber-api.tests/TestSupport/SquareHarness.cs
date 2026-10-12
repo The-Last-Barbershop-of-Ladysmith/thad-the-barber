@@ -19,6 +19,8 @@ public sealed class SquareHarness : IDisposable
     public const string ApplicationId = "sandbox-test-app";
     public const string ApplicationSecret = "app-secret-value";
     public const string RefreshToken = "refresh-token-value";
+    public const string WebhookNotificationUrl = "https://api.example.test/api/webhooks/square";
+    public const string WebhookSignatureKey = "made-up-webhook-signature-key";
 
     private readonly ServiceProvider _services;
 
@@ -36,6 +38,8 @@ public sealed class SquareHarness : IDisposable
             {
                 ["Square:BaseUrl"] = "https://square.example",
                 ["Square:ApplicationId"] = ApplicationId,
+                ["Square:WebhookNotificationUrl"] = WebhookNotificationUrl,
+                ["Square:WebhookSignatureKey"] = WebhookSignatureKey,
             })
             .Build();
 

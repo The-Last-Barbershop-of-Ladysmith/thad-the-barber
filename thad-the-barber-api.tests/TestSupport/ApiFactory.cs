@@ -81,6 +81,8 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
     {
         builder.UseEnvironment("Testing");
         builder.UseSetting("Square:ApplicationId", SquareHarness.ApplicationId);
+        builder.UseSetting("Square:WebhookNotificationUrl", SquareHarness.WebhookNotificationUrl);
+        builder.UseSetting("Square:WebhookSignatureKey", SquareHarness.WebhookSignatureKey);
         builder.UseSetting("Recaptcha:ProjectId", "fake-project");
         builder.UseSetting("Recaptcha:SiteKey", "fake-site-key");
         builder.UseSetting("Recaptcha:ApiKey", "fake-api-key");

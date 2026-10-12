@@ -16,4 +16,14 @@ public sealed class SquareSettings
 
     /// <summary>Pins the shop's bookable service when the catalog holds more than one (BR-01). Usually unset.</summary>
     public string? ServiceVariationId { get; set; }
+
+    /// <summary>
+    /// This environment's webhook URL, exactly as entered in its Square subscription: Square signs it with the body.
+    /// </summary>
+    [Required]
+    public Uri WebhookNotificationUrl { get; set; } = null!;
+
+    /// <summary>The webhook subscription's signature key, from the <c>Square--WebhookSignatureKey</c> Key Vault secret.</summary>
+    [Required]
+    public string WebhookSignatureKey { get; set; } = null!;
 }
