@@ -2,7 +2,6 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Square;
 using ThadTheBarber.Api.Infrastructure.Problems.Handlers;
 using ThadTheBarber.Api.Square.Exceptions;
 using ThadTheBarber.Api.Tests.TestSupport;
@@ -40,7 +39,7 @@ public sealed class ProblemExceptionHandlerTests
 
         bool handled = await Handler(context).TryHandleAsync(
             context,
-            new SquareApiException("Bad request", StatusCodes.Status400BadRequest, """{"errors":[]}"""),
+            new SquareRequestFailedException(StatusCodes.Status400BadRequest, []),
             TestContext.Current.CancellationToken);
 
         Assert.False(handled);

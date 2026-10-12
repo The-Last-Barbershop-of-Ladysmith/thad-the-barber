@@ -1,7 +1,6 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
-using Square;
 using ThadTheBarber.Api.Square.Exceptions;
 using ThadTheBarber.Api.Square.Handlers;
 using ThadTheBarber.Api.Tests.TestSupport;
@@ -14,11 +13,11 @@ public sealed class SquareExceptionHandlerTests
     {
         { new SquareNotConnectedException("Square refused the refresh token."), StatusCodes.Status503ServiceUnavailable, "square_unavailable" },
         { new BookableServiceNotResolvedException("Square has 2 services bookable online."), StatusCodes.Status503ServiceUnavailable, "square_unavailable" },
-        { new SquareApiException("Square is down", StatusCodes.Status500InternalServerError, """{"errors":[]}"""), StatusCodes.Status503ServiceUnavailable, "square_unavailable" },
+        { new SquareRequestFailedException(StatusCodes.Status500InternalServerError, []), StatusCodes.Status503ServiceUnavailable, "square_unavailable" },
         { new HttpRequestException("No route to Square."), StatusCodes.Status503ServiceUnavailable, "square_unavailable" },
         { new TaskCanceledException("Square timed out."), StatusCodes.Status503ServiceUnavailable, "square_unavailable" },
         { new Azure.RequestFailedException(403, "Key Vault firewall."), StatusCodes.Status503ServiceUnavailable, "square_unavailable" },
-        { new SquareApiException("Bad request", StatusCodes.Status400BadRequest, """{"errors":[]}"""), StatusCodes.Status502BadGateway, "square_rejected" },
+        { new SquareRequestFailedException(StatusCodes.Status400BadRequest, []), StatusCodes.Status502BadGateway, "square_rejected" },
     };
 
     [Theory]

@@ -2,7 +2,6 @@ using Azure;
 using Azure.Identity;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using Square;
 using ThadTheBarber.Api.Infrastructure.Problems.Configuration;
 using ThadTheBarber.Api.Square.Exceptions;
 
@@ -23,11 +22,11 @@ public sealed class SquareExceptionHandler(IProblemDetailsService problemDetails
         {
             SquareNotConnectedException or BookableServiceNotResolvedException or RequestFailedException or AuthenticationFailedException
                 => Problem(StatusCodes.Status503ServiceUnavailable, "square_unavailable", "Booking is unavailable right now."),
-            SquareApiException { StatusCode: >= StatusCodes.Status500InternalServerError } or HttpRequestException
+            SquareRequestFailedException { StatusCode: >= StatusCodes.Status500InternalServerError } or HttpRequestException
                 => Problem(StatusCodes.Status503ServiceUnavailable, "square_unavailable", "Square is unavailable right now."),
             TaskCanceledException when !httpContext.RequestAborted.IsCancellationRequested
                 => Problem(StatusCodes.Status503ServiceUnavailable, "square_unavailable", "Square is unavailable right now."),
-            SquareApiException => Problem(StatusCodes.Status502BadGateway, "square_rejected", "Square couldn't complete the request."),
+            SquareRequestFailedException => Problem(StatusCodes.Status502BadGateway, "square_rejected", "Square couldn't complete the request."),
             _ => null,
         };
         if (problem is null)

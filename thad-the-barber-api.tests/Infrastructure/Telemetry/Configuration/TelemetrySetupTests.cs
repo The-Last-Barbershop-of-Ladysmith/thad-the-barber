@@ -2,20 +2,17 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Net;
 using System.Net.Http.Json;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Time.Testing;
-using Square;
-using ThadTheBarber.Api.Square.Exceptions;
 using ThadTheBarber.Api.Tests.TestSupport;
 using ThadTheBarber.Api.Tests.TestSupport.Fakes;
 
 namespace ThadTheBarber.Api.Tests.Infrastructure.Telemetry.Configuration;
 
 /// <summary>
-/// BR-23: a booking's name and phone never reach App Insights, even when Square echoes them back in an error body. The
-/// ASP.NET Core activity source is process-wide, so captured spans include other tests' requests; assertions look for
-/// this test's values only.
+/// BR-23: a booking's name and phone never reach App Insights (Square's error bodies are kept out at the Square boundary,
+/// see <c>SquareServiceRequestTests</c>). The ASP.NET Core activity source is process-wide, so captured spans include
+/// other tests' requests; assertions look for this test's values only.
 /// </summary>
 public sealed class TelemetrySetupTests
 {
@@ -24,9 +21,6 @@ public sealed class TelemetrySetupTests
     private const string FamilyName = "Vey-Ashgrove";
     private const string Phone = "+15550100163";
     private const string PhoneDigits = "5550100163";
-
-    private static readonly string SquareErrorBody =
-        $$"""{"errors":[{"code":"INVALID_PHONE_NUMBER","detail":"{{Phone}} for {{GivenName}} {{FamilyName}} is invalid","field":"phone_number"}]}""";
 
     private static CancellationToken Cancellation => TestContext.Current.CancellationToken;
 
@@ -39,40 +33,6 @@ public sealed class TelemetrySetupTests
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         Assert.NotEmpty(capture.Spans);
-        AssertNoCustomerData(capture);
-    }
-
-    /// <summary>A refusal is logged as an expected problem with Square's exception inside; a Square failure as an error.</summary>
-    public static TheoryData<Exception, HttpStatusCode> SquareErrorsEchoingTheCustomer => new()
-    {
-        {
-            new InvalidCustomerDetailsException(
-                "Square rejected the customer's name or phone.",
-                new SquareApiException("Error with status code 400", StatusCodes.Status400BadRequest, SquareErrorBody)
-            ),
-            HttpStatusCode.BadRequest
-        },
-        {
-            new SquareApiException("Error with status code 500", StatusCodes.Status500InternalServerError, SquareErrorBody),
-            HttpStatusCode.ServiceUnavailable
-        },
-    };
-
-    [Theory]
-    [MemberData(nameof(SquareErrorsEchoingTheCustomer))]
-    public async Task SquareErrorsLeaveNoNameOrPhoneInTelemetry(Exception squareError, HttpStatusCode expectedStatus)
-    {
-        TelemetryCapture capture = new();
-        FakeSquareService square = new()
-        {
-            CustomerId = null,
-            CreateCustomerFailure = squareError,
-        };
-
-        using HttpResponseMessage response = await BookAsync(capture, square);
-
-        Assert.Equal(expectedStatus, response.StatusCode);
-        Assert.Contains(capture.Texts, text => text.Contains("Square.SquareApiException", StringComparison.Ordinal));
         AssertNoCustomerData(capture);
     }
 

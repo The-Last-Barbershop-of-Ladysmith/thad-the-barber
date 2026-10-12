@@ -1,7 +1,6 @@
 using Microsoft.Extensions.Logging;
 using OpenTelemetry;
 using OpenTelemetry.Logs;
-using ThadTheBarber.Api.Infrastructure.Telemetry.Exceptions;
 using ThadTheBarber.Api.Infrastructure.Telemetry.Processors;
 
 namespace ThadTheBarber.Api.Tests.Infrastructure.Telemetry.Processors;
@@ -31,23 +30,11 @@ public sealed partial class RedactingLogProcessorTests
     }
 
     [Fact]
-    public void CleanRecordsKeepTheirMessageAndException()
+    public void CleanRecordsKeepTheirMessage()
     {
-        InvalidOperationException exception = new("Square returned no booking.");
-
-        ExportedLog log = Log(logger => LogReturned(logger, exception, 503, "square_unavailable"));
+        ExportedLog log = Log(logger => LogReturned(logger, 503, "square_unavailable"));
 
         Assert.Equal("Returned 503 square_unavailable.", log.FormattedMessage);
-        Assert.Same(exception, log.Exception);
-    }
-
-    [Fact]
-    public void ExceptionsWithCustomerDataAreReplaced()
-    {
-        ExportedLog log = Log(logger => LogFailed(logger, new InvalidOperationException("Call +15550100163.")));
-
-        RedactedException redacted = Assert.IsType<RedactedException>(log.Exception);
-        Assert.DoesNotContain("5550100163", redacted.ToString(), StringComparison.Ordinal);
     }
 
     private static ExportedLog Log(Action<ILogger> write)
@@ -72,17 +59,13 @@ public sealed partial class RedactingLogProcessorTests
     [LoggerMessage(Level = LogLevel.Warning, Message = "Square said {Detail}")]
     private static partial void LogSquareSaid(ILogger logger, string detail);
 
-    [LoggerMessage(Level = LogLevel.Error, Message = "Returned {StatusCode} {Code}.")]
-    private static partial void LogReturned(ILogger logger, Exception exception, int statusCode, string code);
-
-    [LoggerMessage(Level = LogLevel.Error, Message = "Failed.")]
-    private static partial void LogFailed(ILogger logger, Exception exception);
+    [LoggerMessage(Level = LogLevel.Information, Message = "Returned {StatusCode} {Code}.")]
+    private static partial void LogReturned(ILogger logger, int statusCode, string code);
 
     private sealed record ExportedLog(
         string? FormattedMessage,
         string? Body,
-        Dictionary<string, object?> Attributes,
-        Exception? Exception
+        Dictionary<string, object?> Attributes
     );
 
     private sealed class LogCapture : BaseProcessor<LogRecord>
@@ -93,8 +76,7 @@ public sealed partial class RedactingLogProcessorTests
             Logs.Add(new ExportedLog(
                 data.FormattedMessage,
                 data.Body,
-                (data.Attributes ?? []).ToDictionary(attribute => attribute.Key, attribute => attribute.Value),
-                data.Exception
+                (data.Attributes ?? []).ToDictionary(attribute => attribute.Key, attribute => attribute.Value)
             ));
     }
 }

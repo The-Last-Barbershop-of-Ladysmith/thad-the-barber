@@ -259,7 +259,7 @@ public sealed class SquareServiceRequestTests
         harness.Http.ResponseStatuses["/v2/bookings"] = HttpStatusCode.BadRequest;
         TimeSlot slot = new FakeSquareService().TimeSlots[0];
 
-        await Assert.ThrowsAsync<SquareApiException>(() => harness.Square.CreateBookingAsync("CUSTOMER-1", slot, "key-1", Cancellation));
+        await Assert.ThrowsAsync<SquareRequestFailedException>(() => harness.Square.CreateBookingAsync("CUSTOMER-1", slot, "key-1", Cancellation));
     }
 
     [Fact]
@@ -279,7 +279,37 @@ public sealed class SquareServiceRequestTests
         harness.Http.Responses["/v2/customers"] = """{"errors":[{"category":"INVALID_REQUEST_ERROR","code":"VALUE_TOO_LONG","field":"idempotency_key"}]}""";
         harness.Http.ResponseStatuses["/v2/customers"] = HttpStatusCode.BadRequest;
 
-        await Assert.ThrowsAsync<SquareApiException>(() => harness.Square.CreateCustomerAsync("Spike TwentyOne", "+18045550123", "key-1", Cancellation));
+        await Assert.ThrowsAsync<SquareRequestFailedException>(() => harness.Square.CreateCustomerAsync("Spike TwentyOne", "+18045550123", "key-1", Cancellation));
+    }
+
+    [Fact]
+    public async Task SquareErrorsKeepTheirCodesButNotTheResponseBody()
+    {
+        using SquareHarness harness = new();
+        harness.Http.Responses["/v2/customers"] = EchoingError("VALUE_TOO_LONG", "idempotency_key");
+        harness.Http.ResponseStatuses["/v2/customers"] = HttpStatusCode.BadRequest;
+
+        SquareRequestFailedException failure = await Assert.ThrowsAsync<SquareRequestFailedException>(
+            () => harness.Square.CreateCustomerAsync("Quillon Vey-Ashgrove", "+15550100163", "key-1", Cancellation));
+
+        Assert.Equal(400, failure.StatusCode);
+        Assert.Equal(new SquareError("INVALID_REQUEST_ERROR", "VALUE_TOO_LONG", "idempotency_key"), Assert.Single(failure.Errors));
+        Assert.Null(failure.InnerException);
+        AssertNoCustomerData(failure);
+    }
+
+    [Fact]
+    public async Task ARejectedPhoneCarriesNoResponseBody()
+    {
+        using SquareHarness harness = new();
+        harness.Http.Responses["/v2/customers"] = EchoingError("INVALID_PHONE_NUMBER", "phone_number");
+        harness.Http.ResponseStatuses["/v2/customers"] = HttpStatusCode.BadRequest;
+
+        InvalidCustomerDetailsException failure = await Assert.ThrowsAsync<InvalidCustomerDetailsException>(
+            () => harness.Square.CreateCustomerAsync("Quillon Vey-Ashgrove", "+15550100163", "key-1", Cancellation));
+
+        Assert.IsType<SquareRequestFailedException>(failure.InnerException);
+        AssertNoCustomerData(failure);
     }
 
     [Theory]
@@ -307,4 +337,16 @@ public sealed class SquareServiceRequestTests
 
     private static JsonElement Body(SquareHarness harness, string path) =>
         JsonDocument.Parse(harness.Http.Requests.Single(request => request.Path == path).Body).RootElement;
+
+    /// <summary>A Square error whose detail repeats the customer's input, as Square's free-text details can.</summary>
+    private static string EchoingError(string code, string field) =>
+        $$"""{"errors":[{"category":"INVALID_REQUEST_ERROR","code":"{{code}}","field":"{{field}}","detail":"+15550100163 for Quillon Vey-Ashgrove is invalid"}]}""";
+
+    private static void AssertNoCustomerData(Exception failure)
+    {
+        string text = failure.ToString();
+        Assert.DoesNotContain("5550100163", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Quillon", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Vey-Ashgrove", text, StringComparison.Ordinal);
+    }
 }

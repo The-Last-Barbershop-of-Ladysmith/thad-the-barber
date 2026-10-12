@@ -38,14 +38,6 @@ public sealed class StringRedactionExtensionsTests
         Assert.Equal(text, text.Redact());
     }
 
-    [Fact]
-    public void ResponseBodyIsDropped()
-    {
-        string message = "Error with status code 400\nStatus code: 400\nBody: {\"errors\":[{\"detail\":\"Quillon Vey-Ashgrove\"}]}\nmore";
-
-        Assert.Equal("Error with status code 400\nStatus code: 400\nBody: [removed]", message.Redact());
-    }
-
     [Theory]
     [InlineData("name")]
     [InlineData("Name")]

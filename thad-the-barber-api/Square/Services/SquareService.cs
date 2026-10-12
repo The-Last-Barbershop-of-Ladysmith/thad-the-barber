@@ -96,7 +96,8 @@ public sealed class SquareService : ISquareService
             },
         };
 
-        SearchAvailabilityResponse availabilityResponse = await squareClient.Bookings.SearchAvailabilityAsync(availabilityRequest, cancellationToken: cancellationToken);
+        SearchAvailabilityResponse availabilityResponse = await CallSquareAsync(async () =>
+            await squareClient.Bookings.SearchAvailabilityAsync(availabilityRequest, cancellationToken: cancellationToken));
 
         return (availabilityResponse.Availabilities ?? [])
             .Select(availability => availability.ToTimeSlot())
@@ -126,7 +127,8 @@ public sealed class SquareService : ISquareService
             Limit = 1,
         };
 
-        SearchCustomersResponse customerSearchResponse = await squareClient.Customers.SearchAsync(customerSearchRequest, cancellationToken: cancellationToken);
+        SearchCustomersResponse customerSearchResponse = await CallSquareAsync(async () =>
+            await squareClient.Customers.SearchAsync(customerSearchRequest, cancellationToken: cancellationToken));
 
         return customerSearchResponse.Customers?.FirstOrDefault()?.Id;
     }
@@ -160,9 +162,10 @@ public sealed class SquareService : ISquareService
         CreateCustomerResponse createCustomerResponse;
         try
         {
-            createCustomerResponse = await squareClient.Customers.CreateAsync(createCustomerRequest, cancellationToken: cancellationToken);
+            createCustomerResponse = await CallSquareAsync(async () =>
+                await squareClient.Customers.CreateAsync(createCustomerRequest, cancellationToken: cancellationToken));
         }
-        catch (SquareApiException exception) when (IsCustomerInputRejected(exception))
+        catch (SquareRequestFailedException exception) when (IsCustomerInputRejected(exception))
         {
             throw new InvalidCustomerDetailsException("Square rejected the customer's name or phone.", exception);
         }
@@ -195,9 +198,10 @@ public sealed class SquareService : ISquareService
         CreateBookingResponse createBookingResponse;
         try
         {
-            createBookingResponse = await squareClient.Bookings.CreateAsync(createBookingRequest, cancellationToken: cancellationToken);
+            createBookingResponse = await CallSquareAsync(async () =>
+                await squareClient.Bookings.CreateAsync(createBookingRequest, cancellationToken: cancellationToken));
         }
-        catch (SquareApiException exception) when (IsSlotTaken(exception))
+        catch (SquareRequestFailedException exception) when (IsSlotTaken(exception))
         {
             throw new SlotUnavailableException("Square says the time is no longer available.", exception);
         }
@@ -217,8 +221,11 @@ public sealed class SquareService : ISquareService
             StartAtMax = ToSquareTime(startAt + TimeSpan.FromMinutes(1)),
         };
 
-        Pager<Booking> bookings = await squareClient.Bookings.ListAsync(listBookingsRequest, cancellationToken: cancellationToken);
-        Booking? heldBooking = await bookings.FirstOrDefaultAsync(booking => IsHeldAt(booking.ToAppointment(), startAt), cancellationToken);
+        Booking? heldBooking = await CallSquareAsync(async () =>
+        {
+            Pager<Booking> bookings = await squareClient.Bookings.ListAsync(listBookingsRequest, cancellationToken: cancellationToken);
+            return await bookings.FirstOrDefaultAsync(booking => IsHeldAt(booking.ToAppointment(), startAt), cancellationToken);
+        });
 
         return heldBooking?.ToTimeSlot();
     }
@@ -232,10 +239,11 @@ public sealed class SquareService : ISquareService
 
         try
         {
-            GetBookingResponse getBookingResponse = await squareClient.Bookings.GetAsync(getBookingRequest, cancellationToken: cancellationToken);
+            GetBookingResponse getBookingResponse = await CallSquareAsync(async () =>
+                await squareClient.Bookings.GetAsync(getBookingRequest, cancellationToken: cancellationToken));
             return getBookingResponse.Booking?.ToAppointment();
         }
-        catch (SquareApiException exception) when (exception.StatusCode == StatusCodes.Status404NotFound)
+        catch (SquareRequestFailedException exception) when (exception.StatusCode == StatusCodes.Status404NotFound)
         {
             return null;
         }
@@ -250,7 +258,8 @@ public sealed class SquareService : ISquareService
             IdempotencyKey = Guid.NewGuid().ToString(),
         };
 
-        CancelBookingResponse cancelBookingResponse = await squareClient.Bookings.CancelAsync(cancelBookingRequest, cancellationToken: cancellationToken);
+        CancelBookingResponse cancelBookingResponse = await CallSquareAsync(async () =>
+            await squareClient.Bookings.CancelAsync(cancelBookingRequest, cancellationToken: cancellationToken));
         Booking cancelledBooking = cancelBookingResponse.Booking ?? throw new InvalidOperationException("Square returned no booking.");
 
         return cancelledBooking.ToAppointment();
@@ -273,9 +282,10 @@ public sealed class SquareService : ISquareService
         UpdateBookingResponse updateBookingResponse;
         try
         {
-            updateBookingResponse = await squareClient.Bookings.UpdateAsync(updateBookingRequest, cancellationToken: cancellationToken);
+            updateBookingResponse = await CallSquareAsync(async () =>
+                await squareClient.Bookings.UpdateAsync(updateBookingRequest, cancellationToken: cancellationToken));
         }
-        catch (SquareApiException exception) when (IsSlotTaken(exception))
+        catch (SquareRequestFailedException exception) when (IsSlotTaken(exception))
         {
             throw new SlotUnavailableException("Square says the new time is no longer available.", exception);
         }
@@ -292,7 +302,8 @@ public sealed class SquareService : ISquareService
             LocationId = MainLocationId,
         };
 
-        GetLocationResponse locationResponse = await squareClient.Locations.GetAsync(locationRequest, cancellationToken: cancellationToken);
+        GetLocationResponse locationResponse = await CallSquareAsync(async () =>
+            await squareClient.Locations.GetAsync(locationRequest, cancellationToken: cancellationToken));
         Location location = locationResponse.Location ?? throw new InvalidOperationException("Square returned no location.");
 
         return location.ToShopDetails();
@@ -300,7 +311,8 @@ public sealed class SquareService : ISquareService
 
     private async Task<BookingProfile> FetchBookingProfileAsync(string locationId, CancellationToken cancellationToken)
     {
-        Task<GetBusinessBookingProfileResponse> businessProfileTask = squareClient.Bookings.GetBusinessProfileAsync(cancellationToken: cancellationToken);
+        Task<GetBusinessBookingProfileResponse> businessProfileTask = CallSquareAsync(async () =>
+            await squareClient.Bookings.GetBusinessProfileAsync(cancellationToken: cancellationToken));
         Task<LocationBookingProfile?> locationProfileTask = FindLocationProfileAsync(locationId, cancellationToken);
         await Task.WhenAll(businessProfileTask, locationProfileTask);
 
@@ -317,32 +329,49 @@ public sealed class SquareService : ISquareService
             ProductTypes = [CatalogItemProductType.AppointmentsService]
         };
 
-        SearchCatalogItemsResponse catalogResponse = await squareClient.Catalog.SearchItemsAsync(catalogRequest, cancellationToken: cancellationToken);
+        SearchCatalogItemsResponse catalogResponse = await CallSquareAsync(async () =>
+            await squareClient.Catalog.SearchItemsAsync(catalogRequest, cancellationToken: cancellationToken));
 
         return (catalogResponse.Items ?? []).SelectMany(catalogItem => catalogItem.ToBookableServices()).ToList();
     }
 
-    private async Task<LocationBookingProfile?> FindLocationProfileAsync(string locationId, CancellationToken cancellationToken)
-    {
-        Pager<LocationBookingProfile> locationProfiles = await squareClient.Bookings.LocationProfiles.ListAsync(
-            new ListLocationProfilesRequest(),
-            cancellationToken: cancellationToken);
+    private Task<LocationBookingProfile?> FindLocationProfileAsync(string locationId, CancellationToken cancellationToken) =>
+        CallSquareAsync(async () =>
+        {
+            Pager<LocationBookingProfile> locationProfiles = await squareClient.Bookings.LocationProfiles.ListAsync(
+                new ListLocationProfilesRequest(),
+                cancellationToken: cancellationToken);
+            return await locationProfiles.FirstOrDefaultAsync(locationProfile => locationProfile.LocationId == locationId, cancellationToken);
+        });
 
-        return await locationProfiles.FirstOrDefaultAsync(locationProfile => locationProfile.LocationId == locationId, cancellationToken);
+    /// <summary>
+    /// Runs a Square call, turning the SDK's exception, whose message carries the whole response body, into
+    /// <see cref="SquareRequestFailedException"/>, so the body never leaves <c>Square/</c> (BR-23).
+    /// </summary>
+    private static async Task<T> CallSquareAsync<T>(Func<Task<T>> call)
+    {
+        try
+        {
+            return await call();
+        }
+        catch (SquareApiException exception)
+        {
+            throw exception.ToRequestFailedException();
+        }
     }
 
     /// <summary>
     /// Square answers a taken time with a plain 400 on <c>start_at</c> (#21), not a 409. We format <c>start_at</c>
     /// ourselves, so a 400 on it means the time, not the request.
     /// </summary>
-    private static bool IsSlotTaken(SquareApiException exception) =>
+    private static bool IsSlotTaken(SquareRequestFailedException exception) =>
         exception.StatusCode == StatusCodes.Status400BadRequest
         && exception.Errors.Any(error => error.Field is "start_at" or "booking.start_at");
 
     private static bool IsHeldAt(Appointment appointment, DateTimeOffset startAt) =>
         appointment.IsActive && appointment.StartAt == startAt;
 
-    private static bool IsCustomerInputRejected(SquareApiException exception) =>
+    private static bool IsCustomerInputRejected(SquareRequestFailedException exception) =>
         exception.StatusCode == StatusCodes.Status400BadRequest
         && exception.Errors.Any(error => error.Field is "given_name" or "family_name" or "phone_number");
 

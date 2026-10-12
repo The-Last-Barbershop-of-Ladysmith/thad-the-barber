@@ -1,12 +1,11 @@
 using OpenTelemetry;
 using OpenTelemetry.Logs;
-using ThadTheBarber.Api.Infrastructure.Telemetry.Exceptions;
 using ThadTheBarber.Api.Infrastructure.Telemetry.Extensions;
 
 namespace ThadTheBarber.Api.Infrastructure.Telemetry.Processors;
 
 /// <summary>
-/// Redacts every log record's text, attributes and exception before it's exported (BR-23). A record with a name, phone
+/// Redacts every log record's text and attributes before it's exported (BR-23). A record with a name, phone
 /// or email attribute also loses its formatted message, so App Insights shows the template (<c>Booked {Name}</c>)
 /// instead of the filled-in text. The attribute list is copied only when a value changes.
 /// </summary>
@@ -46,9 +45,5 @@ public sealed class RedactingLogProcessor : BaseProcessor<LogRecord>
         }
 
         data.Body = data.Body?.Redact();
-        if (data.Exception is not null && RedactedException.IsNeeded(data.Exception))
-        {
-            data.Exception = new RedactedException(data.Exception);
-        }
     }
 }

@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
-using Square;
 using ThadTheBarber.Api.Square.Exceptions;
 using ThadTheBarber.Api.Tests.TestSupport;
 using ThadTheBarber.Api.Tests.TestSupport.Fakes;
@@ -15,9 +14,9 @@ public sealed class ExceptionLoggingTests(ApiFactory factory) : IClassFixture<Ap
     [Fact]
     public async Task SquareFailuresAreLoggedAsErrors()
     {
-        FakeLogCollector logs = await RequestAsync(new SquareApiException("Square is down", StatusCodes.Status500InternalServerError, """{"errors":[]}"""));
+        FakeLogCollector logs = await RequestAsync(new SquareRequestFailedException(StatusCodes.Status500InternalServerError, []));
 
-        Assert.Contains(logs.GetSnapshot(), record => record.Level == LogLevel.Error && record.Exception is SquareApiException);
+        Assert.Contains(logs.GetSnapshot(), record => record.Level == LogLevel.Error && record.Exception is SquareRequestFailedException);
     }
 
     [Fact]

@@ -9,7 +9,6 @@ public static partial class StringRedactionExtensions
 
     private const string PhonePlaceholder = "[phone]";
     private const string EmailPlaceholder = "[email]";
-    private const string BodyPlaceholder = "Body: [removed]";
 
     /// <summary>Compared with only letters and digits, lowercased, so <c>customer.name</c> and <c>given_name</c> match.</summary>
     private static readonly FrozenSet<string> PersonalDataKeys = new[]
@@ -30,16 +29,11 @@ public static partial class StringRedactionExtensions
     }.ToFrozenSet();
 
     /// <summary>
-    /// Masks phone numbers and email addresses and drops HTTP response bodies, which SDKs like Square's put in exception
-    /// messages and which echo customers' names and phones back (BR-23). Names have no shape to find in free text; they're
-    /// caught by their field name instead (<see cref="IsPersonalDataKey"/>).
+    /// Masks phone numbers and email addresses (BR-23). Names have no shape to find in free text; they're caught by their
+    /// field name instead (<see cref="IsPersonalDataKey"/>), and Square's error bodies never leave <c>Square/</c>.
     /// </summary>
-    public static string Redact(this string text)
-    {
-        string withoutBody = ResponseBodyPattern().Replace(text, BodyPlaceholder);
-        string withoutEmails = EmailPattern().Replace(withoutBody, EmailPlaceholder);
-        return PhonePattern().Replace(withoutEmails, PhonePlaceholder);
-    }
+    public static string Redact(this string text) =>
+        PhonePattern().Replace(EmailPattern().Replace(text, EmailPlaceholder), PhonePlaceholder);
 
     /// <summary>
     /// Whether a log attribute or span tag named this holds a name, phone or email. Whole keys only, so tags like
@@ -73,7 +67,4 @@ public static partial class StringRedactionExtensions
 
     [GeneratedRegex(@"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")]
     private static partial Regex EmailPattern();
-
-    [GeneratedRegex(@"^Body:.*\z", RegexOptions.Multiline | RegexOptions.Singleline)]
-    private static partial Regex ResponseBodyPattern();
 }

@@ -5,6 +5,7 @@ using Square;
 using Square.OAuth;
 using ThadTheBarber.Api.Square.Configuration;
 using ThadTheBarber.Api.Square.Exceptions;
+using ThadTheBarber.Api.Square.Mappers;
 using ThadTheBarber.Api.Square.Models;
 
 namespace ThadTheBarber.Api.Square.Services;
@@ -93,7 +94,7 @@ public sealed partial class SquareAccessTokenProvider(
         catch (SquareApiException exception) when (exception.StatusCode is StatusCodes.Status400BadRequest or StatusCodes.Status401Unauthorized)
         {
             LogNotConnected(logger, exception.StatusCode);
-            throw new SquareNotConnectedException("Square refused the refresh token.", exception);
+            throw new SquareNotConnectedException("Square refused the refresh token.", exception.ToRequestFailedException());
         }
 
         _obtainedAt = time.GetUtcNow();
