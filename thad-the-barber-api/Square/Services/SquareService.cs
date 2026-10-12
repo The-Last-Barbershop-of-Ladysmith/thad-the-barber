@@ -22,9 +22,6 @@ namespace ThadTheBarber.Api.Square.Services;
 public sealed class SquareService : ISquareService
 {
     private const string MainLocationId = "main";
-    private const string ShopDetailsKey = "square:shop-details";
-    private const string BookingProfileKeyPrefix = "square:booking-profile:";
-    private const string BookableServicesKey = "square:bookable-services";
     private static readonly TimeSpan minimumAvailabilitySearchLength = TimeSpan.FromHours(24);
 
     private readonly SquareClient squareClient;
@@ -56,16 +53,16 @@ public sealed class SquareService : ISquareService
     }
 
     public Task<ShopDetails> GetShopDetailsAsync(CancellationToken cancellationToken) =>
-        squareCache.GetOrRefreshAsync(ShopDetailsKey, () => FetchShopDetailsAsync(cancellationToken), cancellationToken);
+        squareCache.GetOrRefreshAsync(SquareCacheKeys.ShopDetails, () => FetchShopDetailsAsync(cancellationToken), cancellationToken);
 
     public Task<BookingProfile> GetBookingProfileAsync(string locationId, CancellationToken cancellationToken) =>
         squareCache.GetOrRefreshAsync(
-            BookingProfileKeyPrefix + locationId,
+            SquareCacheKeys.BookingProfilePrefix + locationId,
             () => FetchBookingProfileAsync(locationId, cancellationToken),
             cancellationToken);
 
     public Task<List<BookableService>> GetBookableServicesAsync(CancellationToken cancellationToken) =>
-        squareCache.GetOrRefreshAsync(BookableServicesKey, () => FetchBookableServicesAsync(cancellationToken), cancellationToken);
+        squareCache.GetOrRefreshAsync(SquareCacheKeys.BookableServices, () => FetchBookableServicesAsync(cancellationToken), cancellationToken);
 
     /// <summary>
     /// Square rejects ranges shorter than 24 hours, and a day with a DST jump has 23, so the search covers at least 24
