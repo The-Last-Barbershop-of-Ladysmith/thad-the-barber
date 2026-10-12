@@ -22,9 +22,9 @@ namespace ThadTheBarber.Api.Square.Services;
 public sealed class SquareService : ISquareService
 {
     private const string MainLocationId = "main";
-    private const string ShopDetailsKey = "square:shop-details";
-    private const string BookingProfileKeyPrefix = "square:booking-profile:";
-    private const string BookableServicesKey = "square:bookable-services";
+    public const string ShopDetailsKey = "square:shop-details";
+    public const string BookingProfileKeyPrefix = "square:booking-profile:";
+    public const string BookableServicesKey = "square:bookable-services";
     private static readonly TimeSpan minimumAvailabilitySearchLength = TimeSpan.FromHours(24);
 
     private readonly SquareClient squareClient;
