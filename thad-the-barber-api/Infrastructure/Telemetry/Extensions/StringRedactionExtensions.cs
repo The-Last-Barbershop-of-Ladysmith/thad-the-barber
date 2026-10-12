@@ -5,12 +5,13 @@ namespace ThadTheBarber.Api.Infrastructure.Telemetry.Extensions;
 
 public static partial class StringRedactionExtensions
 {
-    public const string PhonePlaceholder = "[phone]";
-    public const string EmailPlaceholder = "[email]";
-    public const string BodyPlaceholder = "Body: [removed]";
     public const string ValuePlaceholder = "[redacted]";
 
-    /// <summary>Compared after lowercasing and dropping <c>_</c>, <c>-</c> and <c>.</c>, so <c>customer.name</c> and <c>given_name</c> match.</summary>
+    private const string PhonePlaceholder = "[phone]";
+    private const string EmailPlaceholder = "[email]";
+    private const string BodyPlaceholder = "Body: [removed]";
+
+    /// <summary>Compared with only letters and digits, lowercased, so <c>customer.name</c> and <c>given_name</c> match.</summary>
     private static readonly FrozenSet<string> PersonalDataKeys = new[]
     {
         "name",
@@ -45,7 +46,23 @@ public static partial class StringRedactionExtensions
     /// <c>db.name</c> or <c>service.name</c> keep their values.
     /// </summary>
     public static bool IsPersonalDataKey(this string key) =>
-        PersonalDataKeys.Contains(KeySeparatorPattern().Replace(key, string.Empty).ToLowerInvariant());
+        PersonalDataKeys.Contains(string.Concat(key.Where(char.IsLetterOrDigit)).ToLowerInvariant());
+
+    /// <summary>A log attribute's or span tag's value as it may be exported: personal-data keys lose it, text is redacted.</summary>
+    public static object? RedactValue(this string key, object? value)
+    {
+        if (key.IsPersonalDataKey())
+        {
+            return ValuePlaceholder;
+        }
+
+        if (value is string text)
+        {
+            return text.Redact();
+        }
+
+        return value;
+    }
 
     /// <summary>
     /// A US number with or without +1, bare or with spaces, dots, dashes or brackets, and not part of a longer number
@@ -59,7 +76,4 @@ public static partial class StringRedactionExtensions
 
     [GeneratedRegex(@"^Body:.*\z", RegexOptions.Multiline | RegexOptions.Singleline)]
     private static partial Regex ResponseBodyPattern();
-
-    [GeneratedRegex(@"[_.\-]")]
-    private static partial Regex KeySeparatorPattern();
 }

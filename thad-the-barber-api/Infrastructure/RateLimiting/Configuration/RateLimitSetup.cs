@@ -22,22 +22,20 @@ public static class RateLimitSetup
             .ValidateOnStart();
         services.AddSingleton<IValidateOptions<RateLimitSettings>, RateLimitSettingsValidator>();
 
-        services.AddRateLimiter(options =>
-        {
-            options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-            options.OnRejected = (context, _) =>
-            {
-                if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out TimeSpan retryAfter))
-                {
-                    context.HttpContext.Response.Headers.RetryAfter = ((int)Math.Ceiling(retryAfter.TotalSeconds)).ToString(CultureInfo.InvariantCulture);
-                }
-
-                return ValueTask.CompletedTask;
-            };
-        });
+        services.AddRateLimiter(_ => { });
         services.AddOptions<RateLimiterOptions>()
             .Configure<IOptions<RateLimitSettings>>((options, settings) =>
             {
+                options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+                options.OnRejected = (context, _) =>
+                {
+                    if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out TimeSpan retryAfter))
+                    {
+                        context.HttpContext.Response.Headers.RetryAfter = ((int)Math.Ceiling(retryAfter.TotalSeconds)).ToString(CultureInfo.InvariantCulture);
+                    }
+
+                    return ValueTask.CompletedTask;
+                };
                 options.AddPolicy(SessionPolicy, context => PerClientIp(context, settings.Value.Session));
                 options.AddPolicy(BookingPolicy, context => PerClientIp(context, settings.Value.Booking));
             });

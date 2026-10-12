@@ -17,7 +17,7 @@ public sealed class TelemetryCapture
     private readonly ConcurrentQueue<string> _texts = new();
     private readonly ConcurrentQueue<Activity> _spans = new();
 
-    /// <summary>Messages, attribute values, exception text and span tags, as exported.</summary>
+    /// <summary>Messages, attribute values, exception text, span names, tags and events, as exported.</summary>
     public IReadOnlyCollection<string> Texts => _texts;
 
     public IReadOnlyCollection<Activity> Spans => _spans;
@@ -31,22 +31,26 @@ public sealed class TelemetryCapture
                 .AddProcessor(new SpanCapture(this)));
         }));
 
+    private void Add(object? value)
+    {
+        if (value?.ToString() is { Length: > 0 } text)
+        {
+            _texts.Enqueue(text);
+        }
+    }
+
     private sealed class LogCapture(TelemetryCapture capture) : BaseProcessor<LogRecord>
     {
         public override void OnEnd(LogRecord data)
         {
-            capture._texts.Enqueue(data.FormattedMessage ?? string.Empty);
-            capture._texts.Enqueue(data.Body ?? string.Empty);
+            capture.Add(data.FormattedMessage);
+            capture.Add(data.Body);
             foreach (KeyValuePair<string, object?> attribute in data.Attributes ?? [])
             {
-                capture._texts.Enqueue(attribute.Value?.ToString() ?? string.Empty);
+                capture.Add(attribute.Value);
             }
 
-            for (Exception? exception = data.Exception; exception is not null; exception = exception.InnerException)
-            {
-                capture._texts.Enqueue(exception.Message);
-                capture._texts.Enqueue(exception.ToString());
-            }
+            capture.Add(data.Exception);
         }
     }
 
@@ -55,10 +59,19 @@ public sealed class TelemetryCapture
         public override void OnEnd(Activity data)
         {
             capture._spans.Enqueue(data);
-            capture._texts.Enqueue(data.DisplayName);
+            capture.Add(data.DisplayName);
             foreach (KeyValuePair<string, object?> tag in data.TagObjects)
             {
-                capture._texts.Enqueue(tag.Value?.ToString() ?? string.Empty);
+                capture.Add(tag.Value);
+            }
+
+            foreach (ActivityEvent spanEvent in data.Events)
+            {
+                capture.Add(spanEvent.Name);
+                foreach (KeyValuePair<string, object?> tag in spanEvent.Tags)
+                {
+                    capture.Add(tag.Value);
+                }
             }
         }
     }

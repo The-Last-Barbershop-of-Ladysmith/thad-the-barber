@@ -1,12 +1,11 @@
-using System.Text;
 using ThadTheBarber.Api.Infrastructure.Telemetry.Extensions;
 
 namespace ThadTheBarber.Api.Infrastructure.Telemetry.Exceptions;
 
 /// <summary>
 /// Exported in place of a logged exception whose text holds customer data. App Insights reads the message, the inner
-/// exceptions and <see cref="ToString"/>, so all three are redacted; the original type name leads the message and the
-/// stack trace is kept, so the failure can still be traced to its code.
+/// exceptions and the stack trace; the messages are redacted, the original type name leads each one and the stack
+/// trace is kept, so the failure can still be traced to its code.
 /// </summary>
 public sealed class RedactedException : Exception
 {
@@ -34,21 +33,5 @@ public sealed class RedactedException : Exception
         }
 
         return false;
-    }
-
-    public override string ToString()
-    {
-        StringBuilder text = new(Message);
-        if (InnerException is not null)
-        {
-            text.Append(" ---> ").Append(InnerException).AppendLine().Append("   --- End of inner exception stack trace ---");
-        }
-
-        if (_stackTrace is not null)
-        {
-            text.AppendLine().Append(_stackTrace);
-        }
-
-        return text.ToString();
     }
 }

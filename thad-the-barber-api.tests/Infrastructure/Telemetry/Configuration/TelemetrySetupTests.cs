@@ -42,39 +42,36 @@ public sealed class TelemetrySetupTests
         AssertNoCustomerData(capture);
     }
 
-    [Fact]
-    public async Task SquareRefusingTheDetailsLeavesNoNameOrPhoneInTelemetry()
+    /// <summary>A refusal is logged as an expected problem with Square's exception inside; a Square failure as an error.</summary>
+    public static TheoryData<Exception, HttpStatusCode> SquareErrorsEchoingTheCustomer => new()
     {
-        TelemetryCapture capture = new();
-        FakeSquareService square = new()
         {
-            CustomerId = null,
-            CreateCustomerFailure = new InvalidCustomerDetailsException(
+            new InvalidCustomerDetailsException(
                 "Square rejected the customer's name or phone.",
                 new SquareApiException("Error with status code 400", StatusCodes.Status400BadRequest, SquareErrorBody)
             ),
-        };
+            HttpStatusCode.BadRequest
+        },
+        {
+            new SquareApiException("Error with status code 500", StatusCodes.Status500InternalServerError, SquareErrorBody),
+            HttpStatusCode.ServiceUnavailable
+        },
+    };
 
-        using HttpResponseMessage response = await BookAsync(capture, square);
-
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        Assert.Contains(capture.Texts, text => text.Contains("invalid_customer_details", StringComparison.Ordinal));
-        AssertNoCustomerData(capture);
-    }
-
-    [Fact]
-    public async Task SquareFailingLeavesNoNameOrPhoneInTheLoggedError()
+    [Theory]
+    [MemberData(nameof(SquareErrorsEchoingTheCustomer))]
+    public async Task SquareErrorsLeaveNoNameOrPhoneInTelemetry(Exception squareError, HttpStatusCode expectedStatus)
     {
         TelemetryCapture capture = new();
         FakeSquareService square = new()
         {
             CustomerId = null,
-            CreateCustomerFailure = new SquareApiException("Error with status code 500", StatusCodes.Status500InternalServerError, SquareErrorBody),
+            CreateCustomerFailure = squareError,
         };
 
         using HttpResponseMessage response = await BookAsync(capture, square);
 
-        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+        Assert.Equal(expectedStatus, response.StatusCode);
         Assert.Contains(capture.Texts, text => text.Contains("Square.SquareApiException", StringComparison.Ordinal));
         AssertNoCustomerData(capture);
     }
@@ -90,6 +87,7 @@ public sealed class TelemetrySetupTests
 
         using HttpResponseMessage response = await host.CreateClient().SendAsync(request, Cancellation);
 
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Activity span = Assert.Single(capture.Spans, span => span.TraceId.ToHexString() == "4bf92f3577b34da6a3ce929d0e0e4736");
         Assert.Equal(ActivityKind.Server, span.Kind);
         Assert.Equal("00f067aa0ba902b7", span.ParentSpanId.ToHexString());
@@ -101,7 +99,7 @@ public sealed class TelemetrySetupTests
             square: square,
             time: new FakeTimeProvider(DateTimeOffset.Parse(Now, CultureInfo.InvariantCulture))
         );
-        using WebApplicationFactory<Program> host = capture.Attach(api);
+        WebApplicationFactory<Program> host = capture.Attach(api);
         HttpResponseMessage response = await host.CreateClient().PostAsJsonAsync(
             "/api/bookings",
             new
@@ -112,6 +110,7 @@ public sealed class TelemetrySetupTests
                 idempotencyKey = Guid.NewGuid(),
             },
             Cancellation);
+        // Stopping the host flushes the telemetry pipeline, so everything is captured before the caller asserts.
         await host.DisposeAsync();
         return response;
     }

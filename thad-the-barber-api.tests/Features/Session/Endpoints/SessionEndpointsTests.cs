@@ -42,7 +42,7 @@ public sealed class SessionEndpointsTests
 
         using HttpResponseMessage response = await PostSessionAsync(api.CreateClientWithoutToken(), ApiFactory.FrontendOrigin, ValidBody);
 
-        await AssertProblemAsync(response, "bot_check_failed");
+        await ProblemAssert.IsProblemAsync(response, 403, "bot_check_failed");
     }
 
     [Theory]
@@ -55,7 +55,7 @@ public sealed class SessionEndpointsTests
 
         using HttpResponseMessage response = await PostSessionAsync(api.CreateClientWithoutToken(), ApiFactory.FrontendOrigin, body);
 
-        await AssertProblemAsync(response, "bot_check_failed");
+        await ProblemAssert.IsProblemAsync(response, 403, "bot_check_failed");
     }
 
     [Fact]
@@ -66,7 +66,7 @@ public sealed class SessionEndpointsTests
 
         using HttpResponseMessage response = await PostSessionAsync(strict.CreateClient(), ApiFactory.FrontendOrigin, ValidBody);
 
-        await AssertProblemAsync(response, "bot_check_failed");
+        await ProblemAssert.IsProblemAsync(response, 403, "bot_check_failed");
     }
 
     [Theory]
@@ -78,7 +78,7 @@ public sealed class SessionEndpointsTests
 
         using HttpResponseMessage response = await PostSessionAsync(api.CreateClientWithoutToken(), origin, ValidBody);
 
-        await AssertProblemAsync(response, "origin_not_allowed");
+        await ProblemAssert.IsProblemAsync(response, 403, "origin_not_allowed");
     }
 
     private static async Task<HttpResponseMessage> PostSessionAsync(HttpClient client, string? origin, string body)
@@ -93,12 +93,5 @@ public sealed class SessionEndpointsTests
         }
 
         return await client.SendAsync(request, Cancellation);
-    }
-
-    private static async Task AssertProblemAsync(HttpResponseMessage response, string code)
-    {
-        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
-        JsonElement problem = await response.Content.ReadFromJsonAsync<JsonElement>(Cancellation);
-        Assert.Equal(code, problem.GetProperty("code").GetString());
     }
 }

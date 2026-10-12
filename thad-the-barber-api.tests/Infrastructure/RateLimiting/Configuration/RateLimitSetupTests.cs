@@ -1,7 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
-using System.Text.Json;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using ThadTheBarber.Api.Tests.TestSupport;
@@ -105,7 +105,6 @@ public sealed class RateLimitSetupTests(ApiFactory factory) : IClassFixture<ApiF
         TimeSpan? retryAfter = response.Headers.RetryAfter?.Delta;
         Assert.NotNull(retryAfter);
         Assert.InRange(retryAfter.Value, TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(10));
-        JsonElement body = await response.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken);
-        Assert.Equal("rate_limited", body.GetProperty("code").GetString());
+        await ProblemAssert.IsProblemAsync(response, StatusCodes.Status429TooManyRequests, "rate_limited");
     }
 }
