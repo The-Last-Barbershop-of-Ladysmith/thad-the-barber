@@ -26,10 +26,10 @@ public static class BookingEndpoints
             .WithName("GetBooking");
         bookings.MapPost("/{id}/cancel", CancelBookingAsync)
             .WithName("CancelBooking")
-            .RequireRateLimiting(RateLimitSetup.BookingPolicy);
+            .RequireRateLimiting(RateLimitSetup.ManagePolicy);
         bookings.MapPost("/{id}/reschedule", RescheduleBookingAsync)
             .WithName("RescheduleBooking")
-            .RequireRateLimiting(RateLimitSetup.BookingPolicy);
+            .RequireRateLimiting(RateLimitSetup.ManagePolicy);
         return api;
     }
 

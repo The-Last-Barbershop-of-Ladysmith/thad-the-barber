@@ -45,14 +45,40 @@ public sealed class RateLimitSetupTests(ApiFactory factory) : IClassFixture<ApiF
     }
 
     [Fact]
-    public async Task BookingCancelAndRescheduleShareOneLimit()
+    public async Task ThirdBookingAttemptFromOneIpIsRateLimited()
     {
         using WebApplicationFactory<Program> limited = WithLimitOfTwo();
         using HttpClient client = ClientFrom(limited, FirstClientIp);
 
-        AssertNotLimited(await client.PostAsJsonAsync("/api/bookings", new { }, TestContext.Current.CancellationToken));
+        AssertNotLimited(await BookAsync(client));
+        AssertNotLimited(await BookAsync(client));
+        using HttpResponseMessage third = await BookAsync(client);
+
+        await AssertRateLimitedAsync(third);
+    }
+
+    [Fact]
+    public async Task UsedUpBookingAttemptsDontStopManagingABooking()
+    {
+        using WebApplicationFactory<Program> limited = WithLimitOfTwo();
+        using HttpClient client = ClientFrom(limited, FirstClientIp);
+        AssertNotLimited(await BookAsync(client));
+        AssertNotLimited(await BookAsync(client));
+
+        using HttpResponseMessage cancel = await client.PostAsync("/api/bookings/BKG-NOT-REAL/cancel", null, TestContext.Current.CancellationToken);
+
+        AssertNotLimited(cancel);
+    }
+
+    [Fact]
+    public async Task CancelAndRescheduleShareTheManageLimit()
+    {
+        using WebApplicationFactory<Program> limited = WithLimitOfTwo();
+        using HttpClient client = ClientFrom(limited, FirstClientIp);
+
         AssertNotLimited(await client.PostAsync("/api/bookings/BKG-NOT-REAL/cancel", null, TestContext.Current.CancellationToken));
-        using HttpResponseMessage third = await client.PostAsJsonAsync("/api/bookings/BKG-NOT-REAL/reschedule", new { }, TestContext.Current.CancellationToken);
+        AssertNotLimited(await client.PostAsJsonAsync("/api/bookings/BKG-NOT-REAL/reschedule", new { }, TestContext.Current.CancellationToken));
+        using HttpResponseMessage third = await client.PostAsync("/api/bookings/BKG-NOT-REAL/cancel", null, TestContext.Current.CancellationToken);
 
         await AssertRateLimitedAsync(third);
     }
@@ -78,6 +104,7 @@ public sealed class RateLimitSetupTests(ApiFactory factory) : IClassFixture<ApiF
             {
                 ["RateLimits:Session:PermitLimit"] = "2",
                 ["RateLimits:Booking:PermitLimit"] = "2",
+                ["RateLimits:Manage:PermitLimit"] = "2",
             }));
         });
 
@@ -87,6 +114,9 @@ public sealed class RateLimitSetupTests(ApiFactory factory) : IClassFixture<ApiF
         client.DefaultRequestHeaders.Add("X-Forwarded-For", clientIp);
         return client;
     }
+
+    private static Task<HttpResponseMessage> BookAsync(HttpClient client) =>
+        client.PostAsJsonAsync("/api/bookings", new { }, TestContext.Current.CancellationToken);
 
     private static Task<HttpResponseMessage> StartSessionAsync(HttpClient client) =>
         client.PostAsJsonAsync("/api/session", new { recaptchaToken = "fake-token" }, TestContext.Current.CancellationToken);

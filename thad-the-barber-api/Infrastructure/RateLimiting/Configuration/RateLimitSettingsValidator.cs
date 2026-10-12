@@ -10,6 +10,7 @@ public sealed class RateLimitSettingsValidator : IValidateOptions<RateLimitSetti
         List<string> failures = [];
         AddFailures(failures, nameof(RateLimitSettings.Session), options.Session);
         AddFailures(failures, nameof(RateLimitSettings.Booking), options.Booking);
+        AddFailures(failures, nameof(RateLimitSettings.Manage), options.Manage);
         if (failures.Count > 0)
         {
             return ValidateOptionsResult.Fail(failures);

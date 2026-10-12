@@ -14,6 +14,7 @@ public static class RateLimitSetup
 {
     public const string SessionPolicy = "session";
     public const string BookingPolicy = "booking";
+    public const string ManagePolicy = "manage";
 
     public static IServiceCollection AddRateLimits(this IServiceCollection services, IConfiguration configuration)
     {
@@ -38,6 +39,7 @@ public static class RateLimitSetup
                 };
                 options.AddPolicy(SessionPolicy, context => PerClientIp(context, settings.Value.Session));
                 options.AddPolicy(BookingPolicy, context => PerClientIp(context, settings.Value.Booking));
+                options.AddPolicy(ManagePolicy, context => PerClientIp(context, settings.Value.Manage));
             });
         return services;
     }
