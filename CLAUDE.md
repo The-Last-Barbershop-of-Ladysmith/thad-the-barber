@@ -70,6 +70,7 @@ TypeScript (`eslint.config.js`, plus `eslint/items-per-line.js`):
 - ESLint formats `.ts`; Prettier formats HTML/SCSS/CSS only (Prettier would undo the one-per-line wrapping).
 - NgRx typing: effects are `FunctionalEffect`; derived selectors are `MemoizedSelector<object, T>`; feature selectors are destructured with `: typeof xFeature`; action payloads are named interfaces; store is injected as `inject<Store<AppState>>(Store)`.
 - `tsconfig.json` is strict with `noUncheckedIndexedAccess`, `noUnused*`, and `strictTemplates`.
+- `@microsoft/applicationinsights-*` imports are allowed only in `src/app/core/telemetry/` (`no-restricted-imports`), so switching telemetry providers rewrites that folder only. The browser stays on the App Insights SDK, not OpenTelemetry, which Microsoft doesn't support in browsers.
 
 ## Tests
 

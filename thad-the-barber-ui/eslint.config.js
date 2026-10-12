@@ -282,6 +282,24 @@ module.exports = defineConfig([
     },
   },
   {
+    // Telemetry provider lock-in stays in one folder: switching away from App Insights rewrites core/telemetry only.
+    files: ['**/*.ts'],
+    ignores: ['src/app/core/telemetry/**'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@microsoft/applicationinsights-*'],
+              message: 'Use App Insights only inside src/app/core/telemetry/; expose what you need from there.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: ['**/*.html'],
     extends: [
       angular.configs.templateRecommended,
