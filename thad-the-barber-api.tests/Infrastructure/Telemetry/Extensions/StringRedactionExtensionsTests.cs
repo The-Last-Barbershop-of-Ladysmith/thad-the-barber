@@ -12,6 +12,7 @@ public sealed class StringRedactionExtensionsTests
     [InlineData("call 555.010.0163", "call [phone]")]
     [InlineData("call +1 555 010 0163", "call [phone]")]
     [InlineData("{\"phone\":\"+15550100163\"}", "{\"phone\":\"[phone]\"}")]
+    [InlineData("/v2/customers?phone=%2B15550100163&limit=1", "/v2/customers?phone=%2B[phone]&limit=1")]
     public void PhoneNumbersAreMasked(string text, string expected)
     {
         Assert.Equal(expected, text.Redact());
@@ -20,6 +21,7 @@ public sealed class StringRedactionExtensionsTests
     [Theory]
     [InlineData("write to q.vey+ashgrove@example.com today", "write to [email] today")]
     [InlineData("q_vey@mail.example.co.uk", "[email]")]
+    [InlineData("/v2/customers?email=q.vey%40example.com", "/v2/customers?email=[email]")]
     public void EmailAddressesAreMasked(string text, string expected)
     {
         Assert.Equal(expected, text.Redact());
@@ -66,4 +68,26 @@ public sealed class StringRedactionExtensionsTests
     {
         Assert.False(key.IsPersonalDataKey());
     }
+
+    [Fact]
+    public void ObjectValuesArePrintedAndRedacted()
+    {
+        object? redacted = "Request".RedactValue(new MadeUpRequest("+15550100163", 3));
+
+        Assert.Equal("MadeUpRequest { Phone = [phone], Chairs = 3 }", redacted);
+    }
+
+    [Fact]
+    public void NumbersBooleansAndArraysKeepTheirType()
+    {
+        Assert.Equal(503, "StatusCode".RedactValue(503));
+        Assert.Equal(true, "IsActive".RedactValue(true));
+        string[] tags = ["a", "b"];
+        Assert.Same(tags, "Tags".RedactValue(tags));
+    }
+
+    private sealed record MadeUpRequest(
+        string Phone,
+        int Chairs
+    );
 }

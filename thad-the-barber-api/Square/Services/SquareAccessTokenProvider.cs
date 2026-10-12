@@ -96,6 +96,10 @@ public sealed partial class SquareAccessTokenProvider(
             LogNotConnected(logger, exception.StatusCode);
             throw new SquareNotConnectedException("Square refused the refresh token.", exception.ToRequestFailedException());
         }
+        catch (SquareApiException exception)
+        {
+            throw exception.ToRequestFailedException();
+        }
 
         _obtainedAt = time.GetUtcNow();
         Volatile.Write(ref _accessToken, response.AccessToken);
