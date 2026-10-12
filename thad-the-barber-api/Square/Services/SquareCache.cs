@@ -46,4 +46,19 @@ public sealed partial class SquareCache(IMemoryCache cache, TimeProvider time, I
 
     [LoggerMessage(EventName = "SquareServingStale", Level = LogLevel.Warning, Message = "Square failed, so {CacheKey} is served from the copy fetched {FetchedAt}.")]
     private static partial void LogServingStale(ILogger logger, Exception exception, string cacheKey, DateTimeOffset fetchedAt);
+
+    /// <summary>
+    /// Makes the next read of <paramref name="key"/> refetch, keeping the value to serve if Square fails then.
+    /// <typeparamref name="T"/> must be the type the entry was cached as, or nothing is marked.
+    /// </summary>
+    public void MarkStale<T>(string key)
+    {
+        if (cache.Get(key) is CachedValue<T> cached)
+        {
+            cache.Set(key, cached with
+            {
+                RefreshAt = time.GetUtcNow(),
+            });
+        }
+    }
 }
