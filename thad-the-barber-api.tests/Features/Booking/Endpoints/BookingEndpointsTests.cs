@@ -122,13 +122,13 @@ public sealed class BookingEndpointsTests
     public async Task APhoneAtItsUpcomingAppointmentLimitIs409WithItsCode()
     {
         FakeSquareService square = new();
-        square.Hold(5, AppointmentStatus.Accepted, DateTimeOffset.Parse("2026-11-02T14:00:00Z", CultureInfo.InvariantCulture));
+        square.Hold(6, AppointmentStatus.Accepted, DateTimeOffset.Parse("2026-10-30T14:00:00Z", CultureInfo.InvariantCulture));
         using ApiFactory api = Api(square);
 
         using HttpResponseMessage response = await api.CreateClient().PostAsJsonAsync("/api/bookings", BookingBody(), Cancellation);
 
         await ProblemAssert.IsProblemAsync(response, StatusCodes.Status409Conflict, "booking_limit");
-        Assert.Equal(5, square.Bookings.Count);
+        Assert.Equal(6, square.Bookings.Count);
     }
 
     [Fact]
