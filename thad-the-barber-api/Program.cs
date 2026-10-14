@@ -18,6 +18,7 @@ using ThadTheBarber.Api.Infrastructure.RateLimiting.Configuration;
 using ThadTheBarber.Api.Infrastructure.Telemetry.Configuration;
 using ThadTheBarber.Api.Recaptcha.Configuration;
 using ThadTheBarber.Api.Square.Configuration;
+using ThadTheBarber.Api.Square.Endpoints;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -71,6 +72,7 @@ api.MapSessionEndpoints();
 api.MapHealthEndpoints();
 api.MapShopEndpoints();
 api.MapBookingEndpoints();
+api.MapSquareWebhookEndpoints();
 
 if (app.Environment.IsDevelopment())
 {

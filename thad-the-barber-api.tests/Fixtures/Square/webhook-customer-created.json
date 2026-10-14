@@ -1,0 +1,15 @@
+{
+  "merchant_id": "FAKEMERCHANT01",
+  "type": "customer.created",
+  "event_id": "0b0c3f0e-0000-4000-8000-000000000003",
+  "created_at": "2031-02-14T09:32:00.000Z",
+  "data": {
+    "type": "customer",
+    "id": "FAKECUSTOMER01",
+    "object": {
+      "customer": {
+        "id": "FAKECUSTOMER01"
+      }
+    }
+  }
+}

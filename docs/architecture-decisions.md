@@ -71,7 +71,7 @@ Endpoints (each replaces a mocked Angular service without changing its NgRx effe
 | None: the UI reads `media-<env>/content/announcements.json` ([#30](https://github.com/The-Last-Barbershop-of-Ladysmith/thad-the-barber/issues/30)) | None | `HOME_CONTENT.announcements` |
 | None: the UI lists `media-<env>/gallery/` (#168) | None | `HOME_CONTENT.gallery` |
 | `GET /api/content/reviews` | Google Business Profile reviews (fallback `content/reviews.json`) | `HOME_CONTENT.testimonials`, `SHOP_INFO.reviews` |
-| `POST /api/webhooks/square` | Signature-verified webhooks | New (cache invalidation now, admin feed later) |
+| `POST /api/webhooks/square` | Signature-verified webhooks: `location.updated` and `catalog.version.updated` mark the cached shop details or service stale, so the next read refetches them (the old copy still covers a Square outage); a repeated event id is skipped for 24 hours, Square's retry window. Both live in the instance's memory, which is right while the API runs as one App Service instance; scaling out would need a shared cache. Bodies over 32 K characters get 413 before they're read in full. Booking events aren't subscribed until the admin feed needs them (#31) | New |
 | `GET /api/health` | None | New |
 | `POST /api/session` | None (Google reCAPTCHA v3 check) | New: issues the session JWT (see [M](#m-security)) |
 
@@ -100,7 +100,7 @@ Endpoints (each replaces a mocked Angular service without changing its NgRx effe
 - The token is HMAC-SHA256 of the booking ID with the `ManageLink--HmacKey` secret, base64url, and `POST /api/bookings` returns it as `manageToken` (#29). The API checks it in constant time before calling Square. A missing or wrong token is 404 `booking_not_found`, never 403, so it doesn't reveal that the booking exists. The link never expires; replacing the key revokes every link.
 - `GET /api/bookings/{id}` returns `{ id, startAt, isCancelled, canChange }`. `canChange` comes from the server's clock, so the UI doesn't trust the browser's. `POST …/cancel` and `POST …/reschedule` (`{ startAt }`, re-checked against availability) return the same shape. Repeating a cancel or reschedule that already happened returns the booking unchanged, so retries are safe. Rescheduling a cancelled booking is 409 `booking_cancelled`; a taken time is 409 `slot_unavailable`.
 
-**One service:** the shop offers a single service, and that isn't expected to change. There's no services page, no service step, and no public services endpoint. The API still **reads that service from the Square Catalog** (`BookableServiceResolver`, cached for 60 minutes; #31 adds invalidation by the `catalog.version.updated` webhook), because `SearchAvailability` needs its variation ID and `CreateBooking` needs its variation ID, **version**, team member and duration. It takes the one appointment-service variation open for online booking; the optional `Square:ServiceVariationId` setting pins one. With none, or more than one and no pin, booking calls return 503 and the deep health check (`bookableService`) reports unhealthy with an error logged. Only its duration reaches the UI, as `bookingSettings.slotMinutes` in `GET /api/shop` (no name or price, BR-11).
+**One service:** the shop offers a single service, and that isn't expected to change. There's no services page, no service step, and no public services endpoint. The API still **reads that service from the Square Catalog** (`BookableServiceResolver`, cached for 60 minutes and marked stale by the `catalog.version.updated` webhook, #31), because `SearchAvailability` needs its variation ID and `CreateBooking` needs its variation ID, **version**, team member and duration. It takes the one appointment-service variation open for online booking; the optional `Square:ServiceVariationId` setting pins one. With none, or more than one and no pin, booking calls return 503 and the deep health check (`bookableService`) reports unhealthy with an error logged. Only its duration reaches the UI, as `bookingSettings.slotMinutes` in `GET /api/shop` (no name or price, BR-11).
 
 **Booking UI:** our own UI, not Square's hosted booking page. It keeps the site's design and makes room for the admin portal.
 
@@ -209,7 +209,7 @@ Every change ships with its tests:
 | API base URL, site URL, reCAPTCHA site key | `environment.*.ts` per environment (build time) | `environment` |
 | PrimeUI license, theme tokens, frame counts, validator patterns | Code (not business data) | Unchanged |
 
-- The API caches Square reads for 15–60 minutes with `IMemoryCache`, and Square `catalog`/`location` webhooks invalidate the cache.
+- The API caches Square reads for 15–60 minutes with `IMemoryCache`, and Square's `catalog.version.updated`/`location.updated` webhooks mark the affected entry stale.
 - `SHOP_INFO`, `OPENING_HOURS`, `SOCIAL_LINKS`, `BOOKING_RULES`, and `HOME_CONTENT` are deleted once nothing uses them.
 - Every audit issue carries a **Hardcoded values inventory** for its component.
 

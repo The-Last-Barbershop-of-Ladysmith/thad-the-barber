@@ -38,6 +38,7 @@ public static class SquareSetup
         services.AddSingleton<SquareCache>();
         services.AddSingleton<ISquareService, SquareService>();
         services.AddSingleton<BookableServiceResolver>();
+        services.AddSingleton<SquareWebhookService>();
         services.AddExceptionHandler<SquareExceptionHandler>();
         return services;
     }
