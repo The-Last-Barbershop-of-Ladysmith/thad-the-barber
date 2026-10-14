@@ -58,7 +58,7 @@ public sealed class BookingService(
         );
 
         List<Appointment> appointments = await square.ListCustomerAppointmentsAsync(shopDetails.LocationId, customerId, upcoming, cancellationToken);
-        int upcomingCount = appointments.Count(appointment => appointment.IsActive && appointment.StartAt > now);
+        int upcomingCount = appointments.Count(appointment => appointment.IsUpcomingAt(now));
         if (upcomingCount >= settings.Value.MaxUpcomingPerPhone)
         {
             throw new BookingLimitReachedException($"The customer holds {upcomingCount} upcoming appointments.");
