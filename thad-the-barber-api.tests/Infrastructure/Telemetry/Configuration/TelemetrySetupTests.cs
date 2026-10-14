@@ -19,7 +19,7 @@ namespace ThadTheBarber.Api.Tests.Infrastructure.Telemetry.Configuration;
 /// see <c>SquareServiceRequestTests</c>). The ASP.NET Core activity source is process-wide, so captured spans include
 /// other tests' requests; assertions look for this test's values only.
 /// </summary>
-public sealed class TelemetrySetupTests
+public sealed partial class TelemetrySetupTests
 {
     private const string Now = "2026-10-06T15:10:00Z";
     private const string GivenName = "Quillon";
@@ -37,6 +37,30 @@ public sealed class TelemetrySetupTests
         using HttpResponseMessage response = await BookAsync(capture, new FakeSquareService { CustomerId = null });
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        AssertNoCustomerData(capture);
+    }
+
+    /// <summary>
+    /// What the processors' own tests can't show: the app registers them ahead of export. A booking logs no customer data
+    /// today, so this logs and tags some through the host's pipeline itself.
+    /// </summary>
+    [Fact]
+    public async Task CustomerDataLoggedOrTaggedInTheAppIsRedactedBeforeExport()
+    {
+        TelemetryCapture capture = new();
+        using ApiFactory api = new();
+        using WebApplicationFactory<Program> host = capture.Attach(api);
+        ILogger logger = host.Services.GetRequiredService<ILogger<TelemetrySetupTests>>();
+        using ActivitySource requestSource = new("Microsoft.AspNetCore");
+
+        LogBooked(logger, $"{GivenName} {FamilyName}", Phone);
+        Activity span = requestSource.StartActivity("Booking", ActivityKind.Server)
+            ?? throw new InvalidOperationException("The host's tracer isn't listening.");
+        span.SetTag("customer.phone", Phone);
+        span.SetTag("note", $"Call {Phone} back");
+        span.Dispose();
+        await capture.WaitForSpanAsync(ended => ended.TraceId == span.TraceId, Cancellation);
+
         AssertNoCustomerData(capture);
     }
 
@@ -103,6 +127,9 @@ public sealed class TelemetrySetupTests
         await host.DisposeAsync();
         return response;
     }
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Booked {Name} on {Phone}.")]
+    private static partial void LogBooked(ILogger logger, string name, string phone);
 
     private static void AssertNoCustomerData(TelemetryCapture capture)
     {
