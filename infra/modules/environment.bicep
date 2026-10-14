@@ -60,6 +60,13 @@ var keyVaultName = 'kv-ttb-${envName}-${location}'
 // Key Vault IP rules take a bare address for a single host.
 var yourIps = map(allowedIpRanges, ip => endsWith(ip, '/32') ? replace(ip, '/32', '') : ip)
 
+// Square sends sandbox webhooks (#31) from these (https://developer.squareup.com/docs/webhooks/overview#static-ip-address).
+// Only the IP-restricted nonprod APIs, which use the sandbox, need them.
+var squareSandboxWebhookIps = [
+  '54.212.177.79'
+  '107.20.218.8'
+]
+
 resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
   name: 'ai-ttb-${envName}-${location}'
   location: location
@@ -192,7 +199,7 @@ module api 'app-service.bicep' = {
     runtime: dotnetRuntime
     alwaysOn: alwaysOn
     restrictAccess: restrictAppAccess
-    allowedIpRanges: allowedIpRanges
+    allowedIpRanges: concat(allowedIpRanges, squareSandboxWebhookIps)
     tags: tags
     appSettings: {
       APPLICATIONINSIGHTS_CONNECTION_STRING: appInsights.properties.ConnectionString

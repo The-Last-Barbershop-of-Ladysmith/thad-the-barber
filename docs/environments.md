@@ -79,7 +79,7 @@ No app can write to Key Vault (#23). Bicep doesn't delete role assignments it no
 | Control | Nonprod | Prod (M5) |
 | --- | --- | --- |
 | `CanNotDelete` lock on the resource group (`lock-ttb-<stage>-<region>`) | On | On |
-| App access restrictions: deny by default, allow `TTB_ALLOWED_IPS` + the `AzureCloud` service tag (GitHub runners, for smoke tests) | On (`restrictAppAccess = true`) | Off: the site is public. Geo-filtering to DC/MD/VA is a separate M5 decision |
+| App access restrictions: deny by default, allow `TTB_ALLOWED_IPS` + the `AzureCloud` service tag (GitHub runners, for smoke tests); the API also allows Square's sandbox webhook IPs (#31) | On (`restrictAppAccess = true`) | Off: the site is public. Geo-filtering to DC/MD/VA is a separate M5 decision |
 | Key Vault firewall: deny by default, allow the apps' outbound IPs + `TTB_ALLOWED_IPS` | On | On |
 
 - The **lock** blocks deletes, not changes. To tear nonprod down, delete the lock first (`az lock delete --name lock-ttb-nonprod-centralus --resource-group rg-ttb-nonprod-centralus`).
