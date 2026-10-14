@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Time.Testing;
+using ThadTheBarber.Api.Square.Models;
 using ThadTheBarber.Api.Tests.TestSupport;
 using ThadTheBarber.Api.Tests.TestSupport.Fakes;
 
@@ -115,6 +116,19 @@ public sealed class BookingEndpointsTests
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
         JsonElement problem = await response.Content.ReadFromJsonAsync<JsonElement>(Cancellation);
         Assert.Equal("slot_unavailable", problem.GetProperty("code").GetString());
+    }
+
+    [Fact]
+    public async Task APhoneAtItsUpcomingAppointmentLimitIs409WithItsCode()
+    {
+        FakeSquareService square = new();
+        square.Hold(5, AppointmentStatus.Accepted, DateTimeOffset.Parse("2026-11-02T14:00:00Z", CultureInfo.InvariantCulture));
+        using ApiFactory api = Api(square);
+
+        using HttpResponseMessage response = await api.CreateClient().PostAsJsonAsync("/api/bookings", BookingBody(), Cancellation);
+
+        await ProblemAssert.IsProblemAsync(response, StatusCodes.Status409Conflict, "booking_limit");
+        Assert.Equal(5, square.Bookings.Count);
     }
 
     [Fact]
