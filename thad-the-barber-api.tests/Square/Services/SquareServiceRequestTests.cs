@@ -179,6 +179,35 @@ public sealed class SquareServiceRequestTests
     }
 
     [Fact]
+    public async Task ACustomersBookingsAreListedIn31DayPiecesAndKeptOnce()
+    {
+        using SquareHarness harness = new();
+        harness.Http.Responses["/v2/bookings"] = SquareFixture.ReadText("list-bookings.json");
+        DateTimeOffset start = new(2026, 10, 1, 0, 0, 0, TimeSpan.Zero);
+
+        List<Appointment> appointments = await harness.Square.ListCustomerAppointmentsAsync(
+            "LOCATION0TEST",
+            "CUSTOMER0TEST0000000000001",
+            new DateTimeRange(
+                start,
+                start.AddDays(40)
+            ),
+            Cancellation);
+
+        List<Dictionary<string, StringValues>> queries = harness.Http.Requests
+            .Where(request => request.Path == "/v2/bookings")
+            .Select(request => QueryHelpers.ParseQuery(request.Query))
+            .OrderBy(query => query["start_at_min"].ToString(), StringComparer.Ordinal)
+            .ToList();
+        Assert.Equal(["2026-10-01T00:00:00Z", "2026-11-01T00:00:00Z"], queries.Select(query => query["start_at_min"].ToString()));
+        Assert.Equal(["2026-11-01T00:00:00Z", "2026-11-10T00:00:00Z"], queries.Select(query => query["start_at_max"].ToString()));
+        Assert.All(queries, query => Assert.Equal("CUSTOMER0TEST0000000000001", query["customer_id"]));
+        Assert.All(queries, query => Assert.Equal("LOCATION0TEST", query["location_id"]));
+        Assert.Equal(appointments.Count, appointments.DistinctBy(appointment => appointment.Id).Count());
+        Assert.NotEmpty(appointments);
+    }
+
+    [Fact]
     public async Task ABookingIsReadById()
     {
         using SquareHarness harness = new();
