@@ -47,7 +47,6 @@ public sealed partial class SquareWebhookService(
             return;
         }
 
-        cache.Set(handledEventKey, true, rememberEventsFor);
         switch (webhookEvent.Type)
         {
             case LocationUpdated:
@@ -58,6 +57,7 @@ public sealed partial class SquareWebhookService(
                 break;
         }
 
+        cache.Set(handledEventKey, true, rememberEventsFor);
         LogReceived(logger, webhookEvent.Type, webhookEvent.EventId);
     }
 
