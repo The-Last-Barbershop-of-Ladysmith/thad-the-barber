@@ -18,8 +18,8 @@ public interface ISquareService
 
     Task<List<TimeSlot>> SearchAvailableTimeSlotsAsync(string locationId, BookableService bookableService, DateTimeRange dateTimeRange, CancellationToken cancellationToken);
 
-    /// <summary>The oldest Square customer with this E.164 phone; Square can hold duplicates.</summary>
-    Task<string?> FindCustomerIdAsync(string phone, CancellationToken cancellationToken);
+    /// <summary>Every Square customer with this E.164 phone, oldest first; Square can hold duplicates.</summary>
+    Task<List<string>> FindCustomerIdsAsync(string phone, CancellationToken cancellationToken);
 
     Task<string> CreateCustomerAsync(string name, string phone, string idempotencyKey, CancellationToken cancellationToken);
 

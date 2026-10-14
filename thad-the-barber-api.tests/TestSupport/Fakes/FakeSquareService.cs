@@ -56,6 +56,9 @@ public sealed class FakeSquareService : ISquareService
     public string? CustomerId { get; set; } =
         SquareFixture.ReadAs<SearchCustomersResponse>("search-customers-by-phone.json").Customers!.First().Id;
 
+    /// <summary>Newer customers with the same phone as <see cref="CustomerId"/>, e.g. added in the Square Dashboard.</summary>
+    public List<string> DuplicateCustomerIds { get; init; } = [];
+
     public string CreatedCustomerId { get; init; } =
         SquareFixture.ReadAs<CreateCustomerResponse>("create-customer.json").Customer!.Id!;
 
@@ -97,7 +100,15 @@ public sealed class FakeSquareService : ISquareService
     public Task<List<TimeSlot>> SearchAvailableTimeSlotsAsync(string locationId, BookableService bookableService, DateTimeRange dateTimeRange, CancellationToken cancellationToken) =>
         Task.FromResult(TimeSlots.Where(timeSlot => dateTimeRange.Contains(timeSlot.StartAt)).ToList());
 
-    public Task<string?> FindCustomerIdAsync(string phone, CancellationToken cancellationToken) => Task.FromResult(CustomerId);
+    public Task<List<string>> FindCustomerIdsAsync(string phone, CancellationToken cancellationToken)
+    {
+        if (CustomerId is null)
+        {
+            return Task.FromResult<List<string>>([]);
+        }
+
+        return Task.FromResult<List<string>>([CustomerId, .. DuplicateCustomerIds]);
+    }
 
     public Task<string> CreateCustomerAsync(string name, string phone, string idempotencyKey, CancellationToken cancellationToken)
     {
@@ -145,14 +156,17 @@ public sealed class FakeSquareService : ISquareService
     public Task<TimeSlot?> FindBookedTimeSlotAsync(string locationId, string customerId, DateTimeOffset startAt, CancellationToken cancellationToken) =>
         Task.FromResult(Bookings.Find(booking => booking.CustomerId == customerId && booking.TimeSlot.StartAt == startAt)?.TimeSlot);
 
-    /// <summary>Gives the customer bookings a day apart from <paramref name="firstStartAt"/>, as if made in Square.</summary>
-    public void Hold(int count, AppointmentStatus status, DateTimeOffset firstStartAt)
+    /// <summary>
+    /// Gives the customer (<see cref="CustomerId"/> unless another is named) bookings a day apart from
+    /// <paramref name="firstStartAt"/>, as if made in Square.
+    /// </summary>
+    public void Hold(int count, AppointmentStatus status, DateTimeOffset firstStartAt, string? customerId = null)
     {
         for (int day = 0; day < count; day++)
         {
             DateTimeOffset startAt = firstStartAt.AddDays(day);
             Bookings.Add(new FakeBooking(
-                CustomerId!,
+                customerId ?? CustomerId!,
                 TimeSlots[0] with
                 {
                     StartAt = startAt,

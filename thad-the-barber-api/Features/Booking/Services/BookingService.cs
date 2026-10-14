@@ -30,13 +30,13 @@ public sealed class BookingService(
             return await ReplayBookingAsync(request, idempotencyKey, cancellationToken);
         }
 
-        string? existingCustomerId = await square.FindCustomerIdAsync(request.Phone, cancellationToken);
-        if (existingCustomerId is not null)
+        List<string> customerIds = await square.FindCustomerIdsAsync(request.Phone, cancellationToken);
+        if (customerIds.Count > 0)
         {
-            await EnsureBelowLimitAsync(existingCustomerId, cancellationToken);
+            await EnsureBelowLimitAsync(customerIds, request.StartAt, cancellationToken);
         }
 
-        string customerId = existingCustomerId
+        string customerId = customerIds.FirstOrDefault()
             ?? await square.CreateCustomerAsync(request.Name, request.Phone, idempotencyKey, cancellationToken);
         Appointment appointment = await square.CreateBookingAsync(customerId, openTimeSlot, idempotencyKey, cancellationToken);
 
@@ -44,10 +44,13 @@ public sealed class BookingService(
     }
 
     /// <summary>
-    /// BR-13: every upcoming booking counts, wherever it was made, up to the furthest a customer can book ahead. Two
-    /// attempts racing at one below the cap can both pass; for one barber's calendar that's not worth a lock.
+    /// BR-13: every upcoming booking of every Square customer with the phone counts, wherever it was made, up to the
+    /// furthest a customer can book ahead. A booking the phone already holds at <paramref name="startAt"/> lifts the
+    /// cap: it's this attempt's own booking while Square's availability still lists the time, and
+    /// <c>CreateBooking</c> answers with it for the same key and refuses the time for any other. Two attempts racing at
+    /// one below the cap can both pass; for one barber's calendar that's not worth a lock.
     /// </summary>
-    private async Task EnsureBelowLimitAsync(string customerId, CancellationToken cancellationToken)
+    private async Task EnsureBelowLimitAsync(List<string> customerIds, DateTimeOffset startAt, CancellationToken cancellationToken)
     {
         ShopDetails shopDetails = await square.GetShopDetailsAsync(cancellationToken);
         BookingProfile bookingProfile = await square.GetBookingProfileAsync(shopDetails.LocationId, cancellationToken);
@@ -57,11 +60,15 @@ public sealed class BookingService(
             now + bookingProfile.MaximumAdvance
         );
 
-        List<Appointment> appointments = await square.ListCustomerAppointmentsAsync(shopDetails.LocationId, customerId, upcoming, cancellationToken);
-        int upcomingCount = appointments.Count(appointment => appointment.IsUpcomingAt(now));
-        if (upcomingCount >= settings.Value.MaxUpcomingPerPhone)
+        List<Appointment>[] appointmentsByCustomer = await Task.WhenAll(customerIds.Select(customerId =>
+            square.ListCustomerAppointmentsAsync(shopDetails.LocationId, customerId, upcoming, cancellationToken)));
+        List<Appointment> upcomingAppointments = [.. appointmentsByCustomer
+            .SelectMany(appointments => appointments)
+            .Where(appointment => appointment.IsUpcomingAt(now))];
+        if (upcomingAppointments.Count >= settings.Value.MaxUpcomingPerPhone
+            && !upcomingAppointments.Any(appointment => appointment.StartAt == startAt))
         {
-            throw new BookingLimitReachedException($"The customer holds {upcomingCount} upcoming appointments.");
+            throw new BookingLimitReachedException($"The phone holds {upcomingAppointments.Count} upcoming appointments.");
         }
     }
 
@@ -75,7 +82,8 @@ public sealed class BookingService(
     /// </summary>
     private async Task<BookingConfirmation> ReplayBookingAsync(BookingRequest request, string idempotencyKey, CancellationToken cancellationToken)
     {
-        string customerId = await square.FindCustomerIdAsync(request.Phone, cancellationToken)
+        List<string> customerIds = await square.FindCustomerIdsAsync(request.Phone, cancellationToken);
+        string customerId = customerIds.FirstOrDefault()
             ?? await square.CreateCustomerAsync(request.Name, request.Phone, idempotencyKey, cancellationToken);
         ShopDetails shopDetails = await square.GetShopDetailsAsync(cancellationToken);
         TimeSlot bookedTimeSlot = await square.FindBookedTimeSlotAsync(shopDetails.LocationId, customerId, request.StartAt, cancellationToken)
