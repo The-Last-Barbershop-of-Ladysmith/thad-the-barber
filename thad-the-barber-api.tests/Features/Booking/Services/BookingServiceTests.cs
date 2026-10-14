@@ -164,6 +164,35 @@ public sealed class BookingServiceTests
     }
 
     [Fact]
+    public async Task BookingsOfEveryCustomerWithThePhoneCountTowardTheMaximum()
+    {
+        FakeSquareService square = new()
+        {
+            DuplicateCustomerIds = ["CUSTOMER0TEST0DUPLICATE01"],
+        };
+        square.Hold(1, AppointmentStatus.Accepted, Instant("2026-11-02T14:00:00Z"));
+        square.Hold(MaxUpcomingPerPhone - 1, AppointmentStatus.Accepted, Instant("2026-11-10T14:00:00Z"), "CUSTOMER0TEST0DUPLICATE01");
+
+        await Assert.ThrowsAsync<BookingLimitReachedException>(() => Service(square).BookAsync(Request(openTime), Cancellation));
+    }
+
+    [Fact]
+    public async Task ARetryAtTheMaximumWhileSquareStillListsTheTimeConfirmsTheSameBooking()
+    {
+        FakeSquareService square = new();
+        square.Hold(MaxUpcomingPerPhone - 1, AppointmentStatus.Accepted, Instant("2026-11-02T14:00:00Z"));
+        BookingService service = Service(square);
+        BookingRequest request = Request(openTime);
+        BookingConfirmation first = await service.BookAsync(request, Cancellation);
+        square.TimeSlots.Add(square.Bookings[^1].TimeSlot);
+
+        BookingConfirmation retried = await service.BookAsync(request, Cancellation);
+
+        Assert.Equal(first, retried);
+        Assert.Equal(MaxUpcomingPerPhone, square.Bookings.Count);
+    }
+
+    [Fact]
     public async Task ANewCustomersBookingsArentListed()
     {
         FakeSquareService square = new()

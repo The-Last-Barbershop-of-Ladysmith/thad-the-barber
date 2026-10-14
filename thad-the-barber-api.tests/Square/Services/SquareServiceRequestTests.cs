@@ -85,13 +85,21 @@ public sealed class SquareServiceRequestTests
         using SquareHarness harness = new();
         harness.Http.Responses["/v2/customers/search"] = SquareFixture.ReadText("search-customers-by-phone.json");
 
-        string? customerId = await harness.Square.FindCustomerIdAsync("+18045550123", Cancellation);
+        List<string> customerIds = await harness.Square.FindCustomerIdsAsync("+18045550123", Cancellation);
 
         JsonElement query = Body(harness, "/v2/customers/search").GetProperty("query");
         Assert.Equal("+18045550123", query.GetProperty("filter").GetProperty("phone_number").GetProperty("exact").GetString());
         Assert.Equal("CREATED_AT", query.GetProperty("sort").GetProperty("field").GetString());
         Assert.Equal("ASC", query.GetProperty("sort").GetProperty("order").GetString());
-        Assert.Equal("CUSTOMER0TEST0000000000001", customerId);
+        Assert.Equal(
+            [
+                "CUSTOMER0TEST0000000000001",
+                "CUSTOMER0TEST0000000000004",
+                "CUSTOMER0TEST0000000000006",
+                "CUSTOMER0TEST0000000000005",
+                "CUSTOMER0TEST0000000000003",
+            ],
+            customerIds);
     }
 
     [Theory]

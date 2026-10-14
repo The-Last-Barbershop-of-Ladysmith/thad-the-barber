@@ -107,7 +107,7 @@ public sealed class SquareService : ISquareService
             .ToList();
     }
 
-    public async Task<string?> FindCustomerIdAsync(string phone, CancellationToken cancellationToken)
+    public async Task<List<string>> FindCustomerIdsAsync(string phone, CancellationToken cancellationToken)
     {
         SearchCustomersRequest customerSearchRequest = new()
         {
@@ -126,13 +126,12 @@ public sealed class SquareService : ISquareService
                     Order = SortOrder.Asc,
                 },
             },
-            Limit = 1,
         };
 
         SearchCustomersResponse customerSearchResponse = await CallSquareAsync(async () =>
             await squareClient.Customers.SearchAsync(customerSearchRequest, cancellationToken: cancellationToken));
 
-        return customerSearchResponse.Customers?.FirstOrDefault()?.Id;
+        return [.. (customerSearchResponse.Customers ?? []).Select(customer => customer.Id!)];
     }
 
     /// <summary>
