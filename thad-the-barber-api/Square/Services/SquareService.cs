@@ -8,6 +8,7 @@ using Square.Catalog;
 using Square.Core;
 using Square.Customers;
 using Square.Locations;
+using ThadTheBarber.Api.Common.Extensions;
 using ThadTheBarber.Api.Common.Models;
 using ThadTheBarber.Api.Square.Exceptions;
 using ThadTheBarber.Api.Square.Mappers;
@@ -26,6 +27,7 @@ public sealed class SquareService : ISquareService
     public const string BookingProfileKeyPrefix = "square:booking-profile:";
     public const string BookableServicesKey = "square:bookable-services";
     private static readonly TimeSpan minimumAvailabilitySearchLength = TimeSpan.FromHours(24);
+    private static readonly TimeSpan maximumBookingListLength = TimeSpan.FromDays(31);
 
     private readonly SquareClient squareClient;
     private readonly SquareCache squareCache;
@@ -101,11 +103,11 @@ public sealed class SquareService : ISquareService
 
         return (availabilityResponse.Availabilities ?? [])
             .Select(availability => availability.ToTimeSlot())
-            .Where(timeSlot => timeSlot.StartAt >= dateTimeRange.Start && timeSlot.StartAt < dateTimeRange.End)
+            .Where(timeSlot => dateTimeRange.Contains(timeSlot.StartAt))
             .ToList();
     }
 
-    public async Task<string?> FindCustomerIdAsync(string phone, CancellationToken cancellationToken)
+    public async Task<List<string>> FindCustomerIdsAsync(string phone, CancellationToken cancellationToken)
     {
         SearchCustomersRequest customerSearchRequest = new()
         {
@@ -124,13 +126,12 @@ public sealed class SquareService : ISquareService
                     Order = SortOrder.Asc,
                 },
             },
-            Limit = 1,
         };
 
         SearchCustomersResponse customerSearchResponse = await CallSquareAsync(async () =>
             await squareClient.Customers.SearchAsync(customerSearchRequest, cancellationToken: cancellationToken));
 
-        return customerSearchResponse.Customers?.FirstOrDefault()?.Id;
+        return [.. (customerSearchResponse.Customers ?? []).Select(customer => customer.Id!)];
     }
 
     /// <summary>
@@ -228,6 +229,29 @@ public sealed class SquareService : ISquareService
         });
 
         return heldBooking?.ToTimeSlot();
+    }
+
+    /// <summary>
+    /// Square lists at most 31 days of bookings per request, so longer ranges are read in 31-day pieces at once. A
+    /// booking right on the edge between two pieces can come back from both, so it's kept once.
+    /// </summary>
+    public async Task<List<Appointment>> ListCustomerAppointmentsAsync(string locationId, string customerId, DateTimeRange dateTimeRange, CancellationToken cancellationToken)
+    {
+        List<Appointment>[] pieces = await Task.WhenAll(dateTimeRange.Split(maximumBookingListLength).Select(piece =>
+            CallSquareAsync(async () =>
+            {
+                ListBookingsRequest listBookingsRequest = new()
+                {
+                    LocationId = locationId,
+                    CustomerId = customerId,
+                    StartAtMin = ToSquareTime(piece.Start),
+                    StartAtMax = ToSquareTime(piece.End),
+                };
+                Pager<Booking> bookings = await squareClient.Bookings.ListAsync(listBookingsRequest, cancellationToken: cancellationToken);
+                return await bookings.Select(booking => booking.ToAppointment()).ToListAsync(cancellationToken);
+            })));
+
+        return [.. pieces.SelectMany(appointments => appointments).DistinctBy(appointment => appointment.Id)];
     }
 
     public async Task<Appointment?> GetBookingAsync(string bookingId, CancellationToken cancellationToken)

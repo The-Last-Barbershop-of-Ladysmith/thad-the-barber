@@ -82,5 +82,5 @@ public sealed class ManageBookingService(
         appointment.ToManagedBookingDto(CanChange(appointment));
 
     private bool CanChange(Appointment appointment) =>
-        appointment.IsActive && time.GetUtcNow() < appointment.StartAt;
+        appointment.IsUpcomingAt(time.GetUtcNow());
 }
