@@ -201,20 +201,24 @@ public sealed class BookingServiceTests
         return square;
     }
 
-    private static BookingService Service(FakeSquareService square) => new(
-        square,
-        new AvailabilityService(
+    private static BookingService Service(FakeSquareService square)
+    {
+        FakeTimeProvider time = new(now);
+        return new BookingService(
             square,
-            new BookableServiceResolver(square, Options.Create(new SquareSettings())),
-            new FakeTimeProvider(now)
-        ),
-        ManageTokens.Signer,
-        Options.Create(new BookingSettings
-        {
-            MaxUpcomingPerPhone = MaxUpcomingPerPhone,
-        }),
-        new FakeTimeProvider(now)
-    );
+            new AvailabilityService(
+                square,
+                new BookableServiceResolver(square, Options.Create(new SquareSettings())),
+                time
+            ),
+            ManageTokens.Signer,
+            Options.Create(new BookingSettings
+            {
+                MaxUpcomingPerPhone = MaxUpcomingPerPhone,
+            }),
+            time
+        );
+    }
 
     private static BookingRequest Request(DateTimeOffset startAt) => new(
         startAt,
