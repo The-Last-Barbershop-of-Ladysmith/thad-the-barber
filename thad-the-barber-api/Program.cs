@@ -25,8 +25,12 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.AddKeyVaultIfConfigured(SquareSecrets.All);
 
 builder.AddTelemetry();
+builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = 64 * 1024);
 builder.Services.ConfigureHttpJsonOptions(options =>
-    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)));
+{
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
+    options.SerializerOptions.UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow;
+});
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddProblems();
 builder.Services.AddValidation();

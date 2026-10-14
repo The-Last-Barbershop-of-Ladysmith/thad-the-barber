@@ -27,6 +27,9 @@ public static class ProblemsSetup
             }
         });
         services.AddExceptionHandler<ProblemExceptionHandler>();
+        // Development throws on an unreadable body by default, which the exception handler turns into a 500; the
+        // Azure dev app runs as Development, so it should answer 400 like every other environment.
+        services.Configure<RouteHandlerOptions>(options => options.ThrowOnBadRequest = false);
         return services;
     }
 
