@@ -75,6 +75,8 @@ public sealed class FakeSquareService : ISquareService
 
     public int CustomersCreated { get; private set; }
 
+    public int AppointmentListings { get; private set; }
+
     public Task<SquareConnection> CheckConnectionAsync(CancellationToken cancellationToken)
     {
         Interlocked.Increment(ref _checks);
@@ -141,6 +143,39 @@ public sealed class FakeSquareService : ISquareService
 
     public Task<TimeSlot?> FindBookedTimeSlotAsync(string locationId, string customerId, DateTimeOffset startAt, CancellationToken cancellationToken) =>
         Task.FromResult(Bookings.Find(booking => booking.CustomerId == customerId && booking.TimeSlot.StartAt == startAt)?.TimeSlot);
+
+    /// <summary>Gives the customer bookings a day apart from <paramref name="firstStartAt"/>, as if made in Square.</summary>
+    public void Hold(int count, AppointmentStatus status, DateTimeOffset firstStartAt)
+    {
+        for (int day = 0; day < count; day++)
+        {
+            DateTimeOffset startAt = firstStartAt.AddDays(day);
+            Bookings.Add(new FakeBooking(
+                CustomerId!,
+                TimeSlots[0] with
+                {
+                    StartAt = startAt,
+                },
+                Guid.NewGuid().ToString(),
+                CreatedAppointment with
+                {
+                    Id = $"bk_test-held{Bookings.Count:D4}",
+                    Status = status,
+                    StartAt = startAt,
+                }
+            ));
+        }
+    }
+
+    public Task<List<Appointment>> ListCustomerAppointmentsAsync(string locationId, string customerId, DateTimeRange dateTimeRange, CancellationToken cancellationToken)
+    {
+        AppointmentListings++;
+        return Task.FromResult(Bookings
+            .Where(booking => booking.CustomerId == customerId)
+            .Select(booking => booking.Appointment)
+            .Where(appointment => appointment.StartAt >= dateTimeRange.Start && appointment.StartAt < dateTimeRange.End)
+            .ToList());
+    }
 
     public Task<Appointment?> GetBookingAsync(string bookingId, CancellationToken cancellationToken) =>
         Task.FromResult(Bookings.Find(booking => booking.Appointment.Id == bookingId)?.Appointment);
