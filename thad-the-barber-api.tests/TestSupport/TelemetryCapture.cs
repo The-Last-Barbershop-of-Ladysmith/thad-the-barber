@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Threading.Channels;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using OpenTelemetry;
@@ -10,17 +11,34 @@ namespace ThadTheBarber.Api.Tests.TestSupport;
 
 /// <summary>
 /// Collects the text of every log record and request span a host would export. Its processors are added after the
-/// app's, where Azure Monitor's exporters sit, so they see what App Insights would receive.
+/// app's, where Azure Monitor's exporters sit, so they see what App Insights would receive. ASP.NET Core ends a
+/// request's span after the client already has the response, so wait for it with <see cref="WaitForSpanAsync"/>.
 /// </summary>
 public sealed class TelemetryCapture
 {
     private readonly ConcurrentQueue<string> _texts = new();
-    private readonly ConcurrentQueue<Activity> _spans = new();
+    private static readonly TimeSpan spanWait = TimeSpan.FromSeconds(10);
+
+    private readonly Channel<Activity> _endedSpans = Channel.CreateUnbounded<Activity>();
 
     /// <summary>Messages, attribute values, exception text, span names, tags and events, as exported.</summary>
     public IReadOnlyCollection<string> Texts => _texts;
 
-    public IReadOnlyCollection<Activity> Spans => _spans;
+    /// <summary>The first ended span matching <paramref name="match"/>, waiting up to 10 seconds for it.</summary>
+    public async Task<Activity> WaitForSpanAsync(Func<Activity, bool> match, CancellationToken cancellationToken)
+    {
+        using CancellationTokenSource timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeout.CancelAfter(spanWait);
+        await foreach (Activity span in _endedSpans.Reader.ReadAllAsync(timeout.Token))
+        {
+            if (match(span))
+            {
+                return span;
+            }
+        }
+
+        throw new UnreachableException("The span channel is never completed.");
+    }
 
     public WebApplicationFactory<Program> Attach(WebApplicationFactory<Program> host) =>
         host.WithWebHostBuilder(builder => builder.ConfigureTestServices(services =>
@@ -58,7 +76,7 @@ public sealed class TelemetryCapture
     {
         public override void OnEnd(Activity data)
         {
-            capture._spans.Enqueue(data);
+            capture._endedSpans.Writer.TryWrite(data);
             capture.Add(data.DisplayName);
             foreach (KeyValuePair<string, object?> tag in data.TagObjects)
             {

@@ -37,7 +37,6 @@ public sealed class TelemetrySetupTests
         using HttpResponseMessage response = await BookAsync(capture, new FakeSquareService { CustomerId = null });
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-        Assert.NotEmpty(capture.Spans);
         AssertNoCustomerData(capture);
     }
 
@@ -74,7 +73,7 @@ public sealed class TelemetrySetupTests
         using HttpResponseMessage response = await host.CreateClient().SendAsync(request, Cancellation);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Activity span = Assert.Single(capture.Spans, span => span.TraceId.ToHexString() == "4bf92f3577b34da6a3ce929d0e0e4736");
+        Activity span = await capture.WaitForSpanAsync(span => span.TraceId.ToHexString() == "4bf92f3577b34da6a3ce929d0e0e4736", Cancellation);
         Assert.Equal(ActivityKind.Server, span.Kind);
         Assert.Equal("00f067aa0ba902b7", span.ParentSpanId.ToHexString());
     }
@@ -86,17 +85,21 @@ public sealed class TelemetrySetupTests
             time: new FakeTimeProvider(DateTimeOffset.Parse(Now, CultureInfo.InvariantCulture))
         );
         WebApplicationFactory<Program> host = capture.Attach(api);
-        HttpResponseMessage response = await host.CreateClient().PostAsJsonAsync(
-            "/api/bookings",
-            new
+        ActivityTraceId traceId = ActivityTraceId.CreateRandom();
+        using HttpRequestMessage request = new(HttpMethod.Post, "/api/bookings")
+        {
+            Content = JsonContent.Create(new
             {
                 startAt = "2026-10-07T13:30:00Z",
                 name = $"{GivenName} {FamilyName}",
                 phone = Phone,
                 idempotencyKey = Guid.NewGuid(),
-            },
-            Cancellation);
-        // Stopping the host flushes the telemetry pipeline, so everything is captured before the caller asserts.
+            }),
+        };
+        request.Headers.Add("traceparent", $"00-{traceId.ToHexString()}-{ActivitySpanId.CreateRandom().ToHexString()}-01");
+        HttpResponseMessage response = await host.CreateClient().SendAsync(request, Cancellation);
+        // The span is process-wide, so the wait is for this request's trace, not another test's booking.
+        await capture.WaitForSpanAsync(span => span.TraceId == traceId && span.Kind == ActivityKind.Server, Cancellation);
         await host.DisposeAsync();
         return response;
     }
