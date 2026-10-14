@@ -40,6 +40,16 @@ public sealed class SquareWebhookEndpointsTests(ApiFactory factory) : IClassFixt
         await ProblemAssert.IsProblemAsync(response, StatusCodes.Status401Unauthorized, "invalid_signature");
     }
 
+    [Fact]
+    public async Task ABodyOverTheCapIs413PayloadTooLarge()
+    {
+        string body = new('x', SquareWebhookEndpoints.MaxBodyLength + 1);
+
+        using HttpResponseMessage response = await PostAsync(body, SquareWebhooks.Sign(body));
+
+        await ProblemAssert.IsProblemAsync(response, StatusCodes.Status413PayloadTooLarge, "payload_too_large");
+    }
+
     private async Task<HttpResponseMessage> PostAsync(string body, string? signature)
     {
         using HttpRequestMessage request = new(HttpMethod.Post, Path)

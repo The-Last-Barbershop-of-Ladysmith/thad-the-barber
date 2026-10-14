@@ -71,7 +71,7 @@ Endpoints (each replaces a mocked Angular service without changing its NgRx effe
 | None: the UI reads `media-<env>/content/announcements.json` ([#30](https://github.com/The-Last-Barbershop-of-Ladysmith/thad-the-barber/issues/30)) | None | `HOME_CONTENT.announcements` |
 | None: the UI lists `media-<env>/gallery/` (#168) | None | `HOME_CONTENT.gallery` |
 | `GET /api/content/reviews` | Google Business Profile reviews (fallback `content/reviews.json`) | `HOME_CONTENT.testimonials`, `SHOP_INFO.reviews` |
-| `POST /api/webhooks/square` | Signature-verified webhooks: `location.updated` and `catalog.version.updated` mark the cached shop details or service stale, so the next read refetches them (the old copy still covers a Square outage); a repeated event id is skipped for 24 hours, Square's retry window. Booking events aren't subscribed until the admin feed needs them (#31) | New |
+| `POST /api/webhooks/square` | Signature-verified webhooks: `location.updated` and `catalog.version.updated` mark the cached shop details or service stale, so the next read refetches them (the old copy still covers a Square outage); a repeated event id is skipped for 24 hours, Square's retry window. Both live in the instance's memory, which is right while the API runs as one App Service instance; scaling out would need a shared cache. Bodies over 32 K characters get 413 before they're read in full. Booking events aren't subscribed until the admin feed needs them (#31) | New |
 | `GET /api/health` | None | New |
 | `POST /api/session` | None (Google reCAPTCHA v3 check) | New: issues the session JWT (see [M](#m-security)) |
 
