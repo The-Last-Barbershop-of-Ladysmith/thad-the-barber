@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Microsoft.Extensions.Caching.Memory;
 using ThadTheBarber.Api.Square.Models;
 
@@ -14,6 +15,8 @@ public sealed partial class SquareCache(IMemoryCache cache, TimeProvider time, I
     public static readonly TimeSpan CacheFor = TimeSpan.FromMinutes(60);
     public static readonly TimeSpan RetryAfter = TimeSpan.FromMinutes(1);
 
+    private readonly ConcurrentDictionary<string, long> _staleMarks = new();
+
     public async Task<T> GetOrRefreshAsync<T>(string key, Func<Task<T>> fetch, CancellationToken cancellationToken)
     {
         cache.TryGetValue(key, out CachedValue<T>? cached);
@@ -22,14 +25,22 @@ public sealed partial class SquareCache(IMemoryCache cache, TimeProvider time, I
             return cached.Value;
         }
 
+        long staleMarksBeforeFetch = _staleMarks.GetValueOrDefault(key);
         try
         {
             T value = await fetch();
             DateTimeOffset fetchedAt = time.GetUtcNow();
+            DateTimeOffset refreshAt = fetchedAt + CacheFor;
+            if (_staleMarks.GetValueOrDefault(key) != staleMarksBeforeFetch)
+            {
+                // Marked stale mid-fetch, so the value may predate the change.
+                refreshAt = fetchedAt;
+            }
+
             cache.Set(key, new CachedValue<T>(
                 value,
                 fetchedAt,
-                fetchedAt + CacheFor
+                refreshAt
             ));
             return value;
         }
@@ -48,11 +59,13 @@ public sealed partial class SquareCache(IMemoryCache cache, TimeProvider time, I
     private static partial void LogServingStale(ILogger logger, Exception exception, string cacheKey, DateTimeOffset fetchedAt);
 
     /// <summary>
-    /// Makes the next read of <paramref name="key"/> refetch, keeping the value to serve if Square fails then.
-    /// <typeparamref name="T"/> must be the type the entry was cached as, or nothing is marked.
+    /// Makes the next read of <paramref name="key"/> refetch, keeping the value to serve if Square fails then. A fetch
+    /// already running stores its value stale too. <typeparamref name="T"/> must be the type the entry was cached as,
+    /// or the cached entry isn't marked.
     /// </summary>
     public void MarkStale<T>(string key)
     {
+        _staleMarks.AddOrUpdate(key, 1, (_, marks) => marks + 1);
         if (cache.Get(key) is CachedValue<T> cached)
         {
             cache.Set(key, cached with

@@ -147,6 +147,28 @@ public sealed class SquareCacheTests
     }
 
     [Fact]
+    public async Task AFetchRunningWhenMarkedStaleIsStoredStale()
+    {
+        await ReadAsync(Key);
+        _time.Advance(SquareCache.CacheFor);
+        await _cache.GetOrRefreshAsync(Key, FetchThenMarkStaleAsync, Cancellation);
+
+        int value = await ReadAsync(Key);
+
+        Assert.Equal(3, value);
+    }
+
+    [Fact]
+    public async Task AFirstFetchRunningWhenMarkedStaleIsStoredStale()
+    {
+        await _cache.GetOrRefreshAsync(Key, FetchThenMarkStaleAsync, Cancellation);
+
+        int value = await ReadAsync(Key);
+
+        Assert.Equal(2, value);
+    }
+
+    [Fact]
     public async Task MarkStaleOnANewKeyCachesNothing()
     {
         _cache.MarkStale<int>(Key);
@@ -157,6 +179,14 @@ public sealed class SquareCacheTests
     }
 
     private Task<int> ReadAsync(string key) => _cache.GetOrRefreshAsync(key, FetchAsync, Cancellation);
+
+    /// <summary>A fetch that sees a change land while Square is answering it.</summary>
+    private Task<int> FetchThenMarkStaleAsync()
+    {
+        Task<int> fetched = FetchAsync();
+        _cache.MarkStale<int>(Key);
+        return fetched;
+    }
 
     private Task<int> FetchAsync()
     {
