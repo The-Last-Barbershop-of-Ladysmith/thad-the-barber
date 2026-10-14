@@ -16,9 +16,9 @@ namespace ThadTheBarber.Api.Tests.TestSupport;
 /// </summary>
 public sealed class TelemetryCapture
 {
-    private readonly ConcurrentQueue<string> _texts = new();
     private static readonly TimeSpan spanWait = TimeSpan.FromSeconds(10);
 
+    private readonly ConcurrentQueue<string> _texts = new();
     private readonly Channel<Activity> _endedSpans = Channel.CreateUnbounded<Activity>();
 
     /// <summary>Messages, attribute values, exception text, span names, tags and events, as exported.</summary>
@@ -76,7 +76,6 @@ public sealed class TelemetryCapture
     {
         public override void OnEnd(Activity data)
         {
-            capture._endedSpans.Writer.TryWrite(data);
             capture.Add(data.DisplayName);
             foreach (KeyValuePair<string, object?> tag in data.TagObjects)
             {
@@ -91,6 +90,9 @@ public sealed class TelemetryCapture
                     capture.Add(tag.Value);
                 }
             }
+
+            // Last, so a test woken by the span finds its text already in Texts.
+            capture._endedSpans.Writer.TryWrite(data);
         }
     }
 }
