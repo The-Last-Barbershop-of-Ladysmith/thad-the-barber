@@ -28,6 +28,16 @@ public sealed class DateTimeRangeExtensionsTests
         Assert.Null(Range(start, end).Intersect(Range(otherStart, otherEnd)));
     }
 
+    [Theory]
+    [InlineData("09:59", false)]
+    [InlineData("10:00", true)]
+    [InlineData("11:59", true)]
+    [InlineData("12:00", false)]
+    public void ARangeContainsItsStartButNotItsEnd(string time, bool isContained)
+    {
+        Assert.Equal(isContained, Range("10:00", "12:00").Contains(At(time)));
+    }
+
     [Fact]
     public void ALongRangeSplitsIntoFullPiecesAndAShorterLastOne()
     {

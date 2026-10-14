@@ -1,4 +1,5 @@
 using Square;
+using ThadTheBarber.Api.Common.Extensions;
 using ThadTheBarber.Api.Common.Models;
 using ThadTheBarber.Api.Square.Exceptions;
 using ThadTheBarber.Api.Square.Mappers;
@@ -94,7 +95,7 @@ public sealed class FakeSquareService : ISquareService
     }
 
     public Task<List<TimeSlot>> SearchAvailableTimeSlotsAsync(string locationId, BookableService bookableService, DateTimeRange dateTimeRange, CancellationToken cancellationToken) =>
-        Task.FromResult(TimeSlots.Where(timeSlot => timeSlot.StartAt >= dateTimeRange.Start && timeSlot.StartAt < dateTimeRange.End).ToList());
+        Task.FromResult(TimeSlots.Where(timeSlot => dateTimeRange.Contains(timeSlot.StartAt)).ToList());
 
     public Task<string?> FindCustomerIdAsync(string phone, CancellationToken cancellationToken) => Task.FromResult(CustomerId);
 
@@ -173,7 +174,7 @@ public sealed class FakeSquareService : ISquareService
         return Task.FromResult(Bookings
             .Where(booking => booking.CustomerId == customerId)
             .Select(booking => booking.Appointment)
-            .Where(appointment => appointment.StartAt >= dateTimeRange.Start && appointment.StartAt < dateTimeRange.End)
+            .Where(appointment => dateTimeRange.Contains(appointment.StartAt))
             .ToList());
     }
 
