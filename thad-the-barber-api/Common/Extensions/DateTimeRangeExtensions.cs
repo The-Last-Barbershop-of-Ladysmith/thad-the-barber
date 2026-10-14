@@ -4,6 +4,9 @@ namespace ThadTheBarber.Api.Common.Extensions;
 
 public static class DateTimeRangeExtensions
 {
+    public static bool Contains(this DateTimeRange range, DateTimeOffset instant) =>
+        instant >= range.Start && instant < range.End;
+
     /// <summary>The part both ranges cover, or null when they don't overlap.</summary>
     public static DateTimeRange? Intersect(this DateTimeRange range, DateTimeRange other)
     {

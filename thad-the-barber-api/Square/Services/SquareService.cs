@@ -103,7 +103,7 @@ public sealed class SquareService : ISquareService
 
         return (availabilityResponse.Availabilities ?? [])
             .Select(availability => availability.ToTimeSlot())
-            .Where(timeSlot => timeSlot.StartAt >= dateTimeRange.Start && timeSlot.StartAt < dateTimeRange.End)
+            .Where(timeSlot => dateTimeRange.Contains(timeSlot.StartAt))
             .ToList();
     }
 
