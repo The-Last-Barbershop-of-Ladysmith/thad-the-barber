@@ -11,6 +11,10 @@ public static class BookingSetup
             .Bind(configuration.GetSection(ManageLinkSettings.SectionName))
             .ValidateOnStart();
         services.AddSingleton<IValidateOptions<ManageLinkSettings>, ManageLinkSettingsValidator>();
+        services.AddOptions<BookingSettings>()
+            .Bind(configuration.GetSection(BookingSettings.SectionName))
+            .ValidateOnStart();
+        services.AddSingleton<IValidateOptions<BookingSettings>, BookingSettingsValidator>();
         services.AddSingleton<ManageTokenSigner>();
         services.AddSingleton<AvailabilityService>();
         services.AddSingleton<BookingService>();
