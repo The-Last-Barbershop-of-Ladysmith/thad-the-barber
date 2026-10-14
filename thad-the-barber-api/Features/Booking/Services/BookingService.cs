@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Options;
+using ThadTheBarber.Api.Common.Extensions;
 using ThadTheBarber.Api.Common.Models;
 using ThadTheBarber.Api.Features.Booking.Configuration;
 using ThadTheBarber.Api.Features.Booking.Exceptions;
@@ -44,32 +45,66 @@ public sealed class BookingService(
     }
 
     /// <summary>
-    /// BR-13: every upcoming booking of every Square customer with the phone counts, wherever it was made, up to the
-    /// furthest a customer can book ahead. A booking the phone already holds at <paramref name="startAt"/> lifts the
-    /// cap: it's this attempt's own booking while Square's availability still lists the time, and
-    /// <c>CreateBooking</c> answers with it for the same key and refuses the time for any other. Two attempts racing at
-    /// one below the cap can both pass; for one barber's calendar that's not worth a lock.
+    /// BR-13: no <see cref="BookingSettings.CapWindow"/>-long stretch may hold more than the cap of the phone's upcoming
+    /// bookings, counting every Square customer with the phone and bookings made anywhere. Only stretches containing
+    /// <paramref name="startAt"/> can change, so only bookings within one window either side of it are read. A booking
+    /// the phone already holds at <paramref name="startAt"/> lifts the cap: it's this attempt's own booking while
+    /// Square's availability still lists the time, and <c>CreateBooking</c> answers with it for the same key and refuses
+    /// the time for any other. Two attempts racing at one below the cap can both pass; for one barber's calendar that's
+    /// not worth a lock.
     /// </summary>
     private async Task EnsureBelowLimitAsync(List<string> customerIds, DateTimeOffset startAt, CancellationToken cancellationToken)
     {
         ShopDetails shopDetails = await square.GetShopDetailsAsync(cancellationToken);
-        BookingProfile bookingProfile = await square.GetBookingProfileAsync(shopDetails.LocationId, cancellationToken);
         DateTimeOffset now = time.GetUtcNow();
-        DateTimeRange upcoming = new(
-            now,
-            now + bookingProfile.MaximumAdvance
-        );
-
-        List<Appointment>[] appointmentsByCustomer = await Task.WhenAll(customerIds.Select(customerId =>
-            square.ListCustomerAppointmentsAsync(shopDetails.LocationId, customerId, upcoming, cancellationToken)));
-        List<Appointment> upcomingAppointments = [.. appointmentsByCustomer
-            .SelectMany(appointments => appointments)
-            .Where(appointment => appointment.IsUpcomingAt(now))];
-        if (upcomingAppointments.Count >= settings.Value.MaxUpcomingPerPhone
-            && !upcomingAppointments.Any(appointment => appointment.StartAt == startAt))
+        TimeSpan window = settings.Value.CapWindow;
+        DateTimeOffset readFrom = startAt - window;
+        if (readFrom < now)
         {
-            throw new BookingLimitReachedException($"The phone holds {upcomingAppointments.Count} upcoming appointments.");
+            readFrom = now;
         }
+
+        DateTimeRange nearby = new(
+            readFrom,
+            startAt + window
+        );
+        List<Appointment>[] appointmentsByCustomer = await Task.WhenAll(customerIds.Select(customerId =>
+            square.ListCustomerAppointmentsAsync(shopDetails.LocationId, customerId, nearby, cancellationToken)));
+        List<DateTimeOffset> bookedStarts = [.. appointmentsByCustomer
+            .SelectMany(appointments => appointments)
+            .Where(appointment => appointment.IsUpcomingAt(now))
+            .Select(appointment => appointment.StartAt)];
+        if (bookedStarts.Contains(startAt))
+        {
+            return;
+        }
+
+        int busiestWindow = BusiestWindowAround(startAt, bookedStarts, window);
+        if (busiestWindow >= settings.Value.MaxUpcomingPerPhone)
+        {
+            throw new BookingLimitReachedException($"The phone holds {busiestWindow} appointments within {window} of the requested time.");
+        }
+    }
+
+    /// <summary>
+    /// The most bookings in any window that also covers <paramref name="startAt"/>. The fullest such window can always be
+    /// moved right until it starts at a booking or at <paramref name="startAt"/> without losing one, so those are the only
+    /// starts to try.
+    /// </summary>
+    private static int BusiestWindowAround(DateTimeOffset startAt, List<DateTimeOffset> bookedStarts, TimeSpan window)
+    {
+        List<DateTimeOffset> windowStarts = [
+            startAt,
+            .. bookedStarts.Where(bookedStart => bookedStart > startAt - window && bookedStart < startAt),
+        ];
+        return windowStarts.Max(windowStart =>
+        {
+            DateTimeRange stretch = new(
+                windowStart,
+                windowStart + window
+            );
+            return bookedStarts.Count(stretch.Contains);
+        });
     }
 
     /// <summary>
