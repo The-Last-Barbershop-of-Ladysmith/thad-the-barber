@@ -29,4 +29,25 @@ public static class DateTimeRangeExtensions
             end
         );
     }
+
+    /// <summary>Back-to-back pieces covering the range, none longer than <paramref name="maxLength"/>.</summary>
+    public static List<DateTimeRange> Split(this DateTimeRange range, TimeSpan maxLength)
+    {
+        List<DateTimeRange> pieces = [];
+        for (DateTimeOffset start = range.Start; start < range.End; start += maxLength)
+        {
+            DateTimeOffset end = start + maxLength;
+            if (end > range.End)
+            {
+                end = range.End;
+            }
+
+            pieces.Add(new DateTimeRange(
+                start,
+                end
+            ));
+        }
+
+        return pieces;
+    }
 }
