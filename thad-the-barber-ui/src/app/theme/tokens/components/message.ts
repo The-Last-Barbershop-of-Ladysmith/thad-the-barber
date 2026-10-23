@@ -1,32 +1,28 @@
 import { MessageDesignTokens } from '@primeuix/themes/types/message';
+import { alpha } from '../alpha';
+import {
+  SEVERITY_COLORS,
+  Severity,
+  severityTokens,
+} from './severity';
 
-type MessageSeverityTokens = MessageDesignTokens['info'];
-
-function severity(color: string): MessageSeverityTokens {
+function severity(name: Severity): MessageDesignTokens['info'] {
+  const color: string = SEVERITY_COLORS[name];
   return {
-    background: `color-mix(in srgb, ${color} 14%, transparent)`,
-    borderColor: `color-mix(in srgb, ${color} 40%, transparent)`,
-    color,
-    shadow: 'none',
-    closeButton: {
-      hoverBackground: `color-mix(in srgb, ${color} 14%, transparent)`,
-      focusRing: { color, shadow: 'none' },
-    },
+    ...severityTokens(color),
+    background: alpha(color, 14),
     outlined: { color, borderColor: color },
     simple: { color },
   };
 }
 
-/**
- * Inline notices: field errors, "slot just taken", "You're booked". The app has no blue state,
- * so severity="info" is re-skinned as the copper brand notice.
- */
+/** Inline notices: field errors, "slot just taken", "You're booked". */
 export const message: MessageDesignTokens = {
   root: { borderRadius: '{border.radius.md}' },
   content: { padding: '0.875rem 1.125rem', gap: '0.625rem' },
   text: { fontWeight: '600' },
-  info: severity('{primary.hover.color}'),
-  success: severity('{brand.success}'),
-  warn: severity('{brand.warn}'),
-  error: severity('{brand.error}'),
+  info: severity('info'),
+  success: severity('success'),
+  warn: severity('warn'),
+  error: severity('error'),
 };

@@ -1,29 +1,26 @@
 import { ToastDesignTokens } from '@primeuix/themes/types/toast';
-
-type ToastSeverityTokens = ToastDesignTokens['info'];
+import {
+  SEVERITY_COLORS,
+  Severity,
+  severityTokens,
+} from './severity';
 
 /** Opaque, so the text keeps its contrast over the moving backdrop. */
-function severity(color: string): ToastSeverityTokens {
+function severity(name: Severity): ToastDesignTokens['info'] {
+  const color: string = SEVERITY_COLORS[name];
   return {
-    background: `color-mix(in srgb, ${color} 14%, {espresso.950})`,
-    borderColor: `color-mix(in srgb, ${color} 40%, transparent)`,
-    color,
+    ...severityTokens(color),
+    background: `color-mix(in srgb, ${color} 14%, {overlay.popover.background})`,
     detailColor: '{text.color}',
-    shadow: 'none',
-    closeButton: {
-      hoverBackground: `color-mix(in srgb, ${color} 14%, transparent)`,
-      focusRing: { color, shadow: 'none' },
-    },
   };
 }
 
 /** Short results not tied to one spot on the page ("Link copied", "Booking cancelled"). */
 export const toast: ToastDesignTokens = {
-  root: { borderRadius: '{border.radius.md}' },
   summary: { fontWeight: '600' },
   detail: { fontWeight: '400', fontSize: '0.875rem' },
-  info: severity('{primary.hover.color}'),
-  success: severity('{brand.success}'),
-  warn: severity('{brand.warn}'),
-  error: severity('{brand.error}'),
+  info: severity('info'),
+  success: severity('success'),
+  warn: severity('warn'),
+  error: severity('error'),
 };

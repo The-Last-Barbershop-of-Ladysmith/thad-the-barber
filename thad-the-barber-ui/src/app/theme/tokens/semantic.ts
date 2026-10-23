@@ -1,4 +1,5 @@
 import { TokenSection } from '@primeuix/themes';
+import { alpha } from './alpha';
 
 /**
  * Semantic tokens: give primitives a job (primary, surface, text, form fields...).
@@ -6,10 +7,6 @@ import { TokenSection } from '@primeuix/themes';
  * `extend` holds brand-only tokens PrimeNG has no slot for; they become CSS variables
  * (for example `--p-brand-glass-background`) that `tailwind/theme.css` exposes as utilities.
  */
-function alpha(token: string, percent: number): string {
-  return `color-mix(in srgb, ${token} ${percent}%, transparent)`;
-}
-
 export const semantic: TokenSection = {
   typography: { fontFamily: '{font.family.sans}', fontSize: '1rem' },
 
