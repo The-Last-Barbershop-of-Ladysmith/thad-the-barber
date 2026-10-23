@@ -142,6 +142,7 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 | Phone inputs (SMS + booking) | 2 | `p-inputmask` `(999) 999-9999` | `semantic.ts` `formField` | Replaces the wireframe's hand-written formatter |
 | Name input | 1 | `pInputText` | `semantic.ts` `formField` | |
 | "You're on the list" / "You're booked" | 2 | `p-message severity="info"` | `message.ts` | `info` re-skinned as copper (the app has no blue state) |
+| Success, warning and error notices | new | `p-message` (`success`, `warn`, `error`) and `p-toast` | `message.ts`, `toast.ts` | Not in the wireframe; which one to use is in the README's "Feedback messages" (#110) |
 | "★★★★★" text stars | 5 | `p-rating [readonly]` | `rating.ts` | |
 | Mobile slide-down menu | 1 | `p-drawer` | `drawer.ts` | |
 | Time-slot loading state | new | `p-progress-spinner` | Default | Not in the wireframe |
