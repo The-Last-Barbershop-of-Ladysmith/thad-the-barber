@@ -67,12 +67,16 @@ describe(
     );
 
     it(
-      'shows a message raised twice while showing only once',
+      'shows a message raised twice while showing only once, and a different one beside it',
       (): void => {
         messages.add({ severity: 'info', summary: 'Link copied' });
         messages.add({ severity: 'info', summary: 'Link copied' });
 
         expect(toastsShowing()).toBe(1);
+
+        messages.add({ severity: 'success', summary: 'Booking cancelled' });
+
+        expect(toastsShowing()).toBe(2);
       },
     );
   },
