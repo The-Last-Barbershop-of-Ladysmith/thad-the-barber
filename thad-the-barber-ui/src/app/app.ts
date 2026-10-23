@@ -21,7 +21,6 @@ export class App {
     '40rem': {
       width: '100%',
       left: '0',
-      right: '0',
       bottom: '0',
     },
   };

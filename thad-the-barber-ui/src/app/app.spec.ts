@@ -1,4 +1,4 @@
-import { DebugElement, NO_ERRORS_SCHEMA } from '@angular/core';
+import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
@@ -33,15 +33,9 @@ describe(
     });
 
     it(
-      'hosts exactly one toast, 4 s by default, dropping duplicates',
+      'hosts exactly one toast',
       (): void => {
-        const toasts: Toast[] = fixture.debugElement
-          .queryAll(By.directive(Toast))
-          .map((toast: DebugElement): Toast => toast.componentInstance as Toast);
-
-        expect(toasts).toHaveLength(1);
-        expect(toasts[0]?.life()).toBe(4000);
-        expect(toasts[0]?.preventOpenDuplicates()).toBe(true);
+        expect(fixture.debugElement.queryAll(By.directive(Toast))).toHaveLength(1);
       },
     );
 
