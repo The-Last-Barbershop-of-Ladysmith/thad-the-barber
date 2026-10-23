@@ -131,6 +131,8 @@ export const semantic: TokenSection = {
       ctaGradient: 'linear-gradient(100deg, {ink} 0%, {espresso.800} 30%, {copper.500} 65%, {copper.300} 100%)',
       ctaGlow: `0 16px 36px -10px ${alpha('{copper.500}', 80)}`,
       success: '{mint}',
+      warn: '{amber}',
+      error: '{coral}',
       ease: 'cubic-bezier(0.2, 0.8, 0.2, 1)',
     },
   },

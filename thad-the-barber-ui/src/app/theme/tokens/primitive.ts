@@ -49,8 +49,14 @@ export const primitive: TokenSection = {
   /** Deepest shade, used for glass panels, header fade and CTA gradient start. */
   ink: '#0d0805',
 
-  /** "Open now" status. */
+  /** "Open now" status and success notices. */
   mint: '#7fd18b',
+
+  /** Warning notices. */
+  amber: '#f2c46d',
+
+  /** Error notices. */
+  coral: '#f28b7d',
 
   fontFamily: { sans: 'Helvetica, Arial, sans-serif' },
 };
