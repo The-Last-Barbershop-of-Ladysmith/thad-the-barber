@@ -69,6 +69,8 @@ Fields: `production`, `apiBaseUrl` (absolute, includes `/api`), `siteUrl`, `medi
 
 **Browser telemetry** (`core/telemetry/`, #121): `app.config.browser.ts` adds `provideTelemetry(environment)`, so prerendering never loads the SDK. With an empty `appInsightsConnectionString` it does nothing. Otherwise it loads the App Insights SDK (`@microsoft/applicationinsights-web`) with the Angular plugin's `ErrorHandler` (uncaught errors become exceptions and still log to the console; add extra handlers, like #65's toast, with `addErrorHandler`, because an `errorServices` array in the plugin config would replace the console one), tracks a page view on each `NavigationEnd`, and sends `traceparent` to the API host only. No cookies, no CDN config fetch, and query strings and fragments are stripped from telemetry URLs (BR-23). The mocked e2e fixture answers the ingestion endpoint itself, so test runs never reach App Insights.
 
+**API session** (#66): every `/api/*` call but `/session` carries `Authorization: Bearer` from `core/interceptors/session.interceptor.ts`; on a 401 it gets one new token and retries once. `SessionService` (`core/services/`) gets the token from `POST /api/session` with a reCAPTCHA token (`RecaptchaService` loads Google's `enterprise.js` on first use, because the keys are reCAPTCHA Enterprise score keys), keeps it in memory only, shares one fetch between concurrent callers, and fetches a new one once the last is within a minute of expiry. That happens on demand, not on a timer, so an idle tab spends no assessments. The booking page asks for a token as it opens, so a failed bot check (reCAPTCHA can't load, or 403 `bot_check_failed`) shows the call/text message and turns off Confirm before the customer fills in the form (BR-24). The badge is hidden in `styles.css`, and Google's notice sits under the Confirm button instead. The mocked e2e fixture stubs Google's script and answers `/api/session` (`e2e/support/session.ts`).
+
 ## Folder structure
 
 ```
@@ -87,8 +89,10 @@ src/
     ├── core/
     │   ├── config/shop-info.ts     # phone, address, hours, socials, home sections
     │   ├── config/primeui-license.ts  # PrimeNG license key (all environments)
+    │   ├── interceptors/session.interceptor.ts   # Bearer token on API calls, one retry on a 401
     │   ├── models/
     │   ├── services/shop-hours.service.ts   # hours table + live "Open now" status
+    │   ├── services/session.service.ts + recaptcha.service.ts   # in-memory session JWT from POST /api/session
     │   └── telemetry/              # provideTelemetry (App Insights in the browser) + URL-stripping initializer
     ├── shared/
     │   ├── components/             # backdrop, section-heading, hours-list
