@@ -13,7 +13,9 @@ import {
   throwError,
 } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { SessionService } from '../services/session.service';
+import { SESSION_URL, SessionService } from '../services/session.service';
+
+const API_PREFIX: string = `${environment.apiBaseUrl}/`;
 
 /**
  * Sends the session token on every API call except `/session`, which issues it. On a 401 it gets a new token and
@@ -23,31 +25,24 @@ export const sessionInterceptor: HttpInterceptorFn = (
   request: HttpRequest<unknown>,
   next: HttpHandlerFn,
 ): Observable<HttpEvent<unknown>> => {
-  const isApiCall: boolean = request.url.startsWith(`${environment.apiBaseUrl}/`);
-  const isSessionCall: boolean = request.url === `${environment.apiBaseUrl}/session`;
-
-  if (!isApiCall || isSessionCall) {
+  if (!request.url.startsWith(API_PREFIX) || request.url === SESSION_URL) {
     return next(request);
   }
 
   const sessionService: SessionService = inject(SessionService);
-  const sendWithAuth: (token: string) => Observable<HttpEvent<unknown>> =
-    (token: string): Observable<HttpEvent<unknown>> =>
-      next(
-        request.clone({ setHeaders: { Authorization: `Bearer ${token}` } }),
-      );
 
-  return sessionService
-    .getToken()
-    .pipe(
-      switchMap((token: string): Observable<HttpEvent<unknown>> => sendWithAuth(token).pipe(
-        catchError((error: unknown): Observable<HttpEvent<unknown>> => {
-          const isUnauthorized: boolean = error instanceof HttpErrorResponse && error.status === 401;
-          if (!isUnauthorized) {
-            return throwError((): unknown => error);
-          }
-          return sessionService.refreshToken().pipe(switchMap(sendWithAuth));
-        }),
-      )),
-    );
+  function sendWithAuth(token: string): Observable<HttpEvent<unknown>> {
+    return next(request.clone({ setHeaders: { Authorization: `Bearer ${token}` } }));
+  }
+
+  return sessionService.getToken().pipe(
+    switchMap(sendWithAuth),
+    catchError((error: unknown): Observable<HttpEvent<unknown>> => {
+      const isUnauthorized: boolean = error instanceof HttpErrorResponse && error.status === 401;
+      if (!isUnauthorized) {
+        return throwError((): unknown => error);
+      }
+      return sessionService.refreshToken().pipe(switchMap(sendWithAuth));
+    }),
+  );
 };

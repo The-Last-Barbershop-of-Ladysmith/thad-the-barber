@@ -18,14 +18,8 @@ describe(
     const start: Date = new Date('2026-11-01T05:59:30Z');
     const fifteenMinutes: number = 15 * 60_000;
     let getToken: Mock<(action: string) => Promise<string>>;
-
-    function sessionService(): SessionService {
-      return TestBed.inject(SessionService);
-    }
-
-    function http(): HttpTestingController {
-      return TestBed.inject(HttpTestingController);
-    }
+    let sessionService: SessionService;
+    let http: HttpTestingController;
 
     function issued(token: string, lifetime: number = fifteenMinutes): SessionToken {
       return { token, expiresAt: new Date(Date.now() + lifetime).toISOString() };
@@ -35,16 +29,16 @@ describe(
     async function sessionRequest(): Promise<TestRequest> {
       await Promise.resolve();
       await Promise.resolve();
-      return http().expectOne(sessionUrl);
+      return http.expectOne(sessionUrl);
     }
 
     function startSession(): void {
-      sessionService().getToken().subscribe({ error: (): void => undefined });
+      sessionService.getToken().subscribe({ error: (): void => undefined });
     }
 
     async function tokenOf(): Promise<string | undefined> {
       let token: string | undefined;
-      sessionService().getToken().subscribe((value: string): void => {
+      sessionService.getToken().subscribe((value: string): void => {
         token = value;
       });
       await Promise.resolve();
@@ -62,10 +56,12 @@ describe(
           { provide: RecaptchaService, useValue: { getToken } },
         ],
       });
+      sessionService = TestBed.inject(SessionService);
+      http = TestBed.inject(HttpTestingController);
     });
 
     afterEach((): void => {
-      http().verify();
+      http.verify();
       vi.useRealTimers();
     });
 
@@ -73,7 +69,7 @@ describe(
       'exchanges a reCAPTCHA token made for the session action',
       async (): Promise<void> => {
         const tokens: string[] = [];
-        sessionService().getToken().subscribe((token: string): void => {
+        sessionService.getToken().subscribe((token: string): void => {
           tokens.push(token);
         });
         const request: TestRequest = await sessionRequest();
@@ -91,12 +87,12 @@ describe(
       async (): Promise<void> => {
         const tokens: string[] = [];
         for (let caller: number = 0; caller < 3; caller++) {
-          sessionService().getToken().subscribe((token: string): void => {
+          sessionService.getToken().subscribe((token: string): void => {
             tokens.push(token);
           });
         }
         (await sessionRequest()).flush(issued('jwt-a'));
-        sessionService().getToken().subscribe((token: string): void => {
+        sessionService.getToken().subscribe((token: string): void => {
           tokens.push(token);
         });
 
@@ -134,7 +130,7 @@ describe(
 
         const refreshed: string[] = [];
         for (let caller: number = 0; caller < 2; caller++) {
-          sessionService().refreshToken().subscribe((token: string): void => {
+          sessionService.refreshToken().subscribe((token: string): void => {
             refreshed.push(token);
           });
         }
@@ -148,7 +144,7 @@ describe(
       'flags a failed bot check when the API answers 403 bot_check_failed',
       async (): Promise<void> => {
         let failure: unknown;
-        sessionService().getToken().subscribe({
+        sessionService.getToken().subscribe({
           error: (error: unknown): void => {
             failure = error;
           },
@@ -158,7 +154,7 @@ describe(
           { status: 403, statusText: 'Forbidden' },
         );
 
-        expect(sessionService().isBotCheckFailed()).toBe(true);
+        expect(sessionService.isBotCheckFailed()).toBe(true);
         expect(failure).toBeDefined();
       },
     );
@@ -174,7 +170,7 @@ describe(
         startSession();
         (await sessionRequest()).flush(null, { status: 503, statusText: 'Service Unavailable' });
 
-        expect(sessionService().isBotCheckFailed()).toBe(false);
+        expect(sessionService.isBotCheckFailed()).toBe(false);
       },
     );
 
@@ -185,12 +181,12 @@ describe(
         startSession();
         await Promise.resolve();
         await Promise.resolve();
-        http().expectNone(sessionUrl);
-        expect(sessionService().isBotCheckFailed()).toBe(true);
+        http.expectNone(sessionUrl);
+        expect(sessionService.isBotCheckFailed()).toBe(true);
 
         startSession();
         (await sessionRequest()).flush(issued('jwt-a'));
-        expect(sessionService().isBotCheckFailed()).toBe(false);
+        expect(sessionService.isBotCheckFailed()).toBe(false);
       },
     );
 

@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import {
   Observable,
+  catchError,
   defer,
   finalize,
   map,
@@ -15,10 +16,13 @@ import {
   share,
   switchMap,
   tap,
+  throwError,
 } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { SessionToken } from '../models/session.models';
 import { RecaptchaService } from './recaptcha.service';
+
+export const SESSION_URL: string = `${environment.apiBaseUrl}/session`;
 
 /** Must match the API's `SessionService.RecaptchaAction`. */
 const RECAPTCHA_ACTION: string = 'session';
@@ -66,8 +70,12 @@ export class SessionService {
 
   private requestSession(): Observable<string> {
     return defer((): Promise<string> => this.recaptchaService.getToken(RECAPTCHA_ACTION)).pipe(
+      catchError((error: unknown): Observable<never> => {
+        this.botCheckFailed.set(true);
+        return throwError((): unknown => error);
+      }),
       switchMap((recaptchaToken: string): Observable<SessionToken> =>
-        this.http.post<SessionToken>(`${environment.apiBaseUrl}/session`, { recaptchaToken })),
+        this.http.post<SessionToken>(SESSION_URL, { recaptchaToken })),
       tap({
         next: (session: SessionToken): void => {
           this.token = session.token;
@@ -75,7 +83,9 @@ export class SessionService {
           this.botCheckFailed.set(false);
         },
         error: (error: unknown): void => {
-          this.botCheckFailed.set(isBotCheckFailure(error));
+          if (error instanceof HttpErrorResponse) {
+            this.botCheckFailed.set(isBotCheckRefusal(error));
+          }
         },
       }),
       map((session: SessionToken): string => session.token),
@@ -83,11 +93,7 @@ export class SessionService {
   }
 }
 
-/** reCAPTCHA couldn't run (anything but an HTTP error comes from it), or the API refused the visitor. */
-function isBotCheckFailure(error: unknown): boolean {
-  if (!(error instanceof HttpErrorResponse)) {
-    return true;
-  }
+function isBotCheckRefusal(error: HttpErrorResponse): boolean {
   const isForbidden: boolean = error.status === 403;
   const isBotCheckCode: boolean = (error.error as { code?: string; } | null)?.code === 'bot_check_failed';
   return isForbidden && isBotCheckCode;

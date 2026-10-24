@@ -21,10 +21,7 @@ describe(
     const sessionUrl: string = `${environment.apiBaseUrl}/session`;
     const bookingsUrl: string = `${environment.apiBaseUrl}/bookings/booking-1_x?month=2026-11`;
     let sessionsIssued: number;
-
-    function http(): HttpTestingController {
-      return TestBed.inject(HttpTestingController);
-    }
+    let http: HttpTestingController;
 
     function get(url: string): { body: unknown; error: unknown; } {
       const result: { body: unknown; error: unknown; } = { body: undefined, error: undefined };
@@ -46,7 +43,7 @@ describe(
       sessionsIssued++;
       const token: string = `jwt-${sessionsIssued}`;
       const session: SessionToken = { token, expiresAt: new Date(Date.now() + 15 * 60_000).toISOString() };
-      http().expectOne(sessionUrl).flush(session);
+      http.expectOne(sessionUrl).flush(session);
       await Promise.resolve();
       return token;
     }
@@ -68,10 +65,11 @@ describe(
           { provide: RecaptchaService, useValue: { getToken: (): Promise<string> => Promise.resolve('made-up-recaptcha') } },
         ],
       });
+      http = TestBed.inject(HttpTestingController);
     });
 
     afterEach((): void => {
-      http().verify();
+      http.verify();
     });
 
     it(
@@ -79,7 +77,7 @@ describe(
       async (): Promise<void> => {
         const result: { body: unknown; } = get(bookingsUrl);
         await issueSession();
-        const request: TestRequest = http().expectOne(bookingsUrl);
+        const request: TestRequest = http.expectOne(bookingsUrl);
         request.flush({ id: 'booking-1_x' });
 
         expect(authorization(request)).toBe('Bearer jwt-1');
@@ -97,7 +95,7 @@ describe(
         ];
         for (const url of [sessionUrl, ...outside]) {
           get(url);
-          const request: TestRequest = http().expectOne(url);
+          const request: TestRequest = http.expectOne(url);
           expect(authorization(request)).toBeNull();
           request.flush({});
         }
@@ -110,9 +108,9 @@ describe(
       async (): Promise<void> => {
         const result: { body: unknown; error: unknown; } = get(bookingsUrl);
         await issueSession();
-        unauthorized(http().expectOne(bookingsUrl));
+        unauthorized(http.expectOne(bookingsUrl));
         await issueSession();
-        const retry: TestRequest = http().expectOne(bookingsUrl);
+        const retry: TestRequest = http.expectOne(bookingsUrl);
         retry.flush({ id: 'booking-1_x' });
 
         expect(authorization(retry)).toBe('Bearer jwt-2');
@@ -126,9 +124,9 @@ describe(
       async (): Promise<void> => {
         const result: { error: unknown; } = get(bookingsUrl);
         await issueSession();
-        unauthorized(http().expectOne(bookingsUrl));
+        unauthorized(http.expectOne(bookingsUrl));
         await issueSession();
-        unauthorized(http().expectOne(bookingsUrl));
+        unauthorized(http.expectOne(bookingsUrl));
 
         expect((result.error as HttpErrorResponse).status).toBe(401);
         expect(sessionsIssued).toBe(2);
@@ -140,7 +138,7 @@ describe(
       async (): Promise<void> => {
         const result: { error: unknown; } = get(bookingsUrl);
         await issueSession();
-        http().expectOne(bookingsUrl).flush({ code: 'slot_unavailable' }, { status: 409, statusText: 'Conflict' });
+        http.expectOne(bookingsUrl).flush({ code: 'slot_unavailable' }, { status: 409, statusText: 'Conflict' });
 
         expect((result.error as HttpErrorResponse).status).toBe(409);
         expect(sessionsIssued).toBe(1);
@@ -153,10 +151,10 @@ describe(
         const first: { body: unknown; } = get(bookingsUrl);
         const second: { body: unknown; } = get(`${environment.apiBaseUrl}/shop`);
         await issueSession();
-        unauthorized(http().expectOne(bookingsUrl));
-        unauthorized(http().expectOne(`${environment.apiBaseUrl}/shop`));
+        unauthorized(http.expectOne(bookingsUrl));
+        unauthorized(http.expectOne(`${environment.apiBaseUrl}/shop`));
         await issueSession();
-        const retries: TestRequest[] = [http().expectOne(bookingsUrl), http().expectOne(`${environment.apiBaseUrl}/shop`)];
+        const retries: TestRequest[] = [http.expectOne(bookingsUrl), http.expectOne(`${environment.apiBaseUrl}/shop`)];
         for (const retry of retries) {
           expect(authorization(retry)).toBe('Bearer jwt-2');
           retry.flush({});

@@ -1,7 +1,6 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  DestroyRef,
   OnInit,
   Signal,
   WritableSignal,
@@ -13,11 +12,6 @@ import {
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
-import {
-  EMPTY,
-  Observable,
-  catchError,
-} from 'rxjs';
 import { DatePickerMonthChangeEvent } from 'primeng/types/datepicker';
 import { SHOP_INFO } from '../../core/config/shop-info';
 import { ShopInfo, Weekday } from '../../core/models/shop.models';
@@ -68,7 +62,6 @@ import { bookingFeature } from './state/booking.feature';
 export class Booking implements OnInit {
   private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
   private readonly sessionService: SessionService = inject(SessionService);
-  private readonly destroyRef: DestroyRef = inject(DestroyRef);
 
   protected readonly phone: ShopInfo['phone'] = SHOP_INFO.phone;
   protected readonly isBotCheckFailed: Signal<boolean> = this.sessionService.isBotCheckFailed;
@@ -149,12 +142,7 @@ export class Booking implements OnInit {
 
   constructor() {
     afterNextRender((): void => {
-      this.sessionService.getToken()
-        .pipe(
-          catchError((): Observable<never> => EMPTY),
-          takeUntilDestroyed(this.destroyRef),
-        )
-        .subscribe();
+      this.sessionService.getToken().subscribe({ error: (): void => undefined });
     });
     this.form.valueChanges
       .pipe(takeUntilDestroyed())
