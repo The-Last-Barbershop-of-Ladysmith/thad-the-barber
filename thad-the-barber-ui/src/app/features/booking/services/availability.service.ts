@@ -10,6 +10,7 @@ import {
 import { ShopOpeningHours } from '../../../core/models/shop/shop-opening-hours.model';
 import { ShopHoursService } from '../../../core/services/shop-hours.service';
 import { AppState } from '../../../store/app.state';
+import { RequestStatus } from '../../../shared/models/request.models';
 import { shopFeature } from '../../../store/shop/shop.feature';
 import {
   addDays,
@@ -67,10 +68,17 @@ export class AvailabilityService {
     return this.afterHoursLoad((): TimeSlot[] => this.slotsFor(fromIsoDate(isoDate)));
   }
 
-  /** The mock derives everything from the opening hours, which arrive with the shop, maybe after /book opens. */
+  /**
+   * The mock derives everything from the opening hours, which arrive with the shop, maybe after /book opens. A failed
+   * load settles it too, so the calendar shows no open days instead of loading forever.
+   */
   private afterHoursLoad<T>(compute: () => T): Observable<T> {
-    return this.store.select(shopFeature.selectOpeningHours).pipe(
-      filter((hours: ShopOpeningHours[]): boolean => hours.length > 0),
+    return this.store.select(shopFeature.selectLoadStatus).pipe(
+      filter((loadStatus: RequestStatus): boolean => {
+        const isLoaded: boolean = loadStatus === RequestStatus.Success;
+        const isFailed: boolean = loadStatus === RequestStatus.Error;
+        return isLoaded || isFailed;
+      }),
       take(1),
       delay(150),
       map(compute),
@@ -103,10 +111,11 @@ export class AvailabilityService {
     const isToday: boolean = iso === toIsoDate(now);
     const nowMinutes: number = now.getHours() * 60 + now.getMinutes();
     const slots: TimeSlot[] = [];
+    const closesAt: number = fromTimeOfDay(hours.closes);
 
     for (
       let start: number = fromTimeOfDay(hours.opens);
-      start + BOOKING_RULES.slotMinutes <= fromTimeOfDay(hours.closes);
+      start + BOOKING_RULES.slotMinutes <= closesAt;
       start += BOOKING_RULES.slotMinutes
     ) {
       const taken: boolean = (isToday && start <= nowMinutes) || hashToUnit(`${iso}@${start}`) < 0.35;

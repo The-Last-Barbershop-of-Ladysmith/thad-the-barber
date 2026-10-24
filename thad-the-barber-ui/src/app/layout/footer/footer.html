@@ -58,8 +58,11 @@
 
     <div class="bottom">
       <span class="text-[13px] text-muted-color"
-        >© {{ year }} {{ shopName() }} · Fredericksburg, VA</span
-      >
+        >© {{ year }} {{ shopName() }}
+        @if (address(); as address) {
+          · {{ address.city }}, {{ address.state }}
+        }
+      </span>
       <nav class="bottom-nav" aria-label="Footer">
         @for (item of sections(); track item.fragment) {
           <a routerLink="/" [fragment]="item.fragment" class="nav-link">{{ item.label }}</a>

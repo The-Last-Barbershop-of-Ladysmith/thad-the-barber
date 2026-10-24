@@ -69,7 +69,7 @@ export const bookingFeature = createFeature({
   }),
 });
 
-export function toSelectedDay(selectedDate: string | null): Date | null {
+function toSelectedDay(selectedDate: string | null): Date | null {
   if (selectedDate === null) {
     return null;
   }

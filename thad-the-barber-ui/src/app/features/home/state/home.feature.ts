@@ -40,31 +40,34 @@ export const homeFeature = createFeature({
     selectAnnouncementsStatus,
     selectGallery,
     selectGalleryStatus,
-  }: FeatureSelectors<HomeState>): HomeExtraSelectors => ({
-    selectIsSubscribedToSsms: createSelector(
-      selectSmsSignup,
-      (smsSignup: SmsSignupState): boolean => smsSignup.status === RequestStatus.Success,
-    ),
-    selectIsSubscribingSsms: createSelector(
-      selectSmsSignup,
-      (smsSignup: SmsSignupState): boolean => smsSignup.status === RequestStatus.Pending,
-    ),
-    selectIsContentLoading: createSelector(
-      selectContentStatus,
-      (contentStatus: RequestStatus): boolean => contentStatus === RequestStatus.Pending,
-    ),
-    selectActiveAnnouncements: createSelector(
+  }: FeatureSelectors<HomeState>): HomeExtraSelectors => {
+    const selectActiveAnnouncements: MemoizedSelector<object, Announcement[]> = createSelector(
       selectAnnouncements,
       toActiveAnnouncements,
-    ),
-    selectHomeSections: createSelector(
-      selectAnnouncementsStatus,
-      selectAnnouncements,
-      selectGalleryStatus,
-      selectGallery,
-      toHomeSections,
-    ),
-  }),
+    );
+    return {
+      selectIsSubscribedToSsms: createSelector(
+        selectSmsSignup,
+        (smsSignup: SmsSignupState): boolean => smsSignup.status === RequestStatus.Success,
+      ),
+      selectIsSubscribingSsms: createSelector(
+        selectSmsSignup,
+        (smsSignup: SmsSignupState): boolean => smsSignup.status === RequestStatus.Pending,
+      ),
+      selectIsContentLoading: createSelector(
+        selectContentStatus,
+        (contentStatus: RequestStatus): boolean => contentStatus === RequestStatus.Pending,
+      ),
+      selectActiveAnnouncements,
+      selectHomeSections: createSelector(
+        selectAnnouncementsStatus,
+        selectActiveAnnouncements,
+        selectGalleryStatus,
+        selectGallery,
+        toHomeSections,
+      ),
+    };
+  },
 });
 
 /** BR-30: the ones showing today, from the first day through the last, by the visitor's local date. */
@@ -78,13 +81,13 @@ export function toActiveAnnouncements(announcements: Announcement[]): Announceme
  * The home sections the header and footer link to, without the ones whose content turned out empty or failed to load
  * (BR-32 and the gallery).
  */
-export function toHomeSections(
+function toHomeSections(
   announcementsStatus: RequestStatus,
-  announcements: Announcement[],
+  activeAnnouncements: Announcement[],
   galleryStatus: RequestStatus,
   gallery: GalleryPhoto[],
 ): readonly NavItem[] {
-  const hidesAnnouncements: boolean = isSettledEmpty(announcementsStatus, toActiveAnnouncements(announcements).length);
+  const hidesAnnouncements: boolean = isSettledEmpty(announcementsStatus, activeAnnouncements.length);
   const hidesGallery: boolean = isSettledEmpty(galleryStatus, gallery.length);
   return HOME_SECTIONS.filter((section: NavItem): boolean => {
     const isHiddenAnnouncements: boolean = section.fragment === 'announcements' && hidesAnnouncements;

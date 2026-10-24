@@ -2,9 +2,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { TEST_SHOP } from '../../../testing/test-shop';
-import { environment } from '../../../environments/environment';
 import { ShopInfo } from '../models/shop/shop-info.model';
-import { ShopService } from './shop.service';
+import { SHOP_URL, ShopService } from './shop.service';
 
 describe(
   'ShopService',
@@ -25,7 +24,7 @@ describe(
           shop = result;
         });
 
-        TestBed.inject(HttpTestingController).expectOne(`${environment.apiBaseUrl}/shop`).flush(TEST_SHOP);
+        TestBed.inject(HttpTestingController).expectOne(SHOP_URL).flush(TEST_SHOP);
 
         expect(shop).toEqual(TEST_SHOP);
       },

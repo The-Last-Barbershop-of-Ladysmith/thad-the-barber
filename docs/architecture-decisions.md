@@ -210,7 +210,7 @@ Every change ships with its tests:
 | PrimeUI license, theme tokens, frame counts, validator patterns | Code (not business data) | Unchanged |
 
 - The API caches Square reads for 15–60 minutes with `IMemoryCache`, and Square's `catalog.version.updated`/`location.updated` webhooks mark the affected entry stale.
-- `SHOP_FALLBACK`, `BOOKING_RULES`, and `HOME_CONTENT` are deleted once nothing uses them. `OPENING_HOURS` and `SOCIAL_LINKS` went with #39; `SHOP_FALLBACK` keeps the fallback name, phone and Square booking URL (shown until `/api/shop` answers, and on Express's error page) plus site content Square doesn't hold.
+- `SHOP_FALLBACK`, `BOOKING_RULES`, and `HOME_CONTENT` are deleted once nothing uses them. `OPENING_HOURS` and `SOCIAL_LINKS` went with #39; `SHOP_FALLBACK` keeps only the fallback name, phone and Square booking URL (shown until `/api/shop` answers, and on Express's error page); site content Square doesn't hold is in `SHOP_CONTENT` (reviews, until #37). The tagline, venue and area text were dropped in #39.
 - Every audit issue carries a **Hardcoded values inventory** for its component.
 
 **Announcements:**

@@ -32,7 +32,7 @@ export const WEEK_FROM_MONDAY: readonly Weekday[] = [
 ];
 
 /** Sunday-first, indexed like Date.getDay(). */
-const WEEK_FROM_SUNDAY: readonly Weekday[] = [
+export const WEEK_FROM_SUNDAY: readonly Weekday[] = [
   Weekday.Sunday,
   Weekday.Monday,
   Weekday.Tuesday,

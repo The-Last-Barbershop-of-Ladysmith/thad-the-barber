@@ -1,5 +1,4 @@
 import {
-  ConsoleMessage,
   Locator,
   Page,
   Route,
@@ -8,23 +7,11 @@ import { ShopInfo } from '../../src/app/core/models/shop/shop-info.model';
 import { TEST_SHOP } from '../../src/testing/test-shop';
 import { expectNoA11yViolations } from '../support/axe';
 import { expect, test } from '../support/fixtures';
-import { collectPageErrors } from '../support/page-errors';
+import { collectAngularErrors, collectPageErrors } from '../support/page-errors';
 import { SHOP_URL } from '../support/shop';
 
-/** Angular's hydration and runtime errors are logged with an NG0 code rather than thrown. */
-function collectAngularErrors(page: Page): string[] {
-  const errors: string[] = [];
-  page.on('console', (message: ConsoleMessage): void => {
-    const isAngularError: boolean = message.type() === 'error' && /NG0\d+/.test(message.text());
-    if (isAngularError) {
-      errors.push(message.text());
-    }
-  });
-  return errors;
-}
-
-function phoneLinks(page: Page, shop: ShopInfo): Locator {
-  return page.locator(`a[href="tel:${shop.phone}"]`);
+function phoneLinks(scope: Page | Locator, shop: ShopInfo): Locator {
+  return scope.locator(`a[href="tel:${shop.phone}"]`);
 }
 
 /** The places that show the phone without opening the mobile menu. */
@@ -44,7 +31,7 @@ test.describe(
         await page.goto('/');
 
         for (const place of PHONE_PLACES) {
-          await expect(page.locator(place).locator(`a[href="tel:${TEST_SHOP.phone}"]`)).toBeAttached();
+          await expect(phoneLinks(page.locator(place), TEST_SHOP)).toBeAttached();
         }
         await expect(page.locator('a[href^="https://www.google.com/maps/dir/"][href*="12%20Pretend%20Pl"]')).toHaveCount(2);
         await expect(page.locator('a[href="https://www.instagram.com/made.up%20fades/"]')).toBeAttached();

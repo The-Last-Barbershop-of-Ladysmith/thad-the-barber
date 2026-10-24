@@ -20,6 +20,7 @@ import {
   timeout,
 } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { anonymousRequest } from '../interceptors/anonymous-request.token';
 import { SessionToken } from '../models/session.models';
 import { RecaptchaService } from './recaptcha.service';
 
@@ -81,7 +82,11 @@ export class SessionService {
         return throwError((): unknown => error);
       }),
       switchMap((recaptchaToken: string): Observable<SessionToken> =>
-        this.http.post<SessionToken>(SESSION_URL, { recaptchaToken })),
+        this.http.post<SessionToken>(
+          SESSION_URL,
+          { recaptchaToken },
+          { context: anonymousRequest() },
+        )),
       tap({
         next: (session: SessionToken): void => {
           this.token = session.token;

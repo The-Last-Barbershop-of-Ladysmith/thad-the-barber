@@ -17,15 +17,21 @@ interface EnvironmentModule { environment: CspEnvironment; }
 
 interface BrandCssModule { brandCss: () => string; }
 
-/** The shop facts the error page shows. Node runs this file unbuilt, so it can't import the app's models. */
+/** The phone links the error page shows. Node runs this file unbuilt, so it can't import the app's models. */
+interface PhoneLinks {
+  display: string;
+  tel: string;
+  sms: string;
+}
+
+/** The shop facts the error page shows (Express's `shop.json`). */
 interface ErrorPageShop {
   name: string;
-  phone: {
-    display: string; tel: string; sms: string;
-  };
+  phone: PhoneLinks;
   bookingUrl: string;
 }
 
+/** The fields of the app's `SHOP_FALLBACK` this script reads. */
 interface ShopFallback {
   name: string;
   phone: string;
@@ -34,7 +40,7 @@ interface ShopFallback {
 
 interface ShopInfoModule { SHOP_FALLBACK: ShopFallback; }
 
-interface PhoneUtilsModule { toPhoneLinks: (e164: string) => ErrorPageShop['phone']; }
+interface PhoneUtilsModule { toPhoneLinks: (e164: string) => PhoneLinks; }
 
 interface FileReplacement {
   replace: string;

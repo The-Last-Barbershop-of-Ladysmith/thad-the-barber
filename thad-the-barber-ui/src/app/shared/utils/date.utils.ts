@@ -1,22 +1,12 @@
 import { formatDate } from '@angular/common';
 import { WeekTime } from '../../core/models/shop/week-time.model';
-import { toWeekday } from './weekday.utils';
+import { Weekday } from '../../core/models/shop/weekday.model';
+import { WEEKDAY_SHORT_NAMES, WEEK_FROM_SUNDAY } from './weekday.utils';
 
 /** Local-time date helpers. The store keeps dates as ISO strings so state stays serializable. */
 
 /** Locale for display labels. They use `formatDate`, the same formatter behind Angular's `DatePipe`. */
 const DATE_LOCALE: string = 'en-US';
-
-/** `Intl`'s short weekday names in DATE_LOCALE, indexed like Date.getDay(). */
-const WEEKDAY_ABBREVIATIONS: readonly string[] = [
-  'Sun',
-  'Mon',
-  'Tue',
-  'Wed',
-  'Thu',
-  'Fri',
-  'Sat',
-];
 
 function pad(value: number): string {
   return String(value).padStart(2, '0');
@@ -115,7 +105,8 @@ export function weekTimeIn(timeZone: string, instant: Date): WeekTime {
   const part: (type: Intl.DateTimeFormatPartTypes) => string = (type: Intl.DateTimeFormatPartTypes): string =>
     parts.find((entry: Intl.DateTimeFormatPart): boolean => entry.type === type)?.value ?? '';
   return {
-    day: toWeekday(WEEKDAY_ABBREVIATIONS.indexOf(part('weekday'))),
+    // DATE_LOCALE's short weekday names are the same as WEEKDAY_SHORT_NAMES ('Sun' … 'Sat').
+    day: WEEK_FROM_SUNDAY.find((day: Weekday): boolean => WEEKDAY_SHORT_NAMES[day] === part('weekday')) ?? Weekday.Sunday,
     minutes: Number(part('hour')) * 60 + Number(part('minute')),
   };
 }

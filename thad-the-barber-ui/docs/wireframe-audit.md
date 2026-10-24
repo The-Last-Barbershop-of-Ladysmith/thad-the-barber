@@ -178,15 +178,15 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 | Wireframe logic (source) | App location | Notes |
 | --- | --- | --- |
 | Phone number, address, map/directions URLs, socials (hard-coded in 3 places) | `GET /api/shop` → `shop` slice (`shopFeature` selectors); `SHOP_FALLBACK` keeps the fallback name/phone/booking URL and site content | Square is the source of truth (#39) |
-| Hours rows repeated in schedule, visit, footer | `shopFeature.selectOpeningHours` + `ShopHoursService.rows` | Rows are built from Square's hours |
-| `openLabel` / `openColor` (`index.html` `renderVals`) | `ShopHoursService.statusAt()` / `status` signal | Refreshes every minute; unit tested |
+| Hours rows repeated in schedule, visit, footer | `shopFeature.selectOpeningHours` + `ShopHoursService.businessHours` | Rows are built from Square's hours |
+| `openLabel` / `openColor` (`index.html` `renderVals`) | `ShopHoursService.getShopCurrentStatus()` / `currentOpenStatus` signal, on the shop's clock | Refreshes every minute; unit tested |
 | `ANNS` | `content/announcements.json` in the media container via `AnnouncementsService` (#30) | The seed announcements and the text-alerts slide are dropped (BR-35) |
 | Testimonials markup | `features/home/data/home-content.data.ts` via `HomeContentService` | Ready to swap for `GET /api/reviews` (#37) |
-| `subscribe` / `setPhone` / `phoneErr` | `SmsSignup` component + `HomePageActions.smsSignupSubmitted` → `subscribeToSms` effect → `SmsSignupService` | Mocked 400ms |
+| `subscribe` / `setPhone` / `phoneErr` | `SmsSignup` component + `HomeActions.SmsSignupRequest` → `subscribeToSms` effect → `SmsSignupService` | Mocked 400ms |
 | `slots()`, `available()`, `hash()`, `daysAhead`, `slotMinutes` (`book.html`) | `AvailabilityService` + `BOOKING_RULES` | Same deterministic "booked" pattern; mocked |
-| Month nav, `canPrev` / `canNext` | DatePicker `minDate` / `maxDate` + `monthViewed` → `loadMonthAvailability` effect | |
+| Month nav, `canPrev` / `canNext` | DatePicker `minDate` / `maxDate` + `BookingActions.MonthView` → `loadMonthAvailability` effect | |
 | Day / time pick, `done`, `tried`, `missing[]` | `booking` slice + `Booking` page computed signals | See state below |
-| `confirm` | `confirmRequested` → `confirmBooking` effect → `BookingService` | Mocked 500ms |
+| `confirm` | `BookingActions.BookingConfirmRequest` → `confirmBooking` effect → `BookingService` | Mocked 500ms |
 | `ann`, `touchStart` / `touchEnd`, `goAnn` | Built into `p-carousel` | Removed |
 | `lb`, `stepLb`, `onKey` | Built into `p-galleria` | Removed |
 | `menu` / `toggleMenu` (mobile) | Root `layout` slice + `closeMenuOnNavigation` effect | |
@@ -200,7 +200,7 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 | `home` | `features/home/state/home.{state,actions,reducer,feature,effects}.ts` | Announcements, testimonials, gallery, content status, SMS sign-up status |
 | `booking` | `features/booking/state/booking.{state,actions,reducer,feature,effects}.ts` | Visible month, unavailable dates, selected date/time, slots, submit status, confirmation |
 
-- Each reducer lives in its own `*.reducer.ts`. Each `*.feature.ts` holds the feature key and uses `createFeature` for a scoped feature selector, with `extraSelectors` for derived values such as `selectOpenSlotCount`, `selectSelectedSlot` and `selectIsSubscribed`.
+- Each reducer lives in its own `*.reducer.ts`. Each `*.feature.ts` holds the feature key and uses `createFeature` for a scoped feature selector, with `extraSelectors` for derived values such as `selectOpenSlotCount`, `selectSelectedSlot` and `selectHomeSections`.
 - `home` and `booking` persist to localStorage through `ngrx-store-localstorage` (`store/meta/meta.reducers.ts`). They're stored base64-encoded as `ttb-home` and `ttb-booking` and restored when each slice loads. Each feature clears its slice, and the saved copy, with its own `stateReset` action.
 - Dates are stored as ISO strings to keep state serializable.
 - Stale responses (a month or date the user has already moved past) are ignored by the reducer, and unit tested.

@@ -85,14 +85,14 @@ export const shopFeature = createFeature({
   }),
 });
 
-export function toMapEmbedUrl(shopInfo: ShopInfo | null): string | null {
+function toMapEmbedUrl(shopInfo: ShopInfo | null): string | null {
   if (!shopInfo) {
     return null;
   }
   return `https://maps.google.com/maps?q=${toMapQuery(shopInfo.address)}&z=14&output=embed`;
 }
 
-export function toDirectionsUrl(shopInfo: ShopInfo | null): string | null {
+function toDirectionsUrl(shopInfo: ShopInfo | null): string | null {
   if (!shopInfo) {
     return null;
   }
@@ -100,7 +100,7 @@ export function toDirectionsUrl(shopInfo: ShopInfo | null): string | null {
 }
 
 /** "12 Pretend Pl, Faketown, HI 96999-0001", encoded for a Google Maps query. */
-export function toMapQuery({
+function toMapQuery({
   street,
   city,
   state,
@@ -110,7 +110,7 @@ export function toMapQuery({
 }
 
 /** Only the profiles Square has. */
-export function toSocialLinks(shopInfo: ShopInfo | null): SocialLink[] {
+function toSocialLinks(shopInfo: ShopInfo | null): SocialLink[] {
   const links: SocialLink[] = [];
   if (shopInfo?.instagramUsername) {
     links.push({
