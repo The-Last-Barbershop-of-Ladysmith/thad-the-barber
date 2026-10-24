@@ -130,13 +130,31 @@ describe(
 
         const refreshed: string[] = [];
         for (let caller: number = 0; caller < 2; caller++) {
-          sessionService.refreshToken().subscribe((token: string): void => {
+          sessionService.refreshToken('jwt-a').subscribe((token: string): void => {
             refreshed.push(token);
           });
         }
         (await sessionRequest()).flush(issued('jwt-b'));
 
         expect(refreshed).toEqual(['jwt-b', 'jwt-b']);
+      },
+    );
+
+    it(
+      'reuses the token that replaced a rejected one instead of fetching another',
+      async (): Promise<void> => {
+        startSession();
+        (await sessionRequest()).flush(issued('jwt-a'));
+        sessionService.refreshToken('jwt-a').subscribe();
+        (await sessionRequest()).flush(issued('jwt-b'));
+
+        let token: string | undefined;
+        sessionService.refreshToken('jwt-a').subscribe((value: string): void => {
+          token = value;
+        });
+
+        expect(token).toBe('jwt-b');
+        http.expectNone(sessionUrl);
       },
     );
 
@@ -171,6 +189,40 @@ describe(
         (await sessionRequest()).flush(null, { status: 503, statusText: 'Service Unavailable' });
 
         expect(sessionService.isBotCheckFailed()).toBe(false);
+      },
+    );
+
+    it(
+      'keeps a failed bot check flagged when a later attempt fails another way',
+      async (): Promise<void> => {
+        startSession();
+        (await sessionRequest()).flush(
+          { status: 403, code: 'bot_check_failed' },
+          { status: 403, statusText: 'Forbidden' },
+        );
+        startSession();
+        (await sessionRequest()).flush(null, { status: 503, statusText: 'Service Unavailable' });
+
+        expect(sessionService.isBotCheckFailed()).toBe(true);
+      },
+    );
+
+    it(
+      'flags a failed bot check when reCAPTCHA never answers',
+      (): void => {
+        vi.useFakeTimers({
+          toFake: [
+            'Date',
+            'setInterval',
+            'clearInterval',
+          ],
+        });
+        getToken.mockReturnValueOnce(new Promise<string>((): void => undefined));
+        startSession();
+        vi.advanceTimersByTime(10_000);
+
+        expect(sessionService.isBotCheckFailed()).toBe(true);
+        http.expectNone(sessionUrl);
       },
     );
 

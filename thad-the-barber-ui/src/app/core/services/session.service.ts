@@ -17,6 +17,7 @@ import {
   switchMap,
   tap,
   throwError,
+  timeout,
 } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { SessionToken } from '../models/session.models';
@@ -28,6 +29,9 @@ export const SESSION_URL: string = `${environment.apiBaseUrl}/session`;
 const RECAPTCHA_ACTION: string = 'session';
 
 const REFRESH_BEFORE_EXPIRY_MS: number = 60_000;
+
+/** A stalled script or `ready` that never fires counts as a failed bot check instead of holding every API call. */
+const RECAPTCHA_TIMEOUT_MS: number = 10_000;
 
 /**
  * The session JWT from `POST /api/session`, kept in memory only, never in storage. A new one is fetched when a
@@ -63,13 +67,18 @@ export class SessionService {
     return this.pendingToken;
   }
 
-  refreshToken(): Observable<string> {
-    this.refreshAt = 0;
+  /** A new token unless `rejectedToken` was already replaced, as when several requests get a 401 for it. */
+  refreshToken(rejectedToken: string): Observable<string> {
+    const isCurrentToken: boolean = rejectedToken === this.token;
+    if (isCurrentToken) {
+      this.refreshAt = 0;
+    }
     return this.getToken();
   }
 
   private requestSession(): Observable<string> {
     return defer((): Promise<string> => this.recaptchaService.getToken(RECAPTCHA_ACTION)).pipe(
+      timeout(RECAPTCHA_TIMEOUT_MS),
       catchError((error: unknown): Observable<never> => {
         this.botCheckFailed.set(true);
         return throwError((): unknown => error);
@@ -83,8 +92,9 @@ export class SessionService {
           this.botCheckFailed.set(false);
         },
         error: (error: unknown): void => {
-          if (error instanceof HttpErrorResponse) {
-            this.botCheckFailed.set(isBotCheckRefusal(error));
+          const isRefusal: boolean = error instanceof HttpErrorResponse && isBotCheckRefusal(error);
+          if (isRefusal) {
+            this.botCheckFailed.set(true);
           }
         },
       }),

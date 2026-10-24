@@ -33,9 +33,14 @@ export const sessionInterceptor: HttpInterceptorFn = (
   }
 
   const sessionService: SessionService = inject(SessionService);
+  let sentToken: string = '';
 
   function sendWithAuth(token: string): Observable<HttpEvent<unknown>> {
-    return next(request.clone({ setHeaders: { Authorization: `Bearer ${token}` } }));
+    sentToken = token;
+    const clonedRequest: HttpRequest<unknown> = request.clone(
+      { setHeaders: { Authorization: `Bearer ${token}` } },
+    );
+    return next(clonedRequest);
   }
 
   return sessionService.getToken().pipe(
@@ -45,7 +50,9 @@ export const sessionInterceptor: HttpInterceptorFn = (
       if (!isUnauthorized) {
         return throwError((): unknown => error);
       }
-      return sessionService.refreshToken().pipe(switchMap(sendWithAuth));
+      return sessionService
+        .refreshToken(sentToken)
+        .pipe(switchMap(sendWithAuth));
     }),
   );
 };

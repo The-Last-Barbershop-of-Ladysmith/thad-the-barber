@@ -146,6 +146,27 @@ describe(
     );
 
     it(
+      'retries a late 401 with the token already renewed instead of renewing again',
+      async (): Promise<void> => {
+        const shopUrl: string = `${environment.apiBaseUrl}/shop`;
+        get(bookingsUrl);
+        const late: { body: unknown; } = get(shopUrl);
+        await issueSession();
+        unauthorized(http.expectOne(bookingsUrl));
+        await issueSession();
+        http.expectOne(bookingsUrl).flush({});
+        unauthorized(http.expectOne(shopUrl));
+        await Promise.resolve();
+        const retry: TestRequest = http.expectOne(shopUrl);
+        retry.flush({});
+
+        expect(authorization(retry)).toBe('Bearer jwt-2');
+        expect(sessionsIssued).toBe(2);
+        expect(late.body).toEqual({});
+      },
+    );
+
+    it(
       'shares one new token between concurrent requests that got a 401',
       async (): Promise<void> => {
         const first: { body: unknown; } = get(bookingsUrl);
