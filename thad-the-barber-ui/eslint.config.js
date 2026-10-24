@@ -131,6 +131,13 @@ module.exports = defineConfig([
           allowNumber: true,
         },
       ],
+      // `if (!x) { x = … }` reads plainer than `x ??= …`; `??` in expressions is still required.
+      '@typescript-eslint/prefer-nullish-coalescing': [
+        'error',
+        {
+          ignoreIfStatements: true,
+        },
+      ],
 
       // ---- General correctness -----------------------------------------------------------------
       eqeqeq: [
