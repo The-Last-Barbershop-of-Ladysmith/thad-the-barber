@@ -137,11 +137,12 @@ Styling follows one rule: **if PrimeNG has a component for it, restyle it with t
 | Booking calendar | `p-datepicker` inline | `datepicker.ts` |
 | Time slots | `p-selectbutton` / toggle buttons | `selectbutton.ts` |
 | Phone inputs | `p-inputmask` (form field tokens) | `semantic.ts` → `formField` |
-| "You're on the list" / "You're booked" | `p-message severity="info"` | `message.ts` |
+| "You're on the list" / "You're booked", field errors, inline warnings | `p-message` (`info`, `success`, `warn`, `error`) | `message.ts` |
+| Short results not tied to one spot ("Link copied") | `p-toast` | `toast.ts` |
 | Review stars | `p-rating` readonly | `rating.ts` |
 | Mobile menu | `p-drawer` | `drawer.ts` |
 
-Brand values PrimeNG has no slot for (glass background, CTA gradient, dividers, the "open" green) live under `semantic.extend.brand` and become `--p-brand-*` CSS variables. `tailwind/theme.css` exposes them as Tailwind colors and utilities:
+Brand values PrimeNG has no slot for (glass background, CTA gradient, dividers, the success/warn/error colors) live under `semantic.extend.brand` and become `--p-brand-*` CSS variables. `tailwind/theme.css` exposes them as Tailwind colors and utilities:
 
 - Colors: `text-primary`, `bg-surface-950`, `text-muted-color`, `border-surface` (from tailwindcss-primeui), plus `text-mint`, `border-divider`, `bg-ink`
 - Radii: `rounded-control`, `rounded-tile`, `rounded-panel`
@@ -151,6 +152,23 @@ Brand values PrimeNG has no slot for (glass background, CTA gradient, dividers, 
 The layer order in `styles.css` (`theme, base, primeng, components, utilities`) lets Tailwind utilities override PrimeNG styles without `!important`.
 
 **Outside Angular** (#68): `theme/brand-css.ts` asks PrimeNG's own generator for the primitive and semantic CSS variables (`--p-copper-500`, `--p-focus-ring-color`, `--p-brand-*`, …), so they always match the theme. The `build:express:*` post-build hook (`scripts/write-express-files.ts`, which bundles it with esbuild) writes them to `brand.css` next to the build, where Express serves them at `/brand.css` for its error pages. Put `class="app-dark"` on `<html>` as the app does. A Playwright test in CI checks that every variable in `brand.css` computes to the same value as on the live page.
+
+## Feedback messages
+
+Success, warning and error messages look and behave the same everywhere (#110):
+
+| Use | When | Examples |
+| --- | --- | --- |
+| Inline `p-message` | The message belongs to a place on the page, or the customer has to act on it | Field errors, "booking is down, call or text", slot just taken, offline banner, expired manage link |
+| `p-toast` | A short result that isn't tied to one spot on the page | Link copied, cancel/reschedule succeeded, admin "Saved", the global error handler's message |
+
+- A toast is never the only place important information appears; a success toast repeats a state the page already shows.
+- The app shell (`app.html`) holds the only `<p-toast>`: bottom-right (full width along the bottom under 40rem), with `preventOpenDuplicates`. `MessageService` is provided once in `app.config.ts`; inject it directly, never provide it in a component (that creates a second instance the shell toast never sees), and don't wrap it.
+- `success` and `info` toasts close after 4 s. `warn` and `error` pass `sticky: true` to `MessageService.add(...)`, so they stay until closed (WCAG 2.2.1).
+- Wording is written where the message is raised, never raw error text or an HTTP status.
+- `p-message` takes a severity and its icon, so color is never the only cue: success `pi pi-check`, info `pi pi-info-circle`, warn `pi pi-exclamation-triangle`, error `pi pi-times-circle`. Field errors use `variant="simple" size="small"`. Errors the customer must fix aren't closable.
+- Colors: `info` is copper (the app has no blue state); `success`, `warn` and `error` come from `brand.success`, `brand.warn` and `brand.error` in `semantic.ts`. `tokens/components/severity.ts` holds what `message.ts` and `toast.ts` share per severity, so the two always match. Toasts are opaque so their text keeps its contrast over the backdrop.
+- Content sections that fail to load (gallery, reviews, announcements) hide silently; no message.
 
 ## Component conventions
 

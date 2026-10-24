@@ -52,5 +52,9 @@ export const primitive: TokenSection = {
   /** "Open now" status. */
   mint: '#7fd18b',
 
+  amber: '#f2c46d',
+
+  coral: '#f28b7d',
+
   fontFamily: { sans: 'Helvetica, Arial, sans-serif' },
 };

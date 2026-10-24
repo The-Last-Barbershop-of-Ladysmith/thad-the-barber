@@ -15,6 +15,7 @@ import {
 import { provideEffects } from '@ngrx/effects';
 import { provideStore } from '@ngrx/store';
 import { provideStoreDevtools } from '@ngrx/store-devtools';
+import { MessageService } from 'primeng/api';
 import { PrimeNG, providePrimeNG } from 'primeng/config';
 import { PRIMEUI_LICENSE } from './core/config/primeui-license';
 import { routes } from './app.routes';
@@ -47,5 +48,6 @@ export const appConfig: ApplicationConfig = {
       inject(PrimeNG).csp.set({ nonce: inject(CSP_NONCE) ?? undefined });
     }),
     provideClientHydration(),
+    MessageService,
   ],
 };
