@@ -4,3 +4,8 @@
 @import "tailwindcss";
 @import "tailwindcss-primeui";
 @import "./app/theme/tailwind/theme.css";
+
+/* Google allows hiding the reCAPTCHA badge when the booking form shows its notice instead (booking-summary). */
+.grecaptcha-badge {
+  visibility: hidden;
+}

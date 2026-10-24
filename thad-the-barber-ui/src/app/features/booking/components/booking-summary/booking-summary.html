@@ -16,6 +16,7 @@
       data-testid="confirm-booking"
       [fluid]="true"
       [loading]="submitting()"
+      [disabled]="isBotCheckFailed()"
       (click)="confirm.emit()"
     >
       <span pButtonLabel>{{ booked() ? 'Booked' : 'Confirm booking' }}</span>
@@ -26,6 +27,13 @@
 
     @if (hint()) {
       <small class="text-xs text-surface-200">{{ hint() }}</small>
+    }
+    @if (isBotCheckFailed()) {
+      <p-message data-testid="bot-check-failed" severity="warn">
+        We can't book online from this browser. Please call
+        <a class="message-link" data-testid="bot-check-call" [href]="phone().tel">{{ phone().display }}</a>
+        or <a class="message-link" data-testid="bot-check-text" [href]="phone().sms">text us</a>.
+      </p-message>
     }
     @if (error()) {
       <p-message data-testid="booking-error" severity="error">{{ error() }}</p-message>
@@ -38,5 +46,11 @@
         </div>
       </p-message>
     }
+
+    <small class="recaptcha-notice">
+      This site is protected by reCAPTCHA and the Google
+      <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Privacy Policy</a> and
+      <a href="https://policies.google.com/terms" target="_blank" rel="noopener">Terms of Service</a> apply.
+    </small>
   </div>
 </p-card>

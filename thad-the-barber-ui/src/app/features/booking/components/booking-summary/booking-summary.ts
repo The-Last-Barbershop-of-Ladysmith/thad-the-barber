@@ -9,6 +9,7 @@ import {
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { MessageModule } from 'primeng/message';
+import { ShopInfo } from '../../../../core/models/shop.models';
 
 export interface SummaryRow {
   label: string;
@@ -35,6 +36,9 @@ export class BookingSummary {
   readonly error: InputSignal<string | null> = input<string | null>(null);
   /** Human-readable confirmation line, e.g. "Saturday, October 3 at 10:30 AM…" */
   readonly confirmation: InputSignal<string | null> = input<string | null>(null);
+  /** The visitor failed the bot check, so booking here can't work; they're asked to call or text instead (BR-24). */
+  readonly isBotCheckFailed: InputSignal<boolean> = input(false);
+  readonly phone: InputSignal<ShopInfo['phone']> = input.required<ShopInfo['phone']>();
 
   readonly confirm: OutputEmitterRef<void> = output();
 }

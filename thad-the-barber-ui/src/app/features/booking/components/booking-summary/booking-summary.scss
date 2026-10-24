@@ -11,3 +11,22 @@
     font-size: 0.875rem;
   }
 }
+
+.message-link {
+  color: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.recaptcha-notice {
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--p-surface-200);
+
+  a {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+  }
+}
