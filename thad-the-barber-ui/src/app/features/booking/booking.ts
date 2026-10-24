@@ -4,7 +4,6 @@ import {
   OnInit,
   Signal,
   WritableSignal,
-  afterNextRender,
   computed,
   inject,
   signal,
@@ -141,9 +140,6 @@ export class Booking implements OnInit {
   });
 
   constructor() {
-    afterNextRender((): void => {
-      this.sessionService.getToken().subscribe({ error: (): void => undefined });
-    });
     this.form.valueChanges
       .pipe(takeUntilDestroyed())
       .subscribe((): void => {

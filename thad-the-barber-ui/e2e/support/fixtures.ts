@@ -22,7 +22,7 @@ export function isTelemetryIngestion(url: URL): boolean {
  * The mocked suite's `page`: any `/api/*` call a test hasn't routed fails the test, and so does any CSP violation.
  * Telemetry is accepted and dropped, so test runs never reach App Insights, and the media container serves the
  * made-up gallery in `media.ts`. Google's reCAPTCHA script is a stub and `/api/session` issues a made-up token
- * (`session.ts`), since the booking page asks for one as it opens.
+ * (`session.ts`), since every API call needs a session token.
  * Tests mock endpoints with their own `page.route`, which takes precedence over the catch-all.
  * Each test already gets a fresh browser context, so localStorage starts empty.
  * No fake clock: `page.clock` stalls PrimeNG's drawer animation.
