@@ -34,9 +34,7 @@ export class BookingSummary {
   readonly booked: InputSignal<boolean> = input(false);
   readonly hint: InputSignal<string | null> = input<string | null>(null);
   readonly error: InputSignal<string | null> = input<string | null>(null);
-  /** Human-readable confirmation line, e.g. "Saturday, October 3 at 10:30 AM…" */
   readonly confirmation: InputSignal<string | null> = input<string | null>(null);
-  /** The visitor failed the bot check, so booking here can't work; they're asked to call or text instead (BR-24). */
   readonly isBotCheckFailed: InputSignal<boolean> = input(false);
   readonly phone: InputSignal<ShopInfo['phone']> = input.required<ShopInfo['phone']>();
 
