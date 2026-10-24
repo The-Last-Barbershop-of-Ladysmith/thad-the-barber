@@ -5,6 +5,12 @@ import {
   expect,
 } from '@playwright/test';
 import { fulfillMedia, isMedia } from './media';
+import {
+  fulfillRecaptcha,
+  fulfillSession,
+  isRecaptchaScript,
+  isSessionRequest,
+} from './session';
 
 interface CspReporter { reportCspViolation: (violation: string) => void; }
 
@@ -15,7 +21,8 @@ export function isTelemetryIngestion(url: URL): boolean {
 /**
  * The mocked suite's `page`: any `/api/*` call a test hasn't routed fails the test, and so does any CSP violation.
  * Telemetry is accepted and dropped, so test runs never reach App Insights, and the media container serves the
- * made-up gallery in `media.ts`.
+ * made-up gallery in `media.ts`. Google's reCAPTCHA script is a stub and `/api/session` issues a made-up token
+ * (`session.ts`), since every API call needs a session token.
  * Tests mock endpoints with their own `page.route`, which takes precedence over the catch-all.
  * Each test already gets a fresh browser context, so localStorage starts empty.
  * No fake clock: `page.clock` stalls PrimeNG's drawer animation.
@@ -33,6 +40,8 @@ export const test: typeof base = base.extend({
 
     await page.route(isTelemetryIngestion, (route: Route): Promise<void> => route.fulfill({ status: 200, json: {} }));
     await page.route(isMedia, fulfillMedia);
+    await page.route(isRecaptchaScript, fulfillRecaptcha);
+    await page.route(isSessionRequest, fulfillSession);
 
     const cspViolations: string[] = [];
     await page.exposeFunction('reportCspViolation', (violation: string): void => {

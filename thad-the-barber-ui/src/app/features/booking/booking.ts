@@ -12,8 +12,10 @@ import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { DatePickerMonthChangeEvent } from 'primeng/types/datepicker';
-import { Weekday } from '../../core/models/shop.models';
+import { SHOP_INFO } from '../../core/config/shop-info';
+import { ShopInfo, Weekday } from '../../core/models/shop.models';
 import { ShopHoursService } from '../../core/services/shop-hours.service';
+import { SessionService } from '../../core/services/session.service';
 import { Backdrop } from '../../shared/components/backdrop/backdrop';
 import {
   formatLongDate,
@@ -58,6 +60,10 @@ import { bookingFeature } from './state/booking.feature';
 })
 export class Booking implements OnInit {
   private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
+  private readonly sessionService: SessionService = inject(SessionService);
+
+  protected readonly phone: ShopInfo['phone'] = SHOP_INFO.phone;
+  protected readonly isBotCheckFailed: Signal<boolean> = this.sessionService.isBotCheckFailed;
 
   protected readonly window: DateRange = inject(AvailabilityService).bookingWindow();
   protected readonly closedDays: Weekday[] = inject(ShopHoursService).closedWeekdays();
