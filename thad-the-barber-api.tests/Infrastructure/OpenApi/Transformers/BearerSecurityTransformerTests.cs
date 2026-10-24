@@ -21,8 +21,8 @@ public sealed class BearerSecurityTransformerTests(ApiFactory factory) : IClassF
     }
 
     [Theory]
-    [InlineData("/api/shop", "GET")]
     [InlineData("/api/bookings/availability", "GET")]
+    [InlineData("/api/bookings", "POST")]
     public async Task AProtectedOperationRequiresTheToken(string path, string method)
     {
         OpenApiOperation operation = await OperationAsync(path, method);
@@ -34,6 +34,7 @@ public sealed class BearerSecurityTransformerTests(ApiFactory factory) : IClassF
     [Theory]
     [InlineData("/api/session", "POST")]
     [InlineData("/api/health", "GET")]
+    [InlineData("/api/shop", "GET")]
     public async Task AnAnonymousOperationRequiresNothing(string path, string method)
     {
         OpenApiOperation operation = await OperationAsync(path, method);

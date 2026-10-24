@@ -47,7 +47,7 @@ public sealed class ProblemsSetupTests(ApiFactory factory) : IClassFixture<ApiFa
     [Fact]
     public async Task MissingTokenIsUnauthorized()
     {
-        using HttpResponseMessage response = await factory.CreateClientWithoutToken().GetAsync("/api/shop", Cancellation);
+        using HttpResponseMessage response = await factory.CreateClientWithoutToken().GetAsync("/api/bookings/availability?month=2031-02", Cancellation);
 
         await ProblemAssert.IsProblemAsync(response, 401, "unauthorized");
     }

@@ -7,7 +7,7 @@ namespace ThadTheBarber.Api.Infrastructure.OpenApi.Transformers;
 
 /// <summary>
 /// Gives Swagger UI its Authorize button: the document declares the session bearer token, and each operation that
-/// requires it says so, leaving <c>AllowAnonymous</c> ones (<c>/api/session</c>, <c>/api/health</c>) unlocked. Get a
+/// requires it says so, leaving <c>AllowAnonymous</c> ones (<c>/api/session</c>, <c>/api/health</c>, <c>/api/shop</c>) unlocked. Get a
 /// dev token with <c>tools/session-token</c>.
 /// </summary>
 public sealed class BearerSecurityTransformer : IOpenApiDocumentTransformer, IOpenApiOperationTransformer

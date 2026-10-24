@@ -11,6 +11,7 @@ public static class ShopEndpoints
     public static IEndpointRouteBuilder MapShopEndpoints(this IEndpointRouteBuilder api)
     {
         api.MapGet("/shop", GetShopAsync)
+            .AllowAnonymous()
             .WithName("GetShop")
             .WithTags("Shop");
         return api;
