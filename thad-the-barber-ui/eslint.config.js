@@ -131,6 +131,13 @@ module.exports = defineConfig([
           allowNumber: true,
         },
       ],
+      // `if (!x) { x = … }` reads plainer than `x ??= …`; `??` in expressions is still required.
+      '@typescript-eslint/prefer-nullish-coalescing': [
+        'error',
+        {
+          ignoreIfStatements: true,
+        },
+      ],
 
       // ---- General correctness -----------------------------------------------------------------
       eqeqeq: [
@@ -184,6 +191,7 @@ module.exports = defineConfig([
         {
           multiline: true,
           minItems: 3,
+          consistent: true,
         },
       ],
       '@stylistic/object-curly-newline': [
@@ -192,18 +200,22 @@ module.exports = defineConfig([
           ObjectExpression: {
             multiline: true,
             minProperties: 3,
+            consistent: true,
           },
           ObjectPattern: {
             multiline: true,
             minProperties: 3,
+            consistent: true,
           },
           TSTypeLiteral: {
             multiline: true,
             minProperties: 3,
+            consistent: true,
           },
           TSInterfaceBody: {
             multiline: true,
             minProperties: 3,
+            consistent: true,
           },
           ImportDeclaration: {
             multiline: true,
@@ -227,6 +239,7 @@ module.exports = defineConfig([
           items: 2,
           'max-len': 120,
           semi: true,
+          forceSingleLine: false,
         },
       ],
 
