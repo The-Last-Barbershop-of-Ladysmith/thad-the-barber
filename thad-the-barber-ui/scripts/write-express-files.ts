@@ -17,7 +17,7 @@ interface EnvironmentModule { environment: CspEnvironment; }
 
 interface BrandCssModule { brandCss: () => string; }
 
-/** The shop facts the error page shows. Node runs this file unbuilt, so it can't import `ShopInfo`. */
+/** The shop facts the error page shows. Node runs this file unbuilt, so it can't import the app's models. */
 interface ErrorPageShop {
   name: string;
   phone: {
@@ -26,7 +26,15 @@ interface ErrorPageShop {
   bookingUrl: string;
 }
 
-interface ShopInfoModule { SHOP_INFO: ErrorPageShop; }
+interface ShopFallback {
+  name: string;
+  phone: string;
+  squareBookingSiteUrl: string;
+}
+
+interface ShopInfoModule { SHOP_FALLBACK: ShopFallback; }
+
+interface PhoneUtilsModule { toPhoneLinks: (e164: string) => ErrorPageShop['phone']; }
 
 interface FileReplacement {
   replace: string;
@@ -82,13 +90,15 @@ async function importSource<T>(file: string): Promise<T> {
 const environmentModule: Promise<EnvironmentModule> = importSource(environmentFile);
 const brandCssModule: Promise<BrandCssModule> = importSource('src/app/theme/brand-css.ts');
 const shopInfoModule: Promise<ShopInfoModule> = importSource('src/app/core/config/shop-info.ts');
+const phoneUtilsModule: Promise<PhoneUtilsModule> = importSource('src/app/shared/utils/phone.utils.ts');
 const { environment }: EnvironmentModule = await environmentModule;
 const { brandCss }: BrandCssModule = await brandCssModule;
-const { SHOP_INFO }: ShopInfoModule = await shopInfoModule;
+const { SHOP_FALLBACK }: ShopInfoModule = await shopInfoModule;
+const { toPhoneLinks }: PhoneUtilsModule = await phoneUtilsModule;
 const shop: ErrorPageShop = {
-  name: SHOP_INFO.name,
-  phone: SHOP_INFO.phone,
-  bookingUrl: SHOP_INFO.bookingUrl,
+  name: SHOP_FALLBACK.name,
+  phone: toPhoneLinks(SHOP_FALLBACK.phone),
+  bookingUrl: SHOP_FALLBACK.squareBookingSiteUrl,
 };
 
 const ingestionEndpoint: string | undefined = /IngestionEndpoint=([^;]+)/.exec(environment.appInsightsConnectionString)?.[1];

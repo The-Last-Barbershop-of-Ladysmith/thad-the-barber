@@ -1,5 +1,10 @@
 import { TestBed } from '@angular/core/testing';
-import { HoursRow } from '../models/shop.models';
+import { Store, provideStore } from '@ngrx/store';
+import { TEST_SHOP } from '../../../testing/test-shop';
+import * as ShopActions from '../../store/shop/shop.actions';
+import { shopFeature } from '../../store/shop/shop.feature';
+import { HoursRow } from '../models/shop/hours-row.model';
+import { Weekday } from '../models/shop/weekday.model';
 import { ShopHoursService } from './shop-hours.service';
 
 describe(
@@ -7,84 +12,111 @@ describe(
   (): void => {
     let service: ShopHoursService;
 
+    function loadShop(): void {
+      TestBed.inject(Store).dispatch(ShopActions.ShopInfoRequestSuccess({ shopInfo: TEST_SHOP }));
+    }
+
     beforeEach((): void => {
+      TestBed.configureTestingModule({ providers: [provideStore({ [shopFeature.name]: shopFeature.reducer })] });
       service = TestBed.inject(ShopHoursService);
     });
 
-    // 2026-09-26 is a Saturday, 2026-09-27 a Sunday, 2026-09-28 a Monday.
-    it(
-      'is open during Saturday hours',
+    afterEach((): void => {
+      vi.useRealTimers();
+    });
+
+    describe(
+      'before the shop loads',
       (): void => {
-        expect(service.statusAt(new Date(
-          2026,
-          8,
-          26,
-          12,
-          0,
-        ))).toEqual({ isOpen: true, label: 'Open now' });
+        it(
+          'has no hours and no status',
+          (): void => {
+            expect(service.businessHours()).toEqual([]);
+            expect(service.currentOpenStatus()).toBeNull();
+          },
+        );
       },
     );
 
-    it(
-      'announces a same-day opening before 10 AM',
+    describe(
+      'once the shop loads',
       (): void => {
-        expect(service.statusAt(new Date(
-          2026,
-          8,
-          27,
-          8,
-          30,
-        )).label).toBe('Opens today at 10 AM');
-      },
-    );
+        beforeEach(loadShop);
 
-    it(
-      'points to Sunday after Saturday closes',
-      (): void => {
-        expect(service.statusAt(new Date(
-          2026,
-          8,
-          26,
-          19,
-          0,
-        )).label).toBe('Closed · Opens Sun 10 AM');
-      },
-    );
+        it(
+          'is open during Saturday hours',
+          (): void => {
+            expect(service.getShopCurrentStatus({ day: Weekday.Saturday, minutes: 12 * 60 })).toEqual({ isOpen: true, label: 'Open now' });
+          },
+        );
 
-    it(
-      'points to Saturday on a weekday',
-      (): void => {
-        expect(service.statusAt(new Date(
-          2026,
-          8,
-          28,
-          12,
-          0,
-        ))).toEqual({ isOpen: false, label: 'Closed · Opens Sat 10 AM' });
-      },
-    );
+        it(
+          'announces a same-day opening before 10 AM',
+          (): void => {
+            expect(service.getShopCurrentStatus({ day: Weekday.Sunday, minutes: 8 * 60 + 30 }).label).toBe('Opens today at 10 AM');
+          },
+        );
 
-    it(
-      'lists open days then one closed row',
-      (): void => {
-        expect(service.rows.map((row: HoursRow): string => `${row.label}: ${row.range}`)).toEqual([
-          'Saturday: 10:00 AM – 7:00 PM',
-          'Sunday: 10:00 AM – 4:00 PM',
-          'Monday – Friday: Closed',
-        ]);
-      },
-    );
+        it(
+          'points to Sunday after Saturday closes',
+          (): void => {
+            expect(service.getShopCurrentStatus({ day: Weekday.Saturday, minutes: 19 * 60 + 30 }).label).toBe('Closed · Opens Sun 10 AM');
+          },
+        );
 
-    it(
-      'reports Monday–Friday as closed weekdays',
-      (): void => {
-        expect(service.closedWeekdays()).toEqual([
-          1,
-          2,
-          3,
-          4,
-          5,
-        ]);
+        it(
+          'points to Saturday on a weekday',
+          (): void => {
+            expect(service.getShopCurrentStatus({ day: Weekday.Monday, minutes: 12 * 60 })).toEqual({
+              isOpen: false,
+              label: 'Closed · Opens Sat 10 AM',
+            });
+          },
+        );
+
+        it(
+          "reads the live status on the shop's clock, not the browser's",
+          (): void => {
+            // Sunday 05:00 UTC is still Saturday 7 PM in Honolulu, half an hour before closing.
+            vi.useFakeTimers({ now: new Date('2026-09-27T05:00:00Z'), toFake: ['Date'] });
+            const fresh: ShopHoursService = TestBed.runInInjectionContext(
+              (): ShopHoursService => new ShopHoursService(),
+            );
+
+            expect(fresh.currentOpenStatus()).toEqual({ isOpen: true, label: 'Open now' });
+          },
+        );
+
+        it(
+          'lists open days then one closed row',
+          (): void => {
+            expect(service.businessHours().map((row: HoursRow): string => `${row.label}: ${row.range}`)).toEqual([
+              'Saturday: 10:00 AM – 7:30 PM',
+              'Sunday: 10:00 AM – 4:00 PM',
+              'Monday – Friday: Closed',
+            ]);
+          },
+        );
+
+        it(
+          'keeps the minutes in short ranges only when they are not on the hour',
+          (): void => {
+            expect(service.businessHours()[0]?.shortRange).toBe('10 AM – 7:30 PM');
+          },
+        );
+
+        it(
+          'reports Monday–Friday as closed weekdays',
+          (): void => {
+            expect(service.closedWeekdays()).toEqual([
+              Weekday.Monday,
+              Weekday.Tuesday,
+              Weekday.Wednesday,
+              Weekday.Thursday,
+              Weekday.Friday,
+            ]);
+          },
+        );
       },
     );
   },

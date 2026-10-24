@@ -7,14 +7,17 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { OPENING_HOURS } from '../config/shop-info';
+import { Store } from '@ngrx/store';
+import { HoursRow } from '../models/shop/hours-row.model';
+import { OpenStatus } from '../models/shop/open-status.model';
+import { ShopOpeningHours } from '../models/shop/shop-opening-hours.model';
+import { WeekTime } from '../models/shop/week-time.model';
+import { Weekday } from '../models/shop/weekday.model';
 import {
-  HoursRow,
-  OpenStatus,
-  OpeningHours,
-  Weekday,
-} from '../models/shop.models';
-import { formatMinutes } from '../../shared/utils/date.utils';
+  formatMinutes,
+  fromTimeOfDay,
+  weekTimeIn,
+} from '../../shared/utils/date.utils';
 import {
   WEEKDAY_NAMES,
   WEEKDAY_SHORT_NAMES,
@@ -22,17 +25,37 @@ import {
   toWeekday,
   weekdaySpanLabel,
 } from '../../shared/utils/weekday.utils';
+import { AppState } from '../../store/app.state';
+import { shopFeature } from '../../store/shop/shop.feature';
 
-/** Opening hours and the live "Open now" status shown in the schedule section. */
+/**
+ * Opening hours and the live "Open now" status, from the `shop` slice. Both are empty until the shop loads. The
+ * status reads the shop's clock, not the visitor's, so it's right from any timezone.
+ */
 @Injectable({ providedIn: 'root' })
 export class ShopHoursService {
-  private readonly hours: readonly OpeningHours[] = OPENING_HOURS;
+  private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
+  private readonly hours: Signal<ShopOpeningHours[]> = this.store.selectSignal(shopFeature.selectOpeningHours);
+  private readonly timeZone: Signal<string | null> = this.store.selectSignal(shopFeature.selectTimeZone);
   private readonly now: WritableSignal<Date> = signal(new Date());
 
   /** Open days in display order (Sat, Sun) followed by one "closed" row for the rest. */
-  readonly rows: HoursRow[] = this.buildRows();
+  readonly businessHours: Signal<HoursRow[]> = computed(
+    (): HoursRow[] => this.generateOperatingHoursRows(this.hours()),
+  );
 
-  readonly status: Signal<OpenStatus> = computed((): OpenStatus => this.statusAt(this.now()));
+  readonly currentOpenStatus: Signal<OpenStatus | null> = computed((): OpenStatus | null => {
+    const timeZone: string | null = this.timeZone();
+    if (timeZone === null) {
+      return null;
+    }
+    return this.getShopCurrentStatus(weekTimeIn(timeZone, this.now()));
+  });
+
+  /** Weekdays with no hours, e.g. [1, 2, 3, 4, 5]. Feeds the date picker's disabledDays. */
+  readonly closedWeekdays: Signal<Weekday[]> = computed((): Weekday[] => WEEK_FROM_MONDAY
+    .filter((day: Weekday): boolean => !this.isOpenDay(day))
+    .sort((a: Weekday, b: Weekday): number => a - b));
 
   constructor() {
     const timer: ReturnType<typeof setInterval> = setInterval(
@@ -46,62 +69,71 @@ export class ShopHoursService {
     });
   }
 
-  hoursFor(date: Date): OpeningHours | undefined {
-    return this.hours.find((entry: OpeningHours): boolean => entry.day === date.getDay());
+  getShopHoursForDate(date: Date): ShopOpeningHours | undefined {
+    return this.fetchShopHoursForDay(toWeekday(date.getDay()));
   }
 
   isOpenDay(day: Weekday): boolean {
-    return this.hours.some((entry: OpeningHours): boolean => entry.day === day);
+    return this.fetchShopHoursForDay(day) !== undefined;
   }
 
-  /** Weekdays with no hours, e.g. [1, 2, 3, 4, 5]. Feeds the date picker's disabledDays. */
-  closedWeekdays(): Weekday[] {
-    return WEEK_FROM_MONDAY
-      .filter((day: Weekday): boolean => !this.isOpenDay(day))
-      .sort((a: Weekday, b: Weekday): number => a - b);
-  }
-
-  statusAt(now: Date): OpenStatus {
-    const minutes: number = now.getHours() * 60 + now.getMinutes();
-    const today: OpeningHours | undefined = this.hoursFor(now);
-
-    if (today && minutes >= today.opensAt && minutes < today.closesAt) {
-      return { isOpen: true, label: 'Open now' };
-    }
-    if (today && minutes < today.opensAt) {
-      return { isOpen: false, label: `Opens today at ${formatMinutes(today.opensAt, true)}` };
+  getShopCurrentStatus({ day, minutes }: WeekTime): OpenStatus {
+    const today: ShopOpeningHours | undefined = this.fetchShopHoursForDay(day);
+    if (today) {
+      const opensAt: number = fromTimeOfDay(today.opens);
+      const isOpenNow: boolean = minutes >= opensAt && minutes < fromTimeOfDay(today.closes);
+      const opensLaterToday: boolean = minutes < opensAt;
+      if (isOpenNow) {
+        return { isOpen: true, label: 'Open now' };
+      }
+      if (opensLaterToday) {
+        return { isOpen: false, label: `Opens today at ${formatMinutes(opensAt, true)}` };
+      }
     }
     for (let offset: number = 1; offset <= 7; offset++) {
-      const day: Weekday = toWeekday(now.getDay() + offset);
-      const next: OpeningHours | undefined = this.hours.find((entry: OpeningHours): boolean => entry.day === day);
+      const nextDay: Weekday = toWeekday(day + offset);
+      const next: ShopOpeningHours | undefined = this.fetchShopHoursForDay(nextDay);
       if (next) {
         return {
           isOpen: false,
-          label: `Closed · Opens ${WEEKDAY_SHORT_NAMES[day]} ${formatMinutes(next.opensAt, true)}`,
+          label: `Closed · Opens ${WEEKDAY_SHORT_NAMES[nextDay]} ${formatMinutes(fromTimeOfDay(next.opens), true)}`,
         };
       }
     }
     return { isOpen: false, label: 'Closed' };
   }
 
-  private buildRows(): HoursRow[] {
-    const open: HoursRow[] = this.hours.map((entry: OpeningHours): HoursRow => ({
-      label: WEEKDAY_NAMES[entry.day],
-      shortLabel: WEEKDAY_SHORT_NAMES[entry.day],
-      range: `${formatMinutes(entry.opensAt)} – ${formatMinutes(entry.closesAt)}`,
-      shortRange: `${formatMinutes(entry.opensAt, true)} – ${formatMinutes(entry.closesAt, true)}`,
-      closed: false,
-    }));
+  private fetchShopHoursForDay(day: Weekday): ShopOpeningHours | undefined {
+    return this.hours().find((entry: ShopOpeningHours): boolean => entry.day === day);
+  }
+
+  /* Creates the rows for displaying opening hours */
+  private generateOperatingHoursRows(hours: ShopOpeningHours[]): HoursRow[] {
+    if (hours.length === 0) {
+      return [];
+    }
+
+    const operatingHours: HoursRow[] = hours.map((entry: ShopOpeningHours): HoursRow => {
+      const opensAt: number = fromTimeOfDay(entry.opens);
+      const closesAt: number = fromTimeOfDay(entry.closes);
+      return {
+        label: WEEKDAY_NAMES[entry.day],
+        shortLabel: WEEKDAY_SHORT_NAMES[entry.day],
+        range: `${formatMinutes(opensAt)} – ${formatMinutes(closesAt)}`,
+        shortRange: `${formatMinutes(opensAt, true)} – ${formatMinutes(closesAt, true)}`,
+        closed: false,
+      };
+    });
 
     const closedDays: Weekday[] = WEEK_FROM_MONDAY.filter((day: Weekday): boolean => !this.isOpenDay(day));
     const first: Weekday | undefined = closedDays[0];
     const last: Weekday | undefined = closedDays[closedDays.length - 1];
     if (first === undefined || last === undefined) {
-      return open;
+      return operatingHours;
     }
 
     return [
-      ...open,
+      ...operatingHours,
       {
         label: weekdaySpanLabel(
           first,

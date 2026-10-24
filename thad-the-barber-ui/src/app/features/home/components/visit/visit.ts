@@ -1,15 +1,20 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  Signal,
+  computed,
   inject,
 } from '@angular/core';
-import { ShopInfo } from '../../../../core/models/shop.models';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { Store } from '@ngrx/store';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
-import { SHOP_INFO } from '../../../../core/config/shop-info';
+import { PhoneLinks } from '../../../../core/models/shop/phone-links.model';
+import { ShopAddress } from '../../../../core/models/shop/shop-address.model';
 import { HoursList } from '../../../../shared/components/hours-list/hours-list';
 import { SectionHeading } from '../../../../shared/components/section-heading/section-heading';
+import { AppState } from '../../../../store/app.state';
+import { shopFeature } from '../../../../store/shop/shop.feature';
 
 /** Map embed plus location, hours and phone details. */
 @Component({
@@ -25,8 +30,20 @@ import { SectionHeading } from '../../../../shared/components/section-heading/se
   styleUrl: './visit.scss',
 })
 export class Visit {
-  protected readonly shop: ShopInfo = SHOP_INFO;
-  // Constant, first-party URL from config, so trusting it as a resource URL is safe.
-  protected readonly mapUrl: SafeResourceUrl = inject(DomSanitizer)
-    .bypassSecurityTrustResourceUrl(SHOP_INFO.location.mapEmbedUrl);
+  private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
+  private readonly sanitizer: DomSanitizer = inject(DomSanitizer);
+
+  protected readonly shopName: Signal<string> = this.store.selectSignal(shopFeature.selectShopName);
+  protected readonly phone: Signal<PhoneLinks> = this.store.selectSignal(shopFeature.selectPhoneLinks);
+  protected readonly address: Signal<ShopAddress | null> = this.store.selectSignal(shopFeature.selectAddress);
+  protected readonly directionsUrl: Signal<string | null> = this.store.selectSignal(shopFeature.selectDirectionsUrl);
+  private readonly mapEmbedUrl: Signal<string | null> = this.store.selectSignal(shopFeature.selectMapEmbedUrl);
+  // Google Maps' own origin, with only the encoded address in the query, so trusting it as a resource URL is safe.
+  protected readonly mapUrl: Signal<SafeResourceUrl | null> = computed((): SafeResourceUrl | null => {
+    const mapEmbedUrl: string | null = this.mapEmbedUrl();
+    if (mapEmbedUrl === null) {
+      return null;
+    }
+    return this.sanitizer.bypassSecurityTrustResourceUrl(mapEmbedUrl);
+  });
 }

@@ -11,7 +11,7 @@ import {
 import { Announcement, GalleryPhoto } from '../models/home.models';
 import { AnnouncementsService } from '../services/announcements.service';
 import { GalleryService } from '../services/gallery.service';
-import { HomeApiActions, HomePageActions } from './home.actions';
+import * as HomeActions from './home.actions';
 import { loadAnnouncements, loadGallery } from './home.effects';
 
 describe(
@@ -33,14 +33,14 @@ describe(
         .subscribe((action: Action): void => {
           emitted.push(action);
         });
-      actions$.next(HomePageActions.opened());
+      actions$.next(HomeActions.HomePageOpen());
       return emitted;
     }
 
     it(
       'loads the photos when the home page opens in the browser',
       (): void => {
-        expect(run('browser', (): Observable<GalleryPhoto[]> => of(photos))).toEqual([HomeApiActions.galleryLoaded({ photos })]);
+        expect(run('browser', (): Observable<GalleryPhoto[]> => of(photos))).toEqual([HomeActions.GalleryRequestSuccess({ photos })]);
       },
     );
 
@@ -50,7 +50,7 @@ describe(
         const failing: () => Observable<GalleryPhoto[]> = (): Observable<GalleryPhoto[]> =>
           throwError((): Error => new Error('503'));
 
-        expect(run('browser', failing)).toEqual([HomeApiActions.galleryLoadFailed()]);
+        expect(run('browser', failing)).toEqual([HomeActions.GalleryRequestFailure()]);
       },
     );
 
@@ -94,7 +94,7 @@ describe(
         .subscribe((action: Action): void => {
           emitted.push(action);
         });
-      actions$.next(HomePageActions.opened());
+      actions$.next(HomeActions.HomePageOpen());
       return emitted;
     }
 
@@ -102,7 +102,7 @@ describe(
       'loads the announcements when the home page opens in the browser',
       (): void => {
         expect(run('browser', (): Observable<Announcement[]> => of(announcements)))
-          .toEqual([HomeApiActions.announcementsLoaded({ announcements })]);
+          .toEqual([HomeActions.AnnouncementsRequestSuccess({ announcements })]);
       },
     );
 
@@ -112,7 +112,7 @@ describe(
         const failing: () => Observable<Announcement[]> = (): Observable<Announcement[]> =>
           throwError((): Error => new Error('404'));
 
-        expect(run('browser', failing)).toEqual([HomeApiActions.announcementsLoadFailed()]);
+        expect(run('browser', failing)).toEqual([HomeActions.AnnouncementsRequestFailure()]);
       },
     );
 

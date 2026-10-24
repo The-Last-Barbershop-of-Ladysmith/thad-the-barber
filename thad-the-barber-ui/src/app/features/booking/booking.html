@@ -12,7 +12,7 @@
         [value]="selectedDay()"
         [minDate]="window.min"
         [maxDate]="window.max"
-        [disabledDays]="closedDays"
+        [disabledDays]="closedDays()"
         [disabledDates]="disabledDates()"
         (dateSelect)="onDateSelect($event)"
         (monthChange)="onMonthChange($event)"
@@ -37,7 +37,7 @@
       [error]="error()"
       [confirmation]="confirmationText()"
       [isBotCheckFailed]="isBotCheckFailed()"
-      [phone]="phone"
+      [phone]="phone()"
       (confirm)="confirm()"
     />
   </div>

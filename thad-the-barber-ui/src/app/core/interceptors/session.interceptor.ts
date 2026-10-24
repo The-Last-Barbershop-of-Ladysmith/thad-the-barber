@@ -14,21 +14,25 @@ import {
 } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { SESSION_URL, SessionService } from '../services/session.service';
+import { SHOP_URL } from '../services/shop.service';
 
 const API_PREFIX: string = `${environment.apiBaseUrl}/`;
 
+/** The anonymous endpoints the browser calls: `/session` issues the token, and `/shop` loads on every page view. */
+const ANONYMOUS_URLS: readonly string[] = [SESSION_URL, SHOP_URL];
+
 /**
- * Sends the session token on every API call except `/session`, which issues it. On a 401 it gets a new token and
- * retries once. The API's other anonymous endpoints (health, Square's webhook) aren't called from the browser.
+ * Sends the session token on every API call except the anonymous ones. On a 401 it gets a new token and retries
+ * once. The API's other anonymous endpoints (health, Square's webhook) aren't called from the browser.
  */
 export const sessionInterceptor: HttpInterceptorFn = (
   request: HttpRequest<unknown>,
   next: HttpHandlerFn,
 ): Observable<HttpEvent<unknown>> => {
   const isApiCall: boolean = request.url.startsWith(API_PREFIX);
-  const isSessionCall: boolean = request.url === SESSION_URL;
+  const isAnonymousCall: boolean = ANONYMOUS_URLS.includes(request.url);
 
-  if (!isApiCall || isSessionCall) {
+  if (!isApiCall || isAnonymousCall) {
     return next(request);
   }
 

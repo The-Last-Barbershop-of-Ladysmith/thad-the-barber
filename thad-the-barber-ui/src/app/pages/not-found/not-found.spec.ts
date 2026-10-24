@@ -1,7 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { HOME_SECTIONS, SHOP_INFO } from '../../core/config/shop-info';
-import { NavItem } from '../../core/models/shop.models';
+import { Store, provideStore } from '@ngrx/store';
+import { TEST_SHOP } from '../../../testing/test-shop';
+import { HOME_SECTIONS, SHOP_FALLBACK } from '../../core/config/shop-info';
+import { NavItem } from '../../core/models/shop/nav-item.model';
+import * as ShopActions from '../../store/shop/shop.actions';
+import { shopFeature } from '../../store/shop/shop.feature';
 import { NotFound } from './not-found';
 
 describe(
@@ -18,7 +22,9 @@ describe(
     }
 
     beforeEach((): void => {
-      TestBed.configureTestingModule({ providers: [provideRouter([])] });
+      TestBed.configureTestingModule({
+        providers: [provideRouter([]), provideStore({ [shopFeature.name]: shopFeature.reducer })],
+      });
     });
 
     it(
@@ -39,14 +45,23 @@ describe(
     );
 
     it(
-      'links to every home section and the shop phone',
+      'links to every home section and the fallback phone before the shop loads',
       (): void => {
         const links: string[] = hrefs(render());
 
         HOME_SECTIONS.forEach((section: NavItem): void => {
           expect(links).toContain(`/#${section.fragment}`);
         });
-        expect(links).toContain(SHOP_INFO.phone.tel);
+        expect(links).toContain(`tel:${SHOP_FALLBACK.phone}`);
+      },
+    );
+
+    it(
+      "links to the shop's phone from Square once it loads",
+      (): void => {
+        TestBed.inject(Store).dispatch(ShopActions.ShopInfoRequestSuccess({ shopInfo: TEST_SHOP }));
+
+        expect(hrefs(render())).toContain(`tel:${TEST_SHOP.phone}`);
       },
     );
   },

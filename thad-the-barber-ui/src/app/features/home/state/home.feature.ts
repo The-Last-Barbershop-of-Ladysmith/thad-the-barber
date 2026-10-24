@@ -3,32 +3,31 @@ import {
   createFeature,
   createSelector,
 } from '@ngrx/store';
+import { HOME_SECTIONS } from '../../../core/config/shop-info';
+import { NavItem } from '../../../core/models/shop/nav-item.model';
 import { FeatureSelectors } from '../../../shared/models/ngrx.models';
+import { RequestStatus } from '../../../shared/models/request.models';
 import { toIsoDate } from '../../../shared/utils/date.utils';
-import { Announcement } from '../models/home.models';
+import { Announcement, GalleryPhoto } from '../models/home.models';
 import { homeReducer } from './home.reducer';
-import {
-  HomeState,
-  RequestStatus,
-  SmsSignupState,
-} from './home.state';
+import { HomeState, SmsSignupState } from './home.state';
 
 /** Selectors derived from the generated ones; exposed on `homeFeature` alongside them. */
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- extraSelectors needs a type alias.
 export type HomeExtraSelectors = {
-  selectIsSubscribed: MemoizedSelector<object, boolean>;
-  selectIsSubscribing: MemoizedSelector<object, boolean>;
-  selectContentLoading: MemoizedSelector<object, boolean>;
+  selectIsSubscribedToSsms: MemoizedSelector<object, boolean>;
+  selectIsSubscribingSsms: MemoizedSelector<object, boolean>;
+  selectIsContentLoading: MemoizedSelector<object, boolean>;
   selectActiveAnnouncements: MemoizedSelector<object, Announcement[]>;
+  selectHomeSections: MemoizedSelector<object, readonly NavItem[]>;
 };
 
 /** Store key for this slice; also names its localStorage entry (`ttb-home`). */
 export const homeFeatureKey: 'home' = 'home' as const;
 
 /**
- * `createFeature` scopes everything under the `home` key: it generates `selectHomeState`
- * plus one selector per property, and `extraSelectors` adds the derived ones built on those.
- * Consumers import `homeFeature` and read every selector from it.
+ * The home page's content (announcements, testimonials, gallery) and the SMS signup, registered at bootstrap because
+ * the header and footer link to its sections on every page. Its effects still register with the home route.
  */
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the Feature type.
 export const homeFeature = createFeature({
@@ -38,23 +37,65 @@ export const homeFeature = createFeature({
     selectSmsSignup,
     selectContentStatus,
     selectAnnouncements,
+    selectAnnouncementsStatus,
+    selectGallery,
+    selectGalleryStatus,
   }: FeatureSelectors<HomeState>): HomeExtraSelectors => ({
-    selectIsSubscribed: createSelector(
+    selectIsSubscribedToSsms: createSelector(
       selectSmsSignup,
-      (signup: SmsSignupState): boolean => signup.status === 'success',
+      (smsSignup: SmsSignupState): boolean => smsSignup.status === RequestStatus.Success,
     ),
-    selectIsSubscribing: createSelector(
+    selectIsSubscribingSsms: createSelector(
       selectSmsSignup,
-      (signup: SmsSignupState): boolean => signup.status === 'pending',
+      (smsSignup: SmsSignupState): boolean => smsSignup.status === RequestStatus.Pending,
     ),
-    selectContentLoading: createSelector(selectContentStatus, (status: RequestStatus): boolean => status === 'pending'),
-    selectActiveAnnouncements: createSelector(selectAnnouncements, activeAnnouncements),
+    selectIsContentLoading: createSelector(
+      selectContentStatus,
+      (contentStatus: RequestStatus): boolean => contentStatus === RequestStatus.Pending,
+    ),
+    selectActiveAnnouncements: createSelector(
+      selectAnnouncements,
+      toActiveAnnouncements,
+    ),
+    selectHomeSections: createSelector(
+      selectAnnouncementsStatus,
+      selectAnnouncements,
+      selectGalleryStatus,
+      selectGallery,
+      toHomeSections,
+    ),
   }),
 });
 
 /** BR-30: the ones showing today, from the first day through the last, by the visitor's local date. */
-export function activeAnnouncements(announcements: Announcement[]): Announcement[] {
+export function toActiveAnnouncements(announcements: Announcement[]): Announcement[] {
   const today: string = toIsoDate(new Date());
   return announcements.filter((announcement: Announcement): boolean =>
     announcement.startDate <= today && today <= announcement.endDate);
+}
+
+/**
+ * The home sections the header and footer link to, without the ones whose content turned out empty or failed to load
+ * (BR-32 and the gallery).
+ */
+export function toHomeSections(
+  announcementsStatus: RequestStatus,
+  announcements: Announcement[],
+  galleryStatus: RequestStatus,
+  gallery: GalleryPhoto[],
+): readonly NavItem[] {
+  const hidesAnnouncements: boolean = isSettledEmpty(announcementsStatus, toActiveAnnouncements(announcements).length);
+  const hidesGallery: boolean = isSettledEmpty(galleryStatus, gallery.length);
+  return HOME_SECTIONS.filter((section: NavItem): boolean => {
+    const isHiddenAnnouncements: boolean = section.fragment === 'announcements' && hidesAnnouncements;
+    const isHiddenGallery: boolean = section.fragment === 'gallery' && hidesGallery;
+    return !isHiddenAnnouncements && !isHiddenGallery;
+  });
+}
+
+/** Hidden only once its load settles with nothing to show, so prerendered pages and loading states keep the link. */
+function isSettledEmpty(status: RequestStatus, count: number): boolean {
+  const isFailed: boolean = status === RequestStatus.Error;
+  const isLoadedEmpty: boolean = status === RequestStatus.Success && count === 0;
+  return isFailed || isLoadedEmpty;
 }

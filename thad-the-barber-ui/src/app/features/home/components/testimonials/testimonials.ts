@@ -4,11 +4,11 @@ import {
   InputSignal,
   input,
 } from '@angular/core';
-import { ShopInfo } from '../../../../core/models/shop.models';
+import { ShopContent } from '../../../../core/models/shop/shop-content.model';
 import { FormsModule } from '@angular/forms';
 import { CardModule } from 'primeng/card';
 import { RatingModule } from 'primeng/rating';
-import { SHOP_INFO } from '../../../../core/config/shop-info';
+import { SHOP_CONTENT } from '../../../../core/config/shop-info';
 import { SectionHeading } from '../../../../shared/components/section-heading/section-heading';
 import { Testimonial } from '../../models/home.models';
 
@@ -26,5 +26,5 @@ import { Testimonial } from '../../models/home.models';
 })
 export class Testimonials {
   readonly testimonials: InputSignal<Testimonial[]> = input.required<Testimonial[]>();
-  protected readonly reviews: ShopInfo['reviews'] = SHOP_INFO.reviews;
+  protected readonly reviews: ShopContent['reviews'] = SHOP_CONTENT.reviews;
 }

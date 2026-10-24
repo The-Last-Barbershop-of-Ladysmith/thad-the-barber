@@ -8,83 +8,90 @@ import {
   GalleryPhoto,
   HomeContent,
 } from '../models/home.models';
-import { HomeApiActions, HomePageActions } from './home.actions';
+import * as HomeActions from './home.actions';
 import { HomeState, initialHomeState } from './home.state';
+import { RequestStatus } from '../../../shared/models/request.models';
 
 export const homeReducer: ActionReducer<HomeState> = createReducer(
   initialHomeState,
-  on(HomePageActions.stateReset, (): HomeState => initialHomeState),
+  on(HomeActions.HomeStateReset, (): HomeState => initialHomeState),
   // Saved storage content may be outdated (a deleted announcement or photo) or in an older shape, so it never renders.
   on(
-    HomePageActions.opened,
+    HomeActions.HomePageOpen,
     (state: HomeState): HomeState => ({
       ...state,
-      contentStatus: 'pending',
+      contentStatus: RequestStatus.Pending,
       announcements: [],
-      announcementsStatus: 'pending',
+      announcementsStatus: RequestStatus.Pending,
       gallery: [],
-      galleryStatus: 'pending',
+      galleryStatus: RequestStatus.Pending,
     }),
   ),
   on(
-    HomeApiActions.contentLoaded,
+    HomeActions.HomeContentRequestSuccess,
     (state: HomeState, { content }: { content: HomeContent; }): HomeState => ({
       ...state,
       ...content,
-      contentStatus: 'success',
+      contentStatus: RequestStatus.Success,
     }),
   ),
-  on(HomeApiActions.contentLoadFailed, (state: HomeState): HomeState => ({ ...state, contentStatus: 'error' })),
   on(
-    HomeApiActions.announcementsLoaded,
+    HomeActions.HomeContentRequestFailure,
+    (state: HomeState): HomeState => ({ ...state, contentStatus: RequestStatus.Error }),
+  ),
+  on(
+    HomeActions.AnnouncementsRequestSuccess,
     (state: HomeState, { announcements }: { announcements: Announcement[]; }): HomeState => ({
       ...state,
       announcements,
-      announcementsStatus: 'success',
+      announcementsStatus: RequestStatus.Success,
     }),
   ),
   on(
-    HomeApiActions.announcementsLoadFailed,
-    (state: HomeState): HomeState => ({ ...state, announcementsStatus: 'error' }),
+    HomeActions.AnnouncementsRequestFailure,
+    (state: HomeState): HomeState => ({ ...state, announcementsStatus: RequestStatus.Error }),
   ),
   on(
-    HomeApiActions.galleryLoaded,
+    HomeActions.GalleryRequestSuccess,
     (state: HomeState, { photos }: { photos: GalleryPhoto[]; }): HomeState => ({
       ...state,
       gallery: photos,
-      galleryStatus: 'success',
+      galleryStatus: RequestStatus.Success,
     }),
   ),
-  on(HomeApiActions.galleryLoadFailed, (state: HomeState): HomeState => ({ ...state, galleryStatus: 'error' })),
   on(
-    HomePageActions.smsSignupSubmitted,
+    HomeActions.GalleryRequestFailure,
+    (state: HomeState): HomeState => ({ ...state, galleryStatus: RequestStatus.Error }),
+  ),
+  on(
+    HomeActions.SmsSignupRequest,
     (state: HomeState, { phone }: { phone: string; }): HomeState => ({
       ...state,
       smsSignup: {
-        status: 'pending',
+        status: RequestStatus.Pending,
         phone,
         error: null,
       },
     }),
   ),
   on(
-    HomeApiActions.smsSignupSucceeded,
+    HomeActions.SmsSignupRequestSuccess,
     (state: HomeState, { phone }: { phone: string; }): HomeState => ({
       ...state,
       smsSignup: {
-        status: 'success',
+        status: RequestStatus.Success,
         phone,
         error: null,
       },
     }),
   ),
   on(
-    HomeApiActions.smsSignupFailed,
+    HomeActions.SmsSignupRequestFailure,
     (state: HomeState, { error }: { error: string; }): HomeState => ({
       ...state,
       smsSignup: {
         ...state.smsSignup,
-        status: 'error',
+        status: RequestStatus.Error,
         error,
       },
     }),

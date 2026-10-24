@@ -2,10 +2,11 @@ import {
   ChangeDetectionStrategy,
   Component,
   InputSignal,
+  Signal,
   inject,
   input,
 } from '@angular/core';
-import { HoursRow } from '../../../core/models/shop.models';
+import { HoursRow } from '../../../core/models/shop/hours-row.model';
 import { ShopHoursService } from '../../../core/services/shop-hours.service';
 
 export type HoursListVariant = 'table' | 'stacked' | 'compact';
@@ -24,5 +25,5 @@ export type HoursListVariant = 'table' | 'stacked' | 'compact';
 })
 export class HoursList {
   readonly variant: InputSignal<HoursListVariant> = input<HoursListVariant>('table');
-  protected readonly rows: HoursRow[] = inject(ShopHoursService).rows;
+  protected readonly shopHoursEntries: Signal<HoursRow[]> = inject(ShopHoursService).businessHours;
 }

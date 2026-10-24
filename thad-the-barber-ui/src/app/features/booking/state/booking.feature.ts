@@ -24,9 +24,8 @@ export type BookingExtraSelectors = {
 export const bookingFeatureKey: 'booking' = 'booking' as const;
 
 /**
- * `createFeature` scopes everything under the `booking` key: it generates `selectBookingState`
- * plus one selector per property, and `extraSelectors` adds the derived ones built on those.
- * Consumers import `bookingFeature` and read every selector from it.
+ * The booking page's picked day and time, the month's availability and the booking's outcome. Registered by the
+ * booking route.
  */
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the Feature type.
 export const bookingFeature = createFeature({
@@ -41,11 +40,11 @@ export const bookingFeature = createFeature({
   }: FeatureSelectors<BookingState>): BookingExtraSelectors => ({
     selectSelectedDay: createSelector(
       selectSelectedDate,
-      (iso: string | null): Date | null => (iso ? fromIsoDate(iso) : null),
+      toSelectedDay,
     ),
     selectDisabledDates: createSelector(
       selectUnavailableDates,
-      (dates: string[]): Date[] => dates.map((iso: string): Date => fromIsoDate(iso)),
+      (unavailableDates: string[]): Date[] => unavailableDates.map((iso: string): Date => fromIsoDate(iso)),
     ),
     selectOpenSlotCount: createSelector(
       selectSlots,
@@ -56,10 +55,23 @@ export const bookingFeature = createFeature({
       selectSelectedTime,
       (
         slots: TimeSlot[],
-        time: string | null,
-      ): TimeSlot | null => slots.find((slot: TimeSlot): boolean => slot.time === time) ?? null,
+        selectedTime: string | null,
+      ): TimeSlot | null => slots.find((slot: TimeSlot): boolean => slot.time === selectedTime) ?? null,
     ),
-    selectIsSubmitting: createSelector(selectStatus, (status: BookingStatus): boolean => status === 'submitting'),
-    selectIsBooked: createSelector(selectStatus, (status: BookingStatus): boolean => status === 'booked'),
+    selectIsSubmitting: createSelector(
+      selectStatus,
+      (status: BookingStatus): boolean => status === 'submitting',
+    ),
+    selectIsBooked: createSelector(
+      selectStatus,
+      (status: BookingStatus): boolean => status === 'booked',
+    ),
   }),
 });
+
+export function toSelectedDay(selectedDate: string | null): Date | null {
+  if (selectedDate === null) {
+    return null;
+  }
+  return fromIsoDate(selectedDate);
+}

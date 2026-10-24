@@ -27,10 +27,7 @@ export const SESSION_URL: string = `${environment.apiBaseUrl}/session`;
 
 /** Must match the API's `SessionService.RecaptchaAction`. */
 const RECAPTCHA_ACTION: string = 'session';
-
 const REFRESH_BEFORE_EXPIRY_MS: number = 60_000;
-
-/** A stalled script or `ready` that never fires counts as a failed bot check instead of holding every API call. */
 const RECAPTCHA_TIMEOUT_MS: number = 10_000;
 
 /**

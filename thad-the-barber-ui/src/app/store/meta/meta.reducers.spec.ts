@@ -9,9 +9,12 @@ import {
   on,
   props,
 } from '@ngrx/store';
+import { TEST_SHOP } from '../../../testing/test-shop';
 import { decodeBase64, encodeBase64 } from '../../shared/utils/base64.utils';
 import { layoutReducer } from '../app.reducer';
 import { AppState } from '../app.state';
+import * as ShopActions from '../shop/shop.actions';
+import { shopReducer } from '../shop/shop.reducer';
 import { localStorageSyncReducer } from './meta.reducers';
 
 /** Stand-in for a synced feature slice, so this spec tests only the sync, not a real feature reducer. */
@@ -33,6 +36,7 @@ function createSyncedReducer(): ActionReducer<AppState> {
     layout: layoutReducer,
     home: fakeSliceReducer,
     booking: fakeSliceReducer,
+    shop: shopReducer,
   }) as unknown as ActionReducer<AppState>);
 }
 
@@ -60,6 +64,15 @@ describe(
     );
 
     it(
+      'saves the shop without its load status, so the next visit refreshes it',
+      (): void => {
+        createSyncedReducer()(undefined, ShopActions.ShopInfoRequestSuccess({ shopInfo: TEST_SHOP }));
+
+        expect(saved('ttb-shop')).toEqual({ shopInfo: TEST_SHOP });
+      },
+    );
+
+    it(
       'restores a saved slice when it registers',
       (): void => {
         localStorage.setItem('ttb-booking', encodeBase64(JSON.stringify({ note: 'restored' })));
@@ -67,7 +80,7 @@ describe(
         const init: AppState = reducer(undefined, { type: INIT });
         const update: Action & { features: string[]; } = { type: UPDATE, features: ['booking'] };
 
-        expect(reducer(init, update).booking as unknown).toEqual({ note: 'restored' });
+        expect((reducer(init, update) as unknown as Record<string, unknown>)['booking']).toEqual({ note: 'restored' });
       },
     );
   },

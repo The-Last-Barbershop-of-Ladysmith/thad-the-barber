@@ -3,17 +3,8 @@ import {
   createReducer,
   on,
 } from '@ngrx/store';
-import {
-  BookingApiActions,
-  BookingPageActions,
-  ConfirmationPayload,
-  DatePayload,
-  ErrorPayload,
-  MonthAvailabilityPayload,
-  MonthPayload,
-  SlotsPayload,
-  TimePayload,
-} from './booking.actions';
+import { BookingConfirmation, TimeSlot } from '../models/booking.models';
+import * as BookingActions from './booking.actions';
 import { BookingState, initialBookingState } from './booking.state';
 
 /** Changing the date, time or details after booking starts a fresh booking. */
@@ -25,21 +16,21 @@ const clearOutcome: Pick<BookingState, 'status' | 'confirmation' | 'error'> = {
 
 export const bookingReducer: ActionReducer<BookingState> = createReducer(
   initialBookingState,
-  on(BookingPageActions.stateReset, (): BookingState => initialBookingState),
+  on(BookingActions.BookingStateReset, (): BookingState => initialBookingState),
   on(
-    BookingPageActions.monthViewed,
-    (state: BookingState, { month }: MonthPayload): BookingState => ({ ...state, visibleMonth: month }),
+    BookingActions.MonthView,
+    (state: BookingState, { month }: { month: string; }): BookingState => ({ ...state, visibleMonth: month }),
   ),
   on(
-    BookingApiActions.monthAvailabilityLoaded,
-    (state: BookingState, { month, unavailableDates }: MonthAvailabilityPayload): BookingState =>
+    BookingActions.MonthAvailabilityRequestSuccess,
+    (state: BookingState, { month, unavailableDates }: { month: string; unavailableDates: string[]; }): BookingState =>
       month === state.visibleMonth
         ? { ...state, unavailableDates }
         : state,
   ),
   on(
-    BookingPageActions.dateSelected,
-    (state: BookingState, { date }: DatePayload): BookingState => ({
+    BookingActions.DateSelect,
+    (state: BookingState, { date }: { date: string; }): BookingState => ({
       ...state,
       ...clearOutcome,
       selectedDate: date,
@@ -49,8 +40,8 @@ export const bookingReducer: ActionReducer<BookingState> = createReducer(
     }),
   ),
   on(
-    BookingApiActions.slotsLoaded,
-    (state: BookingState, { date, slots }: SlotsPayload): BookingState =>
+    BookingActions.SlotsRequestSuccess,
+    (state: BookingState, { date, slots }: { date: string; slots: TimeSlot[]; }): BookingState =>
       date === state.selectedDate
         ? {
           ...state,
@@ -60,30 +51,30 @@ export const bookingReducer: ActionReducer<BookingState> = createReducer(
         : state,
   ),
   on(
-    BookingApiActions.slotsLoadFailed,
-    (state: BookingState, { error }: ErrorPayload): BookingState => ({
+    BookingActions.SlotsRequestFailure,
+    (state: BookingState, { error }: { error: string; }): BookingState => ({
       ...state,
       slotsLoading: false,
       error,
     }),
   ),
   on(
-    BookingPageActions.timeSelected,
-    (state: BookingState, { time }: TimePayload): BookingState => ({
+    BookingActions.TimeSelect,
+    (state: BookingState, { time }: { time: string; }): BookingState => ({
       ...state,
       ...clearOutcome,
       selectedTime: time,
     }),
   ),
   on(
-    BookingPageActions.detailsEdited,
+    BookingActions.DetailsEdit,
     (state: BookingState): BookingState =>
       state.status === 'booked'
         ? { ...state, ...clearOutcome }
         : state,
   ),
   on(
-    BookingPageActions.confirmRequested,
+    BookingActions.BookingConfirmRequest,
     (state: BookingState): BookingState => ({
       ...state,
       status: 'submitting',
@@ -91,16 +82,16 @@ export const bookingReducer: ActionReducer<BookingState> = createReducer(
     }),
   ),
   on(
-    BookingApiActions.bookingConfirmed,
-    (state: BookingState, { confirmation }: ConfirmationPayload): BookingState => ({
+    BookingActions.BookingConfirmRequestSuccess,
+    (state: BookingState, { confirmation }: { confirmation: BookingConfirmation; }): BookingState => ({
       ...state,
       status: 'booked',
       confirmation,
     }),
   ),
   on(
-    BookingApiActions.bookingFailed,
-    (state: BookingState, { error }: ErrorPayload): BookingState => ({
+    BookingActions.BookingConfirmRequestFailure,
+    (state: BookingState, { error }: { error: string; }): BookingState => ({
       ...state,
       status: 'error',
       error,

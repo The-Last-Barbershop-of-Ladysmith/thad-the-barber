@@ -20,6 +20,7 @@ describe(
   (): void => {
     const sessionUrl: string = `${environment.apiBaseUrl}/session`;
     const bookingsUrl: string = `${environment.apiBaseUrl}/bookings/booking-1_x?month=2026-11`;
+    const availabilityUrl: string = `${environment.apiBaseUrl}/bookings/availability?month=2026-12`;
     let sessionsIssued: number;
     let http: HttpTestingController;
 
@@ -86,14 +87,15 @@ describe(
     );
 
     it(
-      'sends nothing on the session call itself or outside the API',
+      'sends nothing on the anonymous calls or outside the API',
       (): void => {
-        const outside: string[] = [
+        const withoutToken: string[] = [
+          `${environment.apiBaseUrl}/shop`,
           `${environment.mediaBaseUrl}/content/announcements.json`,
           `${environment.apiBaseUrl}s/lookalike`,
           'https://example.test/api/bookings',
         ];
-        for (const url of [sessionUrl, ...outside]) {
+        for (const url of [sessionUrl, ...withoutToken]) {
           get(url);
           const request: TestRequest = http.expectOne(url);
           expect(authorization(request)).toBeNull();
@@ -148,16 +150,15 @@ describe(
     it(
       'retries a late 401 with the token already renewed instead of renewing again',
       async (): Promise<void> => {
-        const shopUrl: string = `${environment.apiBaseUrl}/shop`;
         get(bookingsUrl);
-        const late: { body: unknown; } = get(shopUrl);
+        const late: { body: unknown; } = get(availabilityUrl);
         await issueSession();
         unauthorized(http.expectOne(bookingsUrl));
         await issueSession();
         http.expectOne(bookingsUrl).flush({});
-        unauthorized(http.expectOne(shopUrl));
+        unauthorized(http.expectOne(availabilityUrl));
         await Promise.resolve();
-        const retry: TestRequest = http.expectOne(shopUrl);
+        const retry: TestRequest = http.expectOne(availabilityUrl);
         retry.flush({});
 
         expect(authorization(retry)).toBe('Bearer jwt-2');
@@ -170,12 +171,12 @@ describe(
       'shares one new token between concurrent requests that got a 401',
       async (): Promise<void> => {
         const first: { body: unknown; } = get(bookingsUrl);
-        const second: { body: unknown; } = get(`${environment.apiBaseUrl}/shop`);
+        const second: { body: unknown; } = get(availabilityUrl);
         await issueSession();
         unauthorized(http.expectOne(bookingsUrl));
-        unauthorized(http.expectOne(`${environment.apiBaseUrl}/shop`));
+        unauthorized(http.expectOne(availabilityUrl));
         await issueSession();
-        const retries: TestRequest[] = [http.expectOne(bookingsUrl), http.expectOne(`${environment.apiBaseUrl}/shop`)];
+        const retries: TestRequest[] = [http.expectOne(bookingsUrl), http.expectOne(availabilityUrl)];
         for (const retry of retries) {
           expect(authorization(retry)).toBe('Bearer jwt-2');
           retry.flush({});

@@ -9,7 +9,7 @@ import {
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { MessageModule } from 'primeng/message';
-import { ShopInfo } from '../../../../core/models/shop.models';
+import { PhoneLinks } from '../../../../core/models/shop/phone-links.model';
 
 export interface SummaryRow {
   label: string;
@@ -36,7 +36,7 @@ export class BookingSummary {
   readonly error: InputSignal<string | null> = input<string | null>(null);
   readonly confirmation: InputSignal<string | null> = input<string | null>(null);
   readonly isBotCheckFailed: InputSignal<boolean> = input(false);
-  readonly phone: InputSignal<ShopInfo['phone']> = input.required<ShopInfo['phone']>();
+  readonly phone: InputSignal<PhoneLinks> = input.required<PhoneLinks>();
 
   readonly confirm: OutputEmitterRef<void> = output();
 }

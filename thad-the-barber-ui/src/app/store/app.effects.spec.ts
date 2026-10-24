@@ -7,7 +7,7 @@ import {
 } from '@angular/router';
 import { Action } from '@ngrx/store';
 import { Observable, Subject } from 'rxjs';
-import { LayoutActions } from './app.actions';
+import * as LayoutActions from './app.actions';
 import { closeMenuOnNavigation } from './app.effects';
 
 describe(
@@ -35,7 +35,7 @@ describe(
           '/book',
           '/book',
         ));
-        expect(emitted).toEqual([LayoutActions.menuClosed()]);
+        expect(emitted).toEqual([LayoutActions.MenuClose()]);
       },
     );
   },

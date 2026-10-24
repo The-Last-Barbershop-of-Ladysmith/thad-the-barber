@@ -12,8 +12,8 @@ import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { DatePickerMonthChangeEvent } from 'primeng/types/datepicker';
-import { SHOP_INFO } from '../../core/config/shop-info';
-import { ShopInfo, Weekday } from '../../core/models/shop.models';
+import { PhoneLinks } from '../../core/models/shop/phone-links.model';
+import { Weekday } from '../../core/models/shop/weekday.model';
 import { ShopHoursService } from '../../core/services/shop-hours.service';
 import { SessionService } from '../../core/services/session.service';
 import { Backdrop } from '../../shared/components/backdrop/backdrop';
@@ -30,6 +30,7 @@ import {
   phoneValidators,
 } from '../../shared/validators/form.validators';
 import { AppState } from '../../store/app.state';
+import { shopFeature } from '../../store/shop/shop.feature';
 import { BookingSummary, SummaryRow } from './components/booking-summary/booking-summary';
 import { DateStep } from './components/date-step/date-step';
 import { BookingDetailsForm, DetailsStep } from './components/details-step/details-step';
@@ -41,7 +42,7 @@ import {
   TimeSlot,
 } from './models/booking.models';
 import { AvailabilityService } from './services/availability.service';
-import { BookingPageActions } from './state/booking.actions';
+import * as BookingActions from './state/booking.actions';
 import { bookingFeature } from './state/booking.feature';
 
 /** Booking page: date → time → details, with a live summary. Selection lives in the booking slice. */
@@ -62,11 +63,11 @@ export class Booking implements OnInit {
   private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
   private readonly sessionService: SessionService = inject(SessionService);
 
-  protected readonly phone: ShopInfo['phone'] = SHOP_INFO.phone;
+  protected readonly phone: Signal<PhoneLinks> = this.store.selectSignal(shopFeature.selectPhoneLinks);
   protected readonly isBotCheckFailed: Signal<boolean> = this.sessionService.isBotCheckFailed;
 
   protected readonly window: DateRange = inject(AvailabilityService).bookingWindow();
-  protected readonly closedDays: Weekday[] = inject(ShopHoursService).closedWeekdays();
+  protected readonly closedDays: Signal<Weekday[]> = inject(ShopHoursService).closedWeekdays;
 
   protected readonly selectedDay: Signal<Date | null> = this.store.selectSignal(bookingFeature.selectSelectedDay);
   protected readonly selectedTime: Signal<string | null> = this.store.selectSignal(bookingFeature.selectSelectedTime);
@@ -143,19 +144,19 @@ export class Booking implements OnInit {
     this.form.valueChanges
       .pipe(takeUntilDestroyed())
       .subscribe((): void => {
-        this.store.dispatch(BookingPageActions.detailsEdited());
+        this.store.dispatch(BookingActions.DetailsEdit());
       });
   }
 
   ngOnInit(): void {
-    this.store.dispatch(BookingPageActions.monthViewed({ month: toMonthKey(this.window.min) }));
+    this.store.dispatch(BookingActions.MonthView({ month: toMonthKey(this.window.min) }));
   }
 
   protected onMonthChange(event: DatePickerMonthChangeEvent): void {
     if (event.month === undefined || event.year === undefined) {
       return;
     }
-    this.store.dispatch(BookingPageActions.monthViewed({
+    this.store.dispatch(BookingActions.MonthView({
       month: toMonthKey(new Date(
         event.year,
         event.month - 1,
@@ -165,11 +166,11 @@ export class Booking implements OnInit {
   }
 
   protected onDateSelect(date: Date): void {
-    this.store.dispatch(BookingPageActions.dateSelected({ date: toIsoDate(date) }));
+    this.store.dispatch(BookingActions.DateSelect({ date: toIsoDate(date) }));
   }
 
   protected onTimeSelect(time: string): void {
-    this.store.dispatch(BookingPageActions.timeSelected({ time }));
+    this.store.dispatch(BookingActions.TimeSelect({ time }));
   }
 
   protected confirm(): void {
@@ -182,7 +183,7 @@ export class Booking implements OnInit {
     }
 
     const details: BookingDetails = this.form.getRawValue();
-    this.store.dispatch(BookingPageActions.confirmRequested({
+    this.store.dispatch(BookingActions.BookingConfirmRequest({
       request: {
         date: toIsoDate(day),
         time,

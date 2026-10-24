@@ -1,3 +1,4 @@
+import { Weekday } from '../../core/models/shop/weekday.model';
 import {
   WEEKDAY_SHORT_NAMES,
   toWeekday,
@@ -18,10 +19,10 @@ describe(
     it(
       'labels a single day or a span',
       (): void => {
-        expect(weekdaySpanLabel(1, 1)).toBe('Monday');
+        expect(weekdaySpanLabel(Weekday.Monday, Weekday.Monday)).toBe('Monday');
         expect(weekdaySpanLabel(
-          1,
-          5,
+          Weekday.Monday,
+          Weekday.Friday,
           WEEKDAY_SHORT_NAMES,
         )).toBe('Mon – Fri');
       },

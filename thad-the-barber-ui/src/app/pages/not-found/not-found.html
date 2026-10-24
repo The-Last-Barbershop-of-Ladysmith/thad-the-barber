@@ -26,7 +26,7 @@
       @for (item of sections; track item.fragment) {
         <a routerLink="/" [fragment]="item.fragment" class="nav-link">{{ item.label }}</a>
       }
-      <a [href]="shop.phone.tel" class="nav-link">{{ shop.phone.display }}</a>
+      <a [href]="phone().tel" class="nav-link">{{ phone().display }}</a>
     </nav>
   </div>
 </section>

@@ -87,11 +87,12 @@ src/
     │   ├── thad-preset.ts          #   definePreset(Aura, …) + theme options (cssLayer, dark selector)
     │   └── tailwind/theme.css      #   Tailwind @theme mapping + named utilities (eyebrow, glass, tile…)
     ├── core/
-    │   ├── config/shop-info.ts     # phone, address, hours, socials, home sections
+    │   ├── config/shop-info.ts     # site content + fallback name/phone/booking URL, home sections
     │   ├── config/primeui-license.ts  # PrimeNG license key (all environments)
     │   ├── interceptors/session.interceptor.ts   # Bearer token on API calls, one retry on a 401
-    │   ├── models/
-    │   ├── services/shop-hours.service.ts   # hours table + live "Open now" status
+    │   ├── models/                 # shop/ holds one file per shop model
+    │   ├── services/shop.service.ts         # GET /api/shop (anonymous)
+    │   ├── services/shop-hours.service.ts   # hours table + live "Open now" status, on the shop's clock
     │   ├── services/session.service.ts + recaptcha.service.ts   # in-memory session JWT from POST /api/session
     │   └── telemetry/              # provideTelemetry (App Insights in the browser) + URL-stripping initializer
     ├── shared/
@@ -119,7 +120,7 @@ File names follow the Angular 22 CLI style (`home.ts` / class `Home`, no `.compo
 Each state folder has four files:
 
 - `*.state.ts`: the state interface and initial state
-- `*.actions.ts`: `createActionGroup`, split into page and API sources
+- `*.actions.ts`: an `<Slice>ActionTypes` enum of `[Source]`-prefixed type strings and one `createAction` per action (`ShopInfoRequest`, `ShopInfoRequestSuccess`, `ShopInfoRequestFailure`), wrapped one argument per line, with inline `props<{ … }>()` payloads
 - `*.feature.ts`: `createFeature` with the reducer. It generates a feature selector scoped to the slice key (for example `selectBookingState`), a selector for every property, and `extraSelectors` for derived values.
 - `*.effects.ts`: functional effects that call the feature's services
 
@@ -195,7 +196,7 @@ Lint config lives in `eslint.config.js`; `npm run lint` checks and `npm run lint
   - angular-eslint recommended, including template accessibility
 - **Explicit types everywhere.** Every variable, class property, parameter (including callback and destructured parameters) and return value is annotated.
   - `@typescript-eslint/typedef` enforces the variable and parameter annotations. typescript-eslint marks this rule deprecated because its guidance is to let TypeScript infer local variables. It still works in v8; replace it if a future major version removes it.
-  - **One exception:** NgRx doesn't export the types returned by `createActionGroup` and `createFeature`, so those 8 declarations carry a one-line `eslint-disable` with that reason.
+  - **One exception:** NgRx doesn't export the types returned by `createAction` and `createFeature`, so those declarations carry a one-line `eslint-disable` with that reason.
 - **Semicolons** end every statement and every interface/type member.
 - **One item per line from 3 items** for array items, object properties, type members, call arguments, function parameters, destructured properties and imports. 1–2 items may stay on one line or be wrapped, with brackets that match. RxJS `pipe(...)` puts each operator on its own line from 2 operators. `@stylistic` has no item threshold for properties, arguments, parameters or destructuring, so `eslint/items-per-line.js` covers those; `eslint-plugin-import-newlines` does the same for imports (`forceSingleLine: false`).
 - **Stricter compiler:** `tsconfig.json` adds `strict`, `noUncheckedIndexedAccess`, `noUnusedLocals`/`noUnusedParameters`, and Angular `strictTemplates`, with extended diagnostics treated as errors.
@@ -204,7 +205,7 @@ Lint config lives in `eslint.config.js`; `npm run lint` checks and `npm run lint
   - Effects are typed as `FunctionalEffect`.
   - Derived selectors are `MemoizedSelector<object, T>` constants in `*.feature.ts`.
   - Feature selectors are destructured with `: typeof xFeature`.
-  - Action payloads are named interfaces (see `booking.actions.ts`).
+  - Action payloads are inline `props<{ … }>()` types (see `shop.actions.ts`).
   - Stores are injected as `inject<Store<AppState>>(Store)`.
 
 ## Mocked services
@@ -221,5 +222,4 @@ These return local data until a backend exists. Each has a note on the endpoint 
 ## Not in this version yet
 
 - **Scroll-scrubbed video background.** The wireframe plays 847 extracted frames (52 MB) on a canvas. `shared/components/backdrop` crossfades the 7 keyframe stills for now. The frame scrubber can replace it without touching the pages.
-- **Real profile links** for Instagram and Facebook (`SOCIAL_LINKS`)
 - **SSR / prerendering**
