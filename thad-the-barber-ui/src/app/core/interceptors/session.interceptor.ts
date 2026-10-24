@@ -25,7 +25,10 @@ export const sessionInterceptor: HttpInterceptorFn = (
   request: HttpRequest<unknown>,
   next: HttpHandlerFn,
 ): Observable<HttpEvent<unknown>> => {
-  if (!request.url.startsWith(API_PREFIX) || request.url === SESSION_URL) {
+  const isApiCall: boolean = request.url.startsWith(API_PREFIX);
+  const isSessionCall: boolean = request.url === SESSION_URL;
+
+  if (!isApiCall || isSessionCall) {
     return next(request);
   }
 
