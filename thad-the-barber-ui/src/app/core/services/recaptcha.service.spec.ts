@@ -58,6 +58,31 @@ describe(
     );
 
     it(
+      'loads the script again on the next call after a failed load',
+      async (): Promise<void> => {
+        const service: RecaptchaService = TestBed.inject(RecaptchaService);
+        const failed: Promise<string> = service.getToken('session');
+        scripts()[0]?.dispatchEvent(new Event('error'));
+        await expect(failed).rejects.toThrow();
+        expect(scripts()).toHaveLength(0);
+
+        const retried: Promise<string> = service.getToken('session');
+        expect(scripts()).toHaveLength(1);
+        (window as RecaptchaWindow).grecaptcha = {
+          enterprise: {
+            ready: (callback: () => void): void => {
+              callback();
+            },
+            execute: (): Promise<string> => Promise.resolve('made-up-token'),
+          },
+        };
+        scripts()[0]?.dispatchEvent(new Event('load'));
+
+        expect(await retried).toBe('made-up-token');
+      },
+    );
+
+    it(
       'rejects when the script loads without the Enterprise API',
       async (): Promise<void> => {
         const token: Promise<string> = TestBed.inject(RecaptchaService).getToken('session');

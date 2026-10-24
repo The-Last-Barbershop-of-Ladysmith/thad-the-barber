@@ -13,10 +13,13 @@ export class RecaptchaService {
   private readonly document: Document = inject(DOCUMENT);
   private loadedRecaptcha: Promise<RecaptchaEnterprise> | undefined;
 
-  /** A token for `action`; rejects when the script can't load (blocked or offline). */
+  /** A token for `action`; rejects when the script can't load (blocked or offline), and tries again on the next call. */
   async getToken(action: string): Promise<string> {
     if (!this.loadedRecaptcha) {
-      this.loadedRecaptcha = this.loadScript();
+      this.loadedRecaptcha = this.loadScript().catch((error: unknown): never => {
+        this.loadedRecaptcha = undefined;
+        throw error;
+      });
     }
     const recaptcha: RecaptchaEnterprise = await this.loadedRecaptcha;
     return await recaptcha.execute(environment.recaptchaSiteKey, { action });
@@ -42,6 +45,7 @@ export class RecaptchaService {
         });
       };
       script.onerror = (): void => {
+        script.remove();
         reject(new Error('reCAPTCHA failed to load'));
       };
       this.document.head.appendChild(script);
