@@ -1,4 +1,5 @@
 using Square;
+using ThadTheBarber.Api.Common.Extensions;
 using ThadTheBarber.Api.Common.Models;
 using ThadTheBarber.Api.Square.Exceptions;
 using ThadTheBarber.Api.Square.Mappers;
@@ -55,6 +56,9 @@ public sealed class FakeSquareService : ISquareService
     public string? CustomerId { get; set; } =
         SquareFixture.ReadAs<SearchCustomersResponse>("search-customers-by-phone.json").Customers!.First().Id;
 
+    /// <summary>Newer customers with the same phone as <see cref="CustomerId"/>, e.g. added in the Square Dashboard.</summary>
+    public List<string> DuplicateCustomerIds { get; init; } = [];
+
     public string CreatedCustomerId { get; init; } =
         SquareFixture.ReadAs<CreateCustomerResponse>("create-customer.json").Customer!.Id!;
 
@@ -75,6 +79,8 @@ public sealed class FakeSquareService : ISquareService
 
     public int CustomersCreated { get; private set; }
 
+    public int AppointmentListings { get; private set; }
+
     public Task<SquareConnection> CheckConnectionAsync(CancellationToken cancellationToken)
     {
         Interlocked.Increment(ref _checks);
@@ -92,9 +98,17 @@ public sealed class FakeSquareService : ISquareService
     }
 
     public Task<List<TimeSlot>> SearchAvailableTimeSlotsAsync(string locationId, BookableService bookableService, DateTimeRange dateTimeRange, CancellationToken cancellationToken) =>
-        Task.FromResult(TimeSlots.Where(timeSlot => timeSlot.StartAt >= dateTimeRange.Start && timeSlot.StartAt < dateTimeRange.End).ToList());
+        Task.FromResult(TimeSlots.Where(timeSlot => dateTimeRange.Contains(timeSlot.StartAt)).ToList());
 
-    public Task<string?> FindCustomerIdAsync(string phone, CancellationToken cancellationToken) => Task.FromResult(CustomerId);
+    public Task<List<string>> FindCustomerIdsAsync(string phone, CancellationToken cancellationToken)
+    {
+        if (CustomerId is null)
+        {
+            return Task.FromResult<List<string>>([]);
+        }
+
+        return Task.FromResult<List<string>>([CustomerId, .. DuplicateCustomerIds]);
+    }
 
     public Task<string> CreateCustomerAsync(string name, string phone, string idempotencyKey, CancellationToken cancellationToken)
     {
@@ -141,6 +155,42 @@ public sealed class FakeSquareService : ISquareService
 
     public Task<TimeSlot?> FindBookedTimeSlotAsync(string locationId, string customerId, DateTimeOffset startAt, CancellationToken cancellationToken) =>
         Task.FromResult(Bookings.Find(booking => booking.CustomerId == customerId && booking.TimeSlot.StartAt == startAt)?.TimeSlot);
+
+    /// <summary>
+    /// Gives the customer (<see cref="CustomerId"/> unless another is named) bookings a day apart from
+    /// <paramref name="firstStartAt"/>, as if made in Square.
+    /// </summary>
+    public void Hold(int count, AppointmentStatus status, DateTimeOffset firstStartAt, string? customerId = null)
+    {
+        for (int day = 0; day < count; day++)
+        {
+            DateTimeOffset startAt = firstStartAt.AddDays(day);
+            Bookings.Add(new FakeBooking(
+                customerId ?? CustomerId!,
+                TimeSlots[0] with
+                {
+                    StartAt = startAt,
+                },
+                Guid.NewGuid().ToString(),
+                CreatedAppointment with
+                {
+                    Id = $"bk_test-held{Bookings.Count:D4}",
+                    Status = status,
+                    StartAt = startAt,
+                }
+            ));
+        }
+    }
+
+    public Task<List<Appointment>> ListCustomerAppointmentsAsync(string locationId, string customerId, DateTimeRange dateTimeRange, CancellationToken cancellationToken)
+    {
+        AppointmentListings++;
+        return Task.FromResult(Bookings
+            .Where(booking => booking.CustomerId == customerId)
+            .Select(booking => booking.Appointment)
+            .Where(appointment => dateTimeRange.Contains(appointment.StartAt))
+            .ToList());
+    }
 
     public Task<Appointment?> GetBookingAsync(string bookingId, CancellationToken cancellationToken) =>
         Task.FromResult(Bookings.Find(booking => booking.Appointment.Id == bookingId)?.Appointment);

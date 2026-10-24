@@ -1,10 +1,13 @@
 using System.Globalization;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
+using ThadTheBarber.Api.Features.Booking.Configuration;
+using ThadTheBarber.Api.Features.Booking.Exceptions;
 using ThadTheBarber.Api.Features.Booking.Models;
 using ThadTheBarber.Api.Features.Booking.Services;
 using ThadTheBarber.Api.Square.Configuration;
 using ThadTheBarber.Api.Square.Exceptions;
+using ThadTheBarber.Api.Square.Models;
 using ThadTheBarber.Api.Square.Services;
 using ThadTheBarber.Api.Tests.TestSupport;
 using ThadTheBarber.Api.Tests.TestSupport.Fakes;
@@ -19,6 +22,7 @@ public sealed class BookingServiceTests
 {
     private static readonly DateTimeOffset now = Instant("2026-10-06T15:10:00Z");
     private static readonly DateTimeOffset openTime = Instant("2026-10-07T13:30:00Z");
+    private const int MaxUpcomingPerPhone = 3;
 
     private static CancellationToken Cancellation => TestContext.Current.CancellationToken;
 
@@ -120,6 +124,121 @@ public sealed class BookingServiceTests
         Assert.Empty(square.Bookings);
     }
 
+    [Fact]
+    public async Task APhoneHoldingTheMaximumUpcomingAppointmentsCantBookAnother()
+    {
+        FakeSquareService square = new();
+        square.Hold(MaxUpcomingPerPhone, AppointmentStatus.Accepted, Instant("2026-11-02T14:00:00Z"));
+
+        await Assert.ThrowsAsync<BookingLimitReachedException>(() => Service(square).BookAsync(Request(openTime), Cancellation));
+        Assert.Equal(MaxUpcomingPerPhone, square.Bookings.Count);
+    }
+
+    [Fact]
+    public async Task APhoneOneBelowTheMaximumCanBook()
+    {
+        FakeSquareService square = new();
+        square.Hold(MaxUpcomingPerPhone - 1, AppointmentStatus.Pending, Instant("2026-11-02T14:00:00Z"));
+
+        await Service(square).BookAsync(Request(openTime), Cancellation);
+
+        Assert.Equal(MaxUpcomingPerPhone, square.Bookings.Count);
+    }
+
+    [Theory]
+    [InlineData(AppointmentStatus.CancelledByCustomer, "2026-11-05T14:00:00Z")]
+    [InlineData(AppointmentStatus.CancelledBySeller, "2026-11-05T14:00:00Z")]
+    [InlineData(AppointmentStatus.Declined, "2026-11-05T14:00:00Z")]
+    [InlineData(AppointmentStatus.NoShow, "2026-11-05T14:00:00Z")]
+    [InlineData(AppointmentStatus.Accepted, "2026-11-07T13:30:00Z")]
+    [InlineData(AppointmentStatus.Accepted, "2026-12-15T14:00:00Z")]
+    [InlineData(AppointmentStatus.Accepted, "2026-10-06T15:00:00Z")]
+    [InlineData(AppointmentStatus.Accepted, "2026-10-06T15:10:00Z")]
+    public async Task CancelledPastOrFarOffAppointmentsDontCountTowardTheMaximum(AppointmentStatus status, string startAt)
+    {
+        FakeSquareService square = new();
+        square.Hold(MaxUpcomingPerPhone - 1, AppointmentStatus.Accepted, Instant("2026-11-02T14:00:00Z"));
+        square.Hold(1, status, Instant(startAt));
+
+        await Service(square).BookAsync(Request(openTime), Cancellation);
+
+        Assert.Equal(MaxUpcomingPerPhone + 1, square.Bookings.Count);
+    }
+
+    /// <summary>
+    /// Bookings the day before and the afternoon of the requested time, plus one about a month on: the 31 days from the
+    /// first booking hold the maximum only when the last one starts before that stretch ends.
+    /// </summary>
+    [Theory]
+    [InlineData("2026-11-06T14:00:00Z", true)]
+    [InlineData("2026-11-06T17:00:00Z", false)]
+    public async Task AnyStretchOfTheWindowAroundTheTimeCanReachTheMaximum(string lastStartAt, bool isRefused)
+    {
+        FakeSquareService square = new();
+        square.Hold(MaxUpcomingPerPhone - 1, AppointmentStatus.Accepted, Instant("2026-10-06T16:00:00Z"));
+        square.Hold(1, AppointmentStatus.Accepted, Instant(lastStartAt));
+
+        Exception? refusal = await Record.ExceptionAsync(() => Service(square).BookAsync(Request(openTime), Cancellation));
+
+        Assert.Equal(isRefused, refusal is BookingLimitReachedException);
+    }
+
+    [Fact]
+    public async Task BookingsOfEveryCustomerWithThePhoneCountTowardTheMaximum()
+    {
+        FakeSquareService square = new()
+        {
+            DuplicateCustomerIds = ["CUSTOMER0TEST0DUPLICATE01"],
+        };
+        square.Hold(1, AppointmentStatus.Accepted, Instant("2026-11-02T14:00:00Z"));
+        square.Hold(MaxUpcomingPerPhone - 1, AppointmentStatus.Accepted, Instant("2026-10-20T14:00:00Z"), "CUSTOMER0TEST0DUPLICATE01");
+
+        await Assert.ThrowsAsync<BookingLimitReachedException>(() => Service(square).BookAsync(Request(openTime), Cancellation));
+    }
+
+    [Fact]
+    public async Task ARetryAtTheMaximumWhileSquareStillListsTheTimeConfirmsTheSameBooking()
+    {
+        FakeSquareService square = new();
+        square.Hold(MaxUpcomingPerPhone - 1, AppointmentStatus.Accepted, Instant("2026-11-02T14:00:00Z"));
+        BookingService service = Service(square);
+        BookingRequest request = Request(openTime);
+        BookingConfirmation first = await service.BookAsync(request, Cancellation);
+        square.TimeSlots.Add(square.Bookings[^1].TimeSlot);
+
+        BookingConfirmation retried = await service.BookAsync(request, Cancellation);
+
+        Assert.Equal(first, retried);
+        Assert.Equal(MaxUpcomingPerPhone, square.Bookings.Count);
+    }
+
+    [Fact]
+    public async Task ANewCustomersBookingsArentListed()
+    {
+        FakeSquareService square = new()
+        {
+            CustomerId = null,
+        };
+
+        await Service(square).BookAsync(Request(openTime), Cancellation);
+
+        Assert.Equal(0, square.AppointmentListings);
+    }
+
+    [Fact]
+    public async Task ARetryOfTheBookingThatReachedTheMaximumStillConfirms()
+    {
+        FakeSquareService square = new();
+        square.Hold(MaxUpcomingPerPhone - 1, AppointmentStatus.Accepted, Instant("2026-11-02T14:00:00Z"));
+        BookingService service = Service(square);
+        BookingRequest request = Request(openTime);
+
+        BookingConfirmation first = await service.BookAsync(request, Cancellation);
+        BookingConfirmation retried = await service.BookAsync(request, Cancellation);
+
+        Assert.Equal(first, retried);
+    }
+
     private static FakeSquareService Square(bool isCustomerKnown)
     {
         FakeSquareService square = new();
@@ -131,15 +250,25 @@ public sealed class BookingServiceTests
         return square;
     }
 
-    private static BookingService Service(FakeSquareService square) => new(
-        square,
-        new AvailabilityService(
+    private static BookingService Service(FakeSquareService square)
+    {
+        FakeTimeProvider time = new(now);
+        return new BookingService(
             square,
-            new BookableServiceResolver(square, Options.Create(new SquareSettings())),
-            new FakeTimeProvider(now)
-        ),
-        ManageTokens.Signer
-    );
+            new AvailabilityService(
+                square,
+                new BookableServiceResolver(square, Options.Create(new SquareSettings())),
+                time
+            ),
+            ManageTokens.Signer,
+            Options.Create(new BookingSettings
+            {
+                MaxUpcomingPerPhone = MaxUpcomingPerPhone,
+                CapWindow = TimeSpan.FromDays(31),
+            }),
+            time
+        );
+    }
 
     private static BookingRequest Request(DateTimeOffset startAt) => new(
         startAt,

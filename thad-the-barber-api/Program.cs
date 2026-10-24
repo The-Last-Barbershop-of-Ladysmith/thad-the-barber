@@ -25,8 +25,13 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.AddKeyVaultIfConfigured(SquareSecrets.All);
 
 builder.AddTelemetry();
+// The largest body is a Square webhook, capped in characters; UTF-8 takes up to 4 bytes per character.
+builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = SquareWebhookEndpoints.MaxBodyLength * 4);
 builder.Services.ConfigureHttpJsonOptions(options =>
-    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)));
+{
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
+    options.SerializerOptions.UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow;
+});
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddProblems();
 builder.Services.AddValidation();

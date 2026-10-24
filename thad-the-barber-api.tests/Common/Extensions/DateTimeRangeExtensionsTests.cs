@@ -28,6 +28,44 @@ public sealed class DateTimeRangeExtensionsTests
         Assert.Null(Range(start, end).Intersect(Range(otherStart, otherEnd)));
     }
 
+    [Theory]
+    [InlineData("09:59", false)]
+    [InlineData("10:00", true)]
+    [InlineData("11:59", true)]
+    [InlineData("12:00", false)]
+    public void ARangeContainsItsStartButNotItsEnd(string time, bool isContained)
+    {
+        Assert.Equal(isContained, Range("10:00", "12:00").Contains(At(time)));
+    }
+
+    [Fact]
+    public void ALongRangeSplitsIntoFullPiecesAndAShorterLastOne()
+    {
+        List<DateTimeRange> pieces = Range("10:00", "12:30").Split(TimeSpan.FromHours(1));
+
+        Assert.Equal(
+            [
+                Range("10:00", "11:00"),
+                Range("11:00", "12:00"),
+                Range("12:00", "12:30"),
+            ],
+            pieces);
+    }
+
+    [Theory]
+    [InlineData("10:00", "11:00")]
+    [InlineData("10:00", "10:30")]
+    public void ARangeNoLongerThanOnePieceStaysWhole(string start, string end)
+    {
+        Assert.Equal([Range(start, end)], Range(start, end).Split(TimeSpan.FromHours(1)));
+    }
+
+    [Fact]
+    public void AnEmptyRangeHasNoPieces()
+    {
+        Assert.Empty(Range("10:00", "10:00").Split(TimeSpan.FromHours(1)));
+    }
+
     private static DateTimeRange Range(string start, string end) => new(
         At(start),
         At(end)

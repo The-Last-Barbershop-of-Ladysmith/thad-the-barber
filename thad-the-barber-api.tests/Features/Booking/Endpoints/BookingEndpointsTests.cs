@@ -2,7 +2,9 @@ using System.Globalization;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Time.Testing;
+using ThadTheBarber.Api.Square.Models;
 using ThadTheBarber.Api.Tests.TestSupport;
 using ThadTheBarber.Api.Tests.TestSupport.Fakes;
 
@@ -117,6 +119,19 @@ public sealed class BookingEndpointsTests
     }
 
     [Fact]
+    public async Task APhoneAtItsUpcomingAppointmentLimitIs409WithItsCode()
+    {
+        FakeSquareService square = new();
+        square.Hold(6, AppointmentStatus.Accepted, DateTimeOffset.Parse("2026-10-30T14:00:00Z", CultureInfo.InvariantCulture));
+        using ApiFactory api = Api(square);
+
+        using HttpResponseMessage response = await api.CreateClient().PostAsJsonAsync("/api/bookings", BookingBody(), Cancellation);
+
+        await ProblemAssert.IsProblemAsync(response, StatusCodes.Status409Conflict, "booking_limit");
+        Assert.Equal(6, square.Bookings.Count);
+    }
+
+    [Fact]
     public async Task TheSameAttemptTwiceBooksOnceAndConfirmsBoth()
     {
         FakeSquareService square = new();
@@ -155,6 +170,34 @@ public sealed class BookingEndpointsTests
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         JsonElement problem = await response.Content.ReadFromJsonAsync<JsonElement>(Cancellation);
         Assert.Equal([field], problem.GetProperty("errors").EnumerateObject().Select(error => error.Name.ToLowerInvariant()));
+        Assert.Empty(square.Bookings);
+    }
+
+    [Theory]
+    [InlineData(250, HttpStatusCode.Created)]
+    [InlineData(251, HttpStatusCode.BadRequest)]
+    public async Task ANameIsAtMost250Characters(int length, HttpStatusCode expected)
+    {
+        using ApiFactory api = Api();
+        Dictionary<string, object?> body = BookingBody();
+        body["name"] = new string('Q', length);
+
+        using HttpResponseMessage response = await api.CreateClient().PostAsJsonAsync("/api/bookings", body, Cancellation);
+
+        Assert.Equal(expected, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task AnUnknownFieldIs400AndBooksNothing()
+    {
+        FakeSquareService square = new();
+        using ApiFactory api = Api(square);
+        Dictionary<string, object?> body = BookingBody();
+        body["email"] = "q.testperson@example.test";
+
+        using HttpResponseMessage response = await api.CreateClient().PostAsJsonAsync("/api/bookings", body, Cancellation);
+
+        await ProblemAssert.IsProblemAsync(response, StatusCodes.Status400BadRequest, "bad_request");
         Assert.Empty(square.Bookings);
     }
 
