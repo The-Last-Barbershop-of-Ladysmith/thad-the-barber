@@ -66,7 +66,7 @@ Components:
 TypeScript (`eslint.config.js`, plus `eslint/items-per-line.js`):
 - Explicit types on every variable, property, parameter (including callbacks/destructuring) and return value. The only exceptions are the `createActionGroup`/`createFeature` declarations, which carry a one-line `eslint-disable` with a reason.
 - Semicolons everywhere, including interface/type members.
-- One item per line from 3 items; 1-2 items stay on one line (array items, object props, call args, params, destructured props, import specifiers).
+- One item per line from 3 items (array items, object props, type members, call args, params, destructured props, import specifiers); 1-2 items may stay on one line or be wrapped, with matching brackets. `pipe(...)` wraps from 2 operators.
 - ESLint formats `.ts`; Prettier formats HTML/SCSS/CSS only (Prettier would undo the one-per-line wrapping).
 - NgRx typing: effects are `FunctionalEffect`; derived selectors are `MemoizedSelector<object, T>`; feature selectors are destructured with `: typeof xFeature`; action payloads are named interfaces; store is injected as `inject<Store<AppState>>(Store)`.
 - `tsconfig.json` is strict with `noUncheckedIndexedAccess`, `noUnused*`, and `strictTemplates`.
