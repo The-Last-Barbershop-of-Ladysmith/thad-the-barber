@@ -15,8 +15,8 @@ import { HomeState, SmsSignupState } from './home.state';
 /** Selectors derived from the generated ones; exposed on `homeFeature` alongside them. */
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- extraSelectors needs a type alias.
 export type HomeExtraSelectors = {
-  selectIsSubscribedToSsms: MemoizedSelector<object, boolean>;
-  selectIsSubscribingSsms: MemoizedSelector<object, boolean>;
+  selectIsSubscribedToSms: MemoizedSelector<object, boolean>;
+  selectIsSubscribingSms: MemoizedSelector<object, boolean>;
   selectIsContentLoading: MemoizedSelector<object, boolean>;
   selectActiveAnnouncements: MemoizedSelector<object, Announcement[]>;
   selectHomeSections: MemoizedSelector<object, readonly NavItem[]>;
@@ -46,11 +46,11 @@ export const homeFeature = createFeature({
       toActiveAnnouncements,
     );
     return {
-      selectIsSubscribedToSsms: createSelector(
+      selectIsSubscribedToSms: createSelector(
         selectSmsSignup,
         (smsSignup: SmsSignupState): boolean => smsSignup.status === RequestStatus.Success,
       ),
-      selectIsSubscribingSsms: createSelector(
+      selectIsSubscribingSms: createSelector(
         selectSmsSignup,
         (smsSignup: SmsSignupState): boolean => smsSignup.status === RequestStatus.Pending,
       ),

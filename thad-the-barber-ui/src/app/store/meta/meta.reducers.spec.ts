@@ -15,6 +15,9 @@ import { layoutReducer } from '../app.reducer';
 import { AppState } from '../app.state';
 import * as ShopActions from '../shop/shop.actions';
 import { shopReducer } from '../shop/shop.reducer';
+import * as HomeActions from '../../features/home/state/home.actions';
+import { homeReducer } from '../../features/home/state/home.reducer';
+import { RequestStatus } from '../../shared/models/request.models';
 import { localStorageSyncReducer } from './meta.reducers';
 
 /** Stand-in for a synced feature slice, so this spec tests only the sync, not a real feature reducer. */
@@ -34,7 +37,7 @@ const fakeSliceReducer: ActionReducer<FakeSlice> = createReducer(
 function createSyncedReducer(): ActionReducer<AppState> {
   return localStorageSyncReducer(combineReducers({
     layout: layoutReducer,
-    home: fakeSliceReducer,
+    home: homeReducer,
     booking: fakeSliceReducer,
     shop: shopReducer,
   }) as unknown as ActionReducer<AppState>);
@@ -53,13 +56,29 @@ describe(
     });
 
     it(
-      'saves home and booking base64-encoded under ttb-<key>, but not layout',
+      'saves booking base64-encoded under ttb-<key>, but not layout',
       (): void => {
         createSyncedReducer()(undefined, noteSet({ note: 'didn’t — works' }));
 
-        expect(saved('ttb-home')).toEqual({ note: 'didn’t — works' });
         expect(saved('ttb-booking')).toEqual({ note: 'didn’t — works' });
         expect(localStorage.getItem('ttb-layout')).toBeNull();
+      },
+    );
+
+    it(
+      "saves only home's SMS signup, so an old load status never hides a nav link on another page",
+      (): void => {
+        const reducer: ActionReducer<AppState> = createSyncedReducer();
+        const failedGallery: AppState = reducer(undefined, HomeActions.GalleryRequestFailure());
+        reducer(failedGallery, HomeActions.SmsSignupRequestSuccess({ phone: '(555) 010-0199' }));
+
+        expect(saved('ttb-home')).toEqual({
+          smsSignup: {
+            status: RequestStatus.Success,
+            phone: '(555) 010-0199',
+            error: null,
+          },
+        });
       },
     );
 

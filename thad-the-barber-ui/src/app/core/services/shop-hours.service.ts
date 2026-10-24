@@ -39,7 +39,7 @@ export class ShopHoursService {
   private readonly timeZone: Signal<string | null> = this.store.selectSignal(shopFeature.selectTimeZone);
   private readonly now: WritableSignal<Date> = signal(new Date());
 
-  /** Open days in display order (Sat, Sun) followed by one "closed" row for the rest. */
+  /** One row per open day, Monday first (so the weekend reads Sat, Sun), then one "closed" row for the rest. */
   readonly businessHours: Signal<HoursRow[]> = computed(
     (): HoursRow[] => this.generateOperatingHoursRows(this.hours()),
   );
@@ -69,30 +69,30 @@ export class ShopHoursService {
     });
   }
 
-  getShopHoursForDate(date: Date): ShopOpeningHours | undefined {
+  /** The day's opening periods, earliest first; Square allows several a day (e.g. closed for lunch). */
+  getShopHoursForDate(date: Date): ShopOpeningHours[] {
     return this.fetchShopHoursForDay(toWeekday(date.getDay()));
   }
 
   isOpenDay(day: Weekday): boolean {
-    return this.fetchShopHoursForDay(day) !== undefined;
+    return this.fetchShopHoursForDay(day).length > 0;
   }
 
   getShopCurrentStatus({ day, minutes }: WeekTime): OpenStatus {
-    const today: ShopOpeningHours | undefined = this.fetchShopHoursForDay(day);
-    if (today) {
-      const opensAt: number = fromTimeOfDay(today.opens);
-      const isOpenNow: boolean = minutes >= opensAt && minutes < fromTimeOfDay(today.closes);
-      const opensLaterToday: boolean = minutes < opensAt;
-      if (isOpenNow) {
-        return { isOpen: true, label: 'Open now' };
-      }
-      if (opensLaterToday) {
-        return { isOpen: false, label: `Opens today at ${formatMinutes(opensAt, true)}` };
-      }
+    const today: ShopOpeningHours[] = this.fetchShopHoursForDay(day);
+    const isOpenNow: boolean = today.some((period: ShopOpeningHours): boolean =>
+      minutes >= fromTimeOfDay(period.opens) && minutes < fromTimeOfDay(period.closes));
+    if (isOpenNow) {
+      return { isOpen: true, label: 'Open now' };
+    }
+    const laterToday: ShopOpeningHours | undefined = today.find((period: ShopOpeningHours): boolean =>
+      minutes < fromTimeOfDay(period.opens));
+    if (laterToday) {
+      return { isOpen: false, label: `Opens today at ${formatMinutes(fromTimeOfDay(laterToday.opens), true)}` };
     }
     for (let offset: number = 1; offset <= 7; offset++) {
       const nextDay: Weekday = toWeekday(day + offset);
-      const next: ShopOpeningHours | undefined = this.fetchShopHoursForDay(nextDay);
+      const next: ShopOpeningHours | undefined = this.fetchShopHoursForDay(nextDay)[0];
       if (next) {
         return {
           isOpen: false,
@@ -103,27 +103,29 @@ export class ShopHoursService {
     return { isOpen: false, label: 'Closed' };
   }
 
-  private fetchShopHoursForDay(day: Weekday): ShopOpeningHours | undefined {
-    return this.hours().find((entry: ShopOpeningHours): boolean => entry.day === day);
+  private fetchShopHoursForDay(day: Weekday): ShopOpeningHours[] {
+    return this.hours()
+      .filter((period: ShopOpeningHours): boolean => period.day === day)
+      .sort((a: ShopOpeningHours, b: ShopOpeningHours): number => fromTimeOfDay(a.opens) - fromTimeOfDay(b.opens));
   }
 
-  /* Creates the rows for displaying opening hours */
   private generateOperatingHoursRows(hours: ShopOpeningHours[]): HoursRow[] {
     if (hours.length === 0) {
       return [];
     }
 
-    const operatingHours: HoursRow[] = hours.map((entry: ShopOpeningHours): HoursRow => {
-      const opensAt: number = fromTimeOfDay(entry.opens);
-      const closesAt: number = fromTimeOfDay(entry.closes);
-      return {
-        label: WEEKDAY_NAMES[entry.day],
-        shortLabel: WEEKDAY_SHORT_NAMES[entry.day],
-        range: `${formatMinutes(opensAt)} – ${formatMinutes(closesAt)}`,
-        shortRange: `${formatMinutes(opensAt, true)} – ${formatMinutes(closesAt, true)}`,
-        closed: false,
-      };
-    });
+    const operatingHours: HoursRow[] = WEEK_FROM_MONDAY
+      .filter((day: Weekday): boolean => this.isOpenDay(day))
+      .map((day: Weekday): HoursRow => {
+        const periods: ShopOpeningHours[] = this.fetchShopHoursForDay(day);
+        return {
+          label: WEEKDAY_NAMES[day],
+          shortLabel: WEEKDAY_SHORT_NAMES[day],
+          range: periods.map((period: ShopOpeningHours): string => toRange(period, false)).join(', '),
+          shortRange: periods.map((period: ShopOpeningHours): string => toRange(period, true)).join(', '),
+          closed: false,
+        };
+      });
 
     const closedDays: Weekday[] = WEEK_FROM_MONDAY.filter((day: Weekday): boolean => !this.isOpenDay(day));
     const first: Weekday | undefined = closedDays[0];
@@ -151,4 +153,9 @@ export class ShopHoursService {
       },
     ];
   }
+}
+
+/** "10:00 AM – 7:30 PM", or with `compact` "10 AM – 7:30 PM". */
+function toRange(period: ShopOpeningHours, compact: boolean): string {
+  return `${formatMinutes(fromTimeOfDay(period.opens), compact)} – ${formatMinutes(fromTimeOfDay(period.closes), compact)}`;
 }

@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { Store } from '@ngrx/store';
 import {
   Observable,
+  combineLatest,
   delay,
   filter,
   map,
@@ -69,15 +70,20 @@ export class AvailabilityService {
   }
 
   /**
-   * The mock derives everything from the opening hours, which arrive with the shop, maybe after /book opens. A failed
-   * load settles it too, so the calendar shows no open days instead of loading forever.
+   * The mock derives everything from the opening hours, which arrive with the shop, maybe after /book opens. Saved
+   * hours are enough to go on; without them a failed load settles it too, so the calendar shows no open days instead
+   * of loading forever.
    */
   private afterHoursLoad<T>(compute: () => T): Observable<T> {
-    return this.store.select(shopFeature.selectLoadStatus).pipe(
-      filter((loadStatus: RequestStatus): boolean => {
+    return combineLatest([
+      this.store.select(shopFeature.selectOpeningHours),
+      this.store.select(shopFeature.selectLoadStatus),
+    ]).pipe(
+      filter(([hours, loadStatus]: [ShopOpeningHours[], RequestStatus]): boolean => {
+        const hasHours: boolean = hours.length > 0;
         const isLoaded: boolean = loadStatus === RequestStatus.Success;
         const isFailed: boolean = loadStatus === RequestStatus.Error;
-        return isLoaded || isFailed;
+        return hasHours || isLoaded || isFailed;
       }),
       take(1),
       delay(150),
@@ -90,7 +96,7 @@ export class AvailabilityService {
     if (date < window.min || date > window.max) {
       return false;
     }
-    if (!this.hours.getShopHoursForDate(date)) {
+    if (this.hours.getShopHoursForDate(date).length === 0) {
       return false;
     }
     // Mock: the shop is closed for the day.
@@ -101,29 +107,26 @@ export class AvailabilityService {
   }
 
   private slotsFor(date: Date): TimeSlot[] {
-    const hours: ShopOpeningHours | undefined = this.hours.getShopHoursForDate(date);
-    if (!hours) {
-      return [];
-    }
-
     const now: Date = new Date();
     const iso: string = toIsoDate(date);
     const isToday: boolean = iso === toIsoDate(now);
     const nowMinutes: number = now.getHours() * 60 + now.getMinutes();
     const slots: TimeSlot[] = [];
-    const closesAt: number = fromTimeOfDay(hours.closes);
 
-    for (
-      let start: number = fromTimeOfDay(hours.opens);
-      start + BOOKING_RULES.slotMinutes <= closesAt;
-      start += BOOKING_RULES.slotMinutes
-    ) {
-      const taken: boolean = (isToday && start <= nowMinutes) || hashToUnit(`${iso}@${start}`) < 0.35;
-      slots.push({
-        time: toTimeKey(start),
-        label: formatMinutes(start),
-        available: !taken,
-      });
+    for (const period of this.hours.getShopHoursForDate(date)) {
+      const closesAt: number = fromTimeOfDay(period.closes);
+      for (
+        let start: number = fromTimeOfDay(period.opens);
+        start + BOOKING_RULES.slotMinutes <= closesAt;
+        start += BOOKING_RULES.slotMinutes
+      ) {
+        const taken: boolean = (isToday && start <= nowMinutes) || hashToUnit(`${iso}@${start}`) < 0.35;
+        slots.push({
+          time: toTimeKey(start),
+          label: formatMinutes(start),
+          available: !taken,
+        });
+      }
     }
     return slots;
   }

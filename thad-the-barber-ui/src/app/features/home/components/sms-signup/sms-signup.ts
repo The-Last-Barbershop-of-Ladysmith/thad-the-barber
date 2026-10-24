@@ -34,7 +34,7 @@ export class SmsSignup {
 
   protected readonly requestStatus: typeof RequestStatus = RequestStatus;
   protected readonly signup: Signal<SmsSignupState> = this.store.selectSignal(homeFeature.selectSmsSignup);
-  protected readonly submitting: Signal<boolean> = this.store.selectSignal(homeFeature.selectIsSubscribingSsms);
+  protected readonly submitting: Signal<boolean> = this.store.selectSignal(homeFeature.selectIsSubscribingSms);
   protected readonly phone: FormControl<string> = new FormControl(
     '',
     { nonNullable: true, validators: phoneValidators },

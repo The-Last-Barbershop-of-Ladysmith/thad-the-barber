@@ -4,6 +4,7 @@ import { TEST_SHOP } from '../../../testing/test-shop';
 import * as ShopActions from '../../store/shop/shop.actions';
 import { shopFeature } from '../../store/shop/shop.feature';
 import { HoursRow } from '../models/shop/hours-row.model';
+import { ShopInfo } from '../models/shop/shop-info.model';
 import { Weekday } from '../models/shop/weekday.model';
 import { ShopHoursService } from './shop-hours.service';
 
@@ -115,6 +116,76 @@ describe(
               Weekday.Thursday,
               Weekday.Friday,
             ]);
+          },
+        );
+      },
+    );
+    describe(
+      'with several periods a day, sent out of order',
+      (): void => {
+        // Closed for lunch on Saturday, and Square lists Sunday first.
+        const splitShop: ShopInfo = {
+          ...TEST_SHOP,
+          hours: [
+            {
+              day: Weekday.Sunday,
+              opens: '10:00:00',
+              closes: '16:00:00',
+            },
+            {
+              day: Weekday.Saturday,
+              opens: '13:00:00',
+              closes: '19:45:00',
+            },
+            {
+              day: Weekday.Saturday,
+              opens: '09:30:00',
+              closes: '12:00:00',
+            },
+          ],
+        };
+
+        beforeEach((): void => {
+          TestBed.inject(Store).dispatch(ShopActions.ShopInfoRequestSuccess({ shopInfo: splitShop }));
+        });
+
+        it(
+          'is open during the second period',
+          (): void => {
+            expect(service.getShopCurrentStatus({ day: Weekday.Saturday, minutes: 14 * 60 }).isOpen).toBe(true);
+          },
+        );
+
+        it(
+          'announces the next period during the break',
+          (): void => {
+            expect(service.getShopCurrentStatus({ day: Weekday.Saturday, minutes: 12 * 60 + 30 }).label)
+              .toBe('Opens today at 1 PM');
+          },
+        );
+
+        it(
+          'shows one row per day, Saturday before Sunday, with both periods on it',
+          (): void => {
+            expect(service.businessHours().map((row: HoursRow): string => `${row.label}: ${row.range}`)).toEqual([
+              'Saturday: 9:30 AM – 12:00 PM, 1:00 PM – 7:45 PM',
+              'Sunday: 10:00 AM – 4:00 PM',
+              'Monday – Friday: Closed',
+            ]);
+          },
+        );
+
+        it(
+          'lists the periods of a day earliest first',
+          (): void => {
+            const saturday: Date = new Date(
+              2026,
+              9,
+              3,
+            );
+
+            expect(service.getShopHoursForDate(saturday).map((period: ShopInfo['hours'][number]): string => period.opens))
+              .toEqual(['09:30:00', '13:00:00']);
           },
         );
       },

@@ -8,12 +8,21 @@ import { shopFeatureKey } from '../shop/shop.feature';
 /** Prefix for each slice's localStorage entry: `ttb-home`, `ttb-booking`, `ttb-shop`. */
 const STORAGE_PREFIX: string = 'ttb';
 
-/** Slices persisted to localStorage. Each feature clears its own with its `State Reset` action. */
-const syncKeys: string[] = [homeFeatureKey, bookingFeatureKey];
-
-/** Every synced slice is stored base64-encoded. */
+/**
+ * Slices persisted to localStorage, base64-encoded, each with the fields it keeps. Each feature clears its own with
+ * its `State Reset` action.
+ */
 const keys: Keys = [
-  ...syncKeys.map((key: string): Keys[number] => ({ [key]: { encrypt: encodeBase64, decrypt: decodeBase64 } })),
+  { [bookingFeatureKey]: { encrypt: encodeBase64, decrypt: decodeBase64 } },
+  // Only the signup: home's content and load statuses reload on every visit, and a saved status (a gallery that
+  // failed last time) would hide that section's nav link on other pages.
+  {
+    [homeFeatureKey]: {
+      encrypt: encodeBase64,
+      decrypt: decodeBase64,
+      filter: ['smsSignup'],
+    },
+  },
   // Only the shop itself: a saved load status would stop the next visit refreshing it.
   {
     [shopFeatureKey]: {
