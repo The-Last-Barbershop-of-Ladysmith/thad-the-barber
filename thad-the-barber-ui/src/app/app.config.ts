@@ -1,4 +1,4 @@
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import {
   ApplicationConfig,
   CSP_NONCE,
@@ -18,6 +18,7 @@ import { provideStoreDevtools } from '@ngrx/store-devtools';
 import { MessageService } from 'primeng/api';
 import { PrimeNG, providePrimeNG } from 'primeng/config';
 import { PRIMEUI_LICENSE } from './core/config/primeui-license';
+import { sessionInterceptor } from './core/interceptors/session.interceptor';
 import { routes } from './app.routes';
 import * as appEffects from './store/app.effects';
 import { layoutFeature } from './store/app.feature';
@@ -29,7 +30,7 @@ import { provideClientHydration } from '@angular/platform-browser';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideHttpClient(),
+    provideHttpClient(withInterceptors([sessionInterceptor])),
     provideRouter(
       routes,
       withComponentInputBinding(),
