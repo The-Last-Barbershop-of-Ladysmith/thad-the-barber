@@ -1,4 +1,7 @@
 import { formatDate } from '@angular/common';
+import { WeekTime } from '../../core/models/shop/week-time.model';
+import { Weekday } from '../../core/models/shop/weekday.model';
+import { WEEKDAY_SHORT_NAMES, WEEK_FROM_SUNDAY } from './weekday.utils';
 
 /** Local-time date helpers. The store keeps dates as ISO strings so state stays serializable. */
 
@@ -79,6 +82,33 @@ export function formatMinutes(minutes: number, compact: boolean = false): string
   const hours12: number = ((hours + 11) % 12) + 1;
   const suffix: string = hours < 12 ? 'AM' : 'PM';
   return compact && remainder === 0 ? `${hours12} ${suffix}` : `${hours12}:${pad(remainder)} ${suffix}`;
+}
+
+/** "10:30:00" or "10:30" → 630 */
+export function fromTimeOfDay(time: string): number {
+  const [hours, minutes]: number[] = time.split(':').map(Number);
+  if (hours === undefined || minutes === undefined || Number.isNaN(hours) || Number.isNaN(minutes)) {
+    throw new Error(`Expected "HH:mm" or "HH:mm:ss", got "${time}".`);
+  }
+  return hours * 60 + minutes;
+}
+
+/** The weekday and time at `instant` on the clocks in `timeZone` (IANA), whatever the browser's timezone. */
+export function weekTimeIn(timeZone: string, instant: Date): WeekTime {
+  const parts: Intl.DateTimeFormatPart[] = new Intl.DateTimeFormat(DATE_LOCALE, {
+    timeZone,
+    weekday: 'short',
+    hour: 'numeric',
+    minute: 'numeric',
+    hourCycle: 'h23',
+  }).formatToParts(instant);
+  const part: (type: Intl.DateTimeFormatPartTypes) => string = (type: Intl.DateTimeFormatPartTypes): string =>
+    parts.find((entry: Intl.DateTimeFormatPart): boolean => entry.type === type)?.value ?? '';
+  return {
+    // DATE_LOCALE's short weekday names are the same as WEEKDAY_SHORT_NAMES ('Sun' … 'Sat').
+    day: WEEK_FROM_SUNDAY.find((day: Weekday): boolean => WEEKDAY_SHORT_NAMES[day] === part('weekday')) ?? Weekday.Sunday,
+    minutes: Number(part('hour')) * 60 + Number(part('minute')),
+  };
 }
 
 /** 630 → "10:30" (24h key used for slot values) */

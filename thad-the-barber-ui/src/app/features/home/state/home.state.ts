@@ -3,8 +3,7 @@ import {
   GalleryPhoto,
   Testimonial,
 } from '../models/home.models';
-
-export type RequestStatus = 'idle' | 'pending' | 'success' | 'error';
+import { RequestStatus } from '../../../shared/models/request.models';
 
 export interface SmsSignupState {
   status: RequestStatus;
@@ -24,13 +23,13 @@ export interface HomeState {
 
 export const initialHomeState: HomeState = {
   announcements: [],
-  announcementsStatus: 'idle',
+  announcementsStatus: RequestStatus.Idle,
   testimonials: [],
   gallery: [],
-  galleryStatus: 'idle',
-  contentStatus: 'idle',
+  galleryStatus: RequestStatus.Idle,
+  contentStatus: RequestStatus.Idle,
   smsSignup: {
-    status: 'idle',
+    status: RequestStatus.Idle,
     phone: null,
     error: null,
   },

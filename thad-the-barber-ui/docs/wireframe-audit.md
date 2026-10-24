@@ -86,7 +86,7 @@ Values under `semantic.extend.brand` become `--p-brand-*` CSS variables. This wa
 | 12px / 700 / `.18em` / uppercase / copper | Every section label | `eyebrow` utility |
 | `clamp(48px,8vw,96px)` / 800 / `.95` / `-.03em` / uppercase | Hero wordmark | `display-title` utility |
 | `clamp(32px,4.5vw,52px)` / 800 / `1` / `-.02em` / uppercase | Section headings | `section-title` utility |
-| `clamp(17px,2vw,21px)` / `1.45` | Hero tagline | `lead` utility |
+| `clamp(17px,2vw,21px)` / `1.45` | Hero tagline (removed in #39; the 404 page still uses it) | `lead` utility |
 | 18px / `1.5` / `#e6d6c4` | Panel paragraphs | `body-copy` utility |
 | 12px / 700 / `.14em` / uppercase / muted | "LOCATION", "PHONE", form labels | `field-label` utility |
 | `0 2px 24px rgba(0,0,0,.55)` | Hero text shadow | `text-shadow-hero` |
@@ -177,16 +177,16 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 
 | Wireframe logic (source) | App location | Notes |
 | --- | --- | --- |
-| Phone number, address, map/directions URLs, socials (hard-coded in 3 places) | `core/config/shop-info.ts` → `SHOP_INFO`, `SOCIAL_LINKS`, `HOME_SECTIONS` | Single source of truth |
-| Hours rows repeated in schedule, visit, footer | `OPENING_HOURS` + `ShopHoursService.rows` | Rows are built from data |
-| `openLabel` / `openColor` (`index.html` `renderVals`) | `ShopHoursService.statusAt()` / `status` signal | Refreshes every minute; unit tested |
+| Phone number, address, map/directions URLs, socials (hard-coded in 3 places) | `GET /api/shop` → `shop` slice (`shopFeature` selectors); `SHOP_FALLBACK` keeps the fallback name/phone/booking URL and site content | Square is the source of truth (#39) |
+| Hours rows repeated in schedule, visit, footer | `shopFeature.selectOpeningHours` + `ShopHoursService.businessHours` | Rows are built from Square's hours |
+| `openLabel` / `openColor` (`index.html` `renderVals`) | `ShopHoursService.getShopCurrentStatus()` / `currentOpenStatus` signal, on the shop's clock | Refreshes every minute; unit tested |
 | `ANNS` | `content/announcements.json` in the media container via `AnnouncementsService` (#30) | The seed announcements and the text-alerts slide are dropped (BR-35) |
 | Testimonials markup | `features/home/data/home-content.data.ts` via `HomeContentService` | Ready to swap for `GET /api/reviews` (#37) |
-| `subscribe` / `setPhone` / `phoneErr` | `SmsSignup` component + `HomePageActions.smsSignupSubmitted` → `subscribeToSms` effect → `SmsSignupService` | Mocked 400ms |
+| `subscribe` / `setPhone` / `phoneErr` | `SmsSignup` component + `HomeActions.SmsSignupRequest` → `subscribeToSms` effect → `SmsSignupService` | Mocked 400ms |
 | `slots()`, `available()`, `hash()`, `daysAhead`, `slotMinutes` (`book.html`) | `AvailabilityService` + `BOOKING_RULES` | Same deterministic "booked" pattern; mocked |
-| Month nav, `canPrev` / `canNext` | DatePicker `minDate` / `maxDate` + `monthViewed` → `loadMonthAvailability` effect | |
+| Month nav, `canPrev` / `canNext` | DatePicker `minDate` / `maxDate` + `BookingActions.MonthView` → `loadMonthAvailability` effect | |
 | Day / time pick, `done`, `tried`, `missing[]` | `booking` slice + `Booking` page computed signals | See state below |
-| `confirm` | `confirmRequested` → `confirmBooking` effect → `BookingService` | Mocked 500ms |
+| `confirm` | `BookingActions.BookingConfirmRequest` → `confirmBooking` effect → `BookingService` | Mocked 500ms |
 | `ann`, `touchStart` / `touchEnd`, `goAnn` | Built into `p-carousel` | Removed |
 | `lb`, `stepLb`, `onKey` | Built into `p-galleria` | Removed |
 | `menu` / `toggleMenu` (mobile) | Root `layout` slice + `closeMenuOnNavigation` effect | |
@@ -200,7 +200,7 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 | `home` | `features/home/state/home.{state,actions,reducer,feature,effects}.ts` | Announcements, testimonials, gallery, content status, SMS sign-up status |
 | `booking` | `features/booking/state/booking.{state,actions,reducer,feature,effects}.ts` | Visible month, unavailable dates, selected date/time, slots, submit status, confirmation |
 
-- Each reducer lives in its own `*.reducer.ts`. Each `*.feature.ts` holds the feature key and uses `createFeature` for a scoped feature selector, with `extraSelectors` for derived values such as `selectOpenSlotCount`, `selectSelectedSlot` and `selectIsSubscribed`.
+- Each reducer lives in its own `*.reducer.ts`. Each `*.feature.ts` holds the feature key and uses `createFeature` for a scoped feature selector, with `extraSelectors` for derived values such as `selectOpenSlotCount`, `selectSelectedSlot` and `selectHomeSections`.
 - `home` and `booking` persist to localStorage through `ngrx-store-localstorage` (`store/meta/meta.reducers.ts`). They're stored base64-encoded as `ttb-home` and `ttb-booking` and restored when each slice loads. Each feature clears its slice, and the saved copy, with its own `stateReset` action.
 - Dates are stored as ISO strings to keep state serializable.
 - Stale responses (a month or date the user has already moved past) are ignored by the reducer, and unit tested.
@@ -228,7 +228,7 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 | Background "loading…%" overlay | Dropped (not needed for the stills) | Bring back with the frame scrubber |
 | Announcement arrows | At panel sides on desktop; beside the dots on mobile | Confirm with design |
 | Lightbox arrows | Inside the photo edges (Galleria default) rather than at the viewport sides | Adjust `galleria.ts` if needed |
-| Instagram / Facebook URLs (`href="#"`) | Still placeholders | Fill in `SOCIAL_LINKS` |
+| Instagram / Facebook URLs (`href="#"`) | From Square's location profile (#39) | Unset ones are hidden (BR-40) |
 | Announcement photos ("kid in the chair", "hot towel") | Placeholders dropped; images come from the media container | Thad uploads to `announcements/` and names the file in `image.fileName` |
 | Booking page monospace styling | Replaced with the brand sans | Intentional; the wireframe mono was a placeholder style |
 | Booking API, SMS provider, content API | Mocked services | Swap each service body for `HttpClient` calls (`environment.apiBaseUrl`) |

@@ -19,7 +19,7 @@ import { Hero } from './components/hero/hero';
 import { ScheduleCta } from './components/schedule-cta/schedule-cta';
 import { Testimonials } from './components/testimonials/testimonials';
 import { Visit } from './components/visit/visit';
-import { HomePageActions } from './state/home.actions';
+import * as HomeActions from './state/home.actions';
 import { homeFeature } from './state/home.feature';
 
 /** Home page: the one-page scroll of sections from the wireframe. Reads content from the home slice. */
@@ -59,6 +59,6 @@ export class Home implements OnInit {
   protected readonly gallery: Signal<GalleryPhoto[]> = this.store.selectSignal(homeFeature.selectGallery);
 
   ngOnInit(): void {
-    this.store.dispatch(HomePageActions.opened());
+    this.store.dispatch(HomeActions.HomePageOpen());
   }
 }

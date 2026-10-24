@@ -1,5 +1,5 @@
 import { Page, Response } from '@playwright/test';
-import { SHOP_INFO } from '../../src/app/core/config/shop-info';
+import { SHOP_FALLBACK } from '../../src/app/core/config/shop-info';
 import { expectNoA11yViolations } from '../support/axe';
 import { expect, test } from '../support/fixtures';
 
@@ -36,7 +36,7 @@ test.describe(
     test(
       'links to the Square booking site from shop-info',
       async ({ page }: { page: Page; }): Promise<void> => {
-        await expect(page.getByTestId('error-book-square')).toHaveAttribute('href', SHOP_INFO.bookingUrl);
+        await expect(page.getByTestId('error-book-square')).toHaveAttribute('href', SHOP_FALLBACK.squareBookingSiteUrl);
       },
     );
 

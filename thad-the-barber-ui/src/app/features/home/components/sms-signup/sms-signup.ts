@@ -6,13 +6,14 @@ import {
 } from '@angular/core';
 import { AppState } from '../../../../store/app.state';
 import { SmsSignupState } from '../../state/home.state';
+import { RequestStatus } from '../../../../shared/models/request.models';
 import { phoneValidators } from '../../../../shared/validators/form.validators';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { ButtonModule } from 'primeng/button';
 import { InputMaskModule } from 'primeng/inputmask';
 import { MessageModule } from 'primeng/message';
-import { HomePageActions } from '../../state/home.actions';
+import * as HomeActions from '../../state/home.actions';
 import { homeFeature } from '../../state/home.feature';
 
 /** Phone number opt-in for text alerts, shown inside the first announcement. */
@@ -31,8 +32,9 @@ import { homeFeature } from '../../state/home.feature';
 export class SmsSignup {
   private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
 
+  protected readonly requestStatus: typeof RequestStatus = RequestStatus;
   protected readonly signup: Signal<SmsSignupState> = this.store.selectSignal(homeFeature.selectSmsSignup);
-  protected readonly submitting: Signal<boolean> = this.store.selectSignal(homeFeature.selectIsSubscribing);
+  protected readonly submitting: Signal<boolean> = this.store.selectSignal(homeFeature.selectIsSubscribingSms);
   protected readonly phone: FormControl<string> = new FormControl(
     '',
     { nonNullable: true, validators: phoneValidators },
@@ -43,6 +45,6 @@ export class SmsSignup {
     if (this.phone.invalid) {
       return;
     }
-    this.store.dispatch(HomePageActions.smsSignupSubmitted({ phone: this.phone.value }));
+    this.store.dispatch(HomeActions.SmsSignupRequest({ phone: this.phone.value }));
   }
 }

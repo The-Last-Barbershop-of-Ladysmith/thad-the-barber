@@ -14,16 +14,14 @@ import {
   of,
   switchMap,
 } from 'rxjs';
-import { BookingConfirmation, TimeSlot } from '../models/booking.models';
+import {
+  BookingConfirmation,
+  BookingRequest,
+  TimeSlot,
+} from '../models/booking.models';
 import { AvailabilityService } from '../services/availability.service';
 import { BookingService } from '../services/booking.service';
-import {
-  BookingApiActions,
-  BookingPageActions,
-  ConfirmRequestPayload,
-  DatePayload,
-  MonthPayload,
-} from './booking.actions';
+import * as BookingActions from './booking.actions';
 
 export const loadMonthAvailability: FunctionalEffect = createEffect(
   (
@@ -31,10 +29,10 @@ export const loadMonthAvailability: FunctionalEffect = createEffect(
     availability: AvailabilityService = inject(AvailabilityService),
   ): Observable<Action> =>
     actions$.pipe(
-      ofType(BookingPageActions.monthViewed),
-      switchMap(({ month }: MonthPayload): Observable<Action> =>
+      ofType(BookingActions.MonthView),
+      switchMap(({ month }: { month: string; }): Observable<Action> =>
         availability.getUnavailableDates(month).pipe(map((unavailableDates: string[]): Action =>
-          BookingApiActions.monthAvailabilityLoaded({ month, unavailableDates })))),
+          BookingActions.MonthAvailabilityRequestSuccess({ month, unavailableDates })))),
     ),
   { functional: true },
 );
@@ -45,13 +43,13 @@ export const loadSlots: FunctionalEffect = createEffect(
     availability: AvailabilityService = inject(AvailabilityService),
   ): Observable<Action> =>
     actions$.pipe(
-      ofType(BookingPageActions.dateSelected),
-      switchMap(({ date }: DatePayload): Observable<Action> =>
+      ofType(BookingActions.DateSelect),
+      switchMap(({ date }: { date: string; }): Observable<Action> =>
         availability.getSlots(date).pipe(
           map((slots: TimeSlot[]): Action =>
-            BookingApiActions.slotsLoaded({ date, slots })),
+            BookingActions.SlotsRequestSuccess({ date, slots })),
           catchError((): Observable<Action> =>
-            of(BookingApiActions.slotsLoadFailed({ error: 'Could not load times for that day.' }))),
+            of(BookingActions.SlotsRequestFailure({ error: 'Could not load times for that day.' }))),
         )),
     ),
   { functional: true },
@@ -63,12 +61,13 @@ export const confirmBooking: FunctionalEffect = createEffect(
     bookings: BookingService = inject(BookingService),
   ): Observable<Action> =>
     actions$.pipe(
-      ofType(BookingPageActions.confirmRequested),
-      exhaustMap(({ request }: ConfirmRequestPayload): Observable<Action> =>
+      ofType(BookingActions.BookingConfirmRequest),
+      exhaustMap(({ request }: { request: BookingRequest; }): Observable<Action> =>
         bookings.create(request).pipe(
-          map((confirmation: BookingConfirmation): Action => BookingApiActions.bookingConfirmed({ confirmation })),
+          map((confirmation: BookingConfirmation): Action =>
+            BookingActions.BookingConfirmRequestSuccess({ confirmation })),
           catchError((): Observable<Action> =>
-            of(BookingApiActions.bookingFailed({ error: 'That booking didn’t go through. Please try again or call.' }))),
+            of(BookingActions.BookingConfirmRequestFailure({ error: 'That booking didn’t go through. Please try again or call.' }))),
         )),
     ),
   { functional: true },

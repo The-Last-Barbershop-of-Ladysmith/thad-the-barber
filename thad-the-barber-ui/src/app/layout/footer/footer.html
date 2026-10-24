@@ -2,28 +2,28 @@
   <div class="glass-strong panel">
     <div class="columns">
       <div class="column brand">
-        <img src="assets/logo.png" [alt]="shop.name" class="logo" />
-        <span class="copy">{{ shop.tagline }}</span>
+        <img src="assets/logo.png" [alt]="shopName()" class="logo" />
       </div>
 
       <div class="column">
         <span class="eyebrow">Visit</span>
-        <span class="copy"
-          >{{ shop.location.venue }}<br />{{ shop.location.street }}<br />{{
-            shop.location.cityLine
-          }}</span
-        >
-        <a
-          pButton
-          [link]="true"
-          [href]="shop.location.directionsUrl"
-          target="_blank"
-          rel="noopener"
-          class="directions"
-        >
-          <span pButtonLabel>Get directions</span>
-          <i pButtonIcon class="pi pi-arrow-right"></i>
-        </a>
+        @if (address(); as address) {
+          <span class="copy"
+            >{{ address.street }}<br />{{ address.city }}, {{ address.state }}
+            {{ address.postalCode }}</span
+          >
+          <a
+            pButton
+            [link]="true"
+            [href]="directionsUrl()"
+            target="_blank"
+            rel="noopener"
+            class="directions"
+          >
+            <span pButtonLabel>Get directions</span>
+            <i pButtonIcon class="pi pi-arrow-right"></i>
+          </a>
+        }
       </div>
 
       <div class="column">
@@ -33,14 +33,14 @@
 
       <div class="column contact">
         <span class="eyebrow">Contact</span>
-        <a [href]="shop.phone.tel" class="nav-link">{{ shop.phone.display }}</a>
-        <a [href]="shop.phone.sms" class="nav-link">Text a question</a>
+        <a [href]="phone().tel" class="nav-link">{{ phone().display }}</a>
+        <a [href]="phone().sms" class="nav-link">Text a question</a>
       </div>
 
       <div class="column social">
         <span class="eyebrow">Follow</span>
         <div class="flex gap-2.5">
-          @for (link of social; track link.label) {
+          @for (link of social(); track link.label) {
             <a
               pButton
               severity="secondary"
@@ -58,8 +58,11 @@
 
     <div class="bottom">
       <span class="text-[13px] text-muted-color"
-        >© {{ year }} {{ shop.name }} · Fredericksburg, VA</span
-      >
+        >© {{ year }} {{ shopName() }}
+        @if (address(); as address) {
+          · {{ address.city }}, {{ address.state }}
+        }
+      </span>
       <nav class="bottom-nav" aria-label="Footer">
         @for (item of sections(); track item.fragment) {
           <a routerLink="/" [fragment]="item.fragment" class="nav-link">{{ item.label }}</a>

@@ -1,5 +1,6 @@
 import {
   HttpClient,
+  HttpContext,
   HttpErrorResponse,
   provideHttpClient,
   withInterceptors,
@@ -13,6 +14,7 @@ import { TestBed } from '@angular/core/testing';
 import { environment } from '../../../environments/environment';
 import { SessionToken } from '../models/session.models';
 import { RecaptchaService } from '../services/recaptcha.service';
+import { anonymousRequest } from './anonymous-request.token';
 import { sessionInterceptor } from './session.interceptor';
 
 describe(
@@ -20,12 +22,13 @@ describe(
   (): void => {
     const sessionUrl: string = `${environment.apiBaseUrl}/session`;
     const bookingsUrl: string = `${environment.apiBaseUrl}/bookings/booking-1_x?month=2026-11`;
+    const availabilityUrl: string = `${environment.apiBaseUrl}/bookings/availability?month=2026-12`;
     let sessionsIssued: number;
     let http: HttpTestingController;
 
-    function get(url: string): { body: unknown; error: unknown; } {
+    function get(url: string, context: HttpContext = new HttpContext()): { body: unknown; error: unknown; } {
       const result: { body: unknown; error: unknown; } = { body: undefined, error: undefined };
-      TestBed.inject(HttpClient).get(url).subscribe({
+      TestBed.inject(HttpClient).get(url, { context }).subscribe({
         next: (body: unknown): void => {
           result.body = body;
         },
@@ -86,14 +89,27 @@ describe(
     );
 
     it(
-      'sends nothing on the session call itself or outside the API',
+      'sends nothing on calls marked anonymous, whatever their query string',
+      (): void => {
+        const shopUrl: string = `${environment.apiBaseUrl}/shop?fresh=1`;
+        get(shopUrl, anonymousRequest());
+        const request: TestRequest = http.expectOne(shopUrl);
+        request.flush({});
+
+        expect(authorization(request)).toBeNull();
+        expect(sessionsIssued).toBe(0);
+      },
+    );
+
+    it(
+      'sends nothing outside the API',
       (): void => {
         const outside: string[] = [
           `${environment.mediaBaseUrl}/content/announcements.json`,
           `${environment.apiBaseUrl}s/lookalike`,
           'https://example.test/api/bookings',
         ];
-        for (const url of [sessionUrl, ...outside]) {
+        for (const url of outside) {
           get(url);
           const request: TestRequest = http.expectOne(url);
           expect(authorization(request)).toBeNull();
@@ -148,16 +164,15 @@ describe(
     it(
       'retries a late 401 with the token already renewed instead of renewing again',
       async (): Promise<void> => {
-        const shopUrl: string = `${environment.apiBaseUrl}/shop`;
         get(bookingsUrl);
-        const late: { body: unknown; } = get(shopUrl);
+        const late: { body: unknown; } = get(availabilityUrl);
         await issueSession();
         unauthorized(http.expectOne(bookingsUrl));
         await issueSession();
         http.expectOne(bookingsUrl).flush({});
-        unauthorized(http.expectOne(shopUrl));
+        unauthorized(http.expectOne(availabilityUrl));
         await Promise.resolve();
-        const retry: TestRequest = http.expectOne(shopUrl);
+        const retry: TestRequest = http.expectOne(availabilityUrl);
         retry.flush({});
 
         expect(authorization(retry)).toBe('Bearer jwt-2');
@@ -170,12 +185,12 @@ describe(
       'shares one new token between concurrent requests that got a 401',
       async (): Promise<void> => {
         const first: { body: unknown; } = get(bookingsUrl);
-        const second: { body: unknown; } = get(`${environment.apiBaseUrl}/shop`);
+        const second: { body: unknown; } = get(availabilityUrl);
         await issueSession();
         unauthorized(http.expectOne(bookingsUrl));
-        unauthorized(http.expectOne(`${environment.apiBaseUrl}/shop`));
+        unauthorized(http.expectOne(availabilityUrl));
         await issueSession();
-        const retries: TestRequest[] = [http.expectOne(bookingsUrl), http.expectOne(`${environment.apiBaseUrl}/shop`)];
+        const retries: TestRequest[] = [http.expectOne(bookingsUrl), http.expectOne(availabilityUrl)];
         for (const retry of retries) {
           expect(authorization(retry)).toBe('Bearer jwt-2');
           retry.flush({});

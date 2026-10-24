@@ -13,7 +13,9 @@ export class RecaptchaService {
   private readonly document: Document = inject(DOCUMENT);
   private loadedRecaptcha: Promise<RecaptchaEnterprise> | undefined;
 
-  /** A token for `action`; rejects when the script can't load (blocked or offline), and tries again on the next call. */
+  /** A token for `action`; rejects when the script can't load (blocked or offline),
+   * and tries again on the next call.
+  */
   async getToken(action: string): Promise<string> {
     if (!this.loadedRecaptcha) {
       this.loadedRecaptcha = this.loadScript().catch((error: unknown): never => {

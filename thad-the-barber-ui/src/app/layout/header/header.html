@@ -1,6 +1,6 @@
 <header class="header-fade bar px-4 pt-3.5 pb-9 md:px-8 md:pt-5.5 md:pb-14">
   <a routerLink="/" class="home-link" (click)="closeMenu()">
-    <img src="assets/logo.png" [alt]="shop.name" class="logo drop-shadow-logo h-9 md:h-12" />
+    <img src="assets/logo.png" [alt]="shopName()" class="logo drop-shadow-logo h-9 md:h-12" />
   </a>
 
   @if (onBookingPage()) {
@@ -53,8 +53,8 @@
       <span pButtonLabel>Book online</span>
       <i pButtonIcon class="pi pi-arrow-right"></i>
     </a>
-    <a pButton [outlined]="true" [fluid]="true" [href]="shop.phone.tel">
-      <span pButtonLabel>{{ shop.phone.display }}</span>
+    <a pButton [outlined]="true" [fluid]="true" [href]="phone().tel">
+      <span pButtonLabel>{{ phone().display }}</span>
     </a>
   </div>
 </p-drawer>

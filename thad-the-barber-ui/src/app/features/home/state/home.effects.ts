@@ -25,7 +25,7 @@ import { AnnouncementsService } from '../services/announcements.service';
 import { GalleryService } from '../services/gallery.service';
 import { HomeContentService } from '../services/home-content.service';
 import { SmsSignupService } from '../services/sms-signup.service';
-import { HomeApiActions, HomePageActions } from './home.actions';
+import * as HomeActions from './home.actions';
 
 export const loadHomeContent: FunctionalEffect = createEffect(
   (
@@ -33,12 +33,12 @@ export const loadHomeContent: FunctionalEffect = createEffect(
     content: HomeContentService = inject(HomeContentService),
   ): Observable<Action> =>
     actions$.pipe(
-      ofType(HomePageActions.opened),
+      ofType(HomeActions.HomePageOpen),
       switchMap((): Observable<Action> =>
         content.getContent().pipe(
-          map((result: HomeContent): Action => HomeApiActions.contentLoaded({ content: result })),
+          map((result: HomeContent): Action => HomeActions.HomeContentRequestSuccess({ content: result })),
           catchError((): Observable<Action> =>
-            of(HomeApiActions.contentLoadFailed({ error: 'Could not load the latest news.' }))),
+            of(HomeActions.HomeContentRequestFailure({ error: 'Could not load the latest news.' }))),
         )),
     ),
   { functional: true },
@@ -52,12 +52,12 @@ export const loadAnnouncements: FunctionalEffect = createEffect(
     platformId: object = inject(PLATFORM_ID),
   ): Observable<Action> =>
     actions$.pipe(
-      ofType(HomePageActions.opened),
+      ofType(HomeActions.HomePageOpen),
       filter((): boolean => isPlatformBrowser(platformId)),
       switchMap((): Observable<Action> =>
         announcements.getAnnouncements().pipe(
-          map((result: Announcement[]): Action => HomeApiActions.announcementsLoaded({ announcements: result })),
-          catchError((): Observable<Action> => of(HomeApiActions.announcementsLoadFailed())),
+          map((result: Announcement[]): Action => HomeActions.AnnouncementsRequestSuccess({ announcements: result })),
+          catchError((): Observable<Action> => of(HomeActions.AnnouncementsRequestFailure())),
         )),
     ),
   { functional: true },
@@ -71,12 +71,12 @@ export const loadGallery: FunctionalEffect = createEffect(
     platformId: object = inject(PLATFORM_ID),
   ): Observable<Action> =>
     actions$.pipe(
-      ofType(HomePageActions.opened),
+      ofType(HomeActions.HomePageOpen),
       filter((): boolean => isPlatformBrowser(platformId)),
       switchMap((): Observable<Action> =>
         gallery.getPhotos().pipe(
-          map((photos: GalleryPhoto[]): Action => HomeApiActions.galleryLoaded({ photos })),
-          catchError((): Observable<Action> => of(HomeApiActions.galleryLoadFailed())),
+          map((photos: GalleryPhoto[]): Action => HomeActions.GalleryRequestSuccess({ photos })),
+          catchError((): Observable<Action> => of(HomeActions.GalleryRequestFailure())),
         )),
     ),
   { functional: true },
@@ -88,12 +88,12 @@ export const subscribeToSms: FunctionalEffect = createEffect(
     sms: SmsSignupService = inject(SmsSignupService),
   ): Observable<Action> =>
     actions$.pipe(
-      ofType(HomePageActions.smsSignupSubmitted),
+      ofType(HomeActions.SmsSignupRequest),
       exhaustMap(({ phone }: { phone: string; }): Observable<Action> =>
         sms.subscribe(phone).pipe(
-          map((result: { phone: string; }): Action => HomeApiActions.smsSignupSucceeded({ phone: result.phone })),
+          map((result: { phone: string; }): Action => HomeActions.SmsSignupRequestSuccess({ phone: result.phone })),
           catchError((): Observable<Action> =>
-            of(HomeApiActions.smsSignupFailed({ error: 'Something went wrong. Try again?' }))),
+            of(HomeActions.SmsSignupRequestFailure({ error: 'Something went wrong. Try again?' }))),
         )),
     ),
   { functional: true },

@@ -22,8 +22,10 @@ import { sessionInterceptor } from './core/interceptors/session.interceptor';
 import { routes } from './app.routes';
 import * as appEffects from './store/app.effects';
 import { layoutFeature } from './store/app.feature';
-import { AppState } from './store/app.state';
 import { metaReducers } from './store/meta/meta.reducers';
+import * as shopEffects from './store/shop/shop.effects';
+import { shopFeature } from './store/shop/shop.feature';
+import { homeFeature } from './features/home/state/home.feature';
 import { ThadPreset, themeOptions } from './theme';
 import { provideClientHydration } from '@angular/platform-browser';
 
@@ -36,8 +38,17 @@ export const appConfig: ApplicationConfig = {
       withComponentInputBinding(),
       withInMemoryScrolling({ anchorScrolling: 'enabled', scrollPositionRestoration: 'enabled' }),
     ),
-    provideStore<AppState>({ [layoutFeature.name]: layoutFeature.reducer }, { metaReducers }),
-    provideEffects(appEffects),
+    // Shop and home are root reducers, not `provideState`, because the header and footer read them on every page. Shop
+    // also saves only `shopInfo`, and a partial saved copy merged before `provideState` would drop its `loadStatus`.
+    provideStore(
+      {
+        [layoutFeature.name]: layoutFeature.reducer,
+        [shopFeature.name]: shopFeature.reducer,
+        [homeFeature.name]: homeFeature.reducer,
+      },
+      { metaReducers },
+    ),
+    provideEffects(appEffects, shopEffects),
     provideStoreDevtools({ maxAge: 25, logOnly: !isDevMode() }),
     providePrimeNG({
       ripple: false,

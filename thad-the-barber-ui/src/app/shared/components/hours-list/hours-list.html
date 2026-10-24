@@ -1,32 +1,36 @@
 @switch (variant()) {
   @case ('table') {
     <dl class="table">
-      @for (row of rows; track row.label) {
-        <div class="table-row" [class.closed]="row.closed">
-          <dt class="day">{{ row.label }}</dt>
-          <dd class="hours">{{ row.range }}</dd>
+      @for (hourEntry of shopHoursEntries(); track hourEntry.label) {
+        <div class="table-row" [class.closed]="hourEntry.closed">
+          <dt class="day">{{ hourEntry.label }}</dt>
+          <dd class="hours">{{ hourEntry.range }}</dd>
         </div>
       }
     </dl>
   }
   @case ('stacked') {
     <div class="stack gap-1">
-      @for (row of rows; track row.label) {
-        @if (row.closed) {
-          <span class="text-sm text-muted-color">Closed {{ row.label }}</span>
+      @for (hourEntry of shopHoursEntries(); track hourEntry.label) {
+        @if (hourEntry.closed) {
+          <span class="text-sm text-muted-color">Closed {{ hourEntry.label }}</span>
         } @else {
-          <span class="font-semibold text-color">{{ row.label }} · {{ row.shortRange }}</span>
+          <span class="font-semibold text-color">
+            {{ hourEntry.label }} · {{ hourEntry.shortRange }}
+          </span>
         }
       }
     </div>
   }
   @case ('compact') {
     <div class="compact">
-      @for (row of rows; track row.label) {
-        @if (row.closed) {
-          <span class="text-sm text-muted-color">Closed {{ row.shortLabel }}</span>
+      @for (hourEntry of shopHoursEntries(); track hourEntry.label) {
+        @if (hourEntry.closed) {
+          <span class="text-sm text-muted-color">Closed {{ hourEntry.shortLabel }}</span>
         } @else {
-          <span class="text-surface-100">{{ row.shortLabel }} · {{ row.shortRange }}</span>
+          <span class="text-surface-100">
+            {{ hourEntry.shortLabel }} · {{ hourEntry.shortRange }}
+          </span>
         }
       }
     </div>

@@ -1,11 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ShopInfo } from '../../../../core/models/shop.models';
+import { PhoneLinks } from '../../../../core/models/shop/phone-links.model';
 import { BookingSummary } from './booking-summary';
 
 describe(
   'BookingSummary',
   (): void => {
-    const phone: ShopInfo['phone'] = {
+    const phone: PhoneLinks = {
       display: '(000) 555-01x9',
       tel: 'tel:+10005550109',
       sms: 'sms:+10005550109',

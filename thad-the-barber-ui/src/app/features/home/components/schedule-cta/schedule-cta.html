@@ -2,21 +2,21 @@
   <p-card class="w-full max-w-245">
     <div class="panel md:grid-cols-2">
       <div class="copy">
-        <div class="status" [class.open]="status().isOpen">
-          <span class="status-dot"></span>
-          <span>{{ status().label }}</span>
-        </div>
+        @if (status(); as status) {
+          <div class="status" [class.open]="status.isOpen">
+            <span class="status-dot"></span>
+            <span>{{ status.label }}</span>
+          </div>
+        }
         <h2 class="section-title">Ready for a cut?</h2>
-        <p class="body-copy max-w-[28em]">
-          Weekends only, now on {{ shop.area }}. Grab a spot online or give Thad a call.
-        </p>
+        <p class="body-copy max-w-[28em]">Weekends only. Grab a spot online or give Thad a call.</p>
         <div class="actions">
           <a pButton routerLink="/book">
             <span pButtonLabel>Book online</span>
             <i pButtonIcon class="pi pi-arrow-right"></i>
           </a>
-          <a pButton [outlined]="true" [href]="shop.phone.tel">
-            <span pButtonLabel>{{ shop.phone.display }}</span>
+          <a pButton [outlined]="true" [href]="phone().tel">
+            <span pButtonLabel>{{ phone().display }}</span>
           </a>
         </div>
       </div>

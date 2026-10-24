@@ -1,39 +1,51 @@
-import { Weekday } from '../../core/models/shop.models';
+import { Weekday } from '../../core/models/shop/weekday.model';
 
 export const WEEKDAY_NAMES: Record<Weekday, string> = {
-  0: 'Sunday',
-  1: 'Monday',
-  2: 'Tuesday',
-  3: 'Wednesday',
-  4: 'Thursday',
-  5: 'Friday',
-  6: 'Saturday',
+  [Weekday.Sunday]: 'Sunday',
+  [Weekday.Monday]: 'Monday',
+  [Weekday.Tuesday]: 'Tuesday',
+  [Weekday.Wednesday]: 'Wednesday',
+  [Weekday.Thursday]: 'Thursday',
+  [Weekday.Friday]: 'Friday',
+  [Weekday.Saturday]: 'Saturday',
 };
 
 export const WEEKDAY_SHORT_NAMES: Record<Weekday, string> = {
-  0: 'Sun',
-  1: 'Mon',
-  2: 'Tue',
-  3: 'Wed',
-  4: 'Thu',
-  5: 'Fri',
-  6: 'Sat',
+  [Weekday.Sunday]: 'Sun',
+  [Weekday.Monday]: 'Mon',
+  [Weekday.Tuesday]: 'Tue',
+  [Weekday.Wednesday]: 'Wed',
+  [Weekday.Thursday]: 'Thu',
+  [Weekday.Friday]: 'Fri',
+  [Weekday.Saturday]: 'Sat',
 };
 
 /** Monday-first order, so a run of weekdays reads "Monday – Friday". */
 export const WEEK_FROM_MONDAY: readonly Weekday[] = [
-  1,
-  2,
-  3,
-  4,
-  5,
-  6,
-  0,
+  Weekday.Monday,
+  Weekday.Tuesday,
+  Weekday.Wednesday,
+  Weekday.Thursday,
+  Weekday.Friday,
+  Weekday.Saturday,
+  Weekday.Sunday,
 ];
 
-/** Any day number (including past 6 or negative) → 0–6, e.g. 8 → 1. */
+/** Sunday-first, indexed like Date.getDay(). */
+export const WEEK_FROM_SUNDAY: readonly Weekday[] = [
+  Weekday.Sunday,
+  Weekday.Monday,
+  Weekday.Tuesday,
+  Weekday.Wednesday,
+  Weekday.Thursday,
+  Weekday.Friday,
+  Weekday.Saturday,
+];
+
+/** Any day number (including past 6 or negative) → its weekday, e.g. 8 → Monday. */
 export function toWeekday(day: number): Weekday {
-  return (((day % 7) + 7) % 7) as Weekday;
+  // The index is always 0–6; the fallback only satisfies noUncheckedIndexedAccess.
+  return WEEK_FROM_SUNDAY[((day % 7) + 7) % 7] ?? Weekday.Sunday;
 }
 
 /** "Monday – Friday", or just "Monday" for a single day. */

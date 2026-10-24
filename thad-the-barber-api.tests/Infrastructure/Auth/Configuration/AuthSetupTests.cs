@@ -1,4 +1,5 @@
 using System.Buffers.Text;
+using System.Globalization;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
@@ -20,16 +21,20 @@ namespace ThadTheBarber.Api.Tests.Infrastructure.Auth.Configuration;
 
 public sealed class AuthSetupTests(ApiFactory factory) : IClassFixture<ApiFactory>
 {
-    private static readonly string[] exemptRoutes = ["/api/health", "/api/session", "/api/webhooks/square"];
+    // The factory runs on the real clock, and only months inside the booking window return 200.
+    private static readonly string ProtectedPath = string.Create(
+        CultureInfo.InvariantCulture,
+        $"/api/bookings/availability?month={DateTime.UtcNow:yyyy-MM}"
+    );
+
+    private static readonly string[] exemptRoutes = ["/api/health", "/api/session", "/api/shop", "/api/webhooks/square"];
 
     private static CancellationToken Cancellation => TestContext.Current.CancellationToken;
 
-    [Theory]
-    [InlineData("/api/shop")]
-    [InlineData("/api/bookings/availability?month=2031-02")]
-    public async Task AProtectedEndpointWithoutATokenIs401(string path)
+    [Fact]
+    public async Task AProtectedEndpointWithoutATokenIs401()
     {
-        using HttpResponseMessage response = await factory.CreateClientWithoutToken().GetAsync(path, Cancellation);
+        using HttpResponseMessage response = await factory.CreateClientWithoutToken().GetAsync(ProtectedPath, Cancellation);
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
@@ -37,7 +42,7 @@ public sealed class AuthSetupTests(ApiFactory factory) : IClassFixture<ApiFactor
     [Fact]
     public async Task AProtectedEndpointWithAValidTokenWorks()
     {
-        using HttpResponseMessage response = await GetShopWithTokenAsync(SessionTokens.Create(factory.SigningKey.Key));
+        using HttpResponseMessage response = await GetProtectedWithTokenAsync(SessionTokens.Create(factory.SigningKey.Key));
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
@@ -53,7 +58,7 @@ public sealed class AuthSetupTests(ApiFactory factory) : IClassFixture<ApiFactor
     [InlineData("not a JWT")]
     public async Task AnExpiredMisaddressedForeignOrTamperedTokenIs401(string kind)
     {
-        using HttpResponseMessage response = await GetShopWithTokenAsync(CreateRefusedToken(kind));
+        using HttpResponseMessage response = await GetProtectedWithTokenAsync(CreateRefusedToken(kind));
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
@@ -61,7 +66,8 @@ public sealed class AuthSetupTests(ApiFactory factory) : IClassFixture<ApiFactor
     [Theory]
     [InlineData("/api/health")]
     [InlineData("/api/health?deep=true")]
-    public async Task HealthNeedsNoToken(string path)
+    [InlineData("/api/shop")]
+    public async Task HealthAndTheShopNeedNoToken(string path)
     {
         using HttpResponseMessage response = await factory.CreateClientWithoutToken().GetAsync(path, Cancellation);
 
@@ -69,7 +75,7 @@ public sealed class AuthSetupTests(ApiFactory factory) : IClassFixture<ApiFactor
     }
 
     [Fact]
-    public void OnlyHealthSessionAndTheSquareWebhookAreOpenWithoutAToken()
+    public void OnlyHealthSessionShopAndTheSquareWebhookAreOpenWithoutAToken()
     {
         string[] openRoutes =
         [
@@ -115,7 +121,7 @@ public sealed class AuthSetupTests(ApiFactory factory) : IClassFixture<ApiFactor
     [Fact]
     public async Task APreflightToAProtectedEndpointNeedsNoToken()
     {
-        using HttpRequestMessage request = new(HttpMethod.Options, "/api/shop");
+        using HttpRequestMessage request = new(HttpMethod.Options, ProtectedPath);
         request.Headers.Add("Origin", ApiFactory.FrontendOrigin);
         request.Headers.Add("Access-Control-Request-Method", "GET");
         request.Headers.Add("Access-Control-Request-Headers", "authorization");
@@ -164,10 +170,10 @@ public sealed class AuthSetupTests(ApiFactory factory) : IClassFixture<ApiFactor
         return string.Join('.', parts);
     }
 
-    private async Task<HttpResponseMessage> GetShopWithTokenAsync(string token)
+    private async Task<HttpResponseMessage> GetProtectedWithTokenAsync(string token)
     {
         HttpClient client = factory.CreateClientWithoutToken();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-        return await client.GetAsync("/api/shop", Cancellation);
+        return await client.GetAsync(ProtectedPath, Cancellation);
     }
 }

@@ -20,6 +20,7 @@ import {
   timeout,
 } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { anonymousRequest } from '../interceptors/anonymous-request.token';
 import { SessionToken } from '../models/session.models';
 import { RecaptchaService } from './recaptcha.service';
 
@@ -27,10 +28,7 @@ export const SESSION_URL: string = `${environment.apiBaseUrl}/session`;
 
 /** Must match the API's `SessionService.RecaptchaAction`. */
 const RECAPTCHA_ACTION: string = 'session';
-
 const REFRESH_BEFORE_EXPIRY_MS: number = 60_000;
-
-/** A stalled script or `ready` that never fires counts as a failed bot check instead of holding every API call. */
 const RECAPTCHA_TIMEOUT_MS: number = 10_000;
 
 /**
@@ -84,7 +82,11 @@ export class SessionService {
         return throwError((): unknown => error);
       }),
       switchMap((recaptchaToken: string): Observable<SessionToken> =>
-        this.http.post<SessionToken>(SESSION_URL, { recaptchaToken })),
+        this.http.post<SessionToken>(
+          SESSION_URL,
+          { recaptchaToken },
+          { context: anonymousRequest() },
+        )),
       tap({
         next: (session: SessionToken): void => {
           this.token = session.token;
