@@ -124,7 +124,7 @@ Each state folder has four files:
 - `*.feature.ts`: `createFeature` with the reducer. It generates a feature selector scoped to the slice key (for example `selectBookingState`), a selector for every property, and `extraSelectors` for derived values.
 - `*.effects.ts`: functional effects that call the feature's services
 
-Feature slices register lazily in `<feature>.routes.ts` with `provideState` and `provideEffects`, so the booking slice only exists once someone opens `/book`. The root `layout` slice (mobile menu) registers at bootstrap.
+Every slice (`layout`, `shop`, `announcements`, `home`, `booking`) is a root reducer in `app.config.ts`, because the header and footer read them on every page or a partly saved slice needs its initial state in place. The root slices' effects (`shop`, `announcements`) register there too; a feature's own effects register in `<feature>.routes.ts` with `provideEffects`.
 
 ## Theming
 
