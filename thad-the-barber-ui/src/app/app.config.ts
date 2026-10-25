@@ -16,11 +16,13 @@ import { PrimeNG, providePrimeNG } from 'primeng/config';
 import { PRIMEUI_LICENSE } from './core/config/primeui-license';
 import { sessionInterceptor } from './core/interceptors/session.interceptor';
 import { routes } from './app.routes';
+import * as bookingTabsEffects from './features/booking/state/booking-tabs.effects';
 import * as appEffects from './store/app.effects';
 import { layoutFeature } from './store/app.feature';
 import { metaReducers } from './store/meta/meta.reducers';
 import * as shopEffects from './store/shop/shop.effects';
 import { shopFeature } from './store/shop/shop.feature';
+import { bookingFeature } from './features/booking/state/booking.feature';
 import { homeFeature } from './features/home/state/home.feature';
 import { ThadPreset, themeOptions } from './theme';
 import { provideClientHydration } from '@angular/platform-browser';
@@ -34,17 +36,23 @@ export const appConfig: ApplicationConfig = {
       withComponentInputBinding(),
       withInMemoryScrolling({ anchorScrolling: 'enabled', scrollPositionRestoration: 'enabled' }),
     ),
-    // Shop and home are root reducers, not `provideState`, because the header and footer read them on every page. Shop
-    // also saves only `shopInfo`, and a partial saved copy merged before `provideState` would drop its `loadStatus`.
+    // Shop and home are root reducers, not `provideState`, because the header and footer read them on every page.
+    // Shop and booking also save only part of their slice (`shopInfo`, `savedConfirmation`), and a partial saved copy
+    // merged before `provideState` would drop the rest.
     provideStore(
       {
         [layoutFeature.name]: layoutFeature.reducer,
         [shopFeature.name]: shopFeature.reducer,
         [homeFeature.name]: homeFeature.reducer,
+        [bookingFeature.name]: bookingFeature.reducer,
       },
       { metaReducers },
     ),
-    provideEffects(appEffects, shopEffects),
+    provideEffects(
+      appEffects,
+      shopEffects,
+      bookingTabsEffects,
+    ),
     provideStoreDevtools({ maxAge: 25, logOnly: !isDevMode() }),
     providePrimeNG({
       ripple: false,

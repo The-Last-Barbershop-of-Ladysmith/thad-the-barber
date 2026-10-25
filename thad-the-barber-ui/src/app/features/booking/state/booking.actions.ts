@@ -1,8 +1,10 @@
 import { createAction, props } from '@ngrx/store';
 import { AvailableDay } from '../models/available-day.model';
+import { SavedConfirmation } from '../models/saved-confirmation.model';
 
 export enum BookingActionTypes {
   SetActiveMonthView = '[Booking Page] Set Active Month View',
+  BookingConfirm = '[Booking Page] Booking Confirmed',
   MonthAvailabilityRequestSuccess = '[Booking API] Month Availability Loaded',
   MonthAvailabilityRequestFailure = '[Booking API] Month Availability Load Failed',
 }
@@ -12,6 +14,13 @@ export enum BookingActionTypes {
 export const SetActiveMonthView = createAction(
   BookingActionTypes.SetActiveMonthView,
   props<{ month: string; }>(),
+);
+
+/** Keeps the booking for 24 hours, replacing any earlier one (BR-22). */
+// eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
+export const BookingConfirm = createAction(
+  BookingActionTypes.BookingConfirm,
+  props<{ savedConfirmation: SavedConfirmation; }>(),
 );
 
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
