@@ -198,10 +198,10 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 | --- | --- | --- |
 | `layout` (root) | `store/app.*.ts` | `menuOpen` |
 | `home` | `features/home/state/home.{state,actions,reducer,feature,effects}.ts` | Announcements, testimonials, gallery, content status, SMS sign-up status |
-| `booking` | `features/booking/state/booking.{state,actions,reducer,feature,effects}.ts` | Month in view, its open days, load status, availability notice (the picks and the booking live in the `Booking` page) |
+| `booking` | `features/booking/state/booking.{state,actions,reducer,feature,effects}.ts` | Month in view, its open days, load status (the availability notice is derived from it), the last booking kept for 24 hours (the picks and the booking in progress live in the `Booking` page) |
 
 - Each reducer lives in its own `*.reducer.ts`. Each `*.feature.ts` holds the feature key and uses `createFeature` for a scoped feature selector, with `extraSelectors` for derived values such as `selectOpenSlotCount`, `selectSelectedSlot` and `selectHomeSections`.
-- `home` and `shop` persist to localStorage through `ngrx-store-localstorage` (`store/meta/meta.reducers.ts`), base64-encoded as `ttb-home` and `ttb-shop`. `booking` isn't saved (#41): availability must be fresh, and the booking page keeps the picks and details itself. `home` clears its slice, and the saved copy, with its own `State Reset` action.
+- `home`, `shop` and `booking` persist to localStorage through `ngrx-store-localstorage` (`store/meta/meta.reducers.ts`), base64-encoded as `ttb-home`, `ttb-shop` and `ttb-booking`. `booking` keeps only the last booking's confirmation, without name or phone, for 24 hours (BR-22, #64); availability must be fresh, and the booking page keeps the picks and details itself. `home` clears its slice, and the saved copy, with its own `State Reset` action.
 - Dates are stored as ISO strings to keep state serializable.
 - Stale responses (a month or date the user has already moved past) are ignored by the reducer, and unit tested.
 - Name and phone stay in a reactive form on the booking page; the store only gets them on confirm.
