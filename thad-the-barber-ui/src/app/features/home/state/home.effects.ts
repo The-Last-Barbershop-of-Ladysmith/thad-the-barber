@@ -3,9 +3,7 @@ import { PLATFORM_ID, inject } from '@angular/core';
 import { Actions, FunctionalEffect, createEffect, ofType } from '@ngrx/effects';
 import { Action } from '@ngrx/store';
 import { Observable, catchError, exhaustMap, filter, map, of, switchMap } from 'rxjs';
-import { Announcement } from '../../../core/models/announcements/announcement.model';
 import { GalleryPhoto, HomeContent } from '../models/home.models';
-import { AnnouncementsService } from '../../../core/services/announcements.service';
 import { GalleryService } from '../services/gallery.service';
 import { HomeContentService } from '../services/home-content.service';
 import { SmsSignupService } from '../services/sms-signup.service';
@@ -23,25 +21,6 @@ export const loadHomeContent: FunctionalEffect = createEffect(
           map((result: HomeContent): Action => HomeActions.HomeContentRequestSuccess({ content: result })),
           catchError((): Observable<Action> =>
             of(HomeActions.HomeContentRequestFailure({ error: 'Could not load the latest news.' }))),
-        )),
-    ),
-  { functional: true },
-);
-
-/** Browser only, like the gallery: prerendered announcements would wait for the next deploy to change. */
-export const loadAnnouncements: FunctionalEffect = createEffect(
-  (
-    actions$: Actions = inject<Actions>(Actions),
-    announcements: AnnouncementsService = inject(AnnouncementsService),
-    platformId: object = inject(PLATFORM_ID),
-  ): Observable<Action> =>
-    actions$.pipe(
-      ofType(HomeActions.HomePageOpen),
-      filter((): boolean => isPlatformBrowser(platformId)),
-      switchMap((): Observable<Action> =>
-        announcements.getAnnouncements().pipe(
-          map((result: Announcement[]): Action => HomeActions.AnnouncementsRequestSuccess({ announcements: result })),
-          catchError((): Observable<Action> => of(HomeActions.AnnouncementsRequestFailure())),
         )),
     ),
   { functional: true },

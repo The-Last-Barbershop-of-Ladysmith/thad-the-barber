@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit, Signal, inject } from '@angular/core';
+import { announcementsFeature } from '../../store/announcements/announcements.feature';
 import { AppState } from '../../store/app.state';
 import { Announcement } from '../../core/models/announcements/announcement.model';
 import { GalleryPhoto, Testimonial } from './models/home.models';
@@ -13,7 +14,7 @@ import { Visit } from './components/visit/visit';
 import * as HomeActions from './state/home.actions';
 import { homeFeature } from './state/home.feature';
 
-/** Home page: the one-page scroll of sections from the wireframe. Reads content from the home slice. */
+/** Home page: the one-page scroll of sections from the wireframe. Reads the home and announcements slices. */
 @Component({
   selector: 'app-home',
   imports: [
@@ -44,7 +45,7 @@ export class Home implements OnInit {
   ];
 
   protected readonly announcements: Signal<Announcement[]> = this.store.selectSignal(
-    homeFeature.selectActiveAnnouncements,
+    announcementsFeature.selectActive,
   );
   protected readonly testimonials: Signal<Testimonial[]> = this.store.selectSignal(homeFeature.selectTestimonials);
   protected readonly gallery: Signal<GalleryPhoto[]> = this.store.selectSignal(homeFeature.selectGallery);
