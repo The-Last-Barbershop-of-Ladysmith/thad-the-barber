@@ -1,8 +1,5 @@
-import { ChangeDetectionStrategy, Component, OnInit, Signal, inject } from '@angular/core';
-import { announcementsFeature } from '../announcements/state/announcements.feature';
+import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
 import { AppState } from '../../store/app.state';
-import { Announcement } from '../announcements/models/announcement.model';
-import { GalleryPhoto, Testimonial } from './models/home.models';
 import { Store } from '@ngrx/store';
 import { Backdrop, BackdropAnchor } from '../../shared/components/backdrop/backdrop';
 import { Announcements } from './components/announcements/announcements';
@@ -12,9 +9,8 @@ import { ScheduleCta } from './components/schedule-cta/schedule-cta';
 import { Testimonials } from './components/testimonials/testimonials';
 import { Visit } from './components/visit/visit';
 import * as HomeActions from './state/home.actions';
-import { homeFeature } from './state/home.feature';
 
-/** Home page: the one-page scroll of sections from the wireframe. Reads the home and announcements slices. */
+/** Home page: the one-page scroll of sections from the wireframe. Each section reads its own slice. */
 @Component({
   selector: 'app-home',
   imports: [
@@ -43,12 +39,6 @@ export class Home implements OnInit {
     '#gallery',
     'app-footer',
   ];
-
-  protected readonly announcements: Signal<Announcement[]> = this.store.selectSignal(
-    announcementsFeature.selectActive,
-  );
-  protected readonly testimonials: Signal<Testimonial[]> = this.store.selectSignal(homeFeature.selectTestimonials);
-  protected readonly gallery: Signal<GalleryPhoto[]> = this.store.selectSignal(homeFeature.selectGallery);
 
   ngOnInit(): void {
     this.store.dispatch(HomeActions.HomePageOpen());

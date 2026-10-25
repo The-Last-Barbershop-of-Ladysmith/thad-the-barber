@@ -57,6 +57,7 @@ Rule: **if PrimeNG has a component for it, restyle it with tokens instead of bui
 
 Components:
 - Templates over 4 lines go in a `.html` file.
+- A page section or other single-use component selects its own state from the store; the page only lays out sections. Inputs are for reusable components (`shared/components`).
 - Style a wrapper element in the template, never the host (no `host: { class }`, no `:host`).
 - At most 2 plain Tailwind utilities per element; move the rest to a named class in the component `.scss`. Theme utilities and breakpoint prefixes (`md:`, `lg:`) don't count and stay inline.
 - SCSS nests to follow the DOM. PrimeNG overlay content (drawer, Galleria lightbox) stays top-level.

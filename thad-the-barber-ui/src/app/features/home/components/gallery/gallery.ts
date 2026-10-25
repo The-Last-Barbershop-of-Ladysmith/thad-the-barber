@@ -1,8 +1,11 @@
-import { ChangeDetectionStrategy, Component, InputSignal, WritableSignal, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Signal, WritableSignal, inject, signal } from '@angular/core';
+import { Store } from '@ngrx/store';
 import { CardModule } from 'primeng/card';
 import { GalleriaModule } from 'primeng/galleria';
 import { SectionHeading } from '../../../../shared/components/section-heading/section-heading';
+import { AppState } from '../../../../store/app.state';
 import { GalleryPhoto } from '../../models/home.models';
+import { homeFeature } from '../../state/home.feature';
 
 /**
  * Grid of framed prints; clicking one opens the PrimeNG Galleria full-screen lightbox.
@@ -20,7 +23,9 @@ import { GalleryPhoto } from '../../models/home.models';
   styleUrl: './gallery.scss',
 })
 export class Gallery {
-  readonly photos: InputSignal<GalleryPhoto[]> = input.required<GalleryPhoto[]>();
+  private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
+
+  protected readonly photos: Signal<GalleryPhoto[]> = this.store.selectSignal(homeFeature.selectGallery);
 
   protected readonly lightboxOpen: WritableSignal<boolean> = signal(false);
   protected readonly activeIndex: WritableSignal<number> = signal(0);

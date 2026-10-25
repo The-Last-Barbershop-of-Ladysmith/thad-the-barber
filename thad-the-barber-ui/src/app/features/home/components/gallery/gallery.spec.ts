@@ -1,5 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Store, provideStore } from '@ngrx/store';
 import { GalleryPhoto } from '../../models/home.models';
+import * as HomeActions from '../../state/home.actions';
+import { homeFeature } from '../../state/home.feature';
 import { Gallery } from './gallery';
 
 describe(
@@ -7,9 +10,10 @@ describe(
   (): void => {
     const photos: GalleryPhoto[] = [{ src: 'https://media.test/gallery/flat-top.jpg', alt: 'Flat top' }, { src: 'https://media.test/gallery/burst-fade%20mohawk.png', alt: 'Burst fade mohawk' }];
 
-    function render(input: GalleryPhoto[]): HTMLElement {
+    function render(listed: GalleryPhoto[]): HTMLElement {
+      TestBed.configureTestingModule({ providers: [provideStore({ [homeFeature.name]: homeFeature.reducer })] });
+      TestBed.inject(Store).dispatch(HomeActions.GalleryRequestSuccess({ photos: listed }));
       const fixture: ComponentFixture<Gallery> = TestBed.createComponent(Gallery);
-      fixture.componentRef.setInput('photos', input);
       fixture.detectChanges();
       return fixture.nativeElement as HTMLElement;
     }
