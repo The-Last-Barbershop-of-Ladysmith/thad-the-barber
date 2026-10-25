@@ -183,10 +183,10 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 | `ANNS` | `content/announcements.json` in the media container via `AnnouncementsService` (#30) | The seed announcements and the text-alerts slide are dropped (BR-35) |
 | Testimonials markup | `features/home/data/home-content.data.ts` via `HomeContentService` | Ready to swap for `GET /api/reviews` (#37) |
 | `subscribe` / `setPhone` / `phoneErr` | `SmsSignup` component + `HomeActions.SmsSignupRequest` → `subscribeToSms` effect → `SmsSignupService` | Mocked 400ms |
-| `slots()`, `available()`, `hash()`, `daysAhead`, `slotMinutes` (`book.html`) | `AvailabilityService` + `BOOKING_RULES` | Same deterministic "booked" pattern; mocked |
+| `slots()`, `available()`, `hash()`, `daysAhead`, `slotMinutes` (`book.html`) | `AvailabilityService` → `GET /api/bookings/availability` (#41); window from `shopFeature.selectBookingSettings` | Real Square availability; the mock pattern and `BOOKING_RULES` are gone |
 | Month nav, `canPrev` / `canNext` | DatePicker `minDate` / `maxDate` + `BookingActions.MonthView` → `loadMonthAvailability` effect | |
 | Day / time pick, `done`, `tried`, `missing[]` | `booking` slice + `Booking` page computed signals | See state below |
-| `confirm` | `BookingActions.BookingConfirmRequest` → `confirmBooking` effect → `BookingService` | Mocked 500ms |
+| `confirm` | `Booking.confirm()` → `BookingService` → `POST /api/bookings` (#41); the page keeps the retry key, confirmation and notice | Error codes become inline `NoticeMessage`s (`toBookingNotice`) |
 | `ann`, `touchStart` / `touchEnd`, `goAnn` | Built into `p-carousel` | Removed |
 | `lb`, `stepLb`, `onKey` | Built into `p-galleria` | Removed |
 | `menu` / `toggleMenu` (mobile) | Root `layout` slice + `closeMenuOnNavigation` effect | |
@@ -198,10 +198,10 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 | --- | --- | --- |
 | `layout` (root) | `store/app.*.ts` | `menuOpen` |
 | `home` | `features/home/state/home.{state,actions,reducer,feature,effects}.ts` | Announcements, testimonials, gallery, content status, SMS sign-up status |
-| `booking` | `features/booking/state/booking.{state,actions,reducer,feature,effects}.ts` | Visible month, unavailable dates, selected date/time, slots, submit status, confirmation |
+| `booking` | `features/booking/state/booking.{state,actions,reducer,feature,effects}.ts` | Month in view, its open days, load status, availability notice (the picks and the booking live in the `Booking` page) |
 
 - Each reducer lives in its own `*.reducer.ts`. Each `*.feature.ts` holds the feature key and uses `createFeature` for a scoped feature selector, with `extraSelectors` for derived values such as `selectOpenSlotCount`, `selectSelectedSlot` and `selectHomeSections`.
-- `home` and `booking` persist to localStorage through `ngrx-store-localstorage` (`store/meta/meta.reducers.ts`). They're stored base64-encoded as `ttb-home` and `ttb-booking` and restored when each slice loads. Each feature clears its slice, and the saved copy, with its own `stateReset` action.
+- `home` and `shop` persist to localStorage through `ngrx-store-localstorage` (`store/meta/meta.reducers.ts`), base64-encoded as `ttb-home` and `ttb-shop`. `booking` isn't saved (#41): availability must be fresh, and the booking page keeps the picks and details itself. `home` clears its slice, and the saved copy, with its own `State Reset` action.
 - Dates are stored as ISO strings to keep state serializable.
 - Stale responses (a month or date the user has already moved past) are ignored by the reducer, and unit tested.
 - Name and phone stay in a reactive form on the booking page; the store only gets them on confirm.
@@ -244,14 +244,18 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 | Spec | Covers | Tied to wireframe behavior? |
 | --- | --- | --- |
 | `core/services/shop-hours.service.spec.ts` | Hours rows, "Open now" / "Opens at" / "Closed" labels | Yes: wireframe hours and label wording |
-| `features/booking/state/booking.reducer.spec.ts` | Date/time selection, stale responses, submit → booked, reset on edit | Yes: wireframe booking flow |
-| `features/booking/state/booking.feature.spec.ts` | Open-slot count, selected slot | Yes: wireframe slot rules |
+| `features/booking/state/booking.reducer.spec.ts` | Month loading, stale months dropped, load status | Stable |
+| `features/booking/state/booking.feature.spec.ts` | Days without open times are disabled; the availability notice shows only after a failed load | Stable |
+| `features/booking/state/booking.effects.spec.ts` | Month availability loads, and a failed load is reported | Stable |
+| `features/booking/booking.spec.ts` | Retry key reuse and renewal, one booking only, taken-time reload, failed bot check, the sent phone in the confirmation | Stable |
+| `features/booking/utils/booking-notice.utils.spec.ts` | API error codes → notice severity, fallback and retry, never the raw error | Stable |
+| `features/booking/utils/booking-time.utils.spec.ts` | Booking window, time labels and dates on the shop's clock | Stable |
 | `store/app.reducer.spec.ts` | Menu toggle / close | Mostly stable |
 | `store/app.effects.spec.ts` | Menu closes after navigation | Mostly stable |
 | `store/meta/meta.reducers.spec.ts` | localStorage sync of `home` / `booking` (`ttb-` keys, base64, restore) | Mostly stable |
 | `shared/utils/{date,weekday,base64}.utils.spec.ts` | Date labels, weekday spans, Unicode-safe base64 | Stable |
 | `e2e/mocked/home.spec.ts` (Playwright) | Every section renders, header and drawer nav links scroll to their section, axe | Mostly stable |
-| `e2e/mocked/booking.spec.ts` (Playwright) | First open date → first open time → details → confirm → confirmation, axe | Yes: wireframe booking flow and mock availability |
+| `e2e/mocked/booking.spec.ts` (Playwright) | Booking with the session token and E.164 phone, loading spinner, 401 retry, taken time, booking limit, availability failure, failed bot check, Square booking link, axe | Partly: wireframe booking flow |
 | `e2e/smoke/health.spec.ts` (Playwright) | Deployed site loads, `GET /api/health` returns 200 | Stable |
 
 ---
