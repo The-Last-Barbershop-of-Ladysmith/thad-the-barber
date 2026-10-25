@@ -1,8 +1,6 @@
 import {
-  Action,
   ActionReducer,
   INIT,
-  UPDATE,
   combineReducers,
   createAction,
   createReducer,
@@ -20,7 +18,7 @@ import { homeReducer } from '../../features/home/state/home.reducer';
 import { RequestStatus } from '../../shared/models/request.models';
 import { localStorageSyncReducer } from './meta.reducers';
 
-/** Stand-in for a synced feature slice, so this spec tests only the sync, not a real feature reducer. */
+/** Stand-in for the unsynced booking slice, so this spec tests only the sync, not a real feature reducer. */
 interface FakeSlice { note: string; }
 
 const initialFakeSlice: FakeSlice = { note: '' };
@@ -56,11 +54,11 @@ describe(
     });
 
     it(
-      'saves booking base64-encoded under ttb-<key>, but not layout',
+      "doesn't save booking's availability, which must be fresh, or layout",
       (): void => {
-        createSyncedReducer()(undefined, noteSet({ note: 'didn’t — works' }));
+        createSyncedReducer()(undefined, noteSet({ note: 'not saved' }));
 
-        expect(saved('ttb-booking')).toEqual({ note: 'didn’t — works' });
+        expect(localStorage.getItem('ttb-booking')).toBeNull();
         expect(localStorage.getItem('ttb-layout')).toBeNull();
       },
     );
@@ -92,14 +90,13 @@ describe(
     );
 
     it(
-      'restores a saved slice when it registers',
+      'restores a saved slice at start-up',
       (): void => {
-        localStorage.setItem('ttb-booking', encodeBase64(JSON.stringify({ note: 'restored' })));
+        localStorage.setItem('ttb-shop', encodeBase64(JSON.stringify({ shopInfo: TEST_SHOP })));
         const reducer: ActionReducer<AppState> = createSyncedReducer();
         const init: AppState = reducer(undefined, { type: INIT });
-        const update: Action & { features: string[]; } = { type: UPDATE, features: ['booking'] };
 
-        expect((reducer(init, update) as unknown as Record<string, unknown>)['booking']).toEqual({ note: 'restored' });
+        expect((init as unknown as Record<string, { shopInfo: unknown; }>)['shop']?.shopInfo).toEqual(TEST_SHOP);
       },
     );
   },

@@ -1,19 +1,17 @@
 import { ActionReducer, MetaReducer } from '@ngrx/store';
 import { Keys, localStorageSync } from 'ngrx-store-localstorage';
-import { bookingFeatureKey } from '../../features/booking/state/booking.feature';
 import { homeFeatureKey } from '../../features/home/state/home.feature';
 import { decodeBase64, encodeBase64 } from '../../shared/utils/base64.utils';
 import { shopFeatureKey } from '../shop/shop.feature';
 
-/** Prefix for each slice's localStorage entry: `ttb-home`, `ttb-booking`, `ttb-shop`. */
+/** Prefix for each slice's localStorage entry: `ttb-home`, `ttb-shop`. */
 const STORAGE_PREFIX: string = 'ttb';
 
 /**
- * Slices persisted to localStorage, base64-encoded, each with the fields it keeps. Each feature clears its own with
- * its `State Reset` action.
+ * Slices persisted to localStorage, base64-encoded, each with the fields it keeps. Home clears its own with its `State
+ * Reset` action. Booking isn't saved: its availability must be fresh, and the picks are the page's.
  */
 const keys: Keys = [
-  { [bookingFeatureKey]: { encrypt: encodeBase64, decrypt: decodeBase64 } },
   // Only the signup: home's content and load statuses reload on every visit, and a saved status (a gallery that
   // failed last time) would hide that section's nav link on other pages.
   {
