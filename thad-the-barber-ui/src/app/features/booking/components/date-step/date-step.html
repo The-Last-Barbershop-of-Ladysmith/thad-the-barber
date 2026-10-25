@@ -1,12 +1,17 @@
 <section class="stack gap-3">
-  <span class="eyebrow">1 — Pick a date</span>
+  <div class="step-header">
+    <span class="eyebrow">1 — Pick a date</span>
+    @if (isLoading()) {
+      <p-progress-spinner class="size-4" strokeWidth="6" ariaLabel="Loading open days" data-testid="dates-loading" />
+    }
+  </div>
   <p-datepicker
     [inline]="true"
     [ngModel]="value()"
     [minDate]="minDate()"
     [maxDate]="maxDate()"
-    [disabledDays]="disabledDays()"
     [disabledDates]="disabledDates()"
+    [defaultDate]="month()"
     [showOtherMonths]="false"
     (onSelect)="dateSelect.emit($event)"
     (onMonthChange)="monthChange.emit($event)"

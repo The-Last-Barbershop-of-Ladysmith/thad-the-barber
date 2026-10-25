@@ -1,0 +1,41 @@
+<p-message data-testid="booking-notice" [severity]="notice().severity">
+  <div class="stack gap-2">
+    <span>
+      {{ notice().text }}
+      @switch (notice().fallback) {
+        @case (noticeFallback.BookingSite) {
+          Book on
+          <a
+            class="message-link"
+            data-testid="notice-booking-site"
+            target="_blank"
+            rel="noopener"
+            [href]="bookingUrl()"
+            >our Square booking page</a
+          >, or call
+        }
+        @case (noticeFallback.Contact) {
+          Please call
+        }
+      }
+      @if (hasContactLinks()) {
+        <a class="message-link" data-testid="notice-call" [href]="phone().tel">{{
+          phone().display
+        }}</a>
+        or <a class="message-link" data-testid="notice-text" [href]="phone().sms">text us</a>.
+      }
+    </span>
+    @if (notice().canRetry) {
+      <button
+        pButton
+        type="button"
+        size="small"
+        variant="outlined"
+        data-testid="notice-retry"
+        (click)="retry.emit()"
+      >
+        <span pButtonLabel>Try again</span>
+      </button>
+    }
+  </div>
+</p-message>

@@ -8,21 +8,28 @@
 
   <div class="layout lg:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]">
     <div class="stack gap-8">
+      @if (availabilityNotice(); as notice) {
+        <app-notice-message
+          [notice]="notice"
+          [phone]="phone()"
+          [bookingUrl]="bookingUrl()"
+          (retry)="reloadMonth()"
+        />
+      }
       <app-date-step
         [value]="selectedDay()"
-        [minDate]="window.min"
-        [maxDate]="window.max"
-        [disabledDays]="closedDays()"
+        [minDate]="window()?.min ?? null"
+        [maxDate]="window()?.max ?? null"
         [disabledDates]="disabledDates()"
+        [month]="visibleMonthStart()"
+        [isLoading]="isLoadingDates()"
         (dateSelect)="onDateSelect($event)"
         (monthChange)="onMonthChange($event)"
       />
       <app-time-step
         [slots]="slots()"
-        [selected]="selectedTime()"
+        [selected]="selectedStartAt()"
         [day]="selectedDay()"
-        [openCount]="openSlotCount()"
-        [loading]="slotsLoading()"
         (timeSelect)="onTimeSelect($event)"
       />
       <app-details-step [form]="form" />
@@ -31,13 +38,14 @@
     <app-booking-summary
       class="lg:sticky lg:top-24"
       [rows]="summaryRows()"
-      [submitting]="submitting()"
-      [booked]="booked()"
+      [submitting]="isSubmitting()"
+      [booked]="isBooked()"
       [hint]="hint()"
-      [error]="error()"
+      [notice]="bookingNotice()"
       [confirmation]="confirmationText()"
       [isBotCheckFailed]="isBotCheckFailed()"
       [phone]="phone()"
+      [bookingUrl]="bookingUrl()"
       (confirm)="confirm()"
     />
   </div>

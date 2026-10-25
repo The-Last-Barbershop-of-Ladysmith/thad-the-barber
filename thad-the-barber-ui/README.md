@@ -214,10 +214,8 @@ These return local data until a backend exists. Each has a note on the endpoint 
 
 - `HomeContentService`: testimonials (`features/home/data`), until `GET /api/reviews` (#37)
 - `SmsSignupService`: text-alert opt-in
-- `AvailabilityService`: open dates and slots, using a fixed pseudo-random "booked" pattern like the wireframe
-- `BookingService`: creates the appointment
 
-`GalleryService` is real: it lists the `gallery/` folder of the environment's media container (`environment.mediaBaseUrl`), in the browser only, so the prerendered page never holds a stale gallery. Supported images show as uploaded, newest first, with alt text from the file name. `AnnouncementsService` is real too: it reads `content/announcements.json` from the same container, in the browser only and revalidated on every load, skipping items without a title or valid dates; the home page shows the active ones (BR-30 to BR-33). The mocked Playwright suite serves a made-up listing and announcements for the media host (`e2e/support/media.ts`).
+`AvailabilityService` (`GET /api/bookings/availability`) and `BookingService` (`POST /api/bookings`) are real since #41. `GalleryService` is real too: it lists the `gallery/` folder of the environment's media container (`environment.mediaBaseUrl`), in the browser only, so the prerendered page never holds a stale gallery. Supported images show as uploaded, newest first, with alt text from the file name. `AnnouncementsService` is real too: it reads `content/announcements.json` from the same container, in the browser only and revalidated on every load, skipping items without a title or valid dates; the home page shows the active ones (BR-30 to BR-33). The mocked Playwright suite serves a made-up listing and announcements for the media host (`e2e/support/media.ts`).
 
 ## Not in this version yet
 

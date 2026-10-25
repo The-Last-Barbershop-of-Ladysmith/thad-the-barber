@@ -3,6 +3,7 @@ import {
   formatLongDate,
   formatShortDate,
   fromTimeOfDay,
+  toIsoDateIn,
   weekTimeIn,
 } from './date.utils';
 
@@ -59,6 +60,17 @@ describe(
       'reads midnight as minute 0, not 24:00',
       (): void => {
         expect(weekTimeIn('UTC', new Date('2026-09-27T00:00:00Z'))).toEqual({ day: Weekday.Sunday, minutes: 0 });
+      },
+    );
+
+    it(
+      "reads the calendar day on another timezone's clock",
+      (): void => {
+        // 05:00 UTC on the 1st is still the last day of the month before in Honolulu.
+        const instant: Date = new Date('2026-11-01T05:00:00Z');
+
+        expect(toIsoDateIn('Pacific/Honolulu', instant)).toBe('2026-10-31');
+        expect(toIsoDateIn('UTC', instant)).toBe('2026-11-01');
       },
     );
   },

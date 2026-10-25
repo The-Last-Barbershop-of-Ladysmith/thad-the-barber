@@ -1,18 +1,17 @@
-import { Injectable } from '@angular/core';
-import {
-  Observable,
-  delay,
-  of,
-} from 'rxjs';
-import { BookingConfirmation, BookingRequest } from '../models/booking.models';
+import { HttpClient } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { Observable } from 'rxjs';
+import { environment } from '../../../../environments/environment';
+import { BookingConfirmation } from '../models/booking-confirmation.model';
+import { BookingRequest } from '../models/booking-request.model';
 
-/**
- * Creates appointments. Mocked until the booking API exists;
- * the real version should POST to `${environment.apiBaseUrl}/bookings`.
- */
+export const BOOKINGS_URL: string = `${environment.apiBaseUrl}/bookings`;
+
 @Injectable({ providedIn: 'root' })
 export class BookingService {
-  create(request: BookingRequest): Observable<BookingConfirmation> {
-    return of({ ...request, id: crypto.randomUUID() }).pipe(delay(500));
+  private readonly http: HttpClient = inject(HttpClient);
+
+  createBooking(request: BookingRequest): Observable<BookingConfirmation> {
+    return this.http.post<BookingConfirmation>(BOOKINGS_URL, request);
   }
 }
