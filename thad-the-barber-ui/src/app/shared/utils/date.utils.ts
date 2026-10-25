@@ -59,14 +59,6 @@ export function fromMonthKey(month: string): Date {
   );
 }
 
-export function startOfToday(now: Date = new Date()): Date {
-  return new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate(),
-  );
-}
-
 export function addDays(date: Date, days: number): Date {
   return new Date(
     date.getFullYear(),
@@ -93,17 +85,31 @@ export function fromTimeOfDay(time: string): number {
   return hours * 60 + minutes;
 }
 
+type PartReader = (type: Intl.DateTimeFormatPartTypes) => string;
+
+function readPartsIn(
+  timeZone: string,
+  instant: Date,
+  options: Intl.DateTimeFormatOptions,
+): PartReader {
+  const parts: Intl.DateTimeFormatPart[] = new Intl.DateTimeFormat(DATE_LOCALE, { ...options, timeZone })
+    .formatToParts(instant);
+  return (type: Intl.DateTimeFormatPartTypes): string =>
+    parts.find((entry: Intl.DateTimeFormatPart): boolean => entry.type === type)?.value ?? '';
+}
+
 /** The weekday and time at `instant` on the clocks in `timeZone` (IANA), whatever the browser's timezone. */
 export function weekTimeIn(timeZone: string, instant: Date): WeekTime {
-  const parts: Intl.DateTimeFormatPart[] = new Intl.DateTimeFormat(DATE_LOCALE, {
+  const part: PartReader = readPartsIn(
     timeZone,
-    weekday: 'short',
-    hour: 'numeric',
-    minute: 'numeric',
-    hourCycle: 'h23',
-  }).formatToParts(instant);
-  const part: (type: Intl.DateTimeFormatPartTypes) => string = (type: Intl.DateTimeFormatPartTypes): string =>
-    parts.find((entry: Intl.DateTimeFormatPart): boolean => entry.type === type)?.value ?? '';
+    instant,
+    {
+      weekday: 'short',
+      hour: 'numeric',
+      minute: 'numeric',
+      hourCycle: 'h23',
+    },
+  );
   return {
     // DATE_LOCALE's short weekday names are the same as WEEKDAY_SHORT_NAMES ('Sun' … 'Sat').
     day: WEEK_FROM_SUNDAY.find((day: Weekday): boolean => WEEKDAY_SHORT_NAMES[day] === part('weekday')) ?? Weekday.Sunday,
@@ -111,9 +117,18 @@ export function weekTimeIn(timeZone: string, instant: Date): WeekTime {
   };
 }
 
-/** 630 → "10:30" (24h key used for slot values) */
-export function toTimeKey(minutes: number): string {
-  return `${pad(Math.floor(minutes / 60))}:${pad(minutes % 60)}`;
+/** The calendar day ("2026-10-03") at `instant` on the clocks in `timeZone` (IANA), whatever the browser's timezone. */
+export function toIsoDateIn(timeZone: string, instant: Date): string {
+  const part: PartReader = readPartsIn(
+    timeZone,
+    instant,
+    {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    },
+  );
+  return `${part('year')}-${part('month')}-${part('day')}`;
 }
 
 /** Date → "Saturday, October 3" */

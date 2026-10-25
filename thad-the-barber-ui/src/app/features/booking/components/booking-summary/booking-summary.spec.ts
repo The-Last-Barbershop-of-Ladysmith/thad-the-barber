@@ -10,11 +10,13 @@ describe(
       tel: 'tel:+10005550109',
       sms: 'sms:+10005550109',
     };
+    const bookingUrl: string = 'https://square.example/book/MADE-UP';
 
     function render(isBotCheckFailed: boolean): HTMLElement {
       const fixture: ComponentFixture<BookingSummary> = TestBed.createComponent(BookingSummary);
       fixture.componentRef.setInput('rows', []);
       fixture.componentRef.setInput('phone', phone);
+      fixture.componentRef.setInput('bookingUrl', bookingUrl);
       fixture.componentRef.setInput('isBotCheckFailed', isBotCheckFailed);
       fixture.detectChanges();
       return fixture.nativeElement as HTMLElement;
@@ -25,13 +27,15 @@ describe(
     }
 
     it(
-      'offers call and text links and turns off confirming when the bot check failed',
+      'offers the Square booking site, call and text links and turns off confirming when the bot check failed',
       (): void => {
         const host: HTMLElement = render(true);
 
         expect(host.querySelector('[data-testid="bot-check-failed"]')).not.toBeNull();
-        expect(host.querySelector('[data-testid="bot-check-call"]')?.getAttribute('href')).toBe(phone.tel);
-        expect(host.querySelector('[data-testid="bot-check-text"]')?.getAttribute('href')).toBe(phone.sms);
+        const botCheck: Element | null = host.querySelector('[data-testid="bot-check-failed"]');
+        expect(botCheck?.querySelector('[data-testid="notice-booking-site"]')?.getAttribute('href')).toBe(bookingUrl);
+        expect(botCheck?.querySelector('[data-testid="notice-call"]')?.getAttribute('href')).toBe(phone.tel);
+        expect(botCheck?.querySelector('[data-testid="notice-text"]')?.getAttribute('href')).toBe(phone.sms);
         expect(confirmButton(host)?.disabled).toBe(true);
       },
     );

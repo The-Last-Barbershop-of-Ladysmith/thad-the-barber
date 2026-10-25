@@ -1,28 +1,18 @@
-import { BookingConfirmation, TimeSlot } from '../models/booking.models';
+import { RequestStatus } from '../../../shared/models/request.models';
+import { AvailableDay } from '../models/available-day.model';
 
-export type BookingStatus = 'idle' | 'submitting' | 'booked' | 'error';
-
-/** Dates are ISO strings ("2026-10-03") so the state stays serializable. */
+/**
+ * The calendar's month ("2026-10") and its open days; a picked day's times come from here. Only availability is kept:
+ * the picked date and time, the customer's details and the booking itself live in the booking page.
+ */
 export interface BookingState {
   visibleMonth: string | null;
-  unavailableDates: string[];
-  selectedDate: string | null;
-  slots: TimeSlot[];
-  slotsLoading: boolean;
-  selectedTime: string | null;
-  status: BookingStatus;
-  confirmation: BookingConfirmation | null;
-  error: string | null;
+  availableDays: AvailableDay[];
+  loadStatus: RequestStatus;
 }
 
 export const initialBookingState: BookingState = {
   visibleMonth: null,
-  unavailableDates: [],
-  selectedDate: null,
-  slots: [],
-  slotsLoading: false,
-  selectedTime: null,
-  status: 'idle',
-  confirmation: null,
-  error: null,
+  availableDays: [],
+  loadStatus: RequestStatus.Idle,
 };

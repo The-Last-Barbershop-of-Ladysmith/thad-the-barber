@@ -52,11 +52,6 @@ export class ShopHoursService {
     return this.getShopCurrentStatus(weekTimeIn(timeZone, this.now()));
   });
 
-  /** Weekdays with no hours, e.g. [1, 2, 3, 4, 5]. Feeds the date picker's disabledDays. */
-  readonly closedWeekdays: Signal<Weekday[]> = computed((): Weekday[] => WEEK_FROM_MONDAY
-    .filter((day: Weekday): boolean => !this.isOpenDay(day))
-    .sort((a: Weekday, b: Weekday): number => a - b));
-
   constructor() {
     const timer: ReturnType<typeof setInterval> = setInterval(
       (): void => {
@@ -67,11 +62,6 @@ export class ShopHoursService {
     inject(DestroyRef).onDestroy((): void => {
       clearInterval(timer);
     });
-  }
-
-  /** The day's opening periods, earliest first; Square allows several a day (e.g. closed for lunch). */
-  getShopHoursForDate(date: Date): ShopOpeningHours[] {
-    return this.fetchShopHoursForDay(toWeekday(date.getDay()));
   }
 
   isOpenDay(day: Weekday): boolean {

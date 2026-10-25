@@ -105,19 +105,6 @@ describe(
             expect(service.businessHours()[0]?.shortRange).toBe('10 AM – 7:30 PM');
           },
         );
-
-        it(
-          'reports Monday–Friday as closed weekdays',
-          (): void => {
-            expect(service.closedWeekdays()).toEqual([
-              Weekday.Monday,
-              Weekday.Tuesday,
-              Weekday.Wednesday,
-              Weekday.Thursday,
-              Weekday.Friday,
-            ]);
-          },
-        );
       },
     );
     describe(
@@ -172,20 +159,6 @@ describe(
               'Sunday: 10:00 AM – 4:00 PM',
               'Monday – Friday: Closed',
             ]);
-          },
-        );
-
-        it(
-          'lists the periods of a day earliest first',
-          (): void => {
-            const saturday: Date = new Date(
-              2026,
-              9,
-              3,
-            );
-
-            expect(service.getShopHoursForDate(saturday).map((period: ShopInfo['hours'][number]): string => period.opens))
-              .toEqual(['09:30:00', '13:00:00']);
           },
         );
       },
