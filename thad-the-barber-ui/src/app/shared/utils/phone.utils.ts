@@ -12,3 +12,8 @@ export function toPhoneLinks(e164: string): PhoneLinks {
     sms: `sms:${e164}`,
   };
 }
+
+/** "(540) 555-0123" → "+15405550123": the API takes US numbers in E.164 (BR-09). */
+export function toE164(usNumber: string): string {
+  return `+1${usNumber.replace(/\D/g, '')}`;
+}

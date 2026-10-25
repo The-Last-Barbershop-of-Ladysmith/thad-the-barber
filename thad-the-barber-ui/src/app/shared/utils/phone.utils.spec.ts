@@ -1,4 +1,4 @@
-import { toPhoneLinks } from './phone.utils';
+import { toE164, toPhoneLinks } from './phone.utils';
 
 describe(
   'toPhoneLinks',
@@ -18,6 +18,18 @@ describe(
       'shows a non-US number as given',
       (): void => {
         expect(toPhoneLinks('+442079460000').display).toBe('+442079460000');
+      },
+    );
+  },
+);
+
+describe(
+  'toE164',
+  (): void => {
+    it(
+      'keeps only the digits after +1',
+      (): void => {
+        expect(toE164('(555) 010-0142')).toBe('+15550100142');
       },
     );
   },

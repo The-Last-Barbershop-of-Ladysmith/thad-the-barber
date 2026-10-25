@@ -20,6 +20,8 @@ import {
   timeout,
 } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { ProblemCode } from '../../shared/models/problem-code.model';
+import { getProblemCode } from '../../shared/utils/problem.utils';
 import { anonymousRequest } from '../interceptors/anonymous-request.token';
 import { SessionToken } from '../models/session.models';
 import { RecaptchaService } from './recaptcha.service';
@@ -107,6 +109,6 @@ export class SessionService {
 
 function isBotCheckRefusal(error: HttpErrorResponse): boolean {
   const isForbidden: boolean = error.status === 403;
-  const isBotCheckCode: boolean = (error.error as { code?: string; } | null)?.code === 'bot_check_failed';
+  const isBotCheckCode: boolean = getProblemCode(error) === ProblemCode.BotCheckFailed;
   return isForbidden && isBotCheckCode;
 }
