@@ -1,5 +1,6 @@
 import { Action } from '@ngrx/store';
-import { Announcement, GalleryPhoto } from '../models/home.models';
+import { Announcement } from '../../../core/models/announcements/announcement.model';
+import { GalleryPhoto } from '../models/home.models';
 import * as HomeActions from './home.actions';
 import { homeReducer } from './home.reducer';
 import { HomeState, initialHomeState } from './home.state';

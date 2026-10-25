@@ -2,7 +2,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ButtonVariant } from '../../../../shared/models/button.models';
 import { Router, provideRouter } from '@angular/router';
 import { MockInstance } from 'vitest';
-import { Announcement, AnnouncementImagePosition } from '../../models/home.models';
+import { Announcement } from '../../../../core/models/announcements/announcement.model';
+import { AnnouncementImagePosition } from '../../../../core/models/announcements/announcement-image-position.model';
 import { Announcements } from './announcements';
 import { LinkKind } from '../../../../shared/models/link.models';
 

@@ -4,7 +4,8 @@ import { NavItem } from '../../../shared/models/nav-item.model';
 import { FeatureSelectors } from '../../../shared/models/ngrx.models';
 import { RequestStatus } from '../../../shared/models/request.models';
 import { toIsoDate } from '../../../shared/utils/date.utils';
-import { Announcement, GalleryPhoto } from '../models/home.models';
+import { Announcement } from '../../../core/models/announcements/announcement.model';
+import { GalleryPhoto } from '../models/home.models';
 import { homeReducer } from './home.reducer';
 import { HomeState, SmsSignupState } from './home.state';
 

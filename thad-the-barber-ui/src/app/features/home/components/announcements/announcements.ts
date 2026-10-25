@@ -8,7 +8,8 @@ import { ButtonStyle, ButtonVariant } from '../../../../shared/models/button.mod
 import { LinkKind } from '../../../../shared/models/link.models';
 import { BUTTON_STYLES } from '../../../../shared/utils/button.utils';
 import { linkKind } from '../../../../shared/utils/link.utils';
-import { Announcement, AnnouncementImagePosition } from '../../models/home.models';
+import { Announcement } from '../../../../core/models/announcements/announcement.model';
+import { AnnouncementImagePosition } from '../../../../core/models/announcements/announcement-image-position.model';
 
 /**
  * Full-height announcement slider (PrimeNG composable carousel; swipe, arrows and dots are built in). Renders nothing

@@ -1,4 +1,4 @@
-import { Announcement } from '../models/home.models';
+import { Announcement } from '../../../core/models/announcements/announcement.model';
 import { HOME_SECTIONS } from '../../../core/config/shop-info';
 import { NavItem } from '../../../shared/models/nav-item.model';
 import { RequestStatus } from '../../../shared/models/request.models';

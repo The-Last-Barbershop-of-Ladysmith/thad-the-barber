@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit, Signal, inject } from '@angular/core';
 import { AppState } from '../../store/app.state';
-import { Announcement, GalleryPhoto, Testimonial } from './models/home.models';
+import { Announcement } from '../../core/models/announcements/announcement.model';
+import { GalleryPhoto, Testimonial } from './models/home.models';
 import { Store } from '@ngrx/store';
 import { Backdrop, BackdropAnchor } from '../../shared/components/backdrop/backdrop';
 import { Announcements } from './components/announcements/announcements';

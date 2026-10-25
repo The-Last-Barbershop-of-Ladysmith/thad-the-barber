@@ -1,5 +1,6 @@
 import { createAction, props } from '@ngrx/store';
-import { Announcement, GalleryPhoto, HomeContent } from '../models/home.models';
+import { Announcement } from '../../../core/models/announcements/announcement.model';
+import { GalleryPhoto, HomeContent } from '../models/home.models';
 
 export enum HomeActionTypes {
   /** Clears the slice back to its initial state (also overwrites its saved copy). */
