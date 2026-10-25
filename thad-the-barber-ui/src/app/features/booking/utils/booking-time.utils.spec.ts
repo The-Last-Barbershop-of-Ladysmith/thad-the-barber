@@ -2,11 +2,7 @@ import { TEST_SHOP } from '../../../../testing/test-shop';
 import { toIsoDate } from '../../../shared/utils/date.utils';
 import { AvailableDay } from '../models/available-day.model';
 import { DateRange } from '../models/date-range.model';
-import {
-  toBookingWindow,
-  toLongDateTime,
-  toTimeSlots,
-} from './booking-time.utils';
+import { toBookingWindow, toLongDateTime, toTimeSlots } from './booking-time.utils';
 
 const HONOLULU: string = TEST_SHOP.timeZone;
 

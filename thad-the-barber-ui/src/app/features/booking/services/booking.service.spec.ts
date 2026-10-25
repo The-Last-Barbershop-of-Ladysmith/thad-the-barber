@@ -1,9 +1,5 @@
 import { provideHttpClient } from '@angular/common/http';
-import {
-  HttpTestingController,
-  TestRequest,
-  provideHttpClientTesting,
-} from '@angular/common/http/testing';
+import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { BookingConfirmation } from '../models/booking-confirmation.model';
 import { BookingRequest } from '../models/booking-request.model';

@@ -1,10 +1,6 @@
 import { MessageDesignTokens } from '@primeuix/themes/types/message';
 import { alpha } from '../alpha';
-import {
-  SEVERITY_COLORS,
-  Severity,
-  severityTokens,
-} from './severity';
+import { SEVERITY_COLORS, Severity, severityTokens } from './severity';
 
 function severity(name: Severity): MessageDesignTokens['info'] {
   const color: string = SEVERITY_COLORS[name];

@@ -1,17 +1,7 @@
-import {
-  Page,
-  Route,
-  test as base,
-  expect,
-} from '@playwright/test';
+import { Page, Route, test as base, expect } from '@playwright/test';
 import { fulfillAvailability, isAvailabilityRequest } from './booking';
 import { fulfillMedia, isMedia } from './media';
-import {
-  fulfillRecaptcha,
-  fulfillSession,
-  isRecaptchaScript,
-  isSessionRequest,
-} from './session';
+import { fulfillRecaptcha, fulfillSession, isRecaptchaScript, isSessionRequest } from './session';
 import { fulfillShop, isShopRequest } from './shop';
 
 interface CspReporter { reportCspViolation: (violation: string) => void; }

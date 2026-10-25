@@ -1,11 +1,5 @@
 import { DatePipe } from '@angular/common';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  InputSignal,
-  inject,
-  input,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, InputSignal, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';

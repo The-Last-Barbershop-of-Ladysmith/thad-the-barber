@@ -1,14 +1,6 @@
-import {
-  Locator,
-  Page,
-  Route,
-} from '@playwright/test';
+import { Locator, Page, Route } from '@playwright/test';
 import { expect, test } from '../support/fixtures';
-import {
-  GALLERY_LISTING_URL,
-  TEST_GALLERY,
-  galleryListing,
-} from '../support/media';
+import { GALLERY_LISTING_URL, TEST_GALLERY, galleryListing } from '../support/media';
 import { collectPageErrors } from '../support/page-errors';
 
 const HIDING_RESPONSES: Record<string, Parameters<Route['fulfill']>[0]> = {

@@ -1,10 +1,4 @@
-import {
-  CLIP_COUNT,
-  FRAMES_PER_CLIP,
-  KEYFRAME_URLS,
-  frameInClip,
-  frameUrl,
-} from './backdrop.frames';
+import { CLIP_COUNT, FRAMES_PER_CLIP, KEYFRAME_URLS, frameInClip, frameUrl } from './backdrop.frames';
 
 const TOTAL_FRAMES: number = CLIP_COUNT * FRAMES_PER_CLIP;
 

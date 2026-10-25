@@ -1,8 +1,4 @@
-import {
-  ActionReducer,
-  createReducer,
-  on,
-} from '@ngrx/store';
+import { ActionReducer, createReducer, on } from '@ngrx/store';
 import * as LayoutActions from './app.actions';
 import { LayoutState, initialLayoutState } from './app.state';
 

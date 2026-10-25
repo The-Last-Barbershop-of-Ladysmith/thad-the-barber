@@ -1,15 +1,5 @@
-import {
-  HttpClient,
-  HttpContext,
-  HttpErrorResponse,
-  provideHttpClient,
-  withInterceptors,
-} from '@angular/common/http';
-import {
-  HttpTestingController,
-  TestRequest,
-  provideHttpClientTesting,
-} from '@angular/common/http/testing';
+import { HttpClient, HttpContext, HttpErrorResponse, provideHttpClient, withInterceptors } from '@angular/common/http';
+import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { environment } from '../../../environments/environment';
 import { SessionToken } from '../models/session.models';

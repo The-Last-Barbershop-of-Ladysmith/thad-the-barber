@@ -7,12 +7,7 @@ import { ButtonVariant } from '../../../shared/models/button.models';
 import { LinkKind } from '../../../shared/models/link.models';
 import { isButtonVariant } from '../../../shared/utils/button.utils';
 import { linkKind } from '../../../shared/utils/link.utils';
-import {
-  Announcement,
-  AnnouncementButton,
-  AnnouncementImage,
-  AnnouncementImagePosition,
-} from '../models/home.models';
+import { Announcement, AnnouncementButton, AnnouncementImage, AnnouncementImagePosition } from '../models/home.models';
 
 type Entry = Record<string, unknown>;
 

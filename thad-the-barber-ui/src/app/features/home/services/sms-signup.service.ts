@@ -1,9 +1,5 @@
 import { Injectable } from '@angular/core';
-import {
-  Observable,
-  delay,
-  of,
-} from 'rxjs';
+import { Observable, delay, of } from 'rxjs';
 
 /**
  * Text-alert sign-ups. Mocked until an SMS provider is chosen.

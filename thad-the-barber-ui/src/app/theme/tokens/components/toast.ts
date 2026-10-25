@@ -1,9 +1,5 @@
 import { ToastDesignTokens } from '@primeuix/themes/types/toast';
-import {
-  SEVERITY_COLORS,
-  Severity,
-  severityTokens,
-} from './severity';
+import { SEVERITY_COLORS, Severity, severityTokens } from './severity';
 
 /** Opaque, so the text keeps its contrast over the moving backdrop. */
 function severity(name: Severity): ToastDesignTokens['info'] {

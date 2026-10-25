@@ -1,9 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  Signal,
-  inject,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, Signal, inject } from '@angular/core';
 import { AppState } from '../../../../store/app.state';
 import { SmsSignupState } from '../../state/home.state';
 import { RequestStatus } from '../../../../shared/models/request.models';

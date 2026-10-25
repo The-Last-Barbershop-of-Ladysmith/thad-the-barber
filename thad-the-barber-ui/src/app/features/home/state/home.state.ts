@@ -1,8 +1,4 @@
-import {
-  Announcement,
-  GalleryPhoto,
-  Testimonial,
-} from '../models/home.models';
+import { Announcement, GalleryPhoto, Testimonial } from '../models/home.models';
 import { RequestStatus } from '../../../shared/models/request.models';
 
 export interface SmsSignupState {

@@ -1,15 +1,7 @@
-import {
-  MemoizedSelector,
-  createFeature,
-  createSelector,
-} from '@ngrx/store';
+import { MemoizedSelector, createFeature, createSelector } from '@ngrx/store';
 import { FeatureSelectors } from '../../../shared/models/ngrx.models';
 import { RequestStatus } from '../../../shared/models/request.models';
-import {
-  addDays,
-  fromMonthKey,
-  toIsoDate,
-} from '../../../shared/utils/date.utils';
+import { addDays, fromMonthKey, toIsoDate } from '../../../shared/utils/date.utils';
 import { AvailableDay } from '../models/available-day.model';
 import { BookingNotice } from '../models/booking-notice.model';
 import { AVAILABILITY_FAILED_NOTICE } from '../utils/booking-notice.utils';

@@ -2,12 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { Actions } from '@ngrx/effects';
 import { Action } from '@ngrx/store';
-import {
-  Observable,
-  Subject,
-  of,
-  throwError,
-} from 'rxjs';
+import { Observable, Subject, of, throwError } from 'rxjs';
 import { AvailableDay } from '../models/available-day.model';
 import { AvailabilityService } from '../services/availability.service';
 import * as BookingActions from './booking.actions';

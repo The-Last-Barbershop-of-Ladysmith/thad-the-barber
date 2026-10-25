@@ -1,11 +1,5 @@
 import { Weekday } from '../../core/models/shop/weekday.model';
-import {
-  formatLongDate,
-  formatShortDate,
-  fromTimeOfDay,
-  toIsoDateIn,
-  weekTimeIn,
-} from './date.utils';
+import { formatLongDate, formatShortDate, fromTimeOfDay, toIsoDateIn, weekTimeIn } from './date.utils';
 
 describe(
   'date utils',

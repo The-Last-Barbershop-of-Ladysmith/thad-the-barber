@@ -1,8 +1,4 @@
-import {
-  MemoizedSelector,
-  createFeature,
-  createSelector,
-} from '@ngrx/store';
+import { MemoizedSelector, createFeature, createSelector } from '@ngrx/store';
 import { SHOP_FALLBACK } from '../../core/config/shop-info';
 import { BookingSettings } from '../../core/models/shop/booking-settings.model';
 import { PhoneLinks } from '../../core/models/shop/phone-links.model';

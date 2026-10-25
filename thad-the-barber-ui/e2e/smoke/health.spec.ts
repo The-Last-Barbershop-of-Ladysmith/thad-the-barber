@@ -1,10 +1,4 @@
-import {
-  APIRequestContext,
-  APIResponse,
-  Page,
-  expect,
-  test,
-} from '@playwright/test';
+import { APIRequestContext, APIResponse, Page, expect, test } from '@playwright/test';
 import { environment } from '../../src/environments/environment.development';
 
 const COLD_START: {
