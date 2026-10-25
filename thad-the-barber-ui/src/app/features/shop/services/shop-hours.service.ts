@@ -1,20 +1,20 @@
 import { DestroyRef, Injectable, Signal, WritableSignal, computed, inject, signal } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { HoursRow } from '../models/shop/hours-row.model';
-import { OpenStatus } from '../models/shop/open-status.model';
-import { ShopOpeningHours } from '../models/shop/shop-opening-hours.model';
-import { WeekTime } from '../models/shop/week-time.model';
-import { Weekday } from '../models/shop/weekday.model';
-import { formatMinutes, fromTimeOfDay, weekTimeIn } from '../../shared/utils/date.utils';
+import { HoursRow } from '../models/hours-row.model';
+import { OpenStatus } from '../models/open-status.model';
+import { ShopOpeningHours } from '../models/shop-opening-hours.model';
+import { WeekTime } from '../../../shared/models/week-time.model';
+import { Weekday } from '../../../shared/models/weekday.model';
+import { formatMinutes, fromTimeOfDay, weekTimeIn } from '../../../shared/utils/date.utils';
 import {
   WEEKDAY_NAMES,
   WEEKDAY_SHORT_NAMES,
   WEEK_FROM_MONDAY,
   toWeekday,
   weekdaySpanLabel,
-} from '../../shared/utils/weekday.utils';
-import { AppState } from '../../store/app.state';
-import { shopFeature } from '../../store/shop/shop.feature';
+} from '../../../shared/utils/weekday.utils';
+import { AppState } from '../../../store/app.state';
+import { shopFeature } from '../state/shop.feature';
 
 /**
  * Opening hours and the live "Open now" status, from the `shop` slice. Both are empty until the shop loads. The

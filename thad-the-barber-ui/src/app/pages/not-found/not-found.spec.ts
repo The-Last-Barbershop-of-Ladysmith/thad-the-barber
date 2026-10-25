@@ -3,9 +3,9 @@ import { provideRouter } from '@angular/router';
 import { Store, provideStore } from '@ngrx/store';
 import { TEST_SHOP } from '../../../testing/test-shop';
 import { HOME_SECTIONS, SHOP_FALLBACK } from '../../core/config/shop-info';
-import { NavItem } from '../../core/models/shop/nav-item.model';
-import * as ShopActions from '../../store/shop/shop.actions';
-import { shopFeature } from '../../store/shop/shop.feature';
+import { NavItem } from '../../shared/models/nav-item.model';
+import * as ShopActions from '../../features/shop/state/shop.actions';
+import { shopFeature } from '../../features/shop/state/shop.feature';
 import { NotFound } from './not-found';
 
 describe(

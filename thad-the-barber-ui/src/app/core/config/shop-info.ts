@@ -1,6 +1,6 @@
-import { NavItem } from '../models/shop/nav-item.model';
-import { ShopContent } from '../models/shop/shop-content.model';
-import { ShopFallback } from '../models/shop/shop-fallback.model';
+import { NavItem } from '../../shared/models/nav-item.model';
+import { ShopContent } from '../models/shop-content.model';
+import { ShopFallback } from '../models/shop-fallback.model';
 
 /** Everything else about the shop comes from Square through the `shop` slice (`store/shop`). */
 export const SHOP_FALLBACK: ShopFallback = {

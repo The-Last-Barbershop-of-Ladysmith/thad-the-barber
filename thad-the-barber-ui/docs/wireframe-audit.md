@@ -152,7 +152,7 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 | Component | Location | Why custom |
 | --- | --- | --- |
 | `SectionHeading` | `shared/components/section-heading` | Eyebrow + title pair used in 4 sections |
-| `HoursList` | `shared/components/hours-list` | One data source, 3 layouts: `table` (schedule), `stacked` (visit), `compact` (footer) |
+| `HoursList` | `features/shop/components/hours-list` | One data source, 3 layouts: `table` (schedule), `stacked` (visit), `compact` (footer) |
 | `Backdrop` | `shared/components/backdrop` | Fixed photo background: `scroll` (home) and `still` (booking) |
 | `Header`, `Footer` | `layout/` | App shell |
 | Section components | `features/home/components/*` | Page composition only |
@@ -243,7 +243,7 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 
 | Spec | Covers | Tied to wireframe behavior? |
 | --- | --- | --- |
-| `core/services/shop-hours.service.spec.ts` | Hours rows, "Open now" / "Opens at" / "Closed" labels | Yes: wireframe hours and label wording |
+| `features/shop/services/shop-hours.service.spec.ts` | Hours rows, "Open now" / "Opens at" / "Closed" labels | Yes: wireframe hours and label wording |
 | `features/booking/state/booking.reducer.spec.ts` | Month loading, stale months dropped, load status | Stable |
 | `features/booking/state/booking.feature.spec.ts` | Days without open times are disabled; the availability notice shows only after a failed load | Stable |
 | `features/booking/state/booking.effects.spec.ts` | Month availability loads, and a failed load is reported | Stable |

@@ -1,5 +1,5 @@
-import { ShopInfo } from '../app/core/models/shop/shop-info.model';
-import { Weekday } from '../app/core/models/shop/weekday.model';
+import { ShopInfo } from '../app/features/shop/models/shop-info.model';
+import { Weekday } from '../app/shared/models/weekday.model';
 
 /**
  * A made-up `GET /api/shop` response for unit and e2e tests. Its timezone is Honolulu's (no DST, UTC−10), far from

@@ -1,8 +1,8 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { TEST_SHOP } from '../../../testing/test-shop';
-import { ShopInfo } from '../models/shop/shop-info.model';
+import { TEST_SHOP } from '../../../../testing/test-shop';
+import { ShopInfo } from '../models/shop-info.model';
 import { SHOP_URL, ShopService } from './shop.service';
 
 describe(

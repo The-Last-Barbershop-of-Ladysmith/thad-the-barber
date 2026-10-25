@@ -1,4 +1,4 @@
-import { Weekday } from './weekday.model';
+import { Weekday } from '../../../shared/models/weekday.model';
 
 /** One open day, in the shop's timezone. */
 export interface ShopOpeningHours {

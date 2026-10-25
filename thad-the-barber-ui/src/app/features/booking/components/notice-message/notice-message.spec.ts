@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { PhoneLinks } from '../../../../core/models/shop/phone-links.model';
+import { PhoneLinks } from '../../../../shared/models/phone-links.model';
 import { BookingNotice } from '../../models/booking-notice.model';
 import { NoticeFallback } from '../../models/notice-fallback.model';
 import { NoticeSeverity } from '../../models/notice-severity.model';

@@ -20,8 +20,8 @@ import * as bookingTabsEffects from './features/booking/state/booking-tabs.effec
 import * as appEffects from './store/app.effects';
 import { layoutFeature } from './store/app.feature';
 import { metaReducers } from './store/meta/meta.reducers';
-import * as shopEffects from './store/shop/shop.effects';
-import { shopFeature } from './store/shop/shop.feature';
+import * as shopEffects from './features/shop/state/shop.effects';
+import { shopFeature } from './features/shop/state/shop.feature';
 import { bookingFeature } from './features/booking/state/booking.feature';
 import { homeFeature } from './features/home/state/home.feature';
 import { ThadPreset, themeOptions } from './theme';

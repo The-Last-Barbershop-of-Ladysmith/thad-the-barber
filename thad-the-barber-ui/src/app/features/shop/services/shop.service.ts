@@ -1,9 +1,9 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { environment } from '../../../environments/environment';
-import { anonymousRequest } from '../interceptors/anonymous-request.token';
-import { ShopInfo } from '../models/shop/shop-info.model';
+import { environment } from '../../../../environments/environment';
+import { anonymousRequest } from '../../../core/interceptors/anonymous-request.token';
+import { ShopInfo } from '../models/shop-info.model';
 
 export const SHOP_URL: string = `${environment.apiBaseUrl}/shop`;
 

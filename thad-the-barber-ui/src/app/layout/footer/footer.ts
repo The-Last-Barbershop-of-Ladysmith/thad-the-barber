@@ -2,14 +2,14 @@ import { ChangeDetectionStrategy, Component, Signal, inject } from '@angular/cor
 import { RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { ButtonModule } from 'primeng/button';
-import { NavItem } from '../../core/models/shop/nav-item.model';
-import { PhoneLinks } from '../../core/models/shop/phone-links.model';
-import { ShopAddress } from '../../core/models/shop/shop-address.model';
-import { SocialLink } from '../../core/models/shop/social-link.model';
+import { NavItem } from '../../shared/models/nav-item.model';
+import { PhoneLinks } from '../../shared/models/phone-links.model';
+import { ShopAddress } from '../../features/shop/models/shop-address.model';
+import { SocialLink } from '../../features/shop/models/social-link.model';
 import { homeFeature } from '../../features/home/state/home.feature';
-import { HoursList } from '../../shared/components/hours-list/hours-list';
+import { HoursList } from '../../features/shop/components/hours-list/hours-list';
 import { AppState } from '../../store/app.state';
-import { shopFeature } from '../../store/shop/shop.feature';
+import { shopFeature } from '../../features/shop/state/shop.feature';
 
 @Component({
   selector: 'app-footer',

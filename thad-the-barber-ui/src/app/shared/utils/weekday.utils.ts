@@ -1,4 +1,4 @@
-import { Weekday } from '../../core/models/shop/weekday.model';
+import { Weekday } from '../models/weekday.model';
 
 export const WEEKDAY_NAMES: Record<Weekday, string> = {
   [Weekday.Sunday]: 'Sunday',

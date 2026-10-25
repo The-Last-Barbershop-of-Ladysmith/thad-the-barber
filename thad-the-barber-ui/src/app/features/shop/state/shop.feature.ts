@@ -1,13 +1,13 @@
 import { MemoizedSelector, createFeature, createSelector } from '@ngrx/store';
-import { SHOP_FALLBACK } from '../../core/config/shop-info';
-import { BookingSettings } from '../../core/models/shop/booking-settings.model';
-import { PhoneLinks } from '../../core/models/shop/phone-links.model';
-import { ShopAddress } from '../../core/models/shop/shop-address.model';
-import { ShopInfo } from '../../core/models/shop/shop-info.model';
-import { ShopOpeningHours } from '../../core/models/shop/shop-opening-hours.model';
-import { SocialLink } from '../../core/models/shop/social-link.model';
-import { FeatureSelectors } from '../../shared/models/ngrx.models';
-import { toPhoneLinks } from '../../shared/utils/phone.utils';
+import { SHOP_FALLBACK } from '../../../core/config/shop-info';
+import { BookingSettings } from '../models/booking-settings.model';
+import { PhoneLinks } from '../../../shared/models/phone-links.model';
+import { ShopAddress } from '../models/shop-address.model';
+import { ShopInfo } from '../models/shop-info.model';
+import { ShopOpeningHours } from '../models/shop-opening-hours.model';
+import { SocialLink } from '../models/social-link.model';
+import { FeatureSelectors } from '../../../shared/models/ngrx.models';
+import { toPhoneLinks } from '../../../shared/utils/phone.utils';
 import { shopReducer } from './shop.reducer';
 import { ShopState } from './shop.state';
 

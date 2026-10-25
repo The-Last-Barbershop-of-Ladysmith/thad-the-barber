@@ -1,4 +1,4 @@
-import { BookingSettings } from '../../../core/models/shop/booking-settings.model';
+import { BookingSettings } from '../../shop/models/booking-settings.model';
 import {
   addDays,
   formatLongDate,

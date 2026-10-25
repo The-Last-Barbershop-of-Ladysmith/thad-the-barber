@@ -4,7 +4,7 @@ import { bookingFeatureKey } from '../../features/booking/state/booking.feature'
 import { toKeptConfirmation } from '../../features/booking/utils/saved-confirmation.utils';
 import { homeFeatureKey } from '../../features/home/state/home.feature';
 import { decodeBase64, encodeBase64 } from '../../shared/utils/base64.utils';
-import { shopFeatureKey } from '../shop/shop.feature';
+import { shopFeatureKey } from '../../features/shop/state/shop.feature';
 
 /** Prefix for each slice's localStorage entry: `ttb-home`, `ttb-shop`, `ttb-booking`. */
 const STORAGE_PREFIX: string = 'ttb';

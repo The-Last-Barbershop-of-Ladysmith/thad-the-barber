@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
-import { PhoneLinks } from '../../../../core/models/shop/phone-links.model';
+import { PhoneLinks } from '../../../../shared/models/phone-links.model';
 import { BookingNotice } from '../../models/booking-notice.model';
 import { NoticeFallback } from '../../models/notice-fallback.model';
 
