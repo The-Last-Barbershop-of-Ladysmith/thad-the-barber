@@ -1,5 +1,7 @@
+import { testSavedConfirmation } from '../../../../testing/test-booking';
 import { RequestStatus } from '../../../shared/models/request.models';
 import { AvailableDay } from '../models/available-day.model';
+import { SavedConfirmation } from '../models/saved-confirmation.model';
 import * as BookingActions from './booking.actions';
 import { bookingReducer } from './booking.reducer';
 import { BookingState, initialBookingState } from './booking.state';
@@ -9,17 +11,20 @@ const availableDays: AvailableDay[] = [
   { date: '2026-10-04', times: ['2026-10-04T23:30:00Z'] },
 ];
 
+const savedConfirmation: SavedConfirmation = testSavedConfirmation('2026-10-02T18:00:00Z');
+
 const october: BookingState = {
   visibleMonth: '2026-10',
   availableDays,
   loadStatus: RequestStatus.Error,
+  savedConfirmation,
 };
 
 describe(
   'booking reducer',
   (): void => {
     it(
-      'empties the calendar and shows it loading while a month loads',
+      'empties the calendar and shows it loading while a month loads, keeping the saved confirmation',
       (): void => {
         const state: BookingState = bookingReducer(october, BookingActions.SetActiveMonthView({ month: '2026-11' }));
 
@@ -27,7 +32,24 @@ describe(
           visibleMonth: '2026-11',
           availableDays: [],
           loadStatus: RequestStatus.Pending,
+          savedConfirmation,
         });
+      },
+    );
+
+    it(
+      'keeps the latest booking, replacing an earlier one',
+      (): void => {
+        const later: SavedConfirmation = {
+          booking: { ...savedConfirmation.booking, id: 'made-up-later-booking' },
+          savedAt: '2026-10-02T19:00:00Z',
+        };
+        const state: BookingState = bookingReducer(
+          october,
+          BookingActions.BookingConfirm({ savedConfirmation: later }),
+        );
+
+        expect(state.savedConfirmation).toEqual(later);
       },
     );
 

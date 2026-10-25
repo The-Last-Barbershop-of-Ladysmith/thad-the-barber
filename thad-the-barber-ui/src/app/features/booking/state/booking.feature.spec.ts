@@ -17,6 +17,7 @@ describe(
             { date: '2026-02-28', times: ['2026-02-28T20:00:00Z'] },
           ],
           loadStatus: RequestStatus.Success,
+          savedConfirmation: null,
         };
 
         const disabled: string[] = bookingFeature.selectDisabledDates({ booking: february })

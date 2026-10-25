@@ -1,7 +1,11 @@
 import { Locator, Page, Request, Route } from '@playwright/test';
 import { BookingConfirmation } from '../../src/app/features/booking/models/booking-confirmation.model';
 import { BookingRequest } from '../../src/app/features/booking/models/booking-request.model';
+import { SavedConfirmation } from '../../src/app/features/booking/models/saved-confirmation.model';
+import { KEEP_CONFIRMATION_MS } from '../../src/app/features/booking/utils/saved-confirmation.utils';
 import { ProblemCode } from '../../src/app/shared/models/problem-code.model';
+import { decodeBase64, encodeBase64 } from '../../src/app/shared/utils/base64.utils';
+import { testSavedConfirmation } from '../../src/testing/test-booking';
 import { TEST_SHOP } from '../../src/testing/test-shop';
 import { expectNoA11yViolations } from '../support/axe';
 import { fulfillAvailability, isAvailabilityRequest, isBookingRequest } from '../support/booking';
@@ -34,6 +38,20 @@ async function problem(
       code,
     },
   });
+}
+
+/** One open time five minutes from now, so a kept booking hasn't started when the test reloads (BR-22). */
+async function offerTimeSoon(page: Page): Promise<void> {
+  const soon: Date = new Date(Date.now() + 5 * 60_000);
+  soon.setUTCSeconds(0, 0);
+  const date: string = new Intl.DateTimeFormat('en-CA', { timeZone: TEST_SHOP.timeZone }).format(soon);
+  await page.route(isAvailabilityRequest, (route: Route): Promise<void> =>
+    route.fulfill({ json: [{ date, times: [soon.toISOString()] }] }));
+}
+
+/** The shop has loaded, so the page can show times and a kept booking. */
+async function waitForShop(page: Page): Promise<void> {
+  await expect(page.locator(`a[href="tel:${TEST_SHOP.phone}"]`).first()).toBeAttached();
 }
 
 /** Picks the first open day and time, fills in the made-up customer and confirms. */
@@ -74,6 +92,47 @@ test.describe(
         expect(await booking?.headerValue('authorization')).toBe('Bearer e2e-session-jwt');
         expect(body.startAt).toMatch(/T20:00:00Z$/);
         expect(body.phone).toBe(`+1${CUSTOMER_PHONE}`);
+      },
+    );
+
+    test(
+      'keeps the booking, without name or phone, through a reload (BR-22)',
+      async ({ page }: { page: Page; }): Promise<void> => {
+        await offerTimeSoon(page);
+        await page.route(isBookingRequest, (route: Route): Promise<void> =>
+          route.fulfill({ status: 201, json: confirm(route.request()) }));
+        await page.goto('/book');
+        await book(page);
+        await expect(page.getByTestId('booking-confirmation')).toBeVisible();
+
+        await page.reload();
+
+        await expect(page.getByTestId('booking-confirmation')).toBeVisible();
+        const saved: string = decodeBase64(await page.evaluate((): string => localStorage.getItem('ttb-booking') ?? ''));
+        expect(Object.keys(JSON.parse(saved) as object)).toEqual(['savedConfirmation']);
+        expect(saved).not.toContain('Jordan');
+        expect(saved).not.toContain(CUSTOMER_PHONE.slice(-4));
+      },
+    );
+
+    test(
+      'drops a booking kept for more than 24 hours',
+      async ({ page }: { page: Page; }): Promise<void> => {
+        // The appointment is still a day away, so only the 24 hours can drop it.
+        const savedAt: string = new Date(Date.now() - KEEP_CONFIRMATION_MS - 60_000).toISOString();
+        const tomorrow: string = new Date(Date.now() + KEEP_CONFIRMATION_MS).toISOString();
+        const savedConfirmation: SavedConfirmation = testSavedConfirmation(savedAt, tomorrow);
+        const encoded: string = encodeBase64(JSON.stringify({ savedConfirmation }));
+        await page.addInitScript((value: string): void => {
+          localStorage.setItem('ttb-booking', value);
+        }, encoded);
+
+        await page.goto('/book');
+        await waitForShop(page);
+
+        await expect(page.getByTestId('booking-confirmation')).toHaveCount(0);
+        const saved: string = decodeBase64(await page.evaluate((): string => localStorage.getItem('ttb-booking') ?? ''));
+        expect(JSON.parse(saved)).toEqual({ savedConfirmation: null });
       },
     );
 

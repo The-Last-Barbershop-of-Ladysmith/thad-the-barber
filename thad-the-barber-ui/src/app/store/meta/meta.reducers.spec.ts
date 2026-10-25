@@ -1,34 +1,42 @@
-import { ActionReducer, INIT, combineReducers, createAction, createReducer, on, props } from '@ngrx/store';
+import { ActionReducer, INIT, combineReducers } from '@ngrx/store';
+import { testSavedConfirmation } from '../../../testing/test-booking';
 import { TEST_SHOP } from '../../../testing/test-shop';
 import { decodeBase64, encodeBase64 } from '../../shared/utils/base64.utils';
 import { layoutReducer } from '../app.reducer';
 import { AppState } from '../app.state';
 import * as ShopActions from '../shop/shop.actions';
 import { shopReducer } from '../shop/shop.reducer';
+import { SavedConfirmation } from '../../features/booking/models/saved-confirmation.model';
+import * as BookingActions from '../../features/booking/state/booking.actions';
+import { bookingReducer } from '../../features/booking/state/booking.reducer';
+import { BookingState } from '../../features/booking/state/booking.state';
+import { KEEP_CONFIRMATION_MS } from '../../features/booking/utils/saved-confirmation.utils';
 import * as HomeActions from '../../features/home/state/home.actions';
 import { homeReducer } from '../../features/home/state/home.reducer';
 import { RequestStatus } from '../../shared/models/request.models';
 import { localStorageSyncReducer } from './meta.reducers';
 
-/** Stand-in for the unsynced booking slice, so this spec tests only the sync, not a real feature reducer. */
-interface FakeSlice { note: string; }
+/** Saved at `savedAt` for an appointment a day from now, so only its age decides whether it's kept. */
+function savedConfirmationFrom(savedAt: Date): SavedConfirmation {
+  const tomorrow: string = new Date(Date.now() + KEEP_CONFIRMATION_MS).toISOString();
+  return testSavedConfirmation(savedAt.toISOString(), tomorrow);
+}
 
-const initialFakeSlice: FakeSlice = { note: '' };
+function seedBooking(savedConfirmation: SavedConfirmation): void {
+  localStorage.setItem('ttb-booking', encodeBase64(JSON.stringify({ savedConfirmation })));
+}
 
-// eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
-const noteSet = createAction('[Test] Note Set', props<FakeSlice>());
-
-const fakeSliceReducer: ActionReducer<FakeSlice> = createReducer(
-  initialFakeSlice,
-  on(noteSet, (_state: FakeSlice, { note }: FakeSlice): FakeSlice => ({ note })),
-);
+function restoredBooking(): BookingState | undefined {
+  const init: AppState = createSyncedReducer()(undefined, { type: INIT });
+  return (init as unknown as { booking?: BookingState; }).booking;
+}
 
 /** The library reads storage when the meta-reducer is created, so build it after seeding. */
 function createSyncedReducer(): ActionReducer<AppState> {
   return localStorageSyncReducer(combineReducers({
     layout: layoutReducer,
     home: homeReducer,
-    booking: fakeSliceReducer,
+    booking: bookingReducer,
     shop: shopReducer,
   }) as unknown as ActionReducer<AppState>);
 }
@@ -46,12 +54,40 @@ describe(
     });
 
     it(
-      "doesn't save booking's availability, which must be fresh, or layout",
+      "saves only booking's last confirmation, with no name or phone, and nothing from layout",
       (): void => {
-        createSyncedReducer()(undefined, noteSet({ note: 'not saved' }));
+        const savedConfirmation: SavedConfirmation = savedConfirmationFrom(new Date());
+        const reducer: ActionReducer<AppState> = createSyncedReducer();
+        const viewing: AppState = reducer(undefined, BookingActions.SetActiveMonthView({ month: '2026-10' }));
+        reducer(viewing, BookingActions.BookingConfirm({ savedConfirmation }));
 
-        expect(localStorage.getItem('ttb-booking')).toBeNull();
+        expect(saved('ttb-booking')).toEqual({ savedConfirmation });
         expect(localStorage.getItem('ttb-layout')).toBeNull();
+      },
+    );
+
+    it(
+      'restores a booking confirmed within 24 hours, with the rest of the slice intact',
+      (): void => {
+        const almostExpired: Date = new Date(Date.now() - KEEP_CONFIRMATION_MS + 60_000);
+        const savedConfirmation: SavedConfirmation = savedConfirmationFrom(almostExpired);
+        seedBooking(savedConfirmation);
+
+        expect(restoredBooking()).toEqual({
+          visibleMonth: null,
+          availableDays: [],
+          loadStatus: RequestStatus.Idle,
+          savedConfirmation,
+        });
+      },
+    );
+
+    it(
+      'drops a saved confirmation over 24 hours old on start-up',
+      (): void => {
+        seedBooking(savedConfirmationFrom(new Date(Date.now() - KEEP_CONFIRMATION_MS - 60_000)));
+
+        expect(restoredBooking()?.savedConfirmation).toBeNull();
       },
     );
 

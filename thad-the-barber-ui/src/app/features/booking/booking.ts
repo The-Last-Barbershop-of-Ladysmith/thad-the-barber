@@ -34,18 +34,21 @@ import { AvailableDay } from './models/available-day.model';
 import { BookingConfirmation } from './models/booking-confirmation.model';
 import { BookingDetails } from './models/booking-details.model';
 import { BookingNotice } from './models/booking-notice.model';
+import { SavedConfirmation } from './models/saved-confirmation.model';
 import { DateRange } from './models/date-range.model';
 import { TimeSlot } from './models/time-slot.model';
 import { BookingService } from './services/booking.service';
 import * as BookingActions from './state/booking.actions';
 import { bookingFeature } from './state/booking.feature';
 import { toBookingNotice } from './utils/booking-notice.utils';
+import { isKept } from './utils/saved-confirmation.utils';
 import { toBookingWindow, toLongDateTime, toTimeLabel, toTimeSlots } from './utils/booking-time.utils';
 
 /**
- * Booking page: date → time → details, with a live summary. The month's availability is in the booking slice; the
- * picks, the customer's details and the booking itself are this page's, thrown away when it closes. Every date and
- * time shows on the shop's clock (`timeZone`), so none shows until the shop has loaded at least once.
+ * Booking page: date → time → details, with a live summary. The month's availability and the last booking (kept for
+ * 24 hours, without name or phone, BR-22) are in the booking slice; the picks, the customer's details and the booking
+ * in progress are this page's, thrown away when it closes. Every date and time shows on the shop's clock
+ * (`timeZone`), so none shows until the shop has loaded at least once.
  */
 @Component({
   selector: 'app-booking',
@@ -97,7 +100,9 @@ export class Booking implements OnInit {
   /** One of the picked day's UTC start times. */
   protected readonly selectedStartAt: WritableSignal<string | null> = signal(null);
   protected readonly isSubmitting: WritableSignal<boolean> = signal(false);
-  private readonly confirmation: WritableSignal<BookingConfirmation | null> = signal(null);
+  /** Starts as the kept booking, so a reload still shows it; a tab left open checks it hasn't expired (BR-22). */
+  private readonly confirmation: WritableSignal<BookingConfirmation | null> =
+    signal(toKeptBooking(this.store.selectSignal(bookingFeature.selectSavedConfirmation)()));
   /** The phone the booking was sent with; the form may have changed while it was in flight. */
   private readonly bookedPhone: WritableSignal<string> = signal('');
   protected readonly bookingNotice: WritableSignal<BookingNotice | null> = signal(null);
@@ -177,7 +182,13 @@ export class Booking implements OnInit {
     if (!booking || !timeZone) {
       return null;
     }
-    return `${toLongDateTime(timeZone, booking.startAt)}. A text confirmation goes to ${this.bookedPhone()}.`;
+    const when: string = `${toLongDateTime(timeZone, booking.startAt)}.`;
+    const phone: string = this.bookedPhone();
+    // After a reload the phone is gone: it's never saved (BR-22).
+    if (!phone) {
+      return when;
+    }
+    return `${when} A text confirmation goes to ${phone}.`;
   });
 
   constructor() {
@@ -257,6 +268,9 @@ export class Booking implements OnInit {
           this.idempotencyKey = null;
           this.bookedPhone.set(details.phone);
           this.confirmation.set(confirmation);
+          this.store.dispatch(BookingActions.BookingConfirm({
+            savedConfirmation: { booking: confirmation, savedAt: new Date().toISOString() },
+          }));
         },
         error: (error: unknown): void => {
           this.onBookingFailed(error);
@@ -287,4 +301,12 @@ export class Booking implements OnInit {
     this.confirmation.set(null);
     this.bookingNotice.set(null);
   }
+}
+
+function toKeptBooking(savedConfirmation: SavedConfirmation | null): BookingConfirmation | null {
+  const isStillKept: boolean = savedConfirmation !== null && isKept(savedConfirmation);
+  if (!isStillKept) {
+    return null;
+  }
+  return savedConfirmation?.booking ?? null;
 }

@@ -16,10 +16,10 @@ export type BookingExtraSelectors = {
   selectNotice: MemoizedSelector<object, BookingNotice | null>;
 };
 
-/** Store key for this slice. It isn't saved to localStorage (`store/meta/meta.reducers.ts`). */
+/** Store key for this slice; also names its localStorage entry (`ttb-booking`), holding only `savedConfirmation`. */
 export const bookingFeatureKey: 'booking' = 'booking' as const;
 
-/** The booking page's month availability. Registered by the booking route. */
+/** The booking page's month availability and the last booking kept for 24 hours. A root reducer (`app.config.ts`). */
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the Feature type.
 export const bookingFeature = createFeature({
   name: bookingFeatureKey,

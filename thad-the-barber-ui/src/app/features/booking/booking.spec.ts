@@ -3,6 +3,7 @@ import { NO_ERRORS_SCHEMA, WritableSignal, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Action, ActionsSubject, Store, provideStore } from '@ngrx/store';
 import { Observable, Subject } from 'rxjs';
+import { testSavedConfirmation } from '../../../testing/test-booking';
 import { TEST_SHOP } from '../../../testing/test-shop';
 import { SessionService } from '../../core/services/session.service';
 import { ProblemCode } from '../../shared/models/problem-code.model';
@@ -14,6 +15,7 @@ import { Booking } from './booking';
 import { BookingConfirmation } from './models/booking-confirmation.model';
 import { BookingNotice } from './models/booking-notice.model';
 import { BookingRequest } from './models/booking-request.model';
+import { SavedConfirmation } from './models/saved-confirmation.model';
 import { BookingService } from './services/booking.service';
 import * as BookingActions from './state/booking.actions';
 import { bookingFeature } from './state/booking.feature';
@@ -26,6 +28,7 @@ interface BookingPage {
   selectedStartAt: () => string | null;
   bookingNotice: () => BookingNotice | null;
   confirmationText: () => string | null;
+  isBooked: () => boolean;
   form: Booking['form'];
 }
 
@@ -66,6 +69,7 @@ describe(
     }
 
     function pickAndConfirm(startAt: string): void {
+      page.form.setValue({ name: 'Test Customer', phone: '(555) 010-0199' });
       page.onDateSelect(fromIsoDate(TODAY));
       page.onTimeSelect(startAt);
       page.confirm();
@@ -83,8 +87,15 @@ describe(
         ],
       });
       TestBed.overrideComponent(Booking, { set: { imports: [], schemas: [NO_ERRORS_SCHEMA] } });
+    });
+
+    /** Opens the page as after a reload, with `savedConfirmation` as the booking kept from the last 24 hours. */
+    function openPage(savedConfirmation: SavedConfirmation | null = null): void {
       const store: Store<AppState> = TestBed.inject<Store<AppState>>(Store);
       store.dispatch(ShopActions.ShopInfoRequestSuccess({ shopInfo: TEST_SHOP }));
+      if (savedConfirmation) {
+        store.dispatch(BookingActions.BookingConfirm({ savedConfirmation }));
+      }
       const fixture: ComponentFixture<Booking> = TestBed.createComponent(Booking);
       fixture.detectChanges();
       store.dispatch(BookingActions.MonthAvailabilityRequestSuccess({
@@ -96,12 +107,12 @@ describe(
         dispatched.push(action);
       });
       page = fixture.componentInstance as unknown as BookingPage;
-      page.form.setValue({ name: 'Test Customer', phone: '(555) 010-0199' });
-    });
+    }
 
     it(
       'retries a failed booking with the same key, and a changed time gets a new one',
       (): void => {
+        openPage();
         pickAndConfirm(FIRST_TIME);
         fail(
           0,
@@ -121,6 +132,7 @@ describe(
     it(
       'sends only one booking: confirming again after it went through does nothing',
       (): void => {
+        openPage();
         pickAndConfirm(FIRST_TIME);
         responses[0]?.next(confirmation(requests[0]));
         responses[0]?.complete();
@@ -133,6 +145,7 @@ describe(
     it(
       'drops a taken time and reloads the month in view',
       (): void => {
+        openPage();
         pickAndConfirm(FIRST_TIME);
         fail(
           0,
@@ -149,6 +162,7 @@ describe(
     it(
       'leaves a failed bot check to its own message and sends nothing more',
       (): void => {
+        openPage();
         pickAndConfirm(FIRST_TIME);
         isBotCheckFailed.set(true);
         fail(
@@ -166,11 +180,36 @@ describe(
     it(
       'confirms the phone the booking was sent with, even if it was edited while in flight',
       (): void => {
+        openPage();
         pickAndConfirm(FIRST_TIME);
         page.form.controls.phone.setValue('(555) 010-0188');
         responses[0]?.next(confirmation(requests[0]));
 
         expect(page.confirmationText()).toContain('(555) 010-0199');
+      },
+    );
+
+    it(
+      'keeps the booking it confirmed for 24 hours, so a reload still shows it',
+      (): void => {
+        openPage();
+        pickAndConfirm(FIRST_TIME);
+        responses[0]?.next(confirmation(requests[0]));
+
+        expect(dispatched).toContainEqual(BookingActions.BookingConfirm({
+          savedConfirmation: { booking: confirmation(requests[0]), savedAt: expect.any(String) as string },
+        }));
+      },
+    );
+
+    it(
+      'shows a booking kept from the last 24 hours as booked, without the phone, which is never saved',
+      (): void => {
+        const tomorrow: string = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+        openPage(testSavedConfirmation(new Date().toISOString(), tomorrow));
+
+        expect(page.isBooked()).toBe(true);
+        expect(page.confirmationText()).not.toContain('text confirmation');
       },
     );
   },
