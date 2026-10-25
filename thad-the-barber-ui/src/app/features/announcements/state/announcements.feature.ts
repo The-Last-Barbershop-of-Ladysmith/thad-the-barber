@@ -1,10 +1,10 @@
 import { MemoizedSelector, createFeature, createSelector } from '@ngrx/store';
-import { Announcement } from '../../core/models/announcements/announcement.model';
-import { FeatureSelectors } from '../../shared/models/ngrx.models';
-import { RequestStatus } from '../../shared/models/request.models';
-import { toIsoDate, toIsoDateIn } from '../../shared/utils/date.utils';
-import { isSettledEmpty } from '../../shared/utils/request.utils';
-import { shopFeature } from '../shop/shop.feature';
+import { Announcement } from '../models/announcement.model';
+import { FeatureSelectors } from '../../../shared/models/ngrx.models';
+import { RequestStatus } from '../../../shared/models/request.models';
+import { toIsoDate, toIsoDateIn } from '../../../shared/utils/date.utils';
+import { isSettledEmpty } from '../../../shared/utils/request.utils';
+import { shopFeature } from '../../shop/state/shop.feature';
 import { announcementsReducer } from './announcements.reducer';
 import { AnnouncementsState } from './announcements.state';
 

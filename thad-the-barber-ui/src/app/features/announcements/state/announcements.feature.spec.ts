@@ -1,8 +1,8 @@
-import { TEST_ANNOUNCEMENT } from '../../../testing/test-announcement';
-import { Announcement } from '../../core/models/announcements/announcement.model';
-import { RequestStatus } from '../../shared/models/request.models';
-import { shopFeatureKey } from '../shop/shop.feature';
-import { initialShopState } from '../shop/shop.state';
+import { TEST_ANNOUNCEMENT } from '../../../../testing/test-announcement';
+import { Announcement } from '../models/announcement.model';
+import { RequestStatus } from '../../../shared/models/request.models';
+import { shopFeatureKey } from '../../shop/state/shop.feature';
+import { initialShopState } from '../../shop/state/shop.state';
 import { announcementsFeature, announcementsFeatureKey, toActiveAnnouncements } from './announcements.feature';
 import { AnnouncementsState, initialAnnouncementsState } from './announcements.state';
 

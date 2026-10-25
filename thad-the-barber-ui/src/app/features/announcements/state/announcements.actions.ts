@@ -1,5 +1,5 @@
 import { createAction, props } from '@ngrx/store';
-import { Announcement } from '../../core/models/announcements/announcement.model';
+import { Announcement } from '../models/announcement.model';
 
 export enum AnnouncementsActionTypes {
   AnnouncementsRequest = '[Announcements] Announcements Requested',

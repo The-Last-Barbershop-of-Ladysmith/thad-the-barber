@@ -1,11 +1,11 @@
 import { HOME_SECTIONS } from '../../../core/config/shop-info';
 import { NavItem } from '../../../shared/models/nav-item.model';
 import { RequestStatus } from '../../../shared/models/request.models';
-import { announcementsFeatureKey } from '../../../store/announcements/announcements.feature';
-import { Announcement } from '../../../core/models/announcements/announcement.model';
-import { AnnouncementsState, initialAnnouncementsState } from '../../../store/announcements/announcements.state';
-import { shopFeatureKey } from '../../../store/shop/shop.feature';
-import { initialShopState } from '../../../store/shop/shop.state';
+import { announcementsFeatureKey } from '../../announcements/state/announcements.feature';
+import { Announcement } from '../../announcements/models/announcement.model';
+import { AnnouncementsState, initialAnnouncementsState } from '../../announcements/state/announcements.state';
+import { shopFeatureKey } from '../../shop/state/shop.feature';
+import { initialShopState } from '../../shop/state/shop.state';
 import { homeFeature, homeFeatureKey } from './home.feature';
 import { HomeState, initialHomeState } from './home.state';
 

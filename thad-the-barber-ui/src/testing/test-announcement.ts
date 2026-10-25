@@ -1,4 +1,4 @@
-import { Announcement } from '../app/core/models/announcements/announcement.model';
+import { Announcement } from '../app/features/announcements/models/announcement.model';
 
 /** A made-up announcement running all of October 2026, for specs that fake today's date inside it. */
 export const TEST_ANNOUNCEMENT: Announcement = {

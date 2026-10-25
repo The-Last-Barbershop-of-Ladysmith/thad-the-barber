@@ -1,5 +1,5 @@
-import { TEST_ANNOUNCEMENT } from '../../../testing/test-announcement';
-import { RequestStatus } from '../../shared/models/request.models';
+import { TEST_ANNOUNCEMENT } from '../../../../testing/test-announcement';
+import { RequestStatus } from '../../../shared/models/request.models';
 import * as AnnouncementsActions from './announcements.actions';
 import { announcementsReducer } from './announcements.reducer';
 import { AnnouncementsState, initialAnnouncementsState } from './announcements.state';

@@ -4,7 +4,7 @@ import { NavItem } from '../../../shared/models/nav-item.model';
 import { FeatureSelectors } from '../../../shared/models/ngrx.models';
 import { RequestStatus } from '../../../shared/models/request.models';
 import { isSettledEmpty } from '../../../shared/utils/request.utils';
-import { announcementsFeature } from '../../../store/announcements/announcements.feature';
+import { announcementsFeature } from '../../announcements/state/announcements.feature';
 import { GalleryPhoto } from '../models/home.models';
 import { homeReducer } from './home.reducer';
 import { HomeState, SmsSignupState } from './home.state';

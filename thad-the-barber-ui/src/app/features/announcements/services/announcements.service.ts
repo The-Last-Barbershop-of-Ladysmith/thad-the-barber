@@ -1,16 +1,16 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
-import { environment } from '../../../environments/environment';
-import { fromIsoDate, toIsoDate } from '../../shared/utils/date.utils';
-import { ButtonVariant } from '../../shared/models/button.models';
-import { LinkKind } from '../../shared/models/link.models';
-import { isButtonVariant } from '../../shared/utils/button.utils';
-import { linkKind } from '../../shared/utils/link.utils';
-import { Announcement } from '../models/announcements/announcement.model';
-import { AnnouncementButton } from '../models/announcements/announcement-button.model';
-import { AnnouncementImage } from '../models/announcements/announcement-image.model';
-import { AnnouncementImagePosition } from '../models/announcements/announcement-image-position.model';
+import { environment } from '../../../../environments/environment';
+import { fromIsoDate, toIsoDate } from '../../../shared/utils/date.utils';
+import { ButtonVariant } from '../../../shared/models/button.models';
+import { LinkKind } from '../../../shared/models/link.models';
+import { isButtonVariant } from '../../../shared/utils/button.utils';
+import { linkKind } from '../../../shared/utils/link.utils';
+import { Announcement } from '../models/announcement.model';
+import { AnnouncementButton } from '../models/announcement-button.model';
+import { AnnouncementImage } from '../models/announcement-image.model';
+import { AnnouncementImagePosition } from '../models/announcement-image-position.model';
 
 type Entry = Record<string, unknown>;
 

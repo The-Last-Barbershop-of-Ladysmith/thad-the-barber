@@ -4,10 +4,10 @@ import { Event, NavigationEnd, Router } from '@angular/router';
 import { Actions, FunctionalEffect, createEffect, ofType } from '@ngrx/effects';
 import { Action, Store } from '@ngrx/store';
 import { Observable, catchError, exhaustMap, filter, map, of, withLatestFrom } from 'rxjs';
-import { Announcement } from '../../core/models/announcements/announcement.model';
-import { AnnouncementsService } from '../../core/services/announcements.service';
-import { RequestStatus } from '../../shared/models/request.models';
-import { AppState } from '../app.state';
+import { Announcement } from '../models/announcement.model';
+import { AnnouncementsService } from '../services/announcements.service';
+import { RequestStatus } from '../../../shared/models/request.models';
+import { AppState } from '../../../store/app.state';
 import * as AnnouncementsActions from './announcements.actions';
 import { announcementsFeature } from './announcements.feature';
 
