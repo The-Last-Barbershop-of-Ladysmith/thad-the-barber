@@ -3,12 +3,12 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Store } from '@ngrx/store';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
-import { PhoneLinks } from '../../../../core/models/shop/phone-links.model';
-import { ShopAddress } from '../../../../core/models/shop/shop-address.model';
-import { HoursList } from '../../../../shared/components/hours-list/hours-list';
+import { PhoneLinks } from '../../../../shared/models/phone-links.model';
+import { ShopAddress } from '../../../shop/models/shop-address.model';
+import { HoursList } from '../../../shop/components/hours-list/hours-list';
 import { SectionHeading } from '../../../../shared/components/section-heading/section-heading';
 import { AppState } from '../../../../store/app.state';
-import { shopFeature } from '../../../../store/shop/shop.feature';
+import { shopFeature } from '../../../shop/state/shop.feature';
 
 /** Map embed plus location, hours and phone details. */
 @Component({

@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, InputSignal, Signal, inject, input } from '@angular/core';
-import { HoursRow } from '../../../core/models/shop/hours-row.model';
-import { ShopHoursService } from '../../../core/services/shop-hours.service';
+import { HoursRow } from '../../models/hours-row.model';
+import { ShopHoursService } from '../../services/shop-hours.service';
 
 export type HoursListVariant = 'table' | 'stacked' | 'compact';
 

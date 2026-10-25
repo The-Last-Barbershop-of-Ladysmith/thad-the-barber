@@ -1,5 +1,5 @@
 import { createAction, props } from '@ngrx/store';
-import { ShopInfo } from '../../core/models/shop/shop-info.model';
+import { ShopInfo } from '../models/shop-info.model';
 
 export enum ShopActionTypes {
   ShopInfoRequest = '[Shop] Shop Info Requested',

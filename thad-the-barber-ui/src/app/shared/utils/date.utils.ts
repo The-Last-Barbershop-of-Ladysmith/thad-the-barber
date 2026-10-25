@@ -1,6 +1,6 @@
 import { formatDate } from '@angular/common';
-import { WeekTime } from '../../core/models/shop/week-time.model';
-import { Weekday } from '../../core/models/shop/weekday.model';
+import { WeekTime } from '../models/week-time.model';
+import { Weekday } from '../models/weekday.model';
 import { WEEKDAY_SHORT_NAMES, WEEK_FROM_SUNDAY } from './weekday.utils';
 
 /** Local-time date helpers. The store keeps dates as ISO strings so state stays serializable. */

@@ -1,4 +1,4 @@
-import { ShopInfo } from './shop-info.model';
+import { ShopInfo } from '../../features/shop/models/shop-info.model';
 
 /**
  * The `ShopInfo` fields shown until `GET /api/shop` answers (so the phone stays reachable while the API is down,

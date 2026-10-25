@@ -1,5 +1,5 @@
-import { TEST_SHOP } from '../../../testing/test-shop';
-import { RequestStatus } from '../../shared/models/request.models';
+import { TEST_SHOP } from '../../../../testing/test-shop';
+import { RequestStatus } from '../../../shared/models/request.models';
 import * as ShopActions from './shop.actions';
 import { shopReducer } from './shop.reducer';
 import { ShopState, initialShopState } from './shop.state';

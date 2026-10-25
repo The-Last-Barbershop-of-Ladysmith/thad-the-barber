@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, input, InputSignal, output, OutputE
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { MessageModule } from 'primeng/message';
-import { PhoneLinks } from '../../../../core/models/shop/phone-links.model';
+import { PhoneLinks } from '../../../../shared/models/phone-links.model';
 import { BookingNotice } from '../../models/booking-notice.model';
 import { BOT_CHECK_FAILED_NOTICE } from '../../utils/booking-notice.utils';
 import { NoticeMessage } from '../notice-message/notice-message';

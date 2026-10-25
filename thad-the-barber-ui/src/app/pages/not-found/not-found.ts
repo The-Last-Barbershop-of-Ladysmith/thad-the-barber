@@ -3,10 +3,10 @@ import { RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { ButtonModule } from 'primeng/button';
 import { HOME_SECTIONS } from '../../core/config/shop-info';
-import { NavItem } from '../../core/models/shop/nav-item.model';
-import { PhoneLinks } from '../../core/models/shop/phone-links.model';
+import { NavItem } from '../../shared/models/nav-item.model';
+import { PhoneLinks } from '../../shared/models/phone-links.model';
 import { AppState } from '../../store/app.state';
-import { shopFeature } from '../../store/shop/shop.feature';
+import { shopFeature } from '../../features/shop/state/shop.feature';
 
 @Component({
   selector: 'app-not-found',

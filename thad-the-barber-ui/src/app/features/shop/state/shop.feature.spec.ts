@@ -1,7 +1,7 @@
-import { TEST_SHOP } from '../../../testing/test-shop';
-import { SHOP_FALLBACK } from '../../core/config/shop-info';
-import { ShopInfo } from '../../core/models/shop/shop-info.model';
-import { RequestStatus } from '../../shared/models/request.models';
+import { TEST_SHOP } from '../../../../testing/test-shop';
+import { SHOP_FALLBACK } from '../../../core/config/shop-info';
+import { ShopInfo } from '../models/shop-info.model';
+import { RequestStatus } from '../../../shared/models/request.models';
 import { shopFeature } from './shop.feature';
 import { ShopState, initialShopState } from './shop.state';
 

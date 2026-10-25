@@ -5,13 +5,13 @@ import { Store } from '@ngrx/store';
 import { ButtonModule } from 'primeng/button';
 import { DrawerModule } from 'primeng/drawer';
 import { filter, map } from 'rxjs';
-import { NavItem } from '../../core/models/shop/nav-item.model';
-import { PhoneLinks } from '../../core/models/shop/phone-links.model';
+import { NavItem } from '../../shared/models/nav-item.model';
+import { PhoneLinks } from '../../shared/models/phone-links.model';
 import { homeFeature } from '../../features/home/state/home.feature';
 import * as LayoutActions from '../../store/app.actions';
 import { layoutFeature } from '../../store/app.feature';
 import { AppState } from '../../store/app.state';
-import { shopFeature } from '../../store/shop/shop.feature';
+import { shopFeature } from '../../features/shop/state/shop.feature';
 
 /** Fixed top bar: section links on desktop, a drawer menu on mobile, "Back to site" on the booking page. */
 @Component({

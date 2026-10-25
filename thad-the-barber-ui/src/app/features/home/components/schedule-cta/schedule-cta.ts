@@ -1,14 +1,14 @@
 import { ChangeDetectionStrategy, Component, Signal, inject } from '@angular/core';
-import { OpenStatus } from '../../../../core/models/shop/open-status.model';
-import { PhoneLinks } from '../../../../core/models/shop/phone-links.model';
+import { OpenStatus } from '../../../shop/models/open-status.model';
+import { PhoneLinks } from '../../../../shared/models/phone-links.model';
 import { RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
-import { ShopHoursService } from '../../../../core/services/shop-hours.service';
-import { HoursList } from '../../../../shared/components/hours-list/hours-list';
+import { ShopHoursService } from '../../../shop/services/shop-hours.service';
+import { HoursList } from '../../../shop/components/hours-list/hours-list';
 import { AppState } from '../../../../store/app.state';
-import { shopFeature } from '../../../../store/shop/shop.feature';
+import { shopFeature } from '../../../shop/state/shop.feature';
 
 /** "Ready for a cut?" panel: live open status, booking + call buttons, weekly hours. */
 @Component({

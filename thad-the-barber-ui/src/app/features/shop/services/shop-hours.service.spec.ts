@@ -1,11 +1,11 @@
 import { TestBed } from '@angular/core/testing';
 import { Store, provideStore } from '@ngrx/store';
-import { TEST_SHOP } from '../../../testing/test-shop';
-import * as ShopActions from '../../store/shop/shop.actions';
-import { shopFeature } from '../../store/shop/shop.feature';
-import { HoursRow } from '../models/shop/hours-row.model';
-import { ShopInfo } from '../models/shop/shop-info.model';
-import { Weekday } from '../models/shop/weekday.model';
+import { TEST_SHOP } from '../../../../testing/test-shop';
+import * as ShopActions from '../state/shop.actions';
+import { shopFeature } from '../state/shop.feature';
+import { HoursRow } from '../models/hours-row.model';
+import { ShopInfo } from '../models/shop-info.model';
+import { Weekday } from '../../../shared/models/weekday.model';
 import { ShopHoursService } from './shop-hours.service';
 
 describe(

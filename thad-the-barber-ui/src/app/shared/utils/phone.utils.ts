@@ -1,4 +1,4 @@
-import { PhoneLinks } from '../../core/models/shop/phone-links.model';
+import { PhoneLinks } from '../models/phone-links.model';
 
 const US_NUMBER: RegExp = /^\+1(\d{3})(\d{3})(\d{4})$/;
 
