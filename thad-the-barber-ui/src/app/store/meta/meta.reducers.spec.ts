@@ -1,12 +1,4 @@
-import {
-  ActionReducer,
-  INIT,
-  combineReducers,
-  createAction,
-  createReducer,
-  on,
-  props,
-} from '@ngrx/store';
+import { ActionReducer, INIT, combineReducers, createAction, createReducer, on, props } from '@ngrx/store';
 import { TEST_SHOP } from '../../../testing/test-shop';
 import { decodeBase64, encodeBase64 } from '../../shared/utils/base64.utils';
 import { layoutReducer } from '../app.reducer';

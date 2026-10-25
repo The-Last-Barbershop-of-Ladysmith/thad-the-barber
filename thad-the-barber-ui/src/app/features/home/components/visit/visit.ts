@@ -1,10 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  Signal,
-  computed,
-  inject,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, Signal, computed, inject } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Store } from '@ngrx/store';
 import { ButtonModule } from 'primeng/button';

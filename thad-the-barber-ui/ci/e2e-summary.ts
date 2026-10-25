@@ -2,11 +2,7 @@
  * Turns the CI run's Playwright JSON report (playwright.config.ts) into Markdown for the job summary and the PR
  * comment: the totals, plus each failed or flaky test with its project. Run with `npm run e2e:summary`.
  */
-import {
-  existsSync,
-  readFileSync,
-  writeFileSync,
-} from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 
 interface TestResult { status: string; }
 

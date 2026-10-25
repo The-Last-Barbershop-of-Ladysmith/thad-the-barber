@@ -235,11 +235,12 @@ module.exports = defineConfig([
       'import-newlines/enforce': [
         'error',
         {
-          // The most items allowed on one line, so 2 wraps from 3.
-          items: 2,
+          // Imports wrap, one name per line, only when they don't fit in 120 characters (as Prettier does), so
+          // import sections stay short; the item count never forces a wrap.
+          items: 1000,
           'max-len': 120,
           semi: true,
-          forceSingleLine: false,
+          forceSingleLine: true,
         },
       ],
 

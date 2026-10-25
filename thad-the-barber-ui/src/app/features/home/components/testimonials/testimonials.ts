@@ -1,9 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  InputSignal,
-  input,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, InputSignal, input } from '@angular/core';
 import { ShopContent } from '../../../../core/models/shop/shop-content.model';
 import { FormsModule } from '@angular/forms';
 import { CardModule } from 'primeng/card';

@@ -1,8 +1,4 @@
-import {
-  ActionReducer,
-  createReducer,
-  on,
-} from '@ngrx/store';
+import { ActionReducer, createReducer, on } from '@ngrx/store';
 import { ShopInfo } from '../../core/models/shop/shop-info.model';
 import { RequestStatus } from '../../shared/models/request.models';
 import * as ShopActions from './shop.actions';

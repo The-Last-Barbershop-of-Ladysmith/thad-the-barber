@@ -1,9 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  Signal,
-  inject,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, Signal, inject } from '@angular/core';
 import { OpenStatus } from '../../../../core/models/shop/open-status.model';
 import { PhoneLinks } from '../../../../core/models/shop/phone-links.model';
 import { RouterLink } from '@angular/router';

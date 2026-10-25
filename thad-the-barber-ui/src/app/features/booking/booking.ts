@@ -18,21 +18,11 @@ import { BookingSettings } from '../../core/models/shop/booking-settings.model';
 import { PhoneLinks } from '../../core/models/shop/phone-links.model';
 import { SessionService } from '../../core/services/session.service';
 import { Backdrop } from '../../shared/components/backdrop/backdrop';
-import {
-  formatShortDate,
-  fromIsoDate,
-  fromMonthKey,
-  toIsoDate,
-  toMonthKey,
-} from '../../shared/utils/date.utils';
+import { formatShortDate, fromIsoDate, fromMonthKey, toIsoDate, toMonthKey } from '../../shared/utils/date.utils';
 import { toE164 } from '../../shared/utils/phone.utils';
 import { ProblemCode } from '../../shared/models/problem-code.model';
 import { getProblemCode } from '../../shared/utils/problem.utils';
-import {
-  PHONE_PATTERN,
-  nameValidators,
-  phoneValidators,
-} from '../../shared/validators/form.validators';
+import { PHONE_PATTERN, nameValidators, phoneValidators } from '../../shared/validators/form.validators';
 import { AppState } from '../../store/app.state';
 import { shopFeature } from '../../store/shop/shop.feature';
 import { BookingSummary, SummaryRow } from './components/booking-summary/booking-summary';
@@ -50,12 +40,7 @@ import { BookingService } from './services/booking.service';
 import * as BookingActions from './state/booking.actions';
 import { bookingFeature } from './state/booking.feature';
 import { toBookingNotice } from './utils/booking-notice.utils';
-import {
-  toBookingWindow,
-  toLongDateTime,
-  toTimeLabel,
-  toTimeSlots,
-} from './utils/booking-time.utils';
+import { toBookingWindow, toLongDateTime, toTimeLabel, toTimeSlots } from './utils/booking-time.utils';
 
 /**
  * Booking page: date → time → details, with a live summary. The month's availability is in the booking slice; the

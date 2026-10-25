@@ -1,8 +1,4 @@
-import {
-  PlaywrightTestConfig,
-  Project,
-  defineConfig,
-} from '@playwright/test';
+import { PlaywrightTestConfig, Project, defineConfig } from '@playwright/test';
 import { environment } from './src/environments/environment.development';
 
 const isCi: boolean = !!process.env['CI'];

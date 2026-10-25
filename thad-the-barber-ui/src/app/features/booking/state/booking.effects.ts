@@ -1,18 +1,7 @@
 import { inject } from '@angular/core';
-import {
-  Actions,
-  FunctionalEffect,
-  createEffect,
-  ofType,
-} from '@ngrx/effects';
+import { Actions, FunctionalEffect, createEffect, ofType } from '@ngrx/effects';
 import { Action } from '@ngrx/store';
-import {
-  Observable,
-  catchError,
-  map,
-  of,
-  switchMap,
-} from 'rxjs';
+import { Observable, catchError, map, of, switchMap } from 'rxjs';
 import { AvailableDay } from '../models/available-day.model';
 import { AvailabilityService } from '../services/availability.service';
 import * as BookingActions from './booking.actions';

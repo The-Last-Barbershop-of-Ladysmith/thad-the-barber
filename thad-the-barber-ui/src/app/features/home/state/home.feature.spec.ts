@@ -2,11 +2,7 @@ import { Announcement } from '../models/home.models';
 import { HOME_SECTIONS } from '../../../core/config/shop-info';
 import { NavItem } from '../../../core/models/shop/nav-item.model';
 import { RequestStatus } from '../../../shared/models/request.models';
-import {
-  homeFeature,
-  homeFeatureKey,
-  toActiveAnnouncements,
-} from './home.feature';
+import { homeFeature, homeFeatureKey, toActiveAnnouncements } from './home.feature';
 import { HomeState, initialHomeState } from './home.state';
 
 describe(

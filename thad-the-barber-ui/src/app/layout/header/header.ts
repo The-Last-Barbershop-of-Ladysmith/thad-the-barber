@@ -1,16 +1,6 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  Signal,
-  inject,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, Signal, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import {
-  Event,
-  NavigationEnd,
-  Router,
-  RouterLink,
-} from '@angular/router';
+import { Event, NavigationEnd, Router, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { ButtonModule } from 'primeng/button';
 import { DrawerModule } from 'primeng/drawer';

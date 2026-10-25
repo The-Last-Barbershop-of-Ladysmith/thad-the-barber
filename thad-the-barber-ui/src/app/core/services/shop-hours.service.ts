@@ -1,23 +1,11 @@
-import {
-  DestroyRef,
-  Injectable,
-  Signal,
-  WritableSignal,
-  computed,
-  inject,
-  signal,
-} from '@angular/core';
+import { DestroyRef, Injectable, Signal, WritableSignal, computed, inject, signal } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { HoursRow } from '../models/shop/hours-row.model';
 import { OpenStatus } from '../models/shop/open-status.model';
 import { ShopOpeningHours } from '../models/shop/shop-opening-hours.model';
 import { WeekTime } from '../models/shop/week-time.model';
 import { Weekday } from '../models/shop/weekday.model';
-import {
-  formatMinutes,
-  fromTimeOfDay,
-  weekTimeIn,
-} from '../../shared/utils/date.utils';
+import { formatMinutes, fromTimeOfDay, weekTimeIn } from '../../shared/utils/date.utils';
 import {
   WEEKDAY_NAMES,
   WEEKDAY_SHORT_NAMES,

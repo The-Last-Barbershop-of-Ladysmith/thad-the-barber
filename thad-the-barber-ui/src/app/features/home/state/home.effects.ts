@@ -1,26 +1,9 @@
 import { isPlatformBrowser } from '@angular/common';
 import { PLATFORM_ID, inject } from '@angular/core';
-import {
-  Actions,
-  FunctionalEffect,
-  createEffect,
-  ofType,
-} from '@ngrx/effects';
+import { Actions, FunctionalEffect, createEffect, ofType } from '@ngrx/effects';
 import { Action } from '@ngrx/store';
-import {
-  Observable,
-  catchError,
-  exhaustMap,
-  filter,
-  map,
-  of,
-  switchMap,
-} from 'rxjs';
-import {
-  Announcement,
-  GalleryPhoto,
-  HomeContent,
-} from '../models/home.models';
+import { Observable, catchError, exhaustMap, filter, map, of, switchMap } from 'rxjs';
+import { Announcement, GalleryPhoto, HomeContent } from '../models/home.models';
 import { AnnouncementsService } from '../services/announcements.service';
 import { GalleryService } from '../services/gallery.service';
 import { HomeContentService } from '../services/home-content.service';

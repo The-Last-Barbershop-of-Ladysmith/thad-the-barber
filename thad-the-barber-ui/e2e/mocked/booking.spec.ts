@@ -1,19 +1,10 @@
-import {
-  Locator,
-  Page,
-  Request,
-  Route,
-} from '@playwright/test';
+import { Locator, Page, Request, Route } from '@playwright/test';
 import { BookingConfirmation } from '../../src/app/features/booking/models/booking-confirmation.model';
 import { BookingRequest } from '../../src/app/features/booking/models/booking-request.model';
 import { ProblemCode } from '../../src/app/shared/models/problem-code.model';
 import { TEST_SHOP } from '../../src/testing/test-shop';
 import { expectNoA11yViolations } from '../support/axe';
-import {
-  fulfillAvailability,
-  isAvailabilityRequest,
-  isBookingRequest,
-} from '../support/booking';
+import { fulfillAvailability, isAvailabilityRequest, isBookingRequest } from '../support/booking';
 import { expect, test } from '../support/fixtures';
 import { fulfillSession, isSessionRequest } from '../support/session';
 

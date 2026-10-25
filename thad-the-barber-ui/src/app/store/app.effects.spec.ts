@@ -1,10 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import {
-  Event,
-  NavigationEnd,
-  NavigationStart,
-  Router,
-} from '@angular/router';
+import { Event, NavigationEnd, NavigationStart, Router } from '@angular/router';
 import { Action } from '@ngrx/store';
 import { Observable, Subject } from 'rxjs';
 import * as LayoutActions from './app.actions';

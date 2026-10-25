@@ -1,16 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import {
-  NO_ERRORS_SCHEMA,
-  WritableSignal,
-  signal,
-} from '@angular/core';
+import { NO_ERRORS_SCHEMA, WritableSignal, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import {
-  Action,
-  ActionsSubject,
-  Store,
-  provideStore,
-} from '@ngrx/store';
+import { Action, ActionsSubject, Store, provideStore } from '@ngrx/store';
 import { Observable, Subject } from 'rxjs';
 import { TEST_SHOP } from '../../../testing/test-shop';
 import { SessionService } from '../../core/services/session.service';

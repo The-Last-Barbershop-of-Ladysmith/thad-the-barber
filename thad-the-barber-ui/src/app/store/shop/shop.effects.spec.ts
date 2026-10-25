@@ -1,22 +1,9 @@
 import { PLATFORM_ID } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import {
-  Event,
-  NavigationEnd,
-  Router,
-} from '@angular/router';
+import { Event, NavigationEnd, Router } from '@angular/router';
 import { Actions } from '@ngrx/effects';
-import {
-  Action,
-  Store,
-  provideStore,
-} from '@ngrx/store';
-import {
-  Observable,
-  Subject,
-  of,
-  throwError,
-} from 'rxjs';
+import { Action, Store, provideStore } from '@ngrx/store';
+import { Observable, Subject, of, throwError } from 'rxjs';
 import { TEST_SHOP } from '../../../testing/test-shop';
 import { ShopInfo } from '../../core/models/shop/shop-info.model';
 import { ShopService } from '../../core/services/shop.service';

@@ -1,26 +1,9 @@
 import { isPlatformBrowser } from '@angular/common';
 import { PLATFORM_ID, inject } from '@angular/core';
-import {
-  Event,
-  NavigationEnd,
-  Router,
-} from '@angular/router';
-import {
-  Actions,
-  FunctionalEffect,
-  createEffect,
-  ofType,
-} from '@ngrx/effects';
+import { Event, NavigationEnd, Router } from '@angular/router';
+import { Actions, FunctionalEffect, createEffect, ofType } from '@ngrx/effects';
 import { Action, Store } from '@ngrx/store';
-import {
-  Observable,
-  catchError,
-  exhaustMap,
-  filter,
-  map,
-  of,
-  withLatestFrom,
-} from 'rxjs';
+import { Observable, catchError, exhaustMap, filter, map, of, withLatestFrom } from 'rxjs';
 import { ShopInfo } from '../../core/models/shop/shop-info.model';
 import { ShopService } from '../../core/services/shop.service';
 import { RequestStatus } from '../../shared/models/request.models';

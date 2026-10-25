@@ -1,24 +1,6 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import {
-  Injectable,
-  Signal,
-  WritableSignal,
-  inject,
-  signal,
-} from '@angular/core';
-import {
-  Observable,
-  catchError,
-  defer,
-  finalize,
-  map,
-  of,
-  share,
-  switchMap,
-  tap,
-  throwError,
-  timeout,
-} from 'rxjs';
+import { Injectable, Signal, WritableSignal, inject, signal } from '@angular/core';
+import { Observable, catchError, defer, finalize, map, of, share, switchMap, tap, throwError, timeout } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ProblemCode } from '../../shared/models/problem-code.model';
 import { getProblemCode } from '../../shared/utils/problem.utils';

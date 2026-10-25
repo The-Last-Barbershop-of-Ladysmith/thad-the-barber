@@ -1,8 +1,4 @@
-import {
-  Locator,
-  Page,
-  Route,
-} from '@playwright/test';
+import { Locator, Page, Route } from '@playwright/test';
 import { ShopInfo } from '../../src/app/core/models/shop/shop-info.model';
 import { TEST_SHOP } from '../../src/testing/test-shop';
 import { expectNoA11yViolations } from '../support/axe';

@@ -1,11 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  InputSignal,
-  WritableSignal,
-  input,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, InputSignal, WritableSignal, input, signal } from '@angular/core';
 import { CardModule } from 'primeng/card';
 import { GalleriaModule } from 'primeng/galleria';
 import { SectionHeading } from '../../../../shared/components/section-heading/section-heading';

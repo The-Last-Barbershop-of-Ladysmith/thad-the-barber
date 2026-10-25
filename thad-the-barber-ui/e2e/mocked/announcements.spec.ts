@@ -1,17 +1,7 @@
-import {
-  Locator,
-  Page,
-  Response,
-  Route,
-} from '@playwright/test';
+import { Locator, Page, Response, Route } from '@playwright/test';
 import { expectNoA11yViolations } from '../support/axe';
 import { expect, test } from '../support/fixtures';
-import {
-  ACTIVE_ANNOUNCEMENT_TITLES,
-  ANNOUNCEMENTS_URL,
-  GALLERY_LISTING_URL,
-  MEDIA_BASE_URL,
-} from '../support/media';
+import { ACTIVE_ANNOUNCEMENT_TITLES, ANNOUNCEMENTS_URL, GALLERY_LISTING_URL, MEDIA_BASE_URL } from '../support/media';
 import { collectPageErrors } from '../support/page-errors';
 
 interface ReloadMarker { e2eNoReload?: boolean; }

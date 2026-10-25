@@ -6,16 +6,8 @@ import {
   AngularPlugin,
   ApplicationinsightsAngularpluginErrorService,
 } from '@microsoft/applicationinsights-angularplugin-js';
-import {
-  DistributedTracingModes,
-  IConfig,
-  IConfiguration,
-} from '@microsoft/applicationinsights-web';
-import {
-  TelemetrySettings,
-  provideTelemetry,
-  telemetryConfig,
-} from './provide-telemetry';
+import { DistributedTracingModes, IConfig, IConfiguration } from '@microsoft/applicationinsights-web';
+import { TelemetrySettings, provideTelemetry, telemetryConfig } from './provide-telemetry';
 
 const SETTINGS: TelemetrySettings = {
   appInsightsConnectionString: 'InstrumentationKey=00000000-0000-0000-0000-000000000000;IngestionEndpoint=https://ingest.example.com/',

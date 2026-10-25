@@ -2,12 +2,7 @@ import { PLATFORM_ID } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Actions } from '@ngrx/effects';
 import { Action } from '@ngrx/store';
-import {
-  Observable,
-  Subject,
-  of,
-  throwError,
-} from 'rxjs';
+import { Observable, Subject, of, throwError } from 'rxjs';
 import { Announcement, GalleryPhoto } from '../models/home.models';
 import { AnnouncementsService } from '../services/announcements.service';
 import { GalleryService } from '../services/gallery.service';

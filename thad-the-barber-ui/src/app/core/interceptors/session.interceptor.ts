@@ -1,17 +1,6 @@
-import {
-  HttpErrorResponse,
-  HttpEvent,
-  HttpHandlerFn,
-  HttpInterceptorFn,
-  HttpRequest,
-} from '@angular/common/http';
+import { HttpErrorResponse, HttpEvent, HttpHandlerFn, HttpInterceptorFn, HttpRequest } from '@angular/common/http';
 import { inject } from '@angular/core';
-import {
-  Observable,
-  catchError,
-  switchMap,
-  throwError,
-} from 'rxjs';
+import { Observable, catchError, switchMap, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { SessionService } from '../services/session.service';
 import { ANONYMOUS_REQUEST } from './anonymous-request.token';

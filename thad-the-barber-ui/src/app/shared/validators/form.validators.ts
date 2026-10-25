@@ -1,9 +1,4 @@
-import {
-  AbstractControl,
-  ValidationErrors,
-  ValidatorFn,
-  Validators,
-} from '@angular/forms';
+import { AbstractControl, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 
 /** Matches the display format produced by the `(999) 999-9999` input mask. */
 export const PHONE_PATTERN: RegExp = /^\(\d{3}\) \d{3}-\d{4}$/;

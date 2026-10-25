@@ -1,14 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
-import {
-  Page,
-  expect,
-  test,
-} from '@playwright/test';
-import {
-  AxeResults,
-  NodeResult,
-  Result,
-} from 'axe-core';
+import { Page, expect, test } from '@playwright/test';
+import { AxeResults, NodeResult, Result } from 'axe-core';
 import { KNOWN_A11Y_ISSUES, KnownA11yIssue } from './known-a11y-issues';
 
 interface ViolationSummary {

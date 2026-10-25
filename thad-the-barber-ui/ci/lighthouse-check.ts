@@ -1,8 +1,4 @@
-import {
-  readFileSync,
-  readdirSync,
-  writeFileSync,
-} from 'node:fs';
+import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 interface Category {

@@ -1,9 +1,5 @@
 import { Page, Route } from '@playwright/test';
-import {
-  expect,
-  isTelemetryIngestion,
-  test,
-} from '../support/fixtures';
+import { expect, isTelemetryIngestion, test } from '../support/fixtures';
 import { servedEnvironment } from '../support/served-environment';
 
 interface Envelope { data?: { baseType?: string; baseData?: { url?: string; }; }; }

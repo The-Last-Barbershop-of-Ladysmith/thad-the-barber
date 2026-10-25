@@ -1,8 +1,4 @@
-import {
-  ActionReducer,
-  createReducer,
-  on,
-} from '@ngrx/store';
+import { ActionReducer, createReducer, on } from '@ngrx/store';
 import { RequestStatus } from '../../../shared/models/request.models';
 import { AvailableDay } from '../models/available-day.model';
 import * as BookingActions from './booking.actions';

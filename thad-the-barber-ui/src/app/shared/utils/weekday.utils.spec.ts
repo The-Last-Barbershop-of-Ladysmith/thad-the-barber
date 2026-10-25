@@ -1,9 +1,5 @@
 import { Weekday } from '../../core/models/shop/weekday.model';
-import {
-  WEEKDAY_SHORT_NAMES,
-  toWeekday,
-  weekdaySpanLabel,
-} from './weekday.utils';
+import { WEEKDAY_SHORT_NAMES, toWeekday, weekdaySpanLabel } from './weekday.utils';
 
 describe(
   'weekday utils',

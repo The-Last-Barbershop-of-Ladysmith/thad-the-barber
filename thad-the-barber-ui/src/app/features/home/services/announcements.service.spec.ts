@@ -1,10 +1,6 @@
 import { provideHttpClient } from '@angular/common/http';
 import { ButtonVariant } from '../../../shared/models/button.models';
-import {
-  HttpTestingController,
-  TestRequest,
-  provideHttpClientTesting,
-} from '@angular/common/http/testing';
+import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { environment } from '../../../../environments/environment';
 import { Announcement, AnnouncementImagePosition } from '../models/home.models';

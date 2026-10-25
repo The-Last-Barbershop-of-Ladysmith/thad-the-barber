@@ -1,8 +1,4 @@
-import {
-  MemoizedSelector,
-  createFeature,
-  createSelector,
-} from '@ngrx/store';
+import { MemoizedSelector, createFeature, createSelector } from '@ngrx/store';
 import { HOME_SECTIONS } from '../../../core/config/shop-info';
 import { NavItem } from '../../../core/models/shop/nav-item.model';
 import { FeatureSelectors } from '../../../shared/models/ngrx.models';
