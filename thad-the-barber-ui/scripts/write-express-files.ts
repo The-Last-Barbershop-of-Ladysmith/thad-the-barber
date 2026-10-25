@@ -1,9 +1,5 @@
 import { build } from 'esbuild';
-import {
-  mkdirSync,
-  readFileSync,
-  writeFileSync,
-} from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 /** The environment fields the CSP needs. Node runs this file unbuilt, so it can't import `Environment`. */
