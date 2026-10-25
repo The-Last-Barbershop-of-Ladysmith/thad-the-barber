@@ -1,6 +1,8 @@
 import { TEST_ANNOUNCEMENT } from '../../../testing/test-announcement';
 import { Announcement } from '../../core/models/announcements/announcement.model';
 import { RequestStatus } from '../../shared/models/request.models';
+import { shopFeatureKey } from '../shop/shop.feature';
+import { initialShopState } from '../shop/shop.state';
 import { announcementsFeature, announcementsFeatureKey, toActiveAnnouncements } from './announcements.feature';
 import { AnnouncementsState, initialAnnouncementsState } from './announcements.state';
 
@@ -25,7 +27,7 @@ describe(
     });
 
     it(
-      'keeps announcements from their first day through their last, by the local date',
+      'keeps announcements from their first day through their last, by the local date until the shop loads',
       (): void => {
         vi.useFakeTimers({
           now: new Date(
@@ -68,7 +70,7 @@ describe(
             '2025-12-31',
             '2027-01-01',
           ),
-        ]).map((active: Announcement): string => active.title);
+        ], null).map((active: Announcement): string => active.title);
 
         expect(titles).toEqual([
           'Ends today',
@@ -98,7 +100,33 @@ describe(
             '2026-10-01',
             '2026-10-15',
           ),
-        ])).toEqual([]);
+        ], null)).toEqual([]);
+      },
+    );
+
+    it(
+      'counts the day on the shop calendar once its timezone is known, wherever the visitor is (BR-30)',
+      (): void => {
+        // 2 a.m. on the 15th in Honolulu (UTC-10) is already 2 a.m. on the 16th in Kiritimati (UTC+14).
+        vi.useFakeTimers({ now: new Date('2026-10-15T12:00:00Z') });
+        const announcements: Announcement[] = [
+          announcement(
+            'Last day the 15th',
+            '2026-10-01',
+            '2026-10-15',
+          ),
+          announcement(
+            'First day the 16th',
+            '2026-10-16',
+            '2026-10-31',
+          ),
+        ];
+
+        const titlesIn: (timeZone: string) => string[] = (timeZone: string): string[] =>
+          toActiveAnnouncements(announcements, timeZone).map((active: Announcement): string => active.title);
+
+        expect(titlesIn('Pacific/Honolulu')).toEqual(['Last day the 15th']);
+        expect(titlesIn('Pacific/Kiritimati')).toEqual(['First day the 16th']);
       },
     );
   },
@@ -108,7 +136,10 @@ describe(
   'selectIsHidden',
   (): void => {
     function isHidden(announcements: AnnouncementsState): boolean {
-      return announcementsFeature.selectIsHidden({ [announcementsFeatureKey]: announcements });
+      return announcementsFeature.selectIsHidden({
+        [announcementsFeatureKey]: announcements,
+        [shopFeatureKey]: initialShopState,
+      });
     }
 
     beforeEach((): void => {

@@ -4,6 +4,8 @@ import { RequestStatus } from '../../../shared/models/request.models';
 import { announcementsFeatureKey } from '../../../store/announcements/announcements.feature';
 import { Announcement } from '../../../core/models/announcements/announcement.model';
 import { AnnouncementsState, initialAnnouncementsState } from '../../../store/announcements/announcements.state';
+import { shopFeatureKey } from '../../../store/shop/shop.feature';
+import { initialShopState } from '../../../store/shop/shop.state';
 import { homeFeature, homeFeatureKey } from './home.feature';
 import { HomeState, initialHomeState } from './home.state';
 
@@ -33,7 +35,11 @@ describe(
     };
 
     function fragments(home: HomeState, announcements: AnnouncementsState): string[] {
-      return homeFeature.selectHomeSections({ [homeFeatureKey]: home, [announcementsFeatureKey]: announcements })
+      return homeFeature.selectHomeSections({
+        [homeFeatureKey]: home,
+        [announcementsFeatureKey]: announcements,
+        [shopFeatureKey]: initialShopState,
+      })
         .map((section: NavItem): string => section.fragment);
     }
 

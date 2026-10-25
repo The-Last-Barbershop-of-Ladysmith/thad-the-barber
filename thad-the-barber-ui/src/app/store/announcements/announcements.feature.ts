@@ -2,8 +2,9 @@ import { MemoizedSelector, createFeature, createSelector } from '@ngrx/store';
 import { Announcement } from '../../core/models/announcements/announcement.model';
 import { FeatureSelectors } from '../../shared/models/ngrx.models';
 import { RequestStatus } from '../../shared/models/request.models';
-import { toIsoDate } from '../../shared/utils/date.utils';
+import { toIsoDate, toIsoDateIn } from '../../shared/utils/date.utils';
 import { isSettledEmpty } from '../../shared/utils/request.utils';
+import { shopFeature } from '../shop/shop.feature';
 import { announcementsReducer } from './announcements.reducer';
 import { AnnouncementsState } from './announcements.state';
 
@@ -30,6 +31,7 @@ export const announcementsFeature = createFeature({
   }: FeatureSelectors<AnnouncementsState>): AnnouncementsExtraSelectors => {
     const selectActive: MemoizedSelector<object, Announcement[]> = createSelector(
       selectAnnouncements,
+      shopFeature.selectTimeZone,
       toActiveAnnouncements,
     );
     return {
@@ -43,9 +45,18 @@ export const announcementsFeature = createFeature({
   },
 });
 
-/** BR-30: the ones showing today, from the first day through the last, by the visitor's local date. */
-export function toActiveAnnouncements(announcements: Announcement[]): Announcement[] {
-  const today: string = toIsoDate(new Date());
+/** BR-30: the ones showing today, from the first day through the last, on the shop's calendar. */
+export function toActiveAnnouncements(announcements: Announcement[], timeZone: string | null): Announcement[] {
+  const today: string = toShopToday(timeZone);
   return announcements.filter((announcement: Announcement): boolean =>
     announcement.startDate <= today && today <= announcement.endDate);
+}
+
+/** The visitor's date stands in until the shop (and its timezone) first loads. */
+function toShopToday(timeZone: string | null): string {
+  const now: Date = new Date();
+  if (timeZone === null) {
+    return toIsoDate(now);
+  }
+  return toIsoDateIn(timeZone, now);
 }
