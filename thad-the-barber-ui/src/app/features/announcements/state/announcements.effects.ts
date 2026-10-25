@@ -7,6 +7,7 @@ import { Observable, catchError, exhaustMap, filter, map, of, withLatestFrom } f
 import { Announcement } from '../models/announcement.model';
 import { AnnouncementsService } from '../services/announcements.service';
 import { RequestStatus } from '../../../shared/models/request.models';
+import * as HomeActions from '../../home/state/home.actions';
 import { AppState } from '../../../store/app.state';
 import * as AnnouncementsActions from './announcements.actions';
 import { announcementsFeature } from './announcements.feature';
@@ -27,6 +28,23 @@ export const requestAnnouncementsOnNavigation: FunctionalEffect = createEffect(
       withLatestFrom(store.select(announcementsFeature.selectLoadStatus)),
       filter(([, status]: [NavigationEnd, RequestStatus]): boolean =>
         status === RequestStatus.Idle || status === RequestStatus.Error),
+      map((): Action => AnnouncementsActions.AnnouncementsRequest()),
+    ),
+  { functional: true },
+);
+
+/**
+ * Opening the home page fetches them again, so an edit or deletion shows without a reload, and a tab left open
+ * overnight drops the ones that ended. The list on screen stays until the new one arrives.
+ */
+export const refreshAnnouncementsOnHomeOpen: FunctionalEffect = createEffect(
+  (
+    actions$: Actions = inject<Actions>(Actions),
+    platformId: object = inject(PLATFORM_ID),
+  ): Observable<Action> =>
+    actions$.pipe(
+      ofType(HomeActions.HomePageOpen),
+      filter((): boolean => isPlatformBrowser(platformId)),
       map((): Action => AnnouncementsActions.AnnouncementsRequest()),
     ),
   { functional: true },

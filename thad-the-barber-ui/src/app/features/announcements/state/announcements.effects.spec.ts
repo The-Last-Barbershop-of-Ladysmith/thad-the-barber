@@ -7,8 +7,13 @@ import { Observable, Subject, of, throwError } from 'rxjs';
 import { TEST_ANNOUNCEMENT } from '../../../../testing/test-announcement';
 import { Announcement } from '../models/announcement.model';
 import { AnnouncementsService } from '../services/announcements.service';
+import * as HomeActions from '../../home/state/home.actions';
 import * as AnnouncementsActions from './announcements.actions';
-import { loadAnnouncements, requestAnnouncementsOnNavigation } from './announcements.effects';
+import {
+  loadAnnouncements,
+  refreshAnnouncementsOnHomeOpen,
+  requestAnnouncementsOnNavigation,
+} from './announcements.effects';
 import { announcementsFeature } from './announcements.feature';
 
 describe(
@@ -89,6 +94,46 @@ describe(
         navigate('/');
 
         expect(emitted).toEqual([]);
+      },
+    );
+  },
+);
+
+describe(
+  'refreshAnnouncementsOnHomeOpen',
+  (): void => {
+    function run(platform: string): Action[] {
+      const actions$: Subject<Action> = new Subject<Action>();
+      TestBed.configureTestingModule({
+        providers: [
+          { provide: Actions, useValue: new Actions(actions$) },
+          { provide: PLATFORM_ID, useValue: platform },
+        ],
+      });
+      const emitted: Action[] = [];
+      TestBed.runInInjectionContext((): Observable<Action> => refreshAnnouncementsOnHomeOpen() as Observable<Action>)
+        .subscribe((action: Action): void => {
+          emitted.push(action);
+        });
+      actions$.next(HomeActions.HomePageOpen());
+      actions$.next(HomeActions.HomePageOpen());
+      return emitted;
+    }
+
+    it(
+      'requests the announcements again every time the home page opens, even once they have loaded',
+      (): void => {
+        expect(run('browser')).toEqual([
+          AnnouncementsActions.AnnouncementsRequest(),
+          AnnouncementsActions.AnnouncementsRequest(),
+        ]);
+      },
+    );
+
+    it(
+      'does nothing while prerendering',
+      (): void => {
+        expect(run('server')).toEqual([]);
       },
     );
   },

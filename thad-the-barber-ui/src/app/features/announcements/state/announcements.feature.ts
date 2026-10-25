@@ -19,7 +19,8 @@ export const announcementsFeatureKey: 'announcements' = 'announcements' as const
 
 /**
  * The announcements in the media container (#30), registered at bootstrap because the header and footer hide their
- * link on every page when there are none (BR-32). Not saved: a deleted announcement must never show again.
+ * link on every page when there are none (BR-32). Not saved, so a deleted announcement never comes back from
+ * storage; it goes on the next home visit or reload.
  */
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the Feature type.
 export const announcementsFeature = createFeature({
