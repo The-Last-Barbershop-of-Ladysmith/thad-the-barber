@@ -39,6 +39,8 @@ export function localStorageSyncReducer<State>(reducer: ActionReducer<State>): A
   return localStorageSync({
     keys,
     rehydrate: true,
+    // Dates stay the ISO strings the slices hold; the library would otherwise turn them into `Date` objects.
+    restoreDates: false,
     checkStorageAvailability: true,
     storageKeySerializer: (key: string): string => `${STORAGE_PREFIX}-${key}`,
   })(reducer);
