@@ -1,10 +1,9 @@
-import { NoticeFallback } from './notice-fallback.model';
 import { NoticeSeverity } from './notice-severity.model';
 
-/** A message the booking page shows inline, mapped from the API's error `code`, never its raw text. */
+/** A message the booking page shows inline: a booking made, or a problem mapped from the API's error `code`. */
 export interface BookingNotice {
   severity: NoticeSeverity;
+  title?: string;
   text: string;
-  fallback: NoticeFallback;
   canRetry: boolean;
 }

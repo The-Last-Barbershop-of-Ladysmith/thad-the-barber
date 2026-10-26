@@ -1,6 +1,6 @@
 import { testSavedConfirmation } from '../../../../testing/test-booking';
 import { SavedConfirmation } from '../models/saved-confirmation.model';
-import { toKeptConfirmation } from './saved-confirmation.utils';
+import { toKeptBooking, toKeptConfirmation } from './saved-confirmation.utils';
 
 /** Saved 26 hours before its 2026-10-03T20:00Z appointment. */
 const savedConfirmation: SavedConfirmation = testSavedConfirmation('2026-10-02T18:00:00Z');
@@ -64,6 +64,26 @@ describe(
         for (const saved of unreadable) {
           expect(toKeptConfirmation(saved)).toEqual({ savedConfirmation: null });
         }
+      },
+    );
+  },
+);
+
+describe(
+  'toKeptBooking',
+  (): void => {
+    it(
+      'returns the booking while it is kept',
+      (): void => {
+        expect(toKeptBooking(savedConfirmation, new Date('2026-10-03T12:00:00Z'))).toEqual(savedConfirmation.booking);
+      },
+    );
+
+    it(
+      'returns none once it is no longer kept, or when nothing was saved',
+      (): void => {
+        expect(toKeptBooking(savedConfirmation, new Date('2026-10-03T18:00:00Z'))).toBeNull();
+        expect(toKeptBooking(null)).toBeNull();
       },
     );
   },

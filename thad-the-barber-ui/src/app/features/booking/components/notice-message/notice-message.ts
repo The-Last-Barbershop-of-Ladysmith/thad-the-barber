@@ -2,19 +2,23 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  inject,
   input,
   InputSignal,
   output,
   OutputEmitterRef,
   Signal,
 } from '@angular/core';
-import { ButtonModule } from 'primeng/button';
+import { ButtonModule, ButtonSeverity } from 'primeng/button';
+import { Store } from '@ngrx/store';
 import { MessageModule } from 'primeng/message';
 import { PhoneLinks } from '../../../../shared/models/phone-links.model';
+import { AppState } from '../../../../store/app.state';
+import { shopFeature } from '../../../shop/state/shop.feature';
 import { BookingNotice } from '../../models/booking-notice.model';
-import { NoticeFallback } from '../../models/notice-fallback.model';
+import { NoticeSeverity } from '../../models/notice-severity.model';
 
-/** An inline booking message with, when the notice asks for them, Square booking, call and text links and a retry. */
+/** An inline booking message. Every problem ends with call, text and Square booking links, and maybe a retry. */
 @Component({
   selector: 'app-notice-message',
   imports: [ButtonModule, MessageModule],
@@ -24,12 +28,23 @@ import { NoticeFallback } from '../../models/notice-fallback.model';
 })
 export class NoticeMessage {
   readonly notice: InputSignal<BookingNotice> = input.required<BookingNotice>();
-  readonly phone: InputSignal<PhoneLinks> = input.required<PhoneLinks>();
-  readonly bookingUrl: InputSignal<string> = input.required<string>();
-
   readonly retry: OutputEmitterRef<void> = output();
 
-  protected readonly noticeFallback: typeof NoticeFallback = NoticeFallback;
-  protected readonly hasContactLinks: Signal<boolean> = computed((): boolean =>
-    this.notice().fallback !== NoticeFallback.None);
+  private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
+  protected readonly phone: Signal<PhoneLinks> = this.store.selectSignal(shopFeature.selectPhoneLinks);
+  protected readonly bookingUrl: Signal<string> = this.store.selectSignal(shopFeature.selectBookingUrl);
+
+  /** Every problem ends with the phone, text and Square's booking site, so a customer is never stuck (BR-14). */
+  protected readonly isProblem: Signal<boolean> = computed((): boolean =>
+    this.notice().severity !== NoticeSeverity.Success);
+
+  /** PrimeNG calls the error severity `danger`. */
+  private readonly buttonSeverities: Record<NoticeSeverity, ButtonSeverity> = {
+    [NoticeSeverity.Success]: 'success',
+    [NoticeSeverity.Warn]: 'warn',
+    [NoticeSeverity.Error]: 'danger',
+  };
+
+  protected readonly noticeSeverityToButtonSeverity: Signal<ButtonSeverity> = computed((): ButtonSeverity =>
+    this.buttonSeverities[this.notice().severity]);
 }

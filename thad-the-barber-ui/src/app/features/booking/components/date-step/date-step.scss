@@ -1,38 +1,38 @@
-.step-header {
+.date-step-header {
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
-.legend {
+.availability-legend {
   display: flex;
   flex-wrap: wrap;
   gap: 1rem;
   font-size: 0.75rem;
   color: var(--p-surface-200);
 
-  .legend-item {
+  .legend-entry {
     display: flex;
     align-items: center;
     gap: 0.375rem;
   }
 
   // Swatches match the day tiles styled in theme/tokens/components/datepicker.ts.
-  .swatch {
+  .legend-swatch {
     width: 0.75rem;
     height: 0.75rem;
     border-radius: var(--p-border-radius-sm);
 
-    &.open {
+    &.is-available {
       background: color-mix(in srgb, var(--p-surface-50) 16%, transparent);
     }
 
-    &.closed {
+    &.is-unavailable {
       background: color-mix(in srgb, var(--p-surface-50) 4%, transparent);
       outline: 1px solid color-mix(in srgb, var(--p-surface-50) 15%, transparent);
     }
 
-    &.selected {
+    &.is-selected {
       background: var(--p-primary-color);
     }
   }

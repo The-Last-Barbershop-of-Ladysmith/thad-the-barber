@@ -107,7 +107,7 @@ test.describe(
 
         await page.reload();
 
-        await expect(page.getByTestId('booking-confirmation')).toBeVisible();
+        await expect(page.getByTestId('saved-booking')).toBeVisible();
         const saved: string = decodeBase64(await page.evaluate((): string => localStorage.getItem('ttb-booking') ?? ''));
         expect(Object.keys(JSON.parse(saved) as object)).toEqual(['savedConfirmation']);
         expect(saved).not.toContain('Jordan');
@@ -130,7 +130,7 @@ test.describe(
         await page.goto('/book');
         await waitForShop(page);
 
-        await expect(page.getByTestId('booking-confirmation')).toHaveCount(0);
+        await expect(page.getByTestId('saved-booking')).toHaveCount(0);
         const saved: string = decodeBase64(await page.evaluate((): string => localStorage.getItem('ttb-booking') ?? ''));
         expect(JSON.parse(saved)).toEqual({ savedConfirmation: null });
       },
@@ -212,14 +212,14 @@ test.describe(
 
         const notice: Locator = page.getByTestId('booking-notice');
         await expect(notice).toHaveClass(/p-message-warn/);
-        await expect(notice.getByTestId('notice-call')).toHaveCount(0);
+        await expect(notice.getByTestId('notice-booking-site')).toHaveAttribute('href', TEST_SHOP.squareBookingSiteUrl ?? '');
         await expect.poll((): number => availabilityLoads).toBe(2);
         await expectNoA11yViolations(page);
       },
     );
 
     test(
-      'offers the shop phone, not the Square booking site, when the booking limit is reached',
+      'offers the shop phone and the Square booking site when the booking limit is reached',
       async ({ page }: { page: Page; }): Promise<void> => {
         await page.route(isBookingRequest, (route: Route): Promise<void> => problem(
           route,
@@ -234,8 +234,7 @@ test.describe(
         await expect(notice).toHaveClass(/p-message-warn/);
         await expect(notice.getByTestId('notice-call')).toHaveAttribute('href', `tel:${TEST_SHOP.phone}`);
         await expect(notice.getByTestId('notice-text')).toHaveAttribute('href', `sms:${TEST_SHOP.phone}`);
-        // Square's booking site doesn't know the per-phone cap, so it isn't offered (BR-13).
-        await expect(notice.getByTestId('notice-booking-site')).toHaveCount(0);
+        await expect(notice.getByTestId('notice-booking-site')).toHaveAttribute('href', TEST_SHOP.squareBookingSiteUrl ?? '');
         await expectNoA11yViolations(page);
       },
     );

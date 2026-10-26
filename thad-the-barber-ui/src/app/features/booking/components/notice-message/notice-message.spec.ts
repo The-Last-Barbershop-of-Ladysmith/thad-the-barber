@@ -1,25 +1,31 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Store, provideStore } from '@ngrx/store';
+import { TEST_SHOP } from '../../../../../testing/test-shop';
 import { PhoneLinks } from '../../../../shared/models/phone-links.model';
+import { AppState } from '../../../../store/app.state';
+import * as ShopActions from '../../../shop/state/shop.actions';
+import { shopFeature } from '../../../shop/state/shop.feature';
 import { BookingNotice } from '../../models/booking-notice.model';
-import { NoticeFallback } from '../../models/notice-fallback.model';
 import { NoticeSeverity } from '../../models/notice-severity.model';
 import { NoticeMessage } from './notice-message';
 
 describe(
   'NoticeMessage',
   (): void => {
-    const phone: PhoneLinks = {
-      display: '(000) 555-01x9',
-      tel: 'tel:+10005550109',
-      sms: 'sms:+10005550109',
-    };
-    const bookingUrl: string = 'https://square.example/book/MADE-UP';
+    let phone: PhoneLinks;
+    let bookingUrl: string;
+
+    beforeEach((): void => {
+      TestBed.configureTestingModule({ providers: [provideStore({ [shopFeature.name]: shopFeature.reducer })] });
+      const store: Store<AppState> = TestBed.inject<Store<AppState>>(Store);
+      store.dispatch(ShopActions.ShopInfoRequestSuccess({ shopInfo: TEST_SHOP }));
+      phone = store.selectSignal(shopFeature.selectPhoneLinks)();
+      bookingUrl = store.selectSignal(shopFeature.selectBookingUrl)();
+    });
 
     function render(notice: BookingNotice): ComponentFixture<NoticeMessage> {
       const fixture: ComponentFixture<NoticeMessage> = TestBed.createComponent(NoticeMessage);
       fixture.componentRef.setInput('notice', notice);
-      fixture.componentRef.setInput('phone', phone);
-      fixture.componentRef.setInput('bookingUrl', bookingUrl);
       fixture.detectChanges();
       return fixture;
     }
@@ -29,12 +35,11 @@ describe(
     }
 
     it(
-      'offers the Square booking site, call and text links and a retry when the notice asks for them',
+      'ends every problem with call, text and Square booking site links, plus a retry when it can be retried',
       (): void => {
         const fixture: ComponentFixture<NoticeMessage> = render({
           severity: NoticeSeverity.Error,
           text: 'Made-up failure',
-          fallback: NoticeFallback.BookingSite,
           canRetry: true,
         });
         let retries: number = 0;
@@ -52,16 +57,19 @@ describe(
     );
 
     it(
-      'shows only the text for a notice without links or retry',
+      'shows a success with its title and text, without links or retry',
       (): void => {
         const fixture: ComponentFixture<NoticeMessage> = render({
-          severity: NoticeSeverity.Warn,
-          text: 'Made-up warning',
-          fallback: NoticeFallback.None,
+          severity: NoticeSeverity.Success,
+          title: 'Made-up title',
+          text: 'Made-up success',
           canRetry: false,
         });
 
-        expect(find(fixture, 'booking-notice')?.textContent).toContain('Made-up warning');
+        const host: HTMLElement = fixture.nativeElement as HTMLElement;
+        expect(host.textContent).toContain('Made-up title');
+        expect(host.textContent).toContain('Made-up success');
+        expect(find(fixture, 'booking-notice')).toBeNull();
         expect(find(fixture, 'notice-booking-site')).toBeNull();
         expect(find(fixture, 'notice-call')).toBeNull();
         expect(find(fixture, 'notice-retry')).toBeNull();

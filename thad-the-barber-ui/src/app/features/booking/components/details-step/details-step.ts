@@ -1,14 +1,9 @@
-import { ChangeDetectionStrategy, Component, input, InputSignal } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { ChangeDetectionStrategy, Component, InputSignal, input } from '@angular/core';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { InputMaskModule } from 'primeng/inputmask';
 import { InputTextModule } from 'primeng/inputtext';
 
-export type BookingDetailsForm = FormGroup<{
-  name: FormControl<string>;
-  phone: FormControl<string>;
-}>;
-
-/** Step 3: customer name and mobile number. The form group is owned by the booking page. */
+/** Step 3: customer name and mobile number. */
 @Component({
   selector: 'app-details-step',
   imports: [
@@ -20,5 +15,6 @@ export type BookingDetailsForm = FormGroup<{
   templateUrl: './details-step.html',
 })
 export class DetailsStep {
-  readonly form: InputSignal<BookingDetailsForm> = input.required<BookingDetailsForm>();
+  readonly nameControl: InputSignal<FormControl<string>> = input.required<FormControl<string>>();
+  readonly phoneControl: InputSignal<FormControl<string>> = input.required<FormControl<string>>();
 }

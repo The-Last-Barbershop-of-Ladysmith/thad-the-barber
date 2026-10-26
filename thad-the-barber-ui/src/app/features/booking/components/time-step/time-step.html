@@ -1,16 +1,17 @@
 <section class="stack gap-3">
   <span class="eyebrow">2 — Pick a time</span>
-  @if (!day()) {
-    <div class="empty">Select a day to see open times</div>
-  } @else {
-    <span class="text-sm text-surface-200">{{ day() | date: 'EEEE, MMMM d' }} · {{ slots().length }} open</span>
+  @if (selectedDate(); as pickedDate) {
+    <span class="text-sm text-surface-200"
+      >{{ pickedDate | date: 'EEEE, MMMM d' }} · {{ timeSlots().length }} open</span
+    >
     <p-selectbutton
-      [options]="slots()"
+      [formControl]="startAtControl()"
+      [options]="timeSlots()"
       optionLabel="label"
       optionValue="startAt"
       [allowEmpty]="false"
-      [ngModel]="selected()"
-      (ngModelChange)="timeSelect.emit($event)"
     />
+  } @else {
+    <div class="no-day-picked">Select a day to see open times</div>
   }
 </section>

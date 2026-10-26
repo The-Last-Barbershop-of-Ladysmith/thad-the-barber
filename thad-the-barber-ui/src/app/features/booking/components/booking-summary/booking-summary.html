@@ -1,59 +1,42 @@
 <p-card>
   <div class="stack gap-3.5">
     <span class="eyebrow">Booking summary</span>
-    <dl class="rows">
-      @for (row of rows(); track row.label) {
-        <div class="row">
-          <dt class="text-surface-200">{{ row.label }}</dt>
-          <dd class="m-0 text-right">{{ row.value }}</dd>
+    <dl class="summary-list">
+      @for (summaryRow of summaryRows(); track summaryRow.label) {
+        <div class="summary-item">
+          <dt class="text-surface-200">{{ summaryRow.label }}</dt>
+          <dd class="m-0 text-right">{{ summaryRow.value }}</dd>
         </div>
       }
     </dl>
 
     <button
       pButton
-      type="button"
+      type="submit"
       data-testid="confirm-booking"
       [fluid]="true"
-      [loading]="submitting()"
-      [disabled]="isBotCheckFailed()"
-      (click)="confirm.emit()"
+      [disabled]="!isFormValid() || isBotCheckFailed() || isSubmitting()"
     >
-      <span pButtonLabel>{{ booked() ? 'Booked' : 'Confirm booking' }}</span>
-      @if (booked()) {
-        <i pButtonIcon class="pi pi-check"></i>
+      @if (isSubmitting()) {
+        <svg data-p-icon="spinner" class="animate-spin"></svg> Confirm booking
+      } @else if (confirmedBooking()) {
+        <svg data-p-icon="check"></svg> Booked
+      } @else {
+        Confirm booking
       }
     </button>
 
-    @if (hint()) {
-      <small class="text-xs text-surface-200">{{ hint() }}</small>
-    }
     @if (isBotCheckFailed()) {
-      <app-notice-message
-        data-testid="bot-check-failed"
-        [notice]="botCheckFailedNotice"
-        [phone]="phone()"
-        [bookingUrl]="bookingUrl()"
-      />
+      <app-notice-message data-testid="bot-check-failed" [notice]="botCheckFailedNotice" />
     }
-    @if (notice(); as notice) {
-      <app-notice-message
-        [notice]="notice"
-        [phone]="phone()"
-        [bookingUrl]="bookingUrl()"
-        (retry)="confirm.emit()"
-      />
+    @if (bookingNotice(); as failureNotice) {
+      <app-notice-message [notice]="failureNotice" (retry)="retry.emit()" />
     }
-    @if (confirmation()) {
-      <p-message data-testid="booking-confirmation" severity="info" icon="pi pi-check">
-        <div class="stack gap-1.5">
-          <strong>You're booked.</strong>
-          <span class="font-normal">{{ confirmation() }}</span>
-        </div>
-      </p-message>
+    @if (confirmationNotice(); as bookedNotice) {
+      <app-notice-message data-testid="booking-confirmation" [notice]="bookedNotice" />
     }
 
-    <small class="recaptcha-notice">
+    <small class="recaptcha-terms">
       This site is protected by reCAPTCHA and the Google
       <a href="https://policies.google.com/privacy" target="_blank" rel="noopener"
         >Privacy Policy</a

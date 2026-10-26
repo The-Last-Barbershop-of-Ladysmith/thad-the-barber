@@ -1,52 +1,46 @@
 <app-backdrop mode="still" [still]="5" />
 
-<div class="page">
+<div class="booking-page">
   <header class="stack gap-2">
     <span class="eyebrow">Book an appointment</span>
     <h1 class="section-title">Schedule your cut</h1>
   </header>
 
-  <div class="layout lg:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]">
+  @if (savedBookingNotice(); as savedNotice) {
+    <app-notice-message data-testid="saved-booking" [notice]="savedNotice" />
+  }
+  @if (availabilityNotice(); as loadFailureNotice) {
+    <app-notice-message [notice]="loadFailureNotice" (retry)="reloadMonth()" />
+  }
+
+  <form
+    class="steps-and-summary lg:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]"
+    [formGroup]="bookingForm"
+    (ngSubmit)="confirm()"
+  >
     <div class="stack gap-8">
-      @if (availabilityNotice(); as notice) {
-        <app-notice-message
-          [notice]="notice"
-          [phone]="phone()"
-          [bookingUrl]="bookingUrl()"
-          (retry)="reloadMonth()"
-        />
-      }
       <app-date-step
-        [value]="selectedDay()"
-        [minDate]="window()?.min ?? null"
-        [maxDate]="window()?.max ?? null"
-        [disabledDates]="disabledDates()"
-        [month]="visibleMonthStart()"
-        [isLoading]="isLoadingDates()"
-        (dateSelect)="onDateSelect($event)"
-        (monthChange)="onMonthChange($event)"
+        [dateControl]="bookingForm.controls.date"
+        [startAtControl]="bookingForm.controls.startAt"
       />
       <app-time-step
-        [slots]="slots()"
-        [selected]="selectedStartAt()"
-        [day]="selectedDay()"
-        (timeSelect)="onTimeSelect($event)"
+        [startAtControl]="bookingForm.controls.startAt"
+        [selectedDate]="bookingFormValue().date"
       />
-      <app-details-step [form]="form" />
+      <app-details-step
+        [nameControl]="bookingForm.controls.name"
+        [phoneControl]="bookingForm.controls.phone"
+      />
     </div>
 
     <app-booking-summary
       class="lg:sticky lg:top-24"
-      [rows]="summaryRows()"
-      [submitting]="isSubmitting()"
-      [booked]="isBooked()"
-      [hint]="hint()"
-      [notice]="bookingNotice()"
-      [confirmation]="confirmationText()"
-      [isBotCheckFailed]="isBotCheckFailed()"
-      [phone]="phone()"
-      [bookingUrl]="bookingUrl()"
-      (confirm)="confirm()"
+      [bookingFormValue]="bookingFormValue()"
+      [isFormValid]="bookingForm.valid"
+      [isSubmitting]="isSubmitting()"
+      [confirmedBooking]="confirmedBooking()"
+      [bookingNotice]="bookingNotice()"
+      (retry)="confirm()"
     />
-  </div>
+  </form>
 </div>

@@ -1,4 +1,4 @@
-.page {
+.booking-page {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -8,7 +8,7 @@
   padding: 8rem 1.5rem 1.5rem;
 
   // Steps and summary stack on mobile; lg:grid-cols-* in the template puts them side by side.
-  .layout {
+  .steps-and-summary {
     display: grid;
     align-items: start;
     gap: 2rem;
