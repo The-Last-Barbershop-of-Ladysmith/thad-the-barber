@@ -216,6 +216,11 @@ jobs:
     needs: ui
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # Playwright's own image has the browsers and their system libraries, so nothing installs per run. Its tag must
+    # match @playwright/test; after a bump, the tests fail asking for the new image.
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.1-noble
+      options: --user 1001
     defaults:
       run:
         working-directory: thad-the-barber-ui
@@ -238,23 +243,8 @@ jobs:
           name: site-test
           path: thad-the-barber-express/public/app/thad-the-barber-ui
 
-      - name: Playwright version
-        id: playwright
-        run: echo "version=$(npx playwright --version | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
-
-      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        id: browsers
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
-
-      # The cache holds the browsers only; their system libraries are installed on every run.
-      - if: steps.browsers.outputs.cache-hit != 'true'
-        run: npx playwright install --with-deps chromium webkit
-      - if: steps.browsers.outputs.cache-hit == 'true'
-        run: npx playwright install-deps chromium webkit
-
       - run: npm run e2e
+        timeout-minutes: 10
 
       - name: Summarize
         if: ${{ !cancelled() }}
