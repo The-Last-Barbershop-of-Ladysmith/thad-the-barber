@@ -3,12 +3,11 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { fromIsoDate, toIsoDate } from '../../../shared/utils/date.utils';
-import { ButtonVariant } from '../../../shared/models/button.models';
+import { Button, ButtonVariant } from '../../../shared/models/button.models';
 import { LinkKind } from '../../../shared/models/link.models';
 import { isButtonVariant } from '../../../shared/utils/button.utils';
 import { linkKind } from '../../../shared/utils/link.utils';
 import { Announcement } from '../models/announcement.model';
-import { AnnouncementButton } from '../models/announcement-button.model';
 import { AnnouncementImage } from '../models/announcement-image.model';
 import { AnnouncementImagePosition } from '../models/announcement-image-position.model';
 
@@ -76,18 +75,18 @@ function toImage(value: unknown): AnnouncementImage | null {
   };
 }
 
-function toButtons(value: unknown): AnnouncementButton[] {
+function toButtons(value: unknown): Button[] {
   if (!Array.isArray(value)) {
     return [];
   }
   return value
     .filter(isEntry)
     .map(toButton)
-    .filter((button: AnnouncementButton | null): button is AnnouncementButton => button !== null);
+    .filter((button: Button | null): button is Button => button !== null);
 }
 
 /** A button without a label or with a link `linkKind` rejects is dropped; an unknown variant falls back to outlined. */
-function toButton(entry: Entry): AnnouncementButton | null {
+function toButton(entry: Entry): Button | null {
   const label: string | null = text(entry['label']);
   const url: string | null = text(entry['url']);
   if (label === null || url === null) {

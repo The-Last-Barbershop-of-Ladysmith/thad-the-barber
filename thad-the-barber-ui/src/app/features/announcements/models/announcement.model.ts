@@ -1,4 +1,4 @@
-import { AnnouncementButton } from './announcement-button.model';
+import { Button } from '../../../shared/models/button.models';
 import { AnnouncementImage } from './announcement-image.model';
 
 /** An item of `content/announcements.json` in the media container, checked and ready to show. */
@@ -11,5 +11,5 @@ export interface Announcement {
   /** Last day it shows, `YYYY-MM-DD`. */
   endDate: string;
   image: AnnouncementImage | null;
-  buttons: AnnouncementButton[];
+  buttons: Button[];
 }
