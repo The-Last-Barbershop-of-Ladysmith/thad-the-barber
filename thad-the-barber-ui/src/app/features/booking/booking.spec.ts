@@ -125,6 +125,24 @@ describe(
     }
 
     it(
+      'needs a name of at least 2 characters once trimmed',
+      (): void => {
+        openPage();
+        const isValidName: (name: string) => boolean = (name: string): boolean => {
+          page.bookingForm.controls.name.setValue(name);
+          return page.bookingForm.controls.name.valid;
+        };
+
+        expect(isValidName('')).toBe(false);
+        expect(isValidName('   ')).toBe(false);
+        expect(isValidName('  J  ')).toBe(false);
+        expect(isValidName('Jo')).toBe(true);
+        expect(isValidName('  Jo  ')).toBe(true);
+        expect(isValidName('Jo Ann')).toBe(true);
+      },
+    );
+
+    it(
       'retries a failed booking with the same key, and a changed time gets a new one',
       (): void => {
         openPage();
