@@ -131,6 +131,15 @@ export function toIsoDateIn(timeZone: string, instant: Date): string {
   return `${part('year')}-${part('month')}-${part('day')}`;
 }
 
+/** Today ("2026-10-03") on the clocks in `timeZone`, or on the browser's while the timezone is unknown (`null`). */
+export function currentDateForTimeZone(timeZone: string | null): string {
+  const now: Date = new Date();
+  if (timeZone === null) {
+    return toIsoDate(now);
+  }
+  return toIsoDateIn(timeZone, now);
+}
+
 /** Date → "Saturday, October 3" */
 export function formatLongDate(date: Date): string {
   return formatDate(
