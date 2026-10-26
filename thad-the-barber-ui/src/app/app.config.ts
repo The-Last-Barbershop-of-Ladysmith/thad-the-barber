@@ -17,6 +17,8 @@ import { PRIMEUI_LICENSE } from './core/config/primeui-license';
 import { sessionInterceptor } from './core/interceptors/session.interceptor';
 import { routes } from './app.routes';
 import * as bookingTabsEffects from './features/booking/state/booking-tabs.effects';
+import * as announcementsEffects from './features/announcements/state/announcements.effects';
+import { announcementsFeature } from './features/announcements/state/announcements.feature';
 import * as appEffects from './store/app.effects';
 import { layoutFeature } from './store/app.feature';
 import { metaReducers } from './store/meta/meta.reducers';
@@ -36,7 +38,8 @@ export const appConfig: ApplicationConfig = {
       withComponentInputBinding(),
       withInMemoryScrolling({ anchorScrolling: 'enabled', scrollPositionRestoration: 'enabled' }),
     ),
-    // Shop and home are root reducers, not `provideState`, because the header and footer read them on every page.
+    // Shop, home and announcements are root reducers, not `provideState`, because the header and footer read them on
+    // every page.
     // Shop and booking also save only part of their slice (`shopInfo`, `savedConfirmation`), and a partial saved copy
     // merged before `provideState` would drop the rest.
     provideStore(
@@ -44,6 +47,7 @@ export const appConfig: ApplicationConfig = {
         [layoutFeature.name]: layoutFeature.reducer,
         [shopFeature.name]: shopFeature.reducer,
         [homeFeature.name]: homeFeature.reducer,
+        [announcementsFeature.name]: announcementsFeature.reducer,
         [bookingFeature.name]: bookingFeature.reducer,
       },
       { metaReducers },
@@ -51,6 +55,7 @@ export const appConfig: ApplicationConfig = {
     provideEffects(
       appEffects,
       shopEffects,
+      announcementsEffects,
       bookingTabsEffects,
     ),
     provideStoreDevtools({ maxAge: 25, logOnly: !isDevMode() }),

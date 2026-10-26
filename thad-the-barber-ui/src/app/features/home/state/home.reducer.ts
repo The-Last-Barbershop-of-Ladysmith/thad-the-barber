@@ -1,5 +1,5 @@
 import { ActionReducer, createReducer, on } from '@ngrx/store';
-import { Announcement, GalleryPhoto, HomeContent } from '../models/home.models';
+import { GalleryPhoto, HomeContent } from '../models/home.models';
 import * as HomeActions from './home.actions';
 import { HomeState, initialHomeState } from './home.state';
 import { RequestStatus } from '../../../shared/models/request.models';
@@ -7,14 +7,12 @@ import { RequestStatus } from '../../../shared/models/request.models';
 export const homeReducer: ActionReducer<HomeState> = createReducer(
   initialHomeState,
   on(HomeActions.HomeStateReset, (): HomeState => initialHomeState),
-  // Saved storage content may be outdated (a deleted announcement or photo) or in an older shape, so it never renders.
+  // Saved storage content may be outdated (a deleted photo) or in an older shape, so it never renders.
   on(
     HomeActions.HomePageOpen,
     (state: HomeState): HomeState => ({
       ...state,
       contentStatus: RequestStatus.Pending,
-      announcements: [],
-      announcementsStatus: RequestStatus.Pending,
       gallery: [],
       galleryStatus: RequestStatus.Pending,
     }),
@@ -30,18 +28,6 @@ export const homeReducer: ActionReducer<HomeState> = createReducer(
   on(
     HomeActions.HomeContentRequestFailure,
     (state: HomeState): HomeState => ({ ...state, contentStatus: RequestStatus.Error }),
-  ),
-  on(
-    HomeActions.AnnouncementsRequestSuccess,
-    (state: HomeState, { announcements }: { announcements: Announcement[]; }): HomeState => ({
-      ...state,
-      announcements,
-      announcementsStatus: RequestStatus.Success,
-    }),
-  ),
-  on(
-    HomeActions.AnnouncementsRequestFailure,
-    (state: HomeState): HomeState => ({ ...state, announcementsStatus: RequestStatus.Error }),
   ),
   on(
     HomeActions.GalleryRequestSuccess,

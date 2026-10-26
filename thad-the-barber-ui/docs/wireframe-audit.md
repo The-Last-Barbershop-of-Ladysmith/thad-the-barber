@@ -197,7 +197,8 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 | Slice | Files | Holds |
 | --- | --- | --- |
 | `layout` (root) | `store/app.*.ts` | `menuOpen` |
-| `home` | `features/home/state/home.{state,actions,reducer,feature,effects}.ts` | Announcements, testimonials, gallery, content status, SMS sign-up status |
+| `announcements` (root) | `features/announcements/state/announcements.{state,actions,reducer,feature,effects}.ts` | Announcements from the media container and their load status, loaded on the first navigation (#40); `selectActive` (BR-30, shop's clock), `selectIsHidden` (BR-32) |
+| `home` | `features/home/state/home.{state,actions,reducer,feature,effects}.ts` | Testimonials, gallery, content status, SMS sign-up status |
 | `booking` | `features/booking/state/booking.{state,actions,reducer,feature,effects}.ts` | Month in view, its open days, load status (the availability notice is derived from it), the last booking kept for 24 hours (the picks and the booking in progress live in the `Booking` page) |
 
 - Each reducer lives in its own `*.reducer.ts`. Each `*.feature.ts` holds the feature key and uses `createFeature` for a scoped feature selector, with `extraSelectors` for derived values such as `selectOpenSlotCount`, `selectSelectedSlot` and `selectHomeSections`.

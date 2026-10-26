@@ -3,7 +3,8 @@ import { ButtonVariant } from '../../../shared/models/button.models';
 import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { environment } from '../../../../environments/environment';
-import { Announcement, AnnouncementImagePosition } from '../models/home.models';
+import { Announcement } from '../models/announcement.model';
+import { AnnouncementImagePosition } from '../models/announcement-image-position.model';
 import { AnnouncementsService } from './announcements.service';
 import { LinkKind } from '../../../shared/models/link.models';
 

@@ -1,111 +1,13 @@
-import { Announcement } from '../models/home.models';
 import { HOME_SECTIONS } from '../../../core/config/shop-info';
 import { NavItem } from '../../../shared/models/nav-item.model';
 import { RequestStatus } from '../../../shared/models/request.models';
-import { homeFeature, homeFeatureKey, toActiveAnnouncements } from './home.feature';
+import { announcementsFeatureKey } from '../../announcements/state/announcements.feature';
+import { Announcement } from '../../announcements/models/announcement.model';
+import { AnnouncementsState, initialAnnouncementsState } from '../../announcements/state/announcements.state';
+import { shopFeatureKey } from '../../shop/state/shop.feature';
+import { initialShopState } from '../../shop/state/shop.state';
+import { homeFeature, homeFeatureKey } from './home.feature';
 import { HomeState, initialHomeState } from './home.state';
-
-describe(
-  'toActiveAnnouncements',
-  (): void => {
-    function announcement(
-      title: string,
-      startDate: string,
-      endDate: string,
-    ): Announcement {
-      return {
-        title,
-        bodyHtml: '',
-        startDate,
-        endDate,
-        image: null,
-        buttons: [],
-      };
-    }
-
-    afterEach((): void => {
-      vi.useRealTimers();
-    });
-
-    it(
-      'keeps announcements from their first day through their last, by the local date',
-      (): void => {
-        vi.useFakeTimers({
-          now: new Date(
-            2026,
-            9,
-            15,
-            23,
-            59,
-          ),
-        });
-
-        const titles: string[] = toActiveAnnouncements([
-          announcement(
-            'Ended yesterday',
-            '2026-10-01',
-            '2026-10-14',
-          ),
-          announcement(
-            'Ends today',
-            '2026-10-01',
-            '2026-10-15',
-          ),
-          announcement(
-            'Only today',
-            '2026-10-15',
-            '2026-10-15',
-          ),
-          announcement(
-            'Starts today',
-            '2026-10-15',
-            '2026-12-31',
-          ),
-          announcement(
-            'Starts tomorrow',
-            '2026-10-16',
-            '2026-10-31',
-          ),
-          announcement(
-            'Spans the year',
-            '2025-12-31',
-            '2027-01-01',
-          ),
-        ]).map((active: Announcement): string => active.title);
-
-        expect(titles).toEqual([
-          'Ends today',
-          'Only today',
-          'Starts today',
-          'Spans the year',
-        ]);
-      },
-    );
-
-    it(
-      'starts a new day at local midnight',
-      (): void => {
-        vi.useFakeTimers({
-          now: new Date(
-            2026,
-            9,
-            16,
-            0,
-            0,
-          ),
-        });
-
-        expect(toActiveAnnouncements([
-          announcement(
-            'Ended yesterday',
-            '2026-10-01',
-            '2026-10-15',
-          ),
-        ])).toEqual([]);
-      },
-    );
-  },
-);
 
 const ALL_SECTIONS: string[] = HOME_SECTIONS.map((section: NavItem): string => section.fragment);
 
@@ -118,17 +20,26 @@ const WITHOUT_STORAGE_CONTENT: string[] = [
 describe(
   'selectHomeSections',
   (): void => {
-    const current: Announcement = {
-      title: 'Made-up current post',
-      bodyHtml: '',
-      startDate: '2026-10-01',
-      endDate: '2026-10-31',
-      image: null,
-      buttons: [],
+    const withAnnouncement: AnnouncementsState = {
+      announcements: [
+        {
+          title: 'Made-up current post',
+          bodyHtml: '',
+          startDate: '2026-10-01',
+          endDate: '2026-10-31',
+          image: null,
+          buttons: [],
+        },
+      ],
+      loadStatus: RequestStatus.Success,
     };
 
-    function fragments(home: HomeState): string[] {
-      return homeFeature.selectHomeSections({ [homeFeatureKey]: home })
+    function fragments(home: HomeState, announcements: AnnouncementsState): string[] {
+      return homeFeature.selectHomeSections({
+        [homeFeatureKey]: home,
+        [announcementsFeatureKey]: announcements,
+        [shopFeatureKey]: initialShopState,
+      })
         .map((section: NavItem): string => section.fragment);
     }
 
@@ -151,48 +62,43 @@ describe(
     it(
       'links every section before the content loads, so the prerendered page keeps them all',
       (): void => {
-        expect(fragments(initialHomeState)).toEqual(ALL_SECTIONS);
+        expect(fragments(initialHomeState, initialAnnouncementsState)).toEqual(ALL_SECTIONS);
       },
     );
 
     it(
       'links every section while the content loads',
       (): void => {
-        const loading: HomeState = {
-          ...initialHomeState,
-          announcementsStatus: RequestStatus.Pending,
-          galleryStatus: RequestStatus.Pending,
-        };
+        const loading: HomeState = { ...initialHomeState, galleryStatus: RequestStatus.Pending };
 
-        expect(fragments(loading)).toEqual(ALL_SECTIONS);
+        expect(fragments(loading, { ...initialAnnouncementsState, loadStatus: RequestStatus.Pending }))
+          .toEqual(ALL_SECTIONS);
       },
     );
 
     it(
       'leaves out the announcements and gallery once they load with nothing to show',
       (): void => {
-        const expired: Announcement = { ...current, endDate: '2026-10-14' };
-        const loaded: HomeState = {
-          ...initialHomeState,
-          announcements: [expired],
-          announcementsStatus: RequestStatus.Success,
-          galleryStatus: RequestStatus.Success,
+        const loaded: HomeState = { ...initialHomeState, galleryStatus: RequestStatus.Success };
+        const expired: AnnouncementsState = {
+          ...withAnnouncement,
+          announcements: withAnnouncement.announcements.map((announcement: Announcement): Announcement => ({
+            ...announcement,
+            endDate: '2026-10-14',
+          })),
         };
 
-        expect(fragments(loaded)).toEqual(WITHOUT_STORAGE_CONTENT);
+        expect(fragments(loaded, expired)).toEqual(WITHOUT_STORAGE_CONTENT);
       },
     );
 
     it(
       'leaves out the announcements and gallery when they fail to load',
       (): void => {
-        const failed: HomeState = {
-          ...initialHomeState,
-          announcementsStatus: RequestStatus.Error,
-          galleryStatus: RequestStatus.Error,
-        };
+        const failed: HomeState = { ...initialHomeState, galleryStatus: RequestStatus.Error };
 
-        expect(fragments(failed)).toEqual(WITHOUT_STORAGE_CONTENT);
+        expect(fragments(failed, { ...initialAnnouncementsState, loadStatus: RequestStatus.Error }))
+          .toEqual(WITHOUT_STORAGE_CONTENT);
       },
     );
 
@@ -201,13 +107,11 @@ describe(
       (): void => {
         const home: HomeState = {
           ...initialHomeState,
-          announcements: [current],
-          announcementsStatus: RequestStatus.Success,
           gallery: [{ src: 'https://media.test/gallery/taper.webp', alt: 'Taper' }],
           galleryStatus: RequestStatus.Success,
         };
 
-        expect(fragments(home)).toEqual(ALL_SECTIONS);
+        expect(fragments(home, withAnnouncement)).toEqual(ALL_SECTIONS);
       },
     );
   },

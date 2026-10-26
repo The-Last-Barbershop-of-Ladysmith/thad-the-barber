@@ -1,8 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ButtonVariant } from '../../../../shared/models/button.models';
 import { Router, provideRouter } from '@angular/router';
+import { Store, provideStore } from '@ngrx/store';
 import { MockInstance } from 'vitest';
-import { Announcement, AnnouncementImagePosition } from '../../models/home.models';
+import { Announcement } from '../../../announcements/models/announcement.model';
+import { AnnouncementImagePosition } from '../../../announcements/models/announcement-image-position.model';
+import * as AnnouncementsActions from '../../../announcements/state/announcements.actions';
+import { announcementsFeature } from '../../../announcements/state/announcements.feature';
+import { shopFeature } from '../../../shop/state/shop.feature';
 import { Announcements } from './announcements';
 import { LinkKind } from '../../../../shared/models/link.models';
 
@@ -19,12 +24,36 @@ describe(
     };
 
     function render(announcements: Announcement[]): HTMLElement {
-      TestBed.configureTestingModule({ providers: [provideRouter([])] });
+      TestBed.configureTestingModule({
+        providers: [
+          provideRouter([]),
+          provideStore({
+            [announcementsFeature.name]: announcementsFeature.reducer,
+            [shopFeature.name]: shopFeature.reducer,
+          }),
+        ],
+      });
+      TestBed.inject(Store).dispatch(AnnouncementsActions.AnnouncementsRequestSuccess({ announcements }));
       const fixture: ComponentFixture<Announcements> = TestBed.createComponent(Announcements);
-      fixture.componentRef.setInput('announcements', announcements);
       fixture.detectChanges();
       return fixture.nativeElement as HTMLElement;
     }
+
+    beforeEach((): void => {
+      vi.useFakeTimers({
+        now: new Date(
+          2026,
+          9,
+          15,
+          12,
+        ),
+        toFake: ['Date'],
+      });
+    });
+
+    afterEach((): void => {
+      vi.useRealTimers();
+    });
 
     function query(host: HTMLElement, selector: string): Element {
       const element: Element | null = host.querySelector(selector);
@@ -58,8 +87,8 @@ describe(
           base,
           {
             ...base,
-            startDate: '2026-11-26',
-            endDate: '2026-11-26',
+            startDate: '2026-10-15',
+            endDate: '2026-10-15',
           },
         ]);
         const labels: string[] = Array.from(host.querySelectorAll('.eyebrow'))
@@ -67,7 +96,7 @@ describe(
 
         expect(labels[0]).toContain('Oct 31');
         expect(labels[0]).not.toBe('Oct 31');
-        expect(labels[1]).toBe('Nov 26');
+        expect(labels[1]).toBe('Oct 15');
       },
     );
 

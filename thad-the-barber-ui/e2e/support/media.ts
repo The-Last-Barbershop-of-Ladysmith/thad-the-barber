@@ -41,7 +41,8 @@ const LONG_TITLE: string = 'E2E special 💈 with a title that runs well past si
 
 /**
  * Made-up announcements: one with every field and a title past the 60-character portal limit, a plain-text one running
- * a day either side of today (so a run across midnight still sees it), and an expired one that never shows.
+ * a day either side of today (so a run across midnight still sees it), and an expired one that never shows. Days count
+ * on the mocked shop's clock (Honolulu, up to a day behind the runner's), so the expired one ended three days ago.
  */
 export const TEST_ANNOUNCEMENTS: { items: object[]; } = {
   items: [
@@ -77,7 +78,7 @@ export const TEST_ANNOUNCEMENTS: { items: object[]; } = {
     {
       title: 'E2E expired post',
       startDate: daysFromToday(-20),
-      endDate: daysFromToday(-1),
+      endDate: daysFromToday(-3),
     },
   ],
 };

@@ -1,4 +1,4 @@
-import { Locator, Page, Response, Route } from '@playwright/test';
+import { Locator, Page, Request, Response, Route } from '@playwright/test';
 import { expectNoA11yViolations } from '../support/axe';
 import { expect, test } from '../support/fixtures';
 import { ACTIVE_ANNOUNCEMENT_TITLES, ANNOUNCEMENTS_URL, GALLERY_LISTING_URL, MEDIA_BASE_URL } from '../support/media';
@@ -89,6 +89,27 @@ test.describe(
         },
       );
     }
+
+    test(
+      'loads on the booking page too, hiding its footer link when none are active, and never lists the gallery there',
+      async ({ page }: { page: Page; }): Promise<void> => {
+        const mediaRequests: string[] = [];
+        page.on('request', (request: Request): void => {
+          mediaRequests.push(request.url());
+        });
+        await page.route(ANNOUNCEMENTS_URL, (route: Route): Promise<void> =>
+          route.fulfill(HIDING_RESPONSES['only expired announcements']));
+        const loaded: Promise<Response> = page.waitForResponse(ANNOUNCEMENTS_URL);
+
+        await page.goto('/book');
+        await loaded;
+
+        const footer: Locator = page.locator('footer');
+        await expect(footer.locator('a[href="/#visit"]')).toHaveCount(1);
+        await expect(footer.locator('a[href="/#announcements"]')).toHaveCount(0);
+        expect(mediaRequests).not.toContain(GALLERY_LISTING_URL);
+      },
+    );
 
     test(
       'hides the announcements and the gallery when the media container is down',

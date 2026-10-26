@@ -7,7 +7,10 @@ import { ButtonVariant } from '../../../shared/models/button.models';
 import { LinkKind } from '../../../shared/models/link.models';
 import { isButtonVariant } from '../../../shared/utils/button.utils';
 import { linkKind } from '../../../shared/utils/link.utils';
-import { Announcement, AnnouncementButton, AnnouncementImage, AnnouncementImagePosition } from '../models/home.models';
+import { Announcement } from '../models/announcement.model';
+import { AnnouncementButton } from '../models/announcement-button.model';
+import { AnnouncementImage } from '../models/announcement-image.model';
+import { AnnouncementImagePosition } from '../models/announcement-image-position.model';
 
 type Entry = Record<string, unknown>;
 
