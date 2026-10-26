@@ -31,7 +31,8 @@ export const datepicker: DatePickerDesignTokens = {
     .p-datepicker-inline { width: 100%; backdrop-filter: blur(var(--p-brand-glass-blur)); }
     .p-datepicker-day-view { width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 6px; }
     .p-datepicker-day-cell { padding: 0; }
-    .p-datepicker-day { aspect-ratio: 1; width: 100%; background: color-mix(in srgb, var(--p-espresso-50) 16%, transparent); }
+    .p-datepicker-day { aspect-ratio: 1; width: 100%; }
+    .p-datepicker-day:not(.p-datepicker-day-selected) { background: color-mix(in srgb, var(--p-espresso-50) 16%, transparent); }
     .p-datepicker-day.p-disabled {
       background: color-mix(in srgb, var(--p-espresso-50) 4%, transparent);
       color: var(--p-espresso-600);
