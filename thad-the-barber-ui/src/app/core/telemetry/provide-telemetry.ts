@@ -39,7 +39,6 @@ export function telemetryConfig(settings: TelemetrySettings, angularPlugin: Angu
     extensions: [angularPlugin],
     extensionConfig: {
       [angularPlugin.identifier]: {
-        // Wires the plugin to the injected error service even if nothing has resolved ErrorHandler yet.
         useInjector: true,
       },
       // The SDK otherwise downloads feature flags from Microsoft's CDN, which the CSP blocks.
@@ -54,7 +53,6 @@ function trackPageViews(router: Router, appInsights: ApplicationInsights): void 
     .pipe(filter((event: unknown): event is NavigationEnd => event instanceof NavigationEnd))
     .subscribe((event: NavigationEnd): void => {
       const url: URL = new URL(event.urlAfterRedirects, window.location.origin);
-      // A new trace per page, as the plugin does, so each page's API calls form their own operation.
       const trace: ReturnType<ApplicationInsights['getTraceCtx']> = appInsights.getTraceCtx();
       if (trace) {
         trace.traceId = crypto.randomUUID().replaceAll('-', '');
