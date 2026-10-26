@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/cor
 import { AppState } from '../../store/app.state';
 import { Store } from '@ngrx/store';
 import { Backdrop, BackdropAnchor } from '../../shared/components/backdrop/backdrop';
-import { Announcements } from './components/announcements/announcements';
+import { AnnouncementsCarousel } from '../announcements/components/announcements-carousel/announcements-carousel';
 import { Gallery } from './components/gallery/gallery';
 import { Hero } from './components/hero/hero';
 import { ScheduleCta } from './components/schedule-cta/schedule-cta';
@@ -16,7 +16,7 @@ import * as HomeActions from './state/home.actions';
   imports: [
     Backdrop,
     Hero,
-    Announcements,
+    AnnouncementsCarousel,
     ScheduleCta,
     Visit,
     Testimonials,

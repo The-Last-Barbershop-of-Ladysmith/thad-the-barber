@@ -1,5 +1,5 @@
 @if (announcements().length > 0) {
-  <section class="announcements px-4 md:px-24" data-testid="announcements">
+  <section class="announcements-carousel px-4 md:px-24" data-testid="announcements">
     <p-carousel class="slider" [loop]="true" [spacing]="24" aria-label="Announcements">
       <p-carousel-content>
         @for (item of announcements(); track $index) {

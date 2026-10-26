@@ -9,9 +9,9 @@ import { ButtonStyle, ButtonVariant } from '../../../../shared/models/button.mod
 import { LinkKind } from '../../../../shared/models/link.models';
 import { BUTTON_STYLES } from '../../../../shared/utils/button.utils';
 import { linkKind } from '../../../../shared/utils/link.utils';
-import { Announcement } from '../../../announcements/models/announcement.model';
-import { AnnouncementImagePosition } from '../../../announcements/models/announcement-image-position.model';
-import { announcementsFeature } from '../../../announcements/state/announcements.feature';
+import { Announcement } from '../../models/announcement.model';
+import { AnnouncementImagePosition } from '../../models/announcement-image-position.model';
+import { announcementsFeature } from '../../state/announcements.feature';
 import { AppState } from '../../../../store/app.state';
 
 /**
@@ -20,7 +20,7 @@ import { AppState } from '../../../../store/app.state';
  * through the Router.
  */
 @Component({
-  selector: 'app-announcements',
+  selector: 'app-announcements-carousel',
   imports: [
     DatePipe,
     ButtonModule,
@@ -28,11 +28,11 @@ import { AppState } from '../../../../store/app.state';
     CarouselModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  templateUrl: './announcements.html',
-  styleUrl: './announcements.scss',
+  templateUrl: './announcements-carousel.html',
+  styleUrl: './announcements-carousel.scss',
   host: { '(click)': 'followInternalLink($event)' },
 })
-export class Announcements {
+export class AnnouncementsCarousel {
   private readonly router: Router = inject(Router);
   private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
 
