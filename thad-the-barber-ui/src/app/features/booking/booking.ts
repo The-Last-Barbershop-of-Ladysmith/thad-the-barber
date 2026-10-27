@@ -20,12 +20,12 @@ import { ButtonModule } from 'primeng/button';
 import { ConfirmationService } from 'primeng/api';
 import { CardModule } from 'primeng/card';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { filter, finalize, map, take } from 'rxjs';
+import { filter, finalize, fromEvent, map, take } from 'rxjs';
 import { SessionService } from '../../core/services/session.service';
 import { Backdrop } from '../../shared/components/backdrop/backdrop';
 import { ProblemCode } from '../../shared/models/problem-code.model';
 import { RequestStatus } from '../../shared/models/request.models';
-import { formatFullDate, formatShortDate, fromIsoDate } from '../../shared/utils/date.utils';
+import { formatFullDate, formatShortDate, fromIsoDate, toIsoDate } from '../../shared/utils/date.utils';
 import { toE164 } from '../../shared/utils/phone.utils';
 import { getProblemCode } from '../../shared/utils/problem.utils';
 import { AppState } from '../../store/app.state';
@@ -40,15 +40,17 @@ import { BookingConfirmation } from './dtos/booking-confirmation.dto';
 import { BookingForm } from './models/booking-form.model';
 import { BookingFormValue } from './models/booking-form-value.model';
 import { BookingNotice } from './models/booking-notice.model';
+import { AvailabilityViewKind } from './models/availability-view-kind.model';
 import { AvailabilityView } from './models/availability-view.model';
 import { BookingStep } from './models/booking-step.model';
+import { DateRange } from './models/date-range.model';
 import { StepProgress } from './models/step-progress.model';
 import { BookingService } from './services/booking.service';
 import * as BookingActions from './state/booking.actions';
 import { bookingFeature } from './state/booking.feature';
 import { BOT_CHECK_FAILED_NOTICE, toBookedNotice, toBookingNotice } from './utils/booking-notice.utils';
 import { BOOKING_STEPS, canOpenStep, isStepDone } from './utils/booking-steps.utils';
-import { FIRST_UPCOMING_VIEW, toTimeLabel } from './utils/booking-time.utils';
+import { toBookingWindow, toTimeLabel, toUpcomingView } from './utils/booking-time.utils';
 import { toKeptBooking } from './utils/saved-confirmation.utils';
 
 /** How one step shows in the phone's step cards and the desktop's step rail. */
@@ -111,6 +113,8 @@ export class Booking {
   private readonly confirmationService: ConfirmationService = inject(ConfirmationService);
 
   private readonly timeZone: Signal<string | null> = this.store.selectSignal(shopFeature.selectTimeZone);
+  private readonly bookingWindow: Signal<DateRange | null> = computed((): DateRange | null =>
+    toBookingWindow(this.store.selectSignal(shopFeature.selectBookingSettings)(), this.timeZone()));
   private readonly view: Signal<AvailabilityView | null> = this.store.selectSignal(bookingFeature.selectView);
   protected readonly isBotCheckFailed: Signal<boolean> = inject(SessionService).isBotCheckFailed;
   protected readonly botCheckFailedNotice: BookingNotice = BOT_CHECK_FAILED_NOTICE;
@@ -244,16 +248,19 @@ export class Booking {
 
   constructor() {
     this.askBeforeUnloadWhileUnconfirmed();
+    this.moveUpcomingDaysToTodayOnReturn();
     // The page, not the date step, loads the first days: the date step goes away whenever its card collapses. They
-    // wait for the shop's timezone, so "today" is the shop's, not the browser's.
-    toObservable(this.timeZone)
+    // wait for the shop, so "today" and the booking window are the shop's, not the browser's.
+    toObservable(this.bookingWindow)
       .pipe(
-        filter((timeZone: string | null): boolean => timeZone !== null),
+        filter((bookingWindow: DateRange | null): bookingWindow is DateRange => bookingWindow !== null),
         take(1),
         takeUntilDestroyed(),
       )
-      .subscribe((): void => {
-        this.store.dispatch(BookingActions.SetAvailabilityView({ view: FIRST_UPCOMING_VIEW }));
+      .subscribe((bookingWindow: DateRange): void => {
+        this.store.dispatch(BookingActions.SetAvailabilityView({
+          view: toUpcomingView(bookingWindow.min, bookingWindow),
+        }));
       });
     this.store
       .select(bookingFeature.selectAvailableDays)
@@ -332,8 +339,12 @@ export class Booking {
     }
   }
 
+  /** Reloads the days in view; before the first load there's nothing to reload. */
   protected reloadMonth(): void {
-    this.store.dispatch(BookingActions.SetAvailabilityView({ view: this.view() ?? FIRST_UPCOMING_VIEW }));
+    const view: AvailabilityView | null = this.view();
+    if (view) {
+      this.store.dispatch(BookingActions.SetAvailabilityView({ view }));
+    }
   }
 
   /** The form's submit, and a failed booking's retry. */
@@ -484,6 +495,36 @@ export class Booking {
    * The listener is there only while there's a pick, since an always-on one keeps the page out of the back/forward
    * cache.
    */
+  /**
+   * A 31-day view starts on the day it was opened; left open past midnight, it would start on a day that's gone. When
+   * the customer comes back to the tab, a view that starts before the shop's today moves to today's block.
+   */
+  private moveUpcomingDaysToTodayOnReturn(): void {
+    if (typeof document === 'undefined') {
+      return;
+    }
+    fromEvent(document, 'visibilitychange')
+      .pipe(
+        filter((): boolean => document.visibilityState === 'visible'),
+        takeUntilDestroyed(),
+      )
+      .subscribe((): void => {
+        const view: AvailabilityView | null = this.view();
+        const bookingWindow: DateRange | null = toBookingWindow(
+          this.store.selectSignal(shopFeature.selectBookingSettings)(),
+          this.timeZone(),
+        );
+        const isPastStart: boolean = view?.kind === AvailabilityViewKind.Upcoming
+          && bookingWindow !== null
+          && view.firstDay < toIsoDate(bookingWindow.min);
+        if (bookingWindow && isPastStart) {
+          this.store.dispatch(BookingActions.SetAvailabilityView({
+            view: toUpcomingView(bookingWindow.min, bookingWindow),
+          }));
+        }
+      });
+  }
+
   private askBeforeUnloadWhileUnconfirmed(): void {
     if (typeof window === 'undefined') {
       return;

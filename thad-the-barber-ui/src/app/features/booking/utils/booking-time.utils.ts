@@ -3,7 +3,6 @@ import { BookingSettings } from '../../shop/models/booking-settings.model';
 import {
   addDays,
   addMonths,
-  currentDateForTimeZone,
   formatLongDate,
   formatMinutes,
   fromIsoDate,
@@ -14,9 +13,9 @@ import {
   weekTimeIn,
 } from '../../../shared/utils/date.utils';
 import { AvailableDay } from '../dtos/available-day.dto';
+import { AvailabilityViewKind } from '../models/availability-view-kind.model';
 import { AvailabilityView } from '../models/availability-view.model';
 import { DateRange } from '../models/date-range.model';
-import { DayRange } from '../models/day-range.model';
 import { TimeSlot } from '../models/time-slot.model';
 
 /** From today on the shop's clock to the furthest day Square lets customers book. */
@@ -32,32 +31,30 @@ export function toBookingWindow(
   return { min, max: addDays(min, bookingSettings.maxAdvanceDays) };
 }
 
-/** Today on, the view the booking page opens on. */
-export const FIRST_UPCOMING_VIEW: AvailabilityView = { month: null, upcomingPage: 0 };
-
-export function isSameView(view: AvailabilityView | null, otherView: AvailabilityView | null): boolean {
-  return view?.month === otherView?.month && view?.upcomingPage === otherView?.upcomingPage;
+/** `UPCOMING_DAY_COUNT` days from `firstDay`, cut to the booking window's last day. */
+export function toUpcomingView(firstDay: Date, bookingWindow: DateRange): AvailabilityView {
+  const blockEnd: Date = addDays(firstDay, UPCOMING_DAY_COUNT - 1);
+  return {
+    kind: AvailabilityViewKind.Upcoming,
+    firstDay: toIsoDate(firstDay),
+    lastDay: toIsoDate(bookingWindow.max < blockEnd ? bookingWindow.max : blockEnd),
+  };
 }
 
-/**
- * The days a view asks for: a month's 1st through its last day, or `UPCOMING_DAY_COUNT` days starting that many days
- * per page after today on the shop's clock (the browser's until the shop loads). The API cuts either to the booking
- * window.
- */
-export function toDayRange(
-  view: AvailabilityView,
-  timeZone: string | null,
-  now: Date = new Date(),
-): DayRange {
-  if (view.month === null) {
-    const firstDay: Date = addDays(
-      fromIsoDate(currentDateForTimeZone(timeZone, now)),
-      view.upcomingPage * UPCOMING_DAY_COUNT,
-    );
-    return { firstDay: toIsoDate(firstDay), lastDay: toIsoDate(addDays(firstDay, UPCOMING_DAY_COUNT - 1)) };
-  }
-  const firstDay: Date = fromMonthKey(view.month);
-  return { firstDay: toIsoDate(firstDay), lastDay: toIsoDate(addDays(addMonths(firstDay, 1), -1)) };
+/** A whole calendar month ("2026-11"), its 1st through its last day. */
+export function toMonthView(month: string): AvailabilityView {
+  const firstDay: Date = fromMonthKey(month);
+  return {
+    kind: AvailabilityViewKind.Month,
+    firstDay: toIsoDate(firstDay),
+    lastDay: toIsoDate(addDays(addMonths(firstDay, 1), -1)),
+  };
+}
+
+export function isSameView(view: AvailabilityView | null, otherView: AvailabilityView | null): boolean {
+  return view?.kind === otherView?.kind
+    && view?.firstDay === otherView?.firstDay
+    && view?.lastDay === otherView?.lastDay;
 }
 
 /** Every month ("2026-11") after the booking window's first, through the one its last day falls in. */

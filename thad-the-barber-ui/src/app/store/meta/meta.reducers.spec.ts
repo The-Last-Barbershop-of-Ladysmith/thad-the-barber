@@ -15,6 +15,7 @@ import * as HomeActions from '../../features/home/state/home.actions';
 import { homeReducer } from '../../features/home/state/home.reducer';
 import { RequestStatus } from '../../shared/models/request.models';
 import { localStorageSyncReducer } from './meta.reducers';
+import { toMonthView } from '../../features/booking/utils/booking-time.utils';
 
 /** Saved at `savedAt` for an appointment a day from now, so only its age decides whether it's kept. */
 function savedConfirmationFrom(savedAt: Date): SavedConfirmation {
@@ -60,7 +61,7 @@ describe(
         const reducer: ActionReducer<AppState> = createSyncedReducer();
         const viewing: AppState = reducer(
           undefined,
-          BookingActions.SetAvailabilityView({ view: { month: '2026-10', upcomingPage: 0 } }),
+          BookingActions.SetAvailabilityView({ view: toMonthView('2026-10') }),
         );
         reducer(viewing, BookingActions.BookingConfirm({ savedConfirmation }));
 

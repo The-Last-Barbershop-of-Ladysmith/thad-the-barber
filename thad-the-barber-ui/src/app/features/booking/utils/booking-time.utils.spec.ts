@@ -3,13 +3,15 @@ import { fromIsoDate, toIsoDate } from '../../../shared/utils/date.utils';
 import { AvailableDay } from '../dtos/available-day.dto';
 import { DateRange } from '../models/date-range.model';
 import {
-  FIRST_UPCOMING_VIEW,
+  isSameView,
   toBookingWindow,
-  toDayRange,
+  toMonthView,
+  toUpcomingView,
   toLaterMonths,
   toLongDateTime,
   toTimeSlots,
 } from './booking-time.utils';
+import { AvailabilityViewKind } from '../models/availability-view-kind.model';
 
 const HONOLULU: string = TEST_SHOP.timeZone;
 
@@ -42,58 +44,48 @@ describe(
 );
 
 describe(
-  'toDayRange',
+  'availability views',
   (): void => {
+    const window: DateRange = { min: fromIsoDate('2026-10-14'), max: fromIsoDate('2027-10-14') };
+
     it(
-      "asks for today on the shop's clock and the 30 days after it, across a month end",
+      'makes a 31-day block from its first day, across a month and year end',
       (): void => {
-        // 05:00 UTC on Nov 1st is still Oct 31st in Honolulu.
-        expect(toDayRange(
-          FIRST_UPCOMING_VIEW,
-          HONOLULU,
-          new Date('2026-11-01T05:00:00Z'),
-        )).toEqual({ firstDay: '2026-10-31', lastDay: '2026-11-30' });
+        expect(toUpcomingView(fromIsoDate('2026-10-14'), window)).toEqual({
+          kind: AvailabilityViewKind.Upcoming,
+          firstDay: '2026-10-14',
+          lastDay: '2026-11-13',
+        });
+        expect(toUpcomingView(fromIsoDate('2026-12-15'), window).lastDay).toBe('2027-01-14');
       },
     );
 
     it(
-      'runs the upcoming days across a year end and a leap day',
+      "cuts a 31-day block at the booking window's last day",
       (): void => {
-        expect(toDayRange(
-          FIRST_UPCOMING_VIEW,
-          HONOLULU,
-          new Date('2026-12-20T22:00:00Z'),
-        )).toEqual({ firstDay: '2026-12-20', lastDay: '2027-01-19' });
-        expect(toDayRange(
-          FIRST_UPCOMING_VIEW,
-          HONOLULU,
-          new Date('2028-02-15T22:00:00Z'),
-        )).toEqual({ firstDay: '2028-02-15', lastDay: '2028-03-16' });
+        expect(toUpcomingView(fromIsoDate('2027-10-01'), window).lastDay).toBe('2027-10-14');
       },
     );
 
     it(
-      'pages the upcoming days in blocks of 31 from today',
+      'makes a month view from its 1st through its last day, leap day included',
       (): void => {
-        expect(toDayRange(
-          { month: null, upcomingPage: 1 },
-          HONOLULU,
-          new Date('2026-10-14T22:00:00Z'),
-        )).toEqual({ firstDay: '2026-11-14', lastDay: '2026-12-14' });
-        expect(toDayRange(
-          { month: null, upcomingPage: 2 },
-          HONOLULU,
-          new Date('2026-10-14T22:00:00Z'),
-        )).toEqual({ firstDay: '2026-12-15', lastDay: '2027-01-14' });
+        expect(toMonthView('2026-11')).toEqual({
+          kind: AvailabilityViewKind.Month,
+          firstDay: '2026-11-01',
+          lastDay: '2026-11-30',
+        });
+        expect(toMonthView('2028-02').lastDay).toBe('2028-02-29');
       },
     );
 
     it(
-      "asks for a month's 1st through its last day",
+      'tells views apart by kind and days',
       (): void => {
-        expect(toDayRange({ month: '2026-11', upcomingPage: 0 }, HONOLULU)).toEqual({ firstDay: '2026-11-01', lastDay: '2026-11-30' });
-        expect(toDayRange({ month: '2028-02', upcomingPage: 0 }, HONOLULU)).toEqual({ firstDay: '2028-02-01', lastDay: '2028-02-29' });
-        expect(toDayRange({ month: '2026-12', upcomingPage: 0 }, null)).toEqual({ firstDay: '2026-12-01', lastDay: '2026-12-31' });
+        expect(isSameView(toMonthView('2026-11'), toMonthView('2026-11'))).toBe(true);
+        expect(isSameView(toMonthView('2026-11'), toMonthView('2026-12'))).toBe(false);
+        expect(isSameView(toUpcomingView(fromIsoDate('2026-11-01'), window), toMonthView('2026-11'))).toBe(false);
+        expect(isSameView(null, toMonthView('2026-11'))).toBe(false);
       },
     );
   },

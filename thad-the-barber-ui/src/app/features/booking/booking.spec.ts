@@ -25,7 +25,9 @@ import { SavedConfirmation } from './models/saved-confirmation.model';
 import { BookingService } from './services/booking.service';
 import * as BookingActions from './state/booking.actions';
 import { bookingFeature } from './state/booking.feature';
-import { FIRST_UPCOMING_VIEW } from './utils/booking-time.utils';
+import { toBookingWindow, toUpcomingView } from './utils/booking-time.utils';
+import { AvailabilityView } from './models/availability-view.model';
+import { DateRange } from './models/date-range.model';
 
 /** The page's protected members the spec drives, read by name so the class stays unchanged. */
 interface BookingPage {
@@ -43,6 +45,15 @@ const TODAY: string = toIsoDateIn(TEST_SHOP.timeZone, new Date());
 const FIRST_TIME: string = `${TODAY}T20:00:00Z`;
 const SECOND_TIME: string = `${TODAY}T20:30:00Z`;
 const TOMORROW: string = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+
+/** The view the page opens on for the test shop: today's 31-day block, on the shop's clock. */
+function firstBlock(): AvailabilityView {
+  const bookingWindow: DateRange | null = toBookingWindow(TEST_SHOP.bookingSettings, TEST_SHOP.timeZone);
+  if (!bookingWindow) {
+    throw new Error('The test shop has a booking window.');
+  }
+  return toUpcomingView(bookingWindow.min, bookingWindow);
+}
 
 describe(
   'Booking',
@@ -210,7 +221,7 @@ describe(
           startAt: null,
         });
         expect(page.openStep()).toBe(BookingStep.Date);
-        expect(dispatched).toContainEqual(BookingActions.SetAvailabilityView({ view: FIRST_UPCOMING_VIEW }));
+        expect(dispatched).toContainEqual(BookingActions.SetAvailabilityView({ view: firstBlock() }));
       },
     );
 
@@ -228,7 +239,7 @@ describe(
         expect(page.bookingForm.controls.startAt.value).toBeNull();
         expect(page.bookingNotice()).not.toBeNull();
         expect(page.openStep()).toBe(BookingStep.Time);
-        expect(dispatched).toContainEqual(BookingActions.SetAvailabilityView({ view: FIRST_UPCOMING_VIEW }));
+        expect(dispatched).toContainEqual(BookingActions.SetAvailabilityView({ view: firstBlock() }));
       },
     );
 
@@ -300,7 +311,7 @@ describe(
         openPage();
 
         expect(TestBed.inject<Store<AppState>>(Store).selectSignal(bookingFeature.selectView)())
-          .toEqual(FIRST_UPCOMING_VIEW);
+          .toEqual(firstBlock());
         expect(TestBed.inject<Store<AppState>>(Store).selectSignal(bookingFeature.selectLoadStatus)())
           .toBe(RequestStatus.Pending);
       },
@@ -439,13 +450,27 @@ describe(
           ProblemCode.SlotUnavailable,
         );
         TestBed.inject<Store<AppState>>(Store).dispatch(BookingActions.AvailabilityRequestSuccess({
-          view: FIRST_UPCOMING_VIEW,
+          view: firstBlock(),
           availableDays: [{ date: '2099-01-01', times: ['2099-01-01T20:00:00Z'] }],
         }));
 
         expect(page.bookingForm.controls.date.value).toBeNull();
         expect(page.openStep()).toBe(BookingStep.Date);
         expect(page.bookingNotice()).not.toBeNull();
+      },
+    );
+
+    it(
+      "moves a 31-day view left open past midnight to today's block when the customer comes back",
+      (): void => {
+        openPage();
+        const today: AvailabilityView = firstBlock();
+        const yesterdaysBlock: AvailabilityView = { ...today, firstDay: '2000-01-01' };
+        TestBed.inject<Store<AppState>>(Store).dispatch(BookingActions.SetAvailabilityView({ view: yesterdaysBlock }));
+
+        document.dispatchEvent(new Event('visibilitychange'));
+
+        expect(dispatched.at(-1)).toEqual(BookingActions.SetAvailabilityView({ view: today }));
       },
     );
   },

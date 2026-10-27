@@ -9,7 +9,7 @@ import { AvailableDay } from '../../dtos/available-day.dto';
 import * as BookingActions from '../../state/booking.actions';
 import { bookingFeature } from '../../state/booking.feature';
 import { TimeStep } from './time-step';
-import { FIRST_UPCOMING_VIEW } from '../../utils/booking-time.utils';
+import { toMonthView } from '../../utils/booking-time.utils';
 
 /** Made-up days on the test shop's Honolulu clock: 20:00 UTC is 10 AM there. */
 const DAYS: AvailableDay[] = [
@@ -47,8 +47,8 @@ describe(
       });
       const store: Store<AppState> = TestBed.inject<Store<AppState>>(Store);
       store.dispatch(ShopActions.ShopInfoRequestSuccess({ shopInfo: TEST_SHOP }));
-      store.dispatch(BookingActions.SetAvailabilityView({ view: FIRST_UPCOMING_VIEW }));
-      store.dispatch(BookingActions.AvailabilityRequestSuccess({ view: FIRST_UPCOMING_VIEW, availableDays: DAYS }));
+      store.dispatch(BookingActions.SetAvailabilityView({ view: toMonthView('2026-11') }));
+      store.dispatch(BookingActions.AvailabilityRequestSuccess({ view: toMonthView('2026-11'), availableDays: DAYS }));
       const fixture: ComponentFixture<TimeStep> = TestBed.createComponent(TimeStep);
       fixture.componentRef.setInput('startAtControl', new FormControl<string | null>(null));
       fixture.componentRef.setInput('selectedDate', selectedDate);
