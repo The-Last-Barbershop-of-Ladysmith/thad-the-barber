@@ -67,6 +67,8 @@ export class DateStep {
 
   protected readonly upcomingLabel: string = `Next ${UPCOMING_DAY_COUNT} days`;
   protected readonly noOpenDaysNotice: BookingNotice = NO_OPEN_DAYS_NOTICE;
+  /** Placeholder rows in the list's place while the days load. */
+  protected readonly skeletonRows: number[] = Array.from({ length: 10 }, (_: unknown, index: number): number => index);
 
   private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
   private readonly timeZone: Signal<string | null> = this.store.selectSignal(shopFeature.selectTimeZone);

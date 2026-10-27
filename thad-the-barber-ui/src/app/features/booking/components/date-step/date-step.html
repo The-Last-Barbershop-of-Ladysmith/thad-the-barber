@@ -1,14 +1,6 @@
 <section class="stack gap-3">
   <div class="date-step-header">
     <span id="date-step-heading" class="eyebrow">1 — Pick a date</span>
-    <!-- @if (isLoading()) {
-      <p-progress-spinner
-        class="size-4"
-        strokeWidth="6"
-        ariaLabel="Loading open days"
-        data-testid="dates-loading"
-      />
-    } -->
   </div>
 
   <div class="view-controls">
@@ -103,13 +95,16 @@
     rangeCaption()
   }}</span>
   @if (isLoading()) {
-      <div class="flex flex-wrap">
-        @for (skeleton of [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]; track $index) {
-          <div class="basis-1/2 p-1">
-            <p-skeleton width="100%" height="2.4rem"></p-skeleton>
-          </div>
-        }
-      </div>
+    <div
+      class="date-list-skeleton"
+      data-testid="dates-loading"
+      aria-busy="true"
+      aria-label="Loading open days"
+    >
+      @for (placeholder of skeletonRows; track $index) {
+        <p-skeleton height="3.25rem" />
+      }
+    </div>
   }
   @if (hasNoOpenDays()) {
     <app-notice-message [notice]="noOpenDaysNotice" />
