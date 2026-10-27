@@ -9,38 +9,203 @@
   @if (savedBookingNotice(); as savedNotice) {
     <app-notice-message data-testid="saved-booking" [notice]="savedNotice" />
   }
+  @if (bookedNotice(); as booked) {
+    <app-notice-message data-testid="booking-confirmation" [notice]="booked" />
+  }
+  @if (isBotCheckFailed()) {
+    <app-notice-message data-testid="bot-check-failed" [notice]="botCheckFailedNotice" />
+  }
   @if (availabilityNotice(); as loadFailureNotice) {
     <app-notice-message [notice]="loadFailureNotice" (retry)="reloadMonth()" />
   }
+  @if (bookingNotice(); as failureNotice) {
+    <app-notice-message [notice]="failureNotice" (retry)="confirm()" />
+  }
 
-  <form
-    class="steps-and-summary lg:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]"
-    [formGroup]="bookingForm"
-    (ngSubmit)="confirm()"
-  >
-    <div class="stack gap-8">
+  <form [formGroup]="bookingForm" (ngSubmit)="confirm()">
+    @if (isDesktop()) {
+      <div class="step-rail-layout">
+        <nav class="step-rail" aria-label="Booking steps">
+          <ol class="step-rail-list">
+            @for (stepView of stepViews(); track stepView.step) {
+              <li>
+                <button
+                  type="button"
+                  class="step-rail-item"
+                  [class.is-open]="stepView.isOpen"
+                  [attr.data-testid]="'rail-' + stepView.step"
+                  [attr.aria-current]="stepView.isOpen ? 'step' : null"
+                  [disabled]="stepView.isLocked"
+                  (click)="showStep(stepView.step)"
+                >
+                  <span
+                    class="step-number"
+                    [class.is-open]="stepView.isOpen"
+                    [class.is-done]="stepView.isDone"
+                    >{{ stepView.number }}</span
+                  >
+                  <span class="step-text">
+                    <span class="step-title">{{ stepView.title }}</span>
+                    <span class="step-summary" [class.is-done]="stepView.isDone">{{
+                      stepView.summary
+                    }}</span>
+                  </span>
+                </button>
+              </li>
+            }
+          </ol>
+        </nav>
+
+        @if (openStepView(); as currentStep) {
+          <section class="step-panel" [attr.aria-labelledby]="'step-heading-' + currentStep.step">
+            <div class="stack gap-1.5">
+              <span class="eyebrow">Step {{ currentStep.number }} of {{ stepViews().length }}</span>
+              <h2 class="step-panel-title" tabindex="-1" [id]="'step-heading-' + currentStep.step">
+                {{ currentStep.title }}
+              </h2>
+            </div>
+            <ng-container
+              [ngTemplateOutlet]="stepContent"
+              [ngTemplateOutletContext]="{ $implicit: currentStep.step }"
+            />
+            <div class="step-panel-actions">
+              @if (currentStep.number > 1) {
+                <button
+                  pButton
+                  type="button"
+                  severity="secondary"
+                  [outlined]="true"
+                  data-testid="previous-step"
+                  [disabled]="isSubmitting()"
+                  (click)="showPreviousStep()"
+                >
+                  <span pButtonLabel>Back</span>
+                </button>
+              }
+              @if (currentStep.step !== bookingStep.Review) {
+                <button
+                  pButton
+                  type="button"
+                  class="ml-auto"
+                  [attr.data-testid]="
+                    currentStep.step === bookingStep.Details ? 'open-review' : 'next-step'
+                  "
+                  [disabled]="!currentStep.isDone"
+                  (click)="showNextStep()"
+                >
+                  <span pButtonLabel>Continue</span>
+                </button>
+              }
+            </div>
+          </section>
+        }
+      </div>
+    } @else {
+      <div class="step-cards">
+        @for (stepView of stepViews(); track stepView.step) {
+          <section class="step-card" [class.is-open]="stepView.isOpen">
+            <h2 class="m-0">
+              <button
+                type="button"
+                class="step-card-header"
+                [id]="'step-heading-' + stepView.step"
+                [attr.aria-expanded]="stepView.isOpen"
+                [attr.aria-controls]="'step-body-' + stepView.step"
+                [attr.data-testid]="'step-' + stepView.step"
+                [disabled]="stepView.isLocked"
+                (click)="showStep(stepView.step)"
+              >
+                <span
+                  class="step-number"
+                  [class.is-open]="stepView.isOpen"
+                  [class.is-done]="stepView.isDone"
+                  >{{ stepView.number }}</span
+                >
+                <span class="step-text">
+                  <span class="step-title">{{ stepView.title }}</span>
+                  <span class="step-summary" [class.is-done]="stepView.isDone">{{
+                    stepView.summary
+                  }}</span>
+                </span>
+                @if (stepView.isDone && !stepView.isOpen) {
+                  <span class="step-change">Change</span>
+                }
+              </button>
+            </h2>
+            @if (stepView.isOpen) {
+              <div class="step-card-body" [id]="'step-body-' + stepView.step">
+                <ng-container
+                  [ngTemplateOutlet]="stepContent"
+                  [ngTemplateOutletContext]="{ $implicit: stepView.step }"
+                />
+              </div>
+            }
+          </section>
+        }
+      </div>
+
+      <div class="sticky-bar" data-testid="sticky-bar">
+        <div class="sticky-picks">
+          <span>{{ pickedDayLabel() }}</span>
+          <strong class="text-primary">{{ pickedTimeLabel() }}</strong>
+        </div>
+        @if (openStep() === bookingStep.Review) {
+          <button
+            pButton
+            type="button"
+            severity="secondary"
+            [outlined]="true"
+            [fluid]="true"
+            data-testid="previous-step"
+            [disabled]="isSubmitting()"
+            (click)="showPreviousStep()"
+          >
+            <span pButtonLabel>Back</span>
+          </button>
+        } @else {
+          <button
+            pButton
+            type="button"
+            [fluid]="true"
+            data-testid="open-review"
+            [disabled]="!canReview()"
+            (click)="showStep(bookingStep.Review)"
+          >
+            <span pButtonLabel>Review booking</span>
+          </button>
+        }
+      </div>
+    }
+  </form>
+</div>
+
+<ng-template #stepContent let-step>
+  @switch (step) {
+    @case (bookingStep.Date) {
       <app-date-step
         [dateControl]="bookingForm.controls.date"
         [startAtControl]="bookingForm.controls.startAt"
       />
+    }
+    @case (bookingStep.Time) {
       <app-time-step
         [startAtControl]="bookingForm.controls.startAt"
         [selectedDate]="bookingFormValue().date"
       />
+    }
+    @case (bookingStep.Details) {
       <app-details-step
         [nameControl]="bookingForm.controls.name"
         [phoneControl]="bookingForm.controls.phone"
       />
-    </div>
-
-    <app-booking-summary
-      class="lg:sticky lg:top-24"
-      [bookingFormValue]="bookingFormValue()"
-      [isFormValid]="bookingForm.valid"
-      [isSubmitting]="isSubmitting()"
-      [confirmedBooking]="confirmedBooking()"
-      [bookingNotice]="bookingNotice()"
-      (retry)="confirm()"
-    />
-  </form>
-</div>
+    }
+    @case (bookingStep.Review) {
+      <app-review-step
+        [bookingFormValue]="bookingFormValue()"
+        [isFormValid]="bookingForm.valid"
+        [isSubmitting]="isSubmitting()"
+        (changeStep)="changeFromReview($event)"
+      />
+    }
+  }
+</ng-template>

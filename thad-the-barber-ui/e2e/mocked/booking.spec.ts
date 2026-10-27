@@ -58,8 +58,11 @@ async function waitForShop(page: Page): Promise<void> {
   await expect(page.locator(`a[href="tel:${TEST_SHOP.phone}"]`).first()).toBeAttached();
 }
 
-/** Picks the first open day and time, fills in the made-up customer and confirms. */
-async function book(page: Page): Promise<void> {
+/**
+ * Picks the first open day and time and fills in the made-up customer; each pick opens the next step. Then opens the
+ * review step from the phone's sticky bar or the desktop's Continue (both `open-review`).
+ */
+async function fillInBooking(page: Page): Promise<void> {
   await openDays(page).first().click();
   await page.getByTestId('time-list').locator('[role="button"]').first().click();
   await page.locator('#booking-name').fill('Jordan Customer');
@@ -69,6 +72,12 @@ async function book(page: Page): Promise<void> {
     await phone.fill(CUSTOMER_PHONE);
     await expect(phone).toHaveValue('(540) 555-0123', { timeout: 1_000 });
   }).toPass();
+  await page.getByTestId('open-review').click();
+}
+
+/** Fills in the booking and confirms it from the review step. */
+async function book(page: Page): Promise<void> {
+  await fillInBooking(page);
   await page.getByTestId('confirm-booking').click();
 }
 
@@ -257,6 +266,7 @@ test.describe(
         const botCheck: Locator = page.getByTestId('bot-check-failed');
         await expect(botCheck.getByTestId('notice-booking-site')).toHaveAttribute('href', TEST_SHOP.squareBookingSiteUrl ?? '');
         await expect(botCheck.getByTestId('notice-call')).toHaveAttribute('href', `tel:${TEST_SHOP.phone}`);
+        await fillInBooking(page);
         await expect(page.getByTestId('confirm-booking')).toBeDisabled();
         await expectNoA11yViolations(page);
       },

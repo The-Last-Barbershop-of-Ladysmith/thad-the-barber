@@ -11,11 +11,9 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { ButtonModule } from 'primeng/button';
-import { filter, take } from 'rxjs';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { SkeletonModule } from 'primeng/skeleton';
 import { RequestStatus } from '../../../../shared/models/request.models';
@@ -123,19 +121,6 @@ export class DateStep {
   protected readonly hasNoOpenDays: Signal<boolean> = computed((): boolean =>
     this.loadStatus() === RequestStatus.Success && this.availableDays().length === 0);
 
-  /** The first view waits for the shop's timezone, so "today" is the shop's, not the browser's. */
-  constructor() {
-    toObservable(this.timeZone)
-      .pipe(
-        filter((timeZone: string | null): boolean => timeZone !== null),
-        take(1),
-        takeUntilDestroyed(),
-      )
-      .subscribe((): void => {
-        this.showView(null);
-      });
-  }
-
   protected toggleMonthPicker(): void {
     this.isMonthPickerOpen.update((isOpen: boolean): boolean => !isOpen);
   }
@@ -146,8 +131,14 @@ export class DateStep {
     this.monthPickerToggle()?.nativeElement.focus();
   }
 
+  /**
+   * The days of another view don't include the picked day, so the pick and its time are cleared; otherwise the time
+   * step would show a day with no times.
+   */
   protected showView(month: string | null): void {
     this.isMonthPickerOpen.set(false);
+    this.dateControl().reset();
+    this.startAtControl().reset();
     this.store.dispatch(BookingActions.SetActiveMonthView({ month }));
   }
 

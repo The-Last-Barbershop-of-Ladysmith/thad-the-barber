@@ -1,0 +1,45 @@
+<div class="stack gap-3.5">
+  <dl class="summary-list">
+    @for (summaryRow of summaryRows(); track summaryRow.label) {
+      <div class="summary-item">
+        <div class="stack gap-1">
+          <dt class="summary-label">{{ summaryRow.label }}</dt>
+          <dd class="m-0">{{ summaryRow.value }}</dd>
+        </div>
+        <button
+          pButton
+          type="button"
+          [link]="true"
+          [attr.data-testid]="'change-' + summaryRow.label.toLowerCase()"
+          [attr.aria-label]="'Change ' + summaryRow.label.toLowerCase()"
+          [disabled]="isSubmitting()"
+          (click)="changeStep.emit(summaryRow.step)"
+        >
+          <span pButtonLabel>Change</span>
+        </button>
+      </div>
+    }
+  </dl>
+
+  <button
+    pButton
+    type="submit"
+    data-testid="confirm-booking"
+    [fluid]="true"
+    [disabled]="!isFormValid() || isBotCheckFailed() || isSubmitting()"
+  >
+    @if (isSubmitting()) {
+      <svg data-p-icon="spinner" class="animate-spin"></svg> Booking…
+    } @else {
+      Confirm booking
+    }
+  </button>
+
+  <small class="recaptcha-terms">
+    This site is protected by reCAPTCHA and the Google
+    <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Privacy Policy</a>
+    and
+    <a href="https://policies.google.com/terms" target="_blank" rel="noopener">Terms of Service</a>
+    apply.
+  </small>
+</div>

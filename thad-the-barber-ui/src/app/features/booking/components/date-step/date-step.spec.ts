@@ -69,9 +69,8 @@ describe(
     }
 
     it(
-      'opens on the next 31 days, with previous disabled',
+      'shows the next 31 days first, with previous disabled',
       (): void => {
-        expect(dispatched).toContainEqual(BookingActions.SetActiveMonthView({ month: null }));
         expect(find('view-picker')?.textContent).toContain('Next 31 days');
         expect(find('previous-view')?.hasAttribute('disabled')).toBe(true);
       },
@@ -167,6 +166,19 @@ describe(
         find(`month-${lastMonth}`)?.click();
 
         expect(dispatched.at(-1)).toEqual(BookingActions.SetActiveMonthView({ month: lastMonth ?? null }));
+      },
+    );
+
+    it(
+      'clears the picked day and time when another view opens, since its days differ',
+      (): void => {
+        load(OPEN_DAYS);
+        dateControl.setValue('2026-11-01');
+
+        find('next-view')?.click();
+
+        expect(dateControl.value).toBeNull();
+        expect(startAtControl.value).toBeNull();
       },
     );
   },

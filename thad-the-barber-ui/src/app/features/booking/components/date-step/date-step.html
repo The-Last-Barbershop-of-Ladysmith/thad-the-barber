@@ -1,8 +1,4 @@
 <section class="stack gap-3">
-  <div class="date-step-header">
-    <span id="date-step-heading" class="eyebrow">1 — Pick a date</span>
-  </div>
-
   <div class="view-controls">
     <button
       pButton
@@ -111,7 +107,7 @@
   } @else {
     <p-selectbutton
       class="date-list"
-      ariaLabelledBy="date-step-heading"
+      ariaLabelledBy="step-heading-date"
       data-testid="date-list"
       [formControl]="dateControl()"
       [options]="dateOptions()"

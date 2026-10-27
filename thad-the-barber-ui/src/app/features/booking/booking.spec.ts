@@ -8,6 +8,7 @@ import { testSavedConfirmation } from '../../../testing/test-booking';
 import { TEST_SHOP } from '../../../testing/test-shop';
 import { SessionService } from '../../core/services/session.service';
 import { ProblemCode } from '../../shared/models/problem-code.model';
+import { RequestStatus } from '../../shared/models/request.models';
 import { toIsoDateIn } from '../../shared/utils/date.utils';
 import { AppState } from '../../store/app.state';
 import * as ShopActions from '../shop/state/shop.actions';
@@ -17,6 +18,7 @@ import { NoticeMessage } from './components/notice-message/notice-message';
 import { BookingConfirmation } from './models/booking-confirmation.model';
 import { BookingForm } from './models/booking-form.model';
 import { BookingNotice } from './models/booking-notice.model';
+import { BookingStep } from './models/booking-step.model';
 import { BookingRequest } from './models/booking-request.model';
 import { SavedConfirmation } from './models/saved-confirmation.model';
 import { BookingService } from './services/booking.service';
@@ -28,11 +30,13 @@ interface BookingPage {
   bookingForm: BookingForm;
   confirm: () => void;
   bookingNotice: () => BookingNotice | null;
-  confirmedBooking: () => BookingConfirmation | null;
+  bookedNotice: () => BookingNotice | null;
+  openStep: () => BookingStep;
+  showStep: (step: BookingStep) => void;
+  changeFromReview: (step: BookingStep) => void;
 }
 
 const TODAY: string = toIsoDateIn(TEST_SHOP.timeZone, new Date());
-const MONTH: string = TODAY.slice(0, 7);
 const FIRST_TIME: string = `${TODAY}T20:00:00Z`;
 const SECOND_TIME: string = `${TODAY}T20:30:00Z`;
 const TOMORROW: string = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
@@ -105,8 +109,6 @@ describe(
     function openPage(savedConfirmation: SavedConfirmation | null = null): void {
       const store: Store<AppState> = TestBed.inject<Store<AppState>>(Store);
       store.dispatch(ShopActions.ShopInfoRequestSuccess({ shopInfo: TEST_SHOP }));
-      // The date step, which opens the month, doesn't render here.
-      store.dispatch(BookingActions.SetActiveMonthView({ month: MONTH }));
       if (savedConfirmation) {
         store.dispatch(BookingActions.BookingConfirm({ savedConfirmation }));
       }
@@ -186,12 +188,31 @@ describe(
         responses[0]?.complete();
 
         expect(page.bookingForm.enabled).toBe(true);
-        expect(page.confirmedBooking()).toEqual(confirmation(requests[0]));
       },
     );
 
     it(
-      'drops a taken time and reloads the month in view',
+      'shows the booking with its phone and starts over at the date, keeping the name and phone',
+      (): void => {
+        openPage();
+        pickAndConfirm(FIRST_TIME);
+        responses[0]?.next(confirmation(requests[0]));
+        responses[0]?.complete();
+
+        expect(page.bookedNotice()?.text).toContain('(555) 010-0199');
+        expect(page.bookingForm.getRawValue()).toEqual({
+          name: 'Test Customer',
+          phone: '(555) 010-0199',
+          date: null,
+          startAt: null,
+        });
+        expect(page.openStep()).toBe(BookingStep.Date);
+        expect(dispatched).toContainEqual(BookingActions.SetActiveMonthView({ month: null }));
+      },
+    );
+
+    it(
+      'drops a taken time, opens the time step and reloads the days in view',
       (): void => {
         openPage();
         pickAndConfirm(FIRST_TIME);
@@ -203,7 +224,8 @@ describe(
 
         expect(page.bookingForm.controls.startAt.value).toBeNull();
         expect(page.bookingNotice()).not.toBeNull();
-        expect(dispatched).toContainEqual(BookingActions.SetActiveMonthView({ month: MONTH }));
+        expect(page.openStep()).toBe(BookingStep.Time);
+        expect(dispatched).toContainEqual(BookingActions.SetActiveMonthView({ month: null }));
       },
     );
 
@@ -266,6 +288,75 @@ describe(
         }));
 
         expect(savedBooking()).toBeNull();
+      },
+    );
+
+    it(
+      'loads the next 31 days once the shop is known',
+      (): void => {
+        openPage();
+
+        expect(TestBed.inject<Store<AppState>>(Store).selectSignal(bookingFeature.selectVisibleMonth)()).toBeNull();
+        expect(TestBed.inject<Store<AppState>>(Store).selectSignal(bookingFeature.selectLoadStatus)())
+          .toBe(RequestStatus.Pending);
+      },
+    );
+
+    it(
+      'opens the time step once a day is picked, then the details once a time is',
+      (): void => {
+        openPage();
+
+        page.bookingForm.controls.date.setValue(TODAY);
+        expect(page.openStep()).toBe(BookingStep.Time);
+        page.bookingForm.controls.startAt.setValue(FIRST_TIME);
+        expect(page.openStep()).toBe(BookingStep.Details);
+      },
+    );
+
+    it(
+      "won't open a step before the ones above it are done",
+      (): void => {
+        openPage();
+
+        page.showStep(BookingStep.Review);
+        expect(page.openStep()).toBe(BookingStep.Date);
+        page.bookingForm.controls.date.setValue(TODAY);
+        page.bookingForm.controls.startAt.setValue(FIRST_TIME);
+        page.showStep(BookingStep.Review);
+        expect(page.openStep()).toBe(BookingStep.Details);
+      },
+    );
+
+    it(
+      'comes back to review after a time is changed from it',
+      (): void => {
+        openPage();
+        page.bookingForm.setValue({
+          name: 'Test Customer',
+          phone: '(555) 010-0199',
+          date: TODAY,
+          startAt: FIRST_TIME,
+        });
+        page.showStep(BookingStep.Review);
+
+        page.changeFromReview(BookingStep.Time);
+        expect(page.openStep()).toBe(BookingStep.Time);
+        page.bookingForm.controls.startAt.setValue(SECOND_TIME);
+        expect(page.openStep()).toBe(BookingStep.Review);
+      },
+    );
+
+    it(
+      'shows a failed bot check at the top of the page, with the Square booking site to fall back on',
+      (): void => {
+        isBotCheckFailed.set(true);
+        openPage();
+
+        const botCheck: Element | null = (fixture.nativeElement as HTMLElement)
+          .querySelector('[data-testid="bot-check-failed"]');
+        expect(botCheck?.querySelector('[data-testid="notice-booking-site"]')?.getAttribute('href'))
+          .toBe(TEST_SHOP.squareBookingSiteUrl);
       },
     );
   },
