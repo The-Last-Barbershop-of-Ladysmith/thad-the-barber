@@ -15,9 +15,9 @@ import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { ButtonModule } from 'primeng/button';
-import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { filter, take } from 'rxjs';
 import { SelectButtonModule } from 'primeng/selectbutton';
+import { SkeletonModule } from 'primeng/skeleton';
 import { RequestStatus } from '../../../../shared/models/request.models';
 import { UPCOMING_DAY_COUNT } from '../../../../core/config/booking-dates';
 import {
@@ -51,11 +51,11 @@ import { NoticeMessage } from '../notice-message/notice-message';
 @Component({
   selector: 'app-date-step',
   imports: [
-    ReactiveFormsModule,
     ButtonModule,
-    ProgressSpinnerModule,
-    SelectButtonModule,
     NoticeMessage,
+    ReactiveFormsModule,
+    SelectButtonModule,
+    SkeletonModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './date-step.html',

@@ -1,14 +1,14 @@
 <section class="stack gap-3">
   <div class="date-step-header">
     <span id="date-step-heading" class="eyebrow">1 — Pick a date</span>
-    @if (isLoading()) {
+    <!-- @if (isLoading()) {
       <p-progress-spinner
         class="size-4"
         strokeWidth="6"
         ariaLabel="Loading open days"
         data-testid="dates-loading"
       />
-    }
+    } -->
   </div>
 
   <div class="view-controls">
@@ -102,7 +102,15 @@
   <span class="text-sm text-surface-200" aria-live="polite" data-testid="view-caption">{{
     rangeCaption()
   }}</span>
-
+  @if (isLoading()) {
+      <div class="flex flex-wrap">
+        @for (skeleton of [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]; track $index) {
+          <div class="basis-1/2 p-1">
+            <p-skeleton width="100%" height="2.4rem"></p-skeleton>
+          </div>
+        }
+      </div>
+  }
   @if (hasNoOpenDays()) {
     <app-notice-message [notice]="noOpenDaysNotice" />
   } @else {
