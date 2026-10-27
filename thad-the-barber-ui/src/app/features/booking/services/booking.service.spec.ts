@@ -1,8 +1,8 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { BookingConfirmation } from '../models/booking-confirmation.model';
-import { BookingRequest } from '../models/booking-request.model';
+import { BookingConfirmation } from '../dtos/booking-confirmation.dto';
+import { BookingRequest } from '../dtos/booking-request.dto';
 import { BOOKINGS_URL, BookingService } from './booking.service';
 
 describe(

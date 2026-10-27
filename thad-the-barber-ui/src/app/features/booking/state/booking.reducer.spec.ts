@@ -1,6 +1,6 @@
 import { testSavedConfirmation } from '../../../../testing/test-booking';
 import { RequestStatus } from '../../../shared/models/request.models';
-import { AvailableDay } from '../models/available-day.model';
+import { AvailableDay } from '../dtos/available-day.dto';
 import { SavedConfirmation } from '../models/saved-confirmation.model';
 import * as BookingActions from './booking.actions';
 import { bookingReducer } from './booking.reducer';

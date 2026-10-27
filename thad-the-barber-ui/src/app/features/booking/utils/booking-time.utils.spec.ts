@@ -1,6 +1,6 @@
 import { TEST_SHOP } from '../../../../testing/test-shop';
 import { fromIsoDate, toIsoDate } from '../../../shared/utils/date.utils';
-import { AvailableDay } from '../models/available-day.model';
+import { AvailableDay } from '../dtos/available-day.dto';
 import { DateRange } from '../models/date-range.model';
 import { toBookingWindow, toDayRange, toLaterMonths, toLongDateTime, toTimeSlots } from './booking-time.utils';
 

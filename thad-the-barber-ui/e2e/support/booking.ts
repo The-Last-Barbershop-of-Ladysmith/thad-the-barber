@@ -1,5 +1,5 @@
 import { Route } from '@playwright/test';
-import { AvailableDay } from '../../src/app/features/booking/models/available-day.model';
+import { AvailableDay } from '../../src/app/features/booking/dtos/available-day.dto';
 import { TEST_SHOP } from '../../src/testing/test-shop';
 import { servedEnvironment } from './served-environment';
 

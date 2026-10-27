@@ -7,7 +7,7 @@ import { FILLING_UP_BELOW } from '../../../../core/config/booking-dates';
 import { formatLongDate, fromIsoDate } from '../../../../shared/utils/date.utils';
 import { AppState } from '../../../../store/app.state';
 import { shopFeature } from '../../../shop/state/shop.feature';
-import { AvailableDay } from '../../models/available-day.model';
+import { AvailableDay } from '../../dtos/available-day.dto';
 import { TimeSlot } from '../../models/time-slot.model';
 import { bookingFeature } from '../../state/booking.feature';
 import { toTimeSlots } from '../../utils/booking-time.utils';

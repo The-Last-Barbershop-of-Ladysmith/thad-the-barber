@@ -5,7 +5,7 @@ import { TEST_SHOP } from '../../../../../testing/test-shop';
 import { AppState } from '../../../../store/app.state';
 import * as ShopActions from '../../../shop/state/shop.actions';
 import { shopFeature } from '../../../shop/state/shop.feature';
-import { AvailableDay } from '../../models/available-day.model';
+import { AvailableDay } from '../../dtos/available-day.dto';
 import * as BookingActions from '../../state/booking.actions';
 import { bookingFeature } from '../../state/booking.feature';
 import { TimeStep } from './time-step';

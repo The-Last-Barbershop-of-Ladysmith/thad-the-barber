@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { AvailableDay } from '../models/available-day.model';
+import { AvailableDay } from '../dtos/available-day.dto';
 import { AVAILABILITY_URL, AvailabilityService } from './availability.service';
 
 describe(

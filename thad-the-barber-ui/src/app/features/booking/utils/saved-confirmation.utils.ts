@@ -1,4 +1,4 @@
-import { BookingConfirmation } from '../models/booking-confirmation.model';
+import { BookingConfirmation } from '../dtos/booking-confirmation.dto';
 import { SavedConfirmation } from '../models/saved-confirmation.model';
 import { BookingState } from '../state/booking.state';
 

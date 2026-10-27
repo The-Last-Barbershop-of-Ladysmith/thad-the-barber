@@ -7,7 +7,7 @@ import { TEST_SHOP } from '../../../../testing/test-shop';
 import { AppState } from '../../../store/app.state';
 import * as ShopActions from '../../shop/state/shop.actions';
 import { shopFeature } from '../../shop/state/shop.feature';
-import { AvailableDay } from '../models/available-day.model';
+import { AvailableDay } from '../dtos/available-day.dto';
 import { DayRange } from '../models/day-range.model';
 import { AvailabilityService } from '../services/availability.service';
 import { toDayRange } from '../utils/booking-time.utils';

@@ -4,7 +4,7 @@ import { Action, Store } from '@ngrx/store';
 import { Observable, catchError, map, of, switchMap, withLatestFrom } from 'rxjs';
 import { AppState } from '../../../store/app.state';
 import { shopFeature } from '../../shop/state/shop.feature';
-import { AvailableDay } from '../models/available-day.model';
+import { AvailableDay } from '../dtos/available-day.dto';
 import { AvailabilityService } from '../services/availability.service';
 import { toDayRange } from '../utils/booking-time.utils';
 import * as BookingActions from './booking.actions';

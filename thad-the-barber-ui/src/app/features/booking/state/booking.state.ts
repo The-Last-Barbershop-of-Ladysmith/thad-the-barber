@@ -1,5 +1,5 @@
 import { RequestStatus } from '../../../shared/models/request.models';
-import { AvailableDay } from '../models/available-day.model';
+import { AvailableDay } from '../dtos/available-day.dto';
 import { SavedConfirmation } from '../models/saved-confirmation.model';
 
 /**

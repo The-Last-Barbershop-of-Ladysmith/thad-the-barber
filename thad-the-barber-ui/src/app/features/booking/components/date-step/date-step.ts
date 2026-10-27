@@ -29,18 +29,38 @@ import {
 import { AppState } from '../../../../store/app.state';
 import { BookingSettings } from '../../../shop/models/booking-settings.model';
 import { shopFeature } from '../../../shop/state/shop.feature';
-import { AvailableDay } from '../../models/available-day.model';
+import { AvailableDay } from '../../dtos/available-day.dto';
 import { BookingNotice } from '../../models/booking-notice.model';
-import { DateOption } from '../../models/date-option.model';
 import { DateRange } from '../../models/date-range.model';
 import { DayRange } from '../../models/day-range.model';
-import { MonthOptionGroup } from '../../models/month-option-group.model';
-import { MonthOption } from '../../models/month-option.model';
 import * as BookingActions from '../../state/booking.actions';
 import { bookingFeature } from '../../state/booking.feature';
 import { NO_OPEN_DAYS_NOTICE } from '../../utils/booking-notice.utils';
 import { toBookingWindow, toDayRange, toLaterMonths } from '../../utils/booking-time.utils';
 import { NoticeMessage } from '../notice-message/notice-message';
+
+/** An open day in the date step's list: the shop-calendar day ("2026-10-27") and how it reads. */
+interface DateOption {
+  date: string;
+  label: string;
+  /** The label plus the open count, so a screen reader hears "only 3 left" too. */
+  accessibleLabel: string;
+  openCount: number;
+  isFillingUp: boolean;
+}
+
+/** A month the date step's month picker offers ("2026-11"). */
+interface MonthOption {
+  month: string;
+  shortLabel: string;
+  longLabel: string;
+}
+
+/** The month picker's months, one group per year. */
+interface MonthOptionGroup {
+  year: number;
+  monthOptions: MonthOption[];
+}
 
 /**
  * Step 1: the open days of the view, written in full on the shop's clock. The view is the next 31 days (`null`) or a

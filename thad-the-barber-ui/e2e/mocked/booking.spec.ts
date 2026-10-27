@@ -1,6 +1,6 @@
 import { Locator, Page, Request, Route } from '@playwright/test';
-import { BookingConfirmation } from '../../src/app/features/booking/models/booking-confirmation.model';
-import { BookingRequest } from '../../src/app/features/booking/models/booking-request.model';
+import { BookingConfirmation } from '../../src/app/features/booking/dtos/booking-confirmation.dto';
+import { BookingRequest } from '../../src/app/features/booking/dtos/booking-request.dto';
 import { SavedConfirmation } from '../../src/app/features/booking/models/saved-confirmation.model';
 import { KEEP_CONFIRMATION_MS } from '../../src/app/features/booking/utils/saved-confirmation.utils';
 import { ProblemCode } from '../../src/app/shared/models/problem-code.model';

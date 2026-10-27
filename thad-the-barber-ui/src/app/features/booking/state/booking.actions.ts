@@ -1,5 +1,5 @@
 import { createAction, props } from '@ngrx/store';
-import { AvailableDay } from '../models/available-day.model';
+import { AvailableDay } from '../dtos/available-day.dto';
 import { SavedConfirmation } from '../models/saved-confirmation.model';
 
 export enum BookingActionTypes {

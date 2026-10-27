@@ -33,12 +33,11 @@ import { DetailsStep } from './components/details-step/details-step';
 import { NoticeMessage } from './components/notice-message/notice-message';
 import { ReviewStep } from './components/review-step/review-step';
 import { TimeStep } from './components/time-step/time-step';
-import { BookingConfirmation } from './models/booking-confirmation.model';
+import { BookingConfirmation } from './dtos/booking-confirmation.dto';
 import { BookingForm } from './models/booking-form.model';
 import { BookingFormValue } from './models/booking-form-value.model';
 import { BookingNotice } from './models/booking-notice.model';
 import { BookingStep } from './models/booking-step.model';
-import { StepView } from './models/step-view.model';
 import { BookingService } from './services/booking.service';
 import * as BookingActions from './state/booking.actions';
 import { bookingFeature } from './state/booking.feature';
@@ -53,6 +52,19 @@ import {
 } from './utils/booking-steps.utils';
 import { toTimeLabel } from './utils/booking-time.utils';
 import { toKeptBooking } from './utils/saved-confirmation.utils';
+
+/** How one step shows in the phone's step cards and the desktop's step rail. */
+interface StepView {
+  step: BookingStep;
+  number: number;
+  title: string;
+  /** What's picked ("Monday, October 27th 2026"), or what to do while nothing is ("Pick a day"). */
+  summary: string;
+  isOpen: boolean;
+  isDone: boolean;
+  /** A step opens only once every step before it is done. */
+  isLocked: boolean;
+}
 
 /** The step rail and one step at a time start here; below it, the steps collapse into cards (#207, #208). */
 const DESKTOP_QUERY: string = '(min-width: 64rem)';

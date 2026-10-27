@@ -18,8 +18,14 @@ import { AppState } from '../../../../store/app.state';
 import { shopFeature } from '../../../shop/state/shop.feature';
 import { BookingFormValue } from '../../models/booking-form-value.model';
 import { BookingStep } from '../../models/booking-step.model';
-import { SummaryRow } from '../../models/summary-row.model';
 import { toTimeLabel } from '../../utils/booking-time.utils';
+
+/** A review row: what was picked, and the step its Change link opens. */
+interface SummaryRow {
+  label: string;
+  value: string;
+  step: BookingStep;
+}
 
 /**
  * Step 4 (#209): everything picked, each with a Change link back to its step, and the confirm button, which submits
