@@ -93,7 +93,7 @@ export class Booking {
       nonNullable: true,
       validators: [Validators.required, Validators.pattern(/^\(\d{3}\) \d{3}-\d{4}$/)],
     }),
-    date: new FormControl<Date | null>(null, [Validators.required]),
+    date: new FormControl<string | null>(null, [Validators.required]),
     startAt: new FormControl<string | null>(null, [Validators.required]),
   });
 
@@ -118,10 +118,7 @@ export class Booking {
   }
 
   protected reloadMonth(): void {
-    const visibleMonth: string | null = this.visibleMonth();
-    if (visibleMonth) {
-      this.store.dispatch(BookingActions.SetActiveMonthView({ month: visibleMonth }));
-    }
+    this.store.dispatch(BookingActions.SetActiveMonthView({ month: this.visibleMonth() }));
   }
 
   /** The form's submit, and a failed booking's retry. */

@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { AvailableDay } from '../models/available-day.model';
+import { DayRange } from '../models/day-range.model';
 
 export const AVAILABILITY_URL: string = `${environment.apiBaseUrl}/bookings/availability`;
 
@@ -10,8 +11,8 @@ export const AVAILABILITY_URL: string = `${environment.apiBaseUrl}/bookings/avai
 export class AvailabilityService {
   private readonly http: HttpClient = inject(HttpClient);
 
-  /** The open days in `month` ("2026-10", shop timezone), leaving out days with no open times. */
-  getAvailableDays(month: string): Observable<AvailableDay[]> {
-    return this.http.get<AvailableDay[]>(AVAILABILITY_URL, { params: { month } });
+  /** The open days from `firstDay` through `lastDay` (shop timezone), leaving out days with no open times. */
+  getAvailableDays({ firstDay, lastDay }: DayRange): Observable<AvailableDay[]> {
+    return this.http.get<AvailableDay[]>(AVAILABILITY_URL, { params: { from: firstDay, to: lastDay } });
   }
 }

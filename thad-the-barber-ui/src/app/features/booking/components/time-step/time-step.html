@@ -1,10 +1,11 @@
 <section class="stack gap-3">
   <span class="eyebrow">2 — Pick a time</span>
-  @if (selectedDate(); as pickedDate) {
+  @if (selectedDateLabel(); as pickedDateLabel) {
     <span class="text-sm text-surface-200"
-      >{{ pickedDate | date: 'EEEE, MMMM d' }} · {{ timeSlots().length }} open</span
+      >{{ pickedDateLabel }} · {{ timeSlots().length }} open</span
     >
     <p-selectbutton
+      data-testid="time-list"
       [formControl]="startAtControl()"
       [options]="timeSlots()"
       optionLabel="label"

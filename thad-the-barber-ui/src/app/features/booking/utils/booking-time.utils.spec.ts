@@ -1,8 +1,8 @@
 import { TEST_SHOP } from '../../../../testing/test-shop';
-import { toIsoDate } from '../../../shared/utils/date.utils';
+import { fromIsoDate, toIsoDate } from '../../../shared/utils/date.utils';
 import { AvailableDay } from '../models/available-day.model';
 import { DateRange } from '../models/date-range.model';
-import { toBookingWindow, toLongDateTime, toTimeSlots } from './booking-time.utils';
+import { toBookingWindow, toDayRange, toLaterMonths, toLongDateTime, toTimeSlots } from './booking-time.utils';
 
 const HONOLULU: string = TEST_SHOP.timeZone;
 
@@ -29,6 +29,86 @@ describe(
       (): void => {
         expect(toBookingWindow(null, HONOLULU)).toBeNull();
         expect(toBookingWindow(TEST_SHOP.bookingSettings, null)).toBeNull();
+      },
+    );
+  },
+);
+
+describe(
+  'toDayRange',
+  (): void => {
+    it(
+      "asks for today on the shop's clock and the 30 days after it, across a month end",
+      (): void => {
+        // 05:00 UTC on Nov 1st is still Oct 31st in Honolulu.
+        expect(toDayRange(
+          null,
+          HONOLULU,
+          new Date('2026-11-01T05:00:00Z'),
+        )).toEqual({ firstDay: '2026-10-31', lastDay: '2026-11-30' });
+      },
+    );
+
+    it(
+      'runs the upcoming days across a year end and a leap day',
+      (): void => {
+        expect(toDayRange(
+          null,
+          HONOLULU,
+          new Date('2026-12-20T22:00:00Z'),
+        )).toEqual({ firstDay: '2026-12-20', lastDay: '2027-01-19' });
+        expect(toDayRange(
+          null,
+          HONOLULU,
+          new Date('2028-02-15T22:00:00Z'),
+        )).toEqual({ firstDay: '2028-02-15', lastDay: '2028-03-16' });
+      },
+    );
+
+    it(
+      "asks for a month's 1st through its last day",
+      (): void => {
+        expect(toDayRange('2026-11', HONOLULU)).toEqual({ firstDay: '2026-11-01', lastDay: '2026-11-30' });
+        expect(toDayRange('2028-02', HONOLULU)).toEqual({ firstDay: '2028-02-01', lastDay: '2028-02-29' });
+        expect(toDayRange('2026-12', null)).toEqual({ firstDay: '2026-12-01', lastDay: '2026-12-31' });
+      },
+    );
+  },
+);
+
+describe(
+  'toLaterMonths',
+  (): void => {
+    function window(min: string, max: string): DateRange {
+      return { min: fromIsoDate(min), max: fromIsoDate(max) };
+    }
+
+    it(
+      'lists every month after the first through the one the window ends in, across a year end',
+      (): void => {
+        expect(toLaterMonths(window('2026-10-27', '2027-10-27'))).toEqual([
+          '2026-11',
+          '2026-12',
+          '2027-01',
+          '2027-02',
+          '2027-03',
+          '2027-04',
+          '2027-05',
+          '2027-06',
+          '2027-07',
+          '2027-08',
+          '2027-09',
+          '2027-10',
+        ]);
+      },
+    );
+
+    it(
+      'lists only the months a short window reaches into',
+      (): void => {
+        expect(toLaterMonths(window('2026-10-27', '2026-11-16'))).toEqual(['2026-11']);
+        expect(toLaterMonths(window('2026-10-05', '2026-10-25'))).toEqual([]);
+        expect(toLaterMonths(window('2026-10-31', '2026-11-01'))).toEqual(['2026-11']);
       },
     );
   },

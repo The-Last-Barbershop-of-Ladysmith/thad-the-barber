@@ -2,8 +2,9 @@ import { SelectButtonDesignTokens } from '@primeuix/themes/types/selectbutton';
 import { ToggleButtonDesignTokens } from '@primeuix/themes/types/togglebutton';
 
 /**
- * Time-slot picker. SelectButton renders ToggleButtons, so both token sets are tuned here.
- * The css override un-joins the segmented control so the options wrap into a grid.
+ * Time-slot and date pickers. SelectButton renders ToggleButtons, so both token sets are tuned here.
+ * The css override un-joins the segmented control so the options wrap into a grid; the booking page's date list
+ * (`date-list`) is one full-width, left-aligned column, two from the `lg` breakpoint.
  */
 export const selectbutton: SelectButtonDesignTokens = {
   root: { borderRadius: '{border.radius.sm}' },
@@ -12,6 +13,9 @@ export const selectbutton: SelectButtonDesignTokens = {
     .p-selectbutton .p-togglebutton,
     .p-selectbutton .p-togglebutton:first-child,
     .p-selectbutton .p-togglebutton:last-child { border-radius: var(--p-selectbutton-border-radius); border-width: 1px; }
+    .p-selectbutton.date-list { grid-template-columns: minmax(0, 1fr); }
+    .p-selectbutton.date-list .p-togglebutton { justify-content: flex-start; padding: 0.875rem 1rem; text-align: left; }
+    @media (min-width: 64rem) { .p-selectbutton.date-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   `,
 };
 

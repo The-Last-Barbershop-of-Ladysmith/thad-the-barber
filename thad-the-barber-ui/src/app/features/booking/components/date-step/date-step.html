@@ -1,6 +1,6 @@
 <section class="stack gap-3">
   <div class="date-step-header">
-    <span class="eyebrow">1 — Pick a date</span>
+    <span id="date-step-heading" class="eyebrow">1 — Pick a date</span>
     @if (isLoading()) {
       <p-progress-spinner
         class="size-4"
@@ -10,22 +10,102 @@
       />
     }
   </div>
-  <p-datepicker
-    [inline]="true"
-    [formControl]="dateControl()"
-    [minDate]="bookingWindow()?.min ?? null"
-    [maxDate]="bookingWindow()?.max ?? null"
-    [disabledDates]="disabledDates()"
-    [defaultDate]="visibleMonthStart()"
-    [showOtherMonths]="false"
-    (onSelect)="onDateSelect()"
-    (onMonthChange)="onMonthChange($event)"
-  />
-  <div class="availability-legend">
-    <span class="legend-entry"><span class="legend-swatch is-available"></span>available</span>
-    <span class="legend-entry"
-      ><span class="legend-swatch is-unavailable"></span>closed / booked</span
+
+  <div class="view-controls">
+    <button
+      pButton
+      type="button"
+      severity="secondary"
+      [outlined]="true"
+      aria-label="Previous month"
+      data-testid="previous-view"
+      [disabled]="isFirstView()"
+      (click)="showPrevious()"
     >
-    <span class="legend-entry"><span class="legend-swatch is-selected"></span>selected</span>
+      <i pButtonIcon class="pi pi-chevron-left"></i>
+    </button>
+    <button
+      pButton
+      type="button"
+      severity="secondary"
+      [outlined]="true"
+      class="view-picker-toggle"
+      aria-haspopup="true"
+      data-testid="view-picker"
+      [attr.aria-expanded]="monthPicker.overlayVisible()"
+      (click)="monthPicker.toggle($event)"
+    >
+      <span pButtonLabel>{{ viewTitle() }}</span>
+      <i pButtonIcon class="pi pi-chevron-down"></i>
+    </button>
+    <button
+      pButton
+      type="button"
+      severity="secondary"
+      [outlined]="true"
+      aria-label="Next month"
+      data-testid="next-view"
+      [disabled]="isLastView()"
+      (click)="showNext()"
+    >
+      <i pButtonIcon class="pi pi-chevron-right"></i>
+    </button>
   </div>
+
+  <p-popover #monthPicker>
+    <div class="month-picker">
+      <button
+        pButton
+        type="button"
+        class="w-full"
+        data-testid="upcoming-view"
+        [outlined]="visibleMonth() !== null"
+        [attr.aria-pressed]="visibleMonth() === null"
+        (click)="showView(null, monthPicker)"
+      >
+        <span pButtonLabel>{{ upcomingLabel }}</span>
+      </button>
+      @for (monthOptionGroup of monthOptionGroups(); track monthOptionGroup.year) {
+        <div class="stack gap-2">
+          <span class="eyebrow">{{ monthOptionGroup.year }}</span>
+          <div class="month-grid">
+            @for (monthOption of monthOptionGroup.monthOptions; track monthOption.month) {
+              <button
+                pButton
+                type="button"
+                size="small"
+                [attr.data-testid]="'month-' + monthOption.month"
+                [outlined]="visibleMonth() !== monthOption.month"
+                [attr.aria-label]="monthOption.longLabel"
+                [attr.aria-pressed]="visibleMonth() === monthOption.month"
+                (click)="showView(monthOption.month, monthPicker)"
+              >
+                <span pButtonLabel>{{ monthOption.shortLabel }}</span>
+              </button>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </p-popover>
+
+  <span class="text-sm text-surface-200" aria-live="polite" data-testid="view-caption">{{
+    rangeCaption()
+  }}</span>
+
+  @if (hasNoOpenDays()) {
+    <app-notice-message [notice]="noOpenDaysNotice" />
+  } @else {
+    <p-selectbutton
+      class="date-list"
+      ariaLabelledBy="date-step-heading"
+      data-testid="date-list"
+      [formControl]="dateControl()"
+      [options]="dateOptions()"
+      optionLabel="label"
+      optionValue="date"
+      [allowEmpty]="false"
+      (onChange)="onDateChange()"
+    />
+  }
 </section>

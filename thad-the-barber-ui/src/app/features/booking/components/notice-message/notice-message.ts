@@ -41,6 +41,7 @@ export class NoticeMessage {
   /** PrimeNG calls the error severity `danger`. */
   private readonly buttonSeverities: Record<NoticeSeverity, ButtonSeverity> = {
     [NoticeSeverity.Success]: 'success',
+    [NoticeSeverity.Info]: 'info',
     [NoticeSeverity.Warn]: 'warn',
     [NoticeSeverity.Error]: 'danger',
   };

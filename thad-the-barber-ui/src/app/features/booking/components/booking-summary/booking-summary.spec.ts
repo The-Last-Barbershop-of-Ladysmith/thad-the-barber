@@ -23,11 +23,7 @@ describe(
     const filledIn: BookingFormValue = {
       name: 'Test Customer',
       phone: '(555) 010-0199',
-      date: new Date(
-        2026,
-        9,
-        3,
-      ),
+      date: '2026-10-03',
       startAt: '2026-10-03T20:00:00Z',
     };
     const confirmedBooking: BookingConfirmation = {

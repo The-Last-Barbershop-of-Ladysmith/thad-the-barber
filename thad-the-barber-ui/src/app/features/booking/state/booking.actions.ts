@@ -9,11 +9,11 @@ export enum BookingActionTypes {
   MonthAvailabilityRequestFailure = '[Booking API] Month Availability Load Failed',
 }
 
-/** month: "2026-10"; dispatched again for the same month, it reloads it. */
+/** month: "2026-10", or null for the upcoming days; dispatched again for the same view, it reloads it. */
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
 export const SetActiveMonthView = createAction(
   BookingActionTypes.SetActiveMonthView,
-  props<{ month: string; }>(),
+  props<{ month: string | null; }>(),
 );
 
 /** Keeps the booking for 24 hours, replacing any earlier one (BR-22). */
@@ -26,11 +26,11 @@ export const BookingConfirm = createAction(
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
 export const MonthAvailabilityRequestSuccess = createAction(
   BookingActionTypes.MonthAvailabilityRequestSuccess,
-  props<{ month: string; availableDays: AvailableDay[]; }>(),
+  props<{ month: string | null; availableDays: AvailableDay[]; }>(),
 );
 
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
 export const MonthAvailabilityRequestFailure = createAction(
   BookingActionTypes.MonthAvailabilityRequestFailure,
-  props<{ month: string; }>(),
+  props<{ month: string | null; }>(),
 );

@@ -4,6 +4,6 @@ import { FormControl, FormGroup } from '@angular/forms';
 export type BookingForm = FormGroup<{
   name: FormControl<string>;
   phone: FormControl<string>;
-  date: FormControl<Date | null>;
+  date: FormControl<string | null>;
   startAt: FormControl<string | null>;
 }>;

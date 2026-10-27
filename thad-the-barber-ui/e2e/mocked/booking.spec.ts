@@ -49,6 +49,10 @@ async function offerTimeSoon(page: Page): Promise<void> {
     route.fulfill({ json: [{ date, times: [soon.toISOString()] }] }));
 }
 
+function openDays(page: Page): Locator {
+  return page.getByTestId('date-list').locator('[role="button"]');
+}
+
 /** The shop has loaded, so the page can show times and a kept booking. */
 async function waitForShop(page: Page): Promise<void> {
   await expect(page.locator(`a[href="tel:${TEST_SHOP.phone}"]`).first()).toBeAttached();
@@ -56,8 +60,8 @@ async function waitForShop(page: Page): Promise<void> {
 
 /** Picks the first open day and time, fills in the made-up customer and confirms. */
 async function book(page: Page): Promise<void> {
-  await page.locator('.p-datepicker-day:not(.p-disabled)').first().click();
-  await page.getByRole('group').locator('[role="button"]').first().click();
+  await openDays(page).first().click();
+  await page.getByTestId('time-list').locator('[role="button"]').first().click();
   await page.locator('#booking-name').fill('Jordan Customer');
   const phone: Locator = page.locator('#booking-phone');
   // InputMask redraws its buffer on a timer after focus, which can wipe a value filled too soon.
@@ -152,12 +156,12 @@ test.describe(
 
         const loading: Locator = page.getByTestId('dates-loading');
         await expect(loading).toBeVisible();
-        await expect(page.locator('.p-datepicker-day:not(.p-disabled)')).toHaveCount(0);
+        await expect(openDays(page)).toHaveCount(0);
         await expectNoA11yViolations(page);
         release();
 
         await expect(loading).toHaveCount(0);
-        await expect(page.locator('.p-datepicker-day:not(.p-disabled)').first()).toBeVisible();
+        await expect(openDays(page).first()).toBeVisible();
       },
     );
 
@@ -280,12 +284,12 @@ test.describe(
         const notice: Locator = page.getByTestId('booking-notice');
         await expect(notice).toHaveClass(/p-message-error/);
         await expect(notice.getByTestId('notice-booking-site')).toHaveAttribute('href', TEST_SHOP.squareBookingSiteUrl ?? '');
-        await expect(page.locator('.p-datepicker-day:not(.p-disabled)')).toHaveCount(0);
+        await expect(openDays(page)).toHaveCount(0);
         await expectNoA11yViolations(page);
         await notice.getByTestId('notice-retry').click();
 
         await expect(notice).toHaveCount(0);
-        await expect(page.locator('.p-datepicker-day:not(.p-disabled)').first()).toBeVisible();
+        await expect(openDays(page).first()).toBeVisible();
       },
     );
   },

@@ -8,7 +8,7 @@ import { testSavedConfirmation } from '../../../testing/test-booking';
 import { TEST_SHOP } from '../../../testing/test-shop';
 import { SessionService } from '../../core/services/session.service';
 import { ProblemCode } from '../../shared/models/problem-code.model';
-import { fromIsoDate, toIsoDateIn } from '../../shared/utils/date.utils';
+import { toIsoDateIn } from '../../shared/utils/date.utils';
 import { AppState } from '../../store/app.state';
 import * as ShopActions from '../shop/state/shop.actions';
 import { shopFeature } from '../shop/state/shop.feature';
@@ -74,7 +74,7 @@ describe(
       page.bookingForm.setValue({
         name: 'Test Customer',
         phone: '(555) 010-0199',
-        date: fromIsoDate(TODAY),
+        date: TODAY,
         startAt,
       });
       page.confirm();

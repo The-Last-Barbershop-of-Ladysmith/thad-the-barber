@@ -15,7 +15,7 @@ import { CardModule } from 'primeng/card';
 import { CheckIcon } from 'primeng/icons/check';
 import { SpinnerIcon } from 'primeng/icons/spinner';
 import { SessionService } from '../../../../core/services/session.service';
-import { formatShortDate } from '../../../../shared/utils/date.utils';
+import { formatShortDate, fromIsoDate } from '../../../../shared/utils/date.utils';
 import { AppState } from '../../../../store/app.state';
 import { shopFeature } from '../../../shop/state/shop.feature';
 import { BookingConfirmation } from '../../models/booking-confirmation.model';
@@ -61,7 +61,7 @@ export class BookingSummary {
     const formValue: BookingFormValue = this.bookingFormValue();
     const timeZone: string | null = this.timeZone();
     return [
-      { label: 'Date', value: formValue.date ? formatShortDate(formValue.date) : '—' },
+      { label: 'Date', value: formValue.date ? formatShortDate(fromIsoDate(formValue.date)) : '—' },
       { label: 'Time', value: formValue.startAt && timeZone ? toTimeLabel(timeZone, formValue.startAt) : '—' },
       { label: 'Name', value: formValue.name.trim() || '—' },
       { label: 'Phone', value: formValue.phone || '—' },

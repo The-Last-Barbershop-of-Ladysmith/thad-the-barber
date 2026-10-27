@@ -9,7 +9,7 @@ export const bookingReducer: ActionReducer<BookingState> = createReducer(
   initialBookingState,
   on(
     BookingActions.SetActiveMonthView,
-    (state: BookingState, { month }: { month: string; }): BookingState => ({
+    (state: BookingState, { month }: { month: string | null; }): BookingState => ({
       ...state,
       visibleMonth: month,
       availableDays: [],
@@ -27,7 +27,7 @@ export const bookingReducer: ActionReducer<BookingState> = createReducer(
     BookingActions.MonthAvailabilityRequestSuccess,
     (
       state: BookingState,
-      { month, availableDays }: { month: string; availableDays: AvailableDay[]; },
+      { month, availableDays }: { month: string | null; availableDays: AvailableDay[]; },
     ): BookingState => {
       const isVisibleMonth: boolean = month === state.visibleMonth;
       if (!isVisibleMonth) {
@@ -42,7 +42,7 @@ export const bookingReducer: ActionReducer<BookingState> = createReducer(
   ),
   on(
     BookingActions.MonthAvailabilityRequestFailure,
-    (state: BookingState, { month }: { month: string; }): BookingState => {
+    (state: BookingState, { month }: { month: string | null; }): BookingState => {
       const isVisibleMonth: boolean = month === state.visibleMonth;
       if (!isVisibleMonth) {
         return state;
