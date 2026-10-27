@@ -10,12 +10,13 @@
           pButton
           type="button"
           [link]="true"
+          iconOnly
           [attr.data-testid]="'change-' + summaryRow.label.toLowerCase()"
           [attr.aria-label]="'Change ' + summaryRow.label.toLowerCase()"
           [disabled]="isSubmitting()"
           (click)="changeStep.emit(summaryRow.step)"
         >
-          <span pButtonLabel>Change</span>
+          <span class="pi pi-pencil"></span>
         </button>
       </div>
     }
