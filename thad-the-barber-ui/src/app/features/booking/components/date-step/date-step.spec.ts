@@ -181,5 +181,34 @@ describe(
         expect(startAtControl.value).toBeNull();
       },
     );
+
+    it(
+      'keeps the picks when the view already showing is picked again',
+      (): void => {
+        load(OPEN_DAYS);
+        dateControl.setValue('2026-11-01');
+        startAtControl.setValue('2026-11-01T20:00:00Z');
+
+        find('view-picker')?.click();
+        fixture.detectChanges();
+        find('upcoming-view')?.click();
+
+        expect(dateControl.value).toBe('2026-11-01');
+        expect(startAtControl.value).toBe('2026-11-01T20:00:00Z');
+      },
+    );
+
+    it(
+      'counts one open day in the singular, and no count while the days load',
+      (): void => {
+        load([{ date: '2026-11-01', times: ['2026-11-01T20:00:00Z'] }]);
+        expect(find('view-caption')?.textContent).toContain('· 1 open day');
+        expect(find('view-caption')?.textContent).not.toContain('days');
+
+        store.dispatch(BookingActions.SetActiveMonthView({ month: null }));
+        fixture.detectChanges();
+        expect(find('view-caption')?.textContent).not.toContain('open');
+      },
+    );
   },
 );

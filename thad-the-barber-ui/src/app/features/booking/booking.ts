@@ -24,6 +24,7 @@ import { filter, finalize, map, take } from 'rxjs';
 import { SessionService } from '../../core/services/session.service';
 import { Backdrop } from '../../shared/components/backdrop/backdrop';
 import { ProblemCode } from '../../shared/models/problem-code.model';
+import { RequestStatus } from '../../shared/models/request.models';
 import { formatFullDate, formatShortDate, fromIsoDate } from '../../shared/utils/date.utils';
 import { toE164 } from '../../shared/utils/phone.utils';
 import { getProblemCode } from '../../shared/utils/problem.utils';
@@ -34,16 +35,18 @@ import { DetailsStep } from './components/details-step/details-step';
 import { NoticeMessage } from './components/notice-message/notice-message';
 import { ReviewStep } from './components/review-step/review-step';
 import { TimeStep } from './components/time-step/time-step';
+import { AvailableDay } from './dtos/available-day.dto';
 import { BookingConfirmation } from './dtos/booking-confirmation.dto';
 import { BookingForm } from './models/booking-form.model';
 import { BookingFormValue } from './models/booking-form-value.model';
 import { BookingNotice } from './models/booking-notice.model';
 import { BookingStep } from './models/booking-step.model';
+import { StepProgress } from './models/step-progress.model';
 import { BookingService } from './services/booking.service';
 import * as BookingActions from './state/booking.actions';
 import { bookingFeature } from './state/booking.feature';
 import { BOT_CHECK_FAILED_NOTICE, toBookedNotice, toBookingNotice } from './utils/booking-notice.utils';
-import { BOOKING_STEPS, StepProgress, canOpenStep, isStepDone } from './utils/booking-steps.utils';
+import { BOOKING_STEPS, canOpenStep, isStepDone } from './utils/booking-steps.utils';
 import { toTimeLabel } from './utils/booking-time.utils';
 import { toKeptBooking } from './utils/saved-confirmation.utils';
 
@@ -177,13 +180,16 @@ export class Booking {
   private readonly pickedStartAt: Signal<string | null> = computed((): string | null =>
     this.bookingFormValue().startAt);
 
-  /** Name and phone validity has no signal of its own; it only changes with the form's value, which is read here. */
+  /**
+   * Name and phone validity has no signal of its own; it only changes with the form's value, which is read here.
+   * `invalid`, not `valid`: the form is disabled while a booking is sent, and disabled controls aren't `valid`.
+   */
   private readonly progress: Signal<StepProgress> = computed((): StepProgress => {
     const { date, startAt }: BookingFormValue = this.bookingFormValue();
     return {
       hasDate: date !== null,
       hasTime: startAt !== null,
-      areDetailsValid: this.bookingForm.controls.name.valid && this.bookingForm.controls.phone.valid,
+      areDetailsValid: !this.bookingForm.controls.name.invalid && !this.bookingForm.controls.phone.invalid,
     };
   });
 
@@ -229,9 +235,11 @@ export class Booking {
   protected readonly canReview: Signal<boolean> = computed((): boolean =>
     this.stepStates().at(-1)?.isLocked === false);
 
-  /** A picked day that isn't booked yet; leaving would lose it (#210). Not while it's being sent. */
-  private readonly hasUnconfirmedPick: Signal<boolean> = computed((): boolean =>
-    this.pickedDate() !== null && !this.isSubmitting());
+  /**
+   * A picked day that isn't booked yet; leaving would lose it (#210). That includes a booking being sent: leaving then
+   * drops its response, so it would be neither shown nor kept.
+   */
+  private readonly hasUnconfirmedPick: Signal<boolean> = computed((): boolean => this.pickedDate() !== null);
 
   constructor() {
     this.askBeforeUnloadWhileUnconfirmed();
@@ -245,6 +253,12 @@ export class Booking {
       )
       .subscribe((): void => {
         this.store.dispatch(BookingActions.SetActiveMonthView({ month: null }));
+      });
+    this.store
+      .select(bookingFeature.selectAvailableDays)
+      .pipe(takeUntilDestroyed())
+      .subscribe((availableDays: AvailableDay[]): void => {
+        this.dropPickedDayWithoutTimes(availableDays);
       });
     // Subscribed after `bookingFormValue`, so the signals already hold the new value here.
     this.bookingForm.valueChanges
@@ -409,18 +423,41 @@ export class Booking {
     this.bookingNotice.set(null);
   }
 
-  /** Picking a day opens the time step; picking a time opens the details, or review after a review row's Change. */
+  /**
+   * Picking a day clears the last day's time and opens the time step; picking a time opens the details, or review
+   * after a review row's Change.
+   */
   private openStepAfterNewPick(): void {
     const { date, startAt }: BookingFormValue = this.bookingFormValue();
     const isNewDay: boolean = date !== null && date !== this.lastPicks.date;
     const isNewTime: boolean = startAt !== null && startAt !== this.lastPicks.startAt;
+    const isLastDaysTime: boolean = isNewDay && startAt !== null && !isNewTime;
     this.lastPicks = { date, startAt };
     if (isNewDay) {
+      if (isLastDaysTime) {
+        this.bookingForm.controls.startAt.reset();
+      }
       this.showStep(BookingStep.Time);
     } else if (isNewTime) {
       const canReturnToReview: boolean = this.isReturningToReview && canOpenStep(BookingStep.Review, this.progress());
       this.showStep(canReturnToReview ? BookingStep.Review : BookingStep.Details);
     }
+  }
+
+  /**
+   * After a taken time reloads the days, the picked day may have none left; it's dropped and the date step opens. The
+   * taken-time notice is put back, since clearing the day starts a new booking, which clears notices.
+   */
+  private dropPickedDayWithoutTimes(availableDays: AvailableDay[]): void {
+    const date: string | null = this.pickedDate();
+    const isLoaded: boolean = this.store.selectSignal(bookingFeature.selectLoadStatus)() === RequestStatus.Success;
+    if (!date || !isLoaded || availableDays.some((availableDay: AvailableDay): boolean => availableDay.date === date)) {
+      return;
+    }
+    const takenTimeNotice: BookingNotice | null = this.bookingNotice();
+    this.bookingForm.patchValue({ date: null, startAt: null });
+    this.bookingNotice.set(takenTimeNotice);
+    this.openStep.set(BookingStep.Date);
   }
 
   private toStepSummary(step: BookingStep, progress: StepProgress): string {

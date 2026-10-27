@@ -401,5 +401,50 @@ describe(
         expect(page.confirmLeave()).toBe(true);
       },
     );
+
+    it(
+      "clears the last day's time when another day is picked",
+      (): void => {
+        openPage();
+        page.bookingForm.controls.date.setValue(TODAY);
+        page.bookingForm.controls.startAt.setValue(FIRST_TIME);
+
+        page.bookingForm.controls.date.setValue('2099-01-01');
+
+        expect(page.bookingForm.controls.startAt.value).toBeNull();
+        expect(page.openStep()).toBe(BookingStep.Time);
+      },
+    );
+
+    it(
+      'still asks before leaving while the booking is being sent, since leaving would drop its response (#210)',
+      (): void => {
+        openPage();
+        pickAndConfirm(FIRST_TIME);
+
+        expect(page.confirmLeave()).toBeInstanceOf(Promise);
+      },
+    );
+
+    it(
+      'drops the picked day and opens the date step when a taken time left that day with none, keeping the notice',
+      (): void => {
+        openPage();
+        pickAndConfirm(FIRST_TIME);
+        fail(
+          0,
+          409,
+          ProblemCode.SlotUnavailable,
+        );
+        TestBed.inject<Store<AppState>>(Store).dispatch(BookingActions.MonthAvailabilityRequestSuccess({
+          month: null,
+          availableDays: [{ date: '2099-01-01', times: ['2099-01-01T20:00:00Z'] }],
+        }));
+
+        expect(page.bookingForm.controls.date.value).toBeNull();
+        expect(page.openStep()).toBe(BookingStep.Date);
+        expect(page.bookingNotice()).not.toBeNull();
+      },
+    );
   },
 );

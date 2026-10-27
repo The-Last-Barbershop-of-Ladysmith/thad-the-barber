@@ -1,5 +1,6 @@
 import { BookingStep } from '../models/booking-step.model';
-import { StepProgress, canOpenStep, isStepDone } from './booking-steps.utils';
+import { StepProgress } from '../models/step-progress.model';
+import { canOpenStep, isStepDone } from './booking-steps.utils';
 
 const NOTHING: StepProgress = {
   hasDate: false,

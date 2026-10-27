@@ -31,7 +31,7 @@ export const AVAILABILITY_FAILED_NOTICE: BookingNotice = {
 /** The days in view have no open times (Square doesn't list closed or full days). */
 export const NO_OPEN_DAYS_NOTICE: BookingNotice = {
   severity: NoticeSeverity.Info,
-  text: 'No open times in these days. Try a later month.',
+  text: 'No open times in these days.',
   canRetry: false,
 };
 

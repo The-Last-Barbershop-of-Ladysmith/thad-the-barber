@@ -125,14 +125,15 @@ export class DateStep {
 
   protected readonly rangeCaption: Signal<string> = computed((): string => {
     const visibleMonth: string | null = this.visibleMonth();
-    const openDayCount: string = `${this.availableDays().length} open days`;
+    const dayCount: number = this.availableDays().length;
+    const openDayCount: string = this.isLoading() ? '' : ` · ${dayCount} open ${dayCount === 1 ? 'day' : 'days'}`;
     if (visibleMonth) {
-      return `Showing all of ${this.viewTitle()} · ${openDayCount}`;
+      return `Showing all of ${this.viewTitle()}${openDayCount}`;
     }
     const { firstDay, lastDay }: DayRange = toDayRange(null, this.timeZone());
     const windowEnd: Date | undefined = this.bookingWindow()?.max;
     const shownLastDay: Date = windowEnd && windowEnd < fromIsoDate(lastDay) ? windowEnd : fromIsoDate(lastDay);
-    return `Showing ${formatMonthDay(fromIsoDate(firstDay))} – ${formatMonthDay(shownLastDay)} · ${openDayCount}`;
+    return `Showing ${formatMonthDay(fromIsoDate(firstDay))} – ${formatMonthDay(shownLastDay)}${openDayCount}`;
   });
 
   protected readonly dateOptions: Signal<DateOption[]> = computed((): DateOption[] =>
@@ -157,6 +158,9 @@ export class DateStep {
    */
   protected showView(month: string | null): void {
     this.isMonthPickerOpen.set(false);
+    if (month === this.visibleMonth()) {
+      return;
+    }
     this.dateControl().reset();
     this.startAtControl().reset();
     this.store.dispatch(BookingActions.SetActiveMonthView({ month }));

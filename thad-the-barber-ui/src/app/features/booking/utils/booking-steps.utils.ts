@@ -1,4 +1,5 @@
 import { BookingStep } from '../models/booking-step.model';
+import { StepProgress } from '../models/step-progress.model';
 
 export const BOOKING_STEPS: readonly BookingStep[] = [
   BookingStep.Date,
@@ -6,13 +7,6 @@ export const BOOKING_STEPS: readonly BookingStep[] = [
   BookingStep.Details,
   BookingStep.Review,
 ];
-
-/** What each step needs before the next one opens; the review step is done only by booking. */
-export interface StepProgress {
-  hasDate: boolean;
-  hasTime: boolean;
-  areDetailsValid: boolean;
-}
 
 export function isStepDone(step: BookingStep, progress: StepProgress): boolean {
   const doneBySteps: Record<BookingStep, boolean> = {
