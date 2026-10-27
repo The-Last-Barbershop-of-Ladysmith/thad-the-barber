@@ -8,6 +8,13 @@ import { WEEKDAY_SHORT_NAMES, WEEK_FROM_SUNDAY } from './weekday.utils';
 /** Locale for display labels. They use `formatDate`, the same formatter behind Angular's `DatePipe`. */
 const DATE_LOCALE: string = 'en-US';
 
+/** Day-of-month endings by last digit; every other digit, and 11–13, take "th". */
+const ORDINAL_SUFFIXES: Record<number, string> = {
+  1: 'st',
+  2: 'nd',
+  3: 'rd',
+};
+
 function pad(value: number): string {
   return String(value).padStart(2, '0');
 }
@@ -145,6 +152,52 @@ export function formatLongDate(date: Date): string {
   return formatDate(
     date,
     'EEEE, MMMM d',
+    DATE_LOCALE,
+  );
+}
+
+/** Date → "Saturday, October 3rd 2026". `formatDate` has no ordinals, so the suffix is added here. */
+export function formatFullDate(date: Date): string {
+  const day: number = date.getDate();
+  return `${formatDate(
+    date,
+    'EEEE, MMMM',
+    DATE_LOCALE,
+  )} ${day}${toOrdinalSuffix(day)} ${date.getFullYear()}`;
+}
+
+/** 1 → "st", 2 → "nd", 3 → "rd", 11–13 → "th", 21 → "st", … */
+function toOrdinalSuffix(day: number): string {
+  const isTeen: boolean = day % 100 >= 11 && day % 100 <= 13;
+  if (isTeen) {
+    return 'th';
+  }
+  return ORDINAL_SUFFIXES[day % 10] ?? 'th';
+}
+
+/** Date → "Oct 26" */
+export function formatMonthDay(date: Date): string {
+  return formatDate(
+    date,
+    'MMM d',
+    DATE_LOCALE,
+  );
+}
+
+/** Date → "Nov" */
+export function formatShortMonth(date: Date): string {
+  return formatDate(
+    date,
+    'MMM',
+    DATE_LOCALE,
+  );
+}
+
+/** Date → "November 2026" */
+export function formatMonthYear(date: Date): string {
+  return formatDate(
+    date,
+    'MMMM yyyy',
     DATE_LOCALE,
   );
 }

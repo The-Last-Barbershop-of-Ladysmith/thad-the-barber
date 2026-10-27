@@ -1,7 +1,12 @@
 import { Weekday } from '../models/weekday.model';
 import {
+  formatFullDate,
   formatLongDate,
+  formatMonthDay,
+  formatMonthYear,
   formatShortDate,
+  formatShortMonth,
+  fromIsoDate,
   fromTimeOfDay,
   toIsoDate,
   toIsoDateIn,
@@ -29,6 +34,38 @@ describe(
       'formats a short date label',
       (): void => {
         expect(formatShortDate(saturday)).toBe('Sat, Oct 3');
+      },
+    );
+
+    it(
+      'writes a full date with its ordinal and year',
+      (): void => {
+        const fullDates: Record<string, string> = {
+          '2026-10-01': 'Thursday, October 1st 2026',
+          '2026-10-02': 'Friday, October 2nd 2026',
+          '2026-10-03': 'Saturday, October 3rd 2026',
+          '2026-10-04': 'Sunday, October 4th 2026',
+          '2026-10-11': 'Sunday, October 11th 2026',
+          '2026-10-12': 'Monday, October 12th 2026',
+          '2026-10-13': 'Tuesday, October 13th 2026',
+          '2026-10-21': 'Wednesday, October 21st 2026',
+          '2026-10-22': 'Thursday, October 22nd 2026',
+          '2026-10-23': 'Friday, October 23rd 2026',
+          '2026-10-31': 'Saturday, October 31st 2026',
+          '2028-02-29': 'Tuesday, February 29th 2028',
+        };
+        for (const [isoDate, fullDate] of Object.entries(fullDates)) {
+          expect(formatFullDate(fromIsoDate(isoDate))).toBe(fullDate);
+        }
+      },
+    );
+
+    it(
+      'formats month labels',
+      (): void => {
+        expect(formatMonthYear(saturday)).toBe('October 2026');
+        expect(formatShortMonth(saturday)).toBe('Oct');
+        expect(formatMonthDay(saturday)).toBe('Oct 3');
       },
     );
 
