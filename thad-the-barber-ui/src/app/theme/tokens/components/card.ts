@@ -3,7 +3,7 @@ import { CardDesignTokens } from '@primeuix/themes/types/card';
 /** p-card is the frosted "glass panel" that wraps every section in the wireframe. */
 export const card: CardDesignTokens = {
   root: {
-    background: '{brand.glass.background}',
+    background: '{brand.glass.strong.background}',
     borderRadius: '{border.radius.xl}',
     color: '{text.color}',
     shadow: 'none',
