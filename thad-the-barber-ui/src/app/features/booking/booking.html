@@ -25,7 +25,7 @@
   <form [formGroup]="bookingForm" (ngSubmit)="confirm()">
     @if (isDesktop()) {
       <div class="step-rail-layout">
-        <p-card class="step-rail">
+        <p-card class="step-rail" [dt]="{ body: { padding: '1.25rem' } }">
           <nav aria-label="Booking steps">
             <ol class="step-rail-list">
               @for (stepView of stepViews(); track stepView.step) {
@@ -39,18 +39,10 @@
                     [disabled]="stepView.isLocked"
                     (click)="showStep(stepView.step)"
                   >
-                    <span
-                      class="step-number"
-                      [class.is-open]="stepView.isOpen"
-                      [class.is-done]="stepView.isDone"
-                      >{{ stepView.number }}</span
-                    >
-                    <span class="step-text">
-                      <span class="step-title">{{ stepView.title }}</span>
-                      <span class="step-summary" [class.is-done]="stepView.isDone">{{
-                        stepView.summary
-                      }}</span>
-                    </span>
+                    <ng-container
+                      [ngTemplateOutlet]="stepLabel"
+                      [ngTemplateOutletContext]="{ $implicit: stepView }"
+                    />
                   </button>
                 </li>
               }
@@ -59,7 +51,7 @@
         </p-card>
 
         @if (openStepView(); as currentStep) {
-          <p-card class="step-panel">
+          <p-card class="step-panel" [dt]="{ body: { padding: '1.75rem' } }">
             <section
               class="stack gap-5"
               [attr.aria-labelledby]="'step-heading-' + currentStep.step"
@@ -89,7 +81,7 @@
                     [outlined]="true"
                     data-testid="previous-step"
                     [disabled]="isSubmitting()"
-                    (click)="showPreviousStep()"
+                    (click)="showAdjacentStep(-1)"
                   >
                     <span pButtonLabel>Back</span>
                   </button>
@@ -103,7 +95,7 @@
                       currentStep.step === bookingStep.Details ? 'open-review' : 'next-step'
                     "
                     [disabled]="!currentStep.isDone"
-                    (click)="showNextStep()"
+                    (click)="showAdjacentStep(1)"
                   >
                     <span pButtonLabel>Continue</span>
                   </button>
@@ -114,9 +106,13 @@
         }
       </div>
     } @else {
-      <div class="step-cards">
+      <div class="stack gap-3.5">
         @for (stepView of stepViews(); track stepView.step) {
-          <p-card class="step-card" [class.is-open]="stepView.isOpen">
+          <p-card
+            class="step-card"
+            [class.is-open]="stepView.isOpen"
+            [dt]="{ body: { padding: '0', gap: '0' } }"
+          >
             <h2 class="m-0">
               <button
                 type="button"
@@ -128,18 +124,10 @@
                 [disabled]="stepView.isLocked"
                 (click)="showStep(stepView.step)"
               >
-                <span
-                  class="step-number"
-                  [class.is-open]="stepView.isOpen"
-                  [class.is-done]="stepView.isDone"
-                  >{{ stepView.number }}</span
-                >
-                <span class="step-text">
-                  <span class="step-title">{{ stepView.title }}</span>
-                  <span class="step-summary" [class.is-done]="stepView.isDone">{{
-                    stepView.summary
-                  }}</span>
-                </span>
+                <ng-container
+                  [ngTemplateOutlet]="stepLabel"
+                  [ngTemplateOutletContext]="{ $implicit: stepView }"
+                />
                 @if (stepView.isDone && !stepView.isOpen) {
                   <span class="step-change">Change</span>
                 }
@@ -157,9 +145,9 @@
         }
       </div>
 
-      <div class="sticky-bar" data-testid="sticky-bar">
+      <div class="sticky-bar glass-strong" data-testid="sticky-bar">
         <div class="sticky-picks">
-          <span>{{ pickedDayLabel() }}</span>
+          <span>{{ pickedDayShortLabel() }}</span>
           <strong class="text-primary">{{ pickedTimeLabel() }}</strong>
         </div>
         @if (openStep() === bookingStep.Review) {
@@ -171,7 +159,7 @@
             [fluid]="true"
             data-testid="previous-step"
             [disabled]="isSubmitting()"
-            (click)="showPreviousStep()"
+            (click)="showAdjacentStep(-1)"
           >
             <span pButtonLabel>Back</span>
           </button>
@@ -215,12 +203,24 @@
     @case (bookingStep.Review) {
       <app-review-step
         [bookingFormValue]="bookingFormValue()"
+        [dateLabel]="pickedDateLabel()"
+        [timeLabel]="pickedTimeLabel()"
         [isFormValid]="bookingForm.valid"
         [isSubmitting]="isSubmitting()"
         (changeStep)="changeFromReview($event)"
       />
     }
   }
+</ng-template>
+
+<ng-template #stepLabel let-stepView>
+  <span class="step-number" [class.is-open]="stepView.isOpen" [class.is-done]="stepView.isDone">{{
+    stepView.number
+  }}</span>
+  <span class="step-text">
+    <span class="field-label">{{ stepView.title }}</span>
+    <span class="step-summary" [class.is-done]="stepView.isDone">{{ stepView.summary }}</span>
+  </span>
 </ng-template>
 
 <p-confirmdialog key="leave-booking" [style]="{ width: 'min(28rem, calc(100vw - 2rem))' }" />

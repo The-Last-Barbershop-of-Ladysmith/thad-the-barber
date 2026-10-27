@@ -1,3 +1,4 @@
+import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
@@ -42,14 +43,7 @@ import { BookingService } from './services/booking.service';
 import * as BookingActions from './state/booking.actions';
 import { bookingFeature } from './state/booking.feature';
 import { BOT_CHECK_FAILED_NOTICE, toBookedNotice, toBookingNotice } from './utils/booking-notice.utils';
-import {
-  BOOKING_STEPS,
-  StepProgress,
-  canOpenStep,
-  isStepDone,
-  toNextStep,
-  toPreviousStep,
-} from './utils/booking-steps.utils';
+import { BOOKING_STEPS, StepProgress, canOpenStep, isStepDone } from './utils/booking-steps.utils';
 import { toTimeLabel } from './utils/booking-time.utils';
 import { toKeptBooking } from './utils/saved-confirmation.utils';
 
@@ -66,8 +60,7 @@ interface StepView {
   isLocked: boolean;
 }
 
-/** The step rail and one step at a time start here; below it, the steps collapse into cards (#207, #208). */
-const DESKTOP_QUERY: string = '(min-width: 64rem)';
+type StepState = Omit<StepView, 'isOpen'>;
 
 const STEP_TITLES: Record<BookingStep, string> = {
   [BookingStep.Date]: 'Date',
@@ -164,52 +157,81 @@ export class Booking {
   /** Kept while the same booking is retried, so a booking whose response was lost isn't made twice. */
   private idempotencyKey: string | null = null;
 
-  protected readonly isDesktop: Signal<boolean> = this.watchMediaQuery(DESKTOP_QUERY);
+  /** The step rail and one step at a time from `lg`; below it, the steps collapse into cards (#207, #208). */
+  protected readonly isDesktop: Signal<boolean> = toSignal(
+    inject(BreakpointObserver)
+      .observe('(min-width: 64rem)')
+      .pipe(map((breakpointState: BreakpointState): boolean => breakpointState.matches)),
+    { initialValue: false },
+  );
   protected readonly bookingStep: typeof BookingStep = BookingStep;
   protected readonly openStep: WritableSignal<BookingStep> = signal(BookingStep.Date);
   /** Set by a review row's Change link: once that step is done again, the flow goes back to review. */
   private isReturningToReview: boolean = false;
 
-  /** Re-read whenever the form's value changes; `readProgress` is for handlers that run before that signal updates. */
+  /** The picks the last form change saw, so the next one can tell which pick changed and open the step after it. */
+  private lastPicks: Pick<BookingFormValue, 'date' | 'startAt'> = { date: null, startAt: null };
+
+  /** The pick alone, so typing a name or phone doesn't reformat the day and time labels. */
+  private readonly pickedDate: Signal<string | null> = computed((): string | null => this.bookingFormValue().date);
+  private readonly pickedStartAt: Signal<string | null> = computed((): string | null =>
+    this.bookingFormValue().startAt);
+
+  /** Name and phone validity has no signal of its own; it only changes with the form's value, which is read here. */
   private readonly progress: Signal<StepProgress> = computed((): StepProgress => {
-    this.bookingFormValue();
-    return this.readProgress();
+    const { date, startAt }: BookingFormValue = this.bookingFormValue();
+    return {
+      hasDate: date !== null,
+      hasTime: startAt !== null,
+      areDetailsValid: this.bookingForm.controls.name.valid && this.bookingForm.controls.phone.valid,
+    };
   });
 
-  protected readonly stepViews: Signal<StepView[]> = computed((): StepView[] => {
+  protected readonly pickedDateLabel: Signal<string | null> = computed((): string | null => {
+    const date: string | null = this.pickedDate();
+    return date ? formatFullDate(fromIsoDate(date)) : null;
+  });
+
+  protected readonly pickedTimeLabel: Signal<string | null> = computed((): string | null => {
+    const startAt: string | null = this.pickedStartAt();
+    const timeZone: string | null = this.timeZone();
+    return startAt && timeZone ? toTimeLabel(timeZone, startAt) : null;
+  });
+
+  /** The sticky bar's day on phones. */
+  protected readonly pickedDayShortLabel: Signal<string> = computed((): string => {
+    const date: string | null = this.pickedDate();
+    return date ? formatShortDate(fromIsoDate(date)) : 'No day picked';
+  });
+
+  /** Everything about each step but whether it's open, so opening one doesn't rebuild the summaries. */
+  private readonly stepStates: Signal<StepState[]> = computed((): StepState[] => {
     const progress: StepProgress = this.progress();
-    return BOOKING_STEPS.map((step: BookingStep, index: number): StepView => ({
+    return BOOKING_STEPS.map((step: BookingStep, index: number): StepState => ({
       step,
       number: index + 1,
       title: STEP_TITLES[step],
       summary: this.toStepSummary(step, progress),
-      isOpen: step === this.openStep(),
       isDone: isStepDone(step, progress),
       isLocked: !canOpenStep(step, progress),
     }));
   });
 
+  protected readonly stepViews: Signal<StepView[]> = computed((): StepView[] =>
+    this.stepStates().map((stepState: StepState): StepView => ({
+      ...stepState,
+      isOpen: stepState.step === this.openStep(),
+    })));
+
   protected readonly openStepView: Signal<StepView | undefined> = computed((): StepView | undefined =>
     this.stepViews().find((stepView: StepView): boolean => stepView.isOpen));
 
   protected readonly canReview: Signal<boolean> = computed((): boolean =>
-    canOpenStep(BookingStep.Review, this.progress()));
+    this.stepStates().at(-1)?.isLocked === false);
 
   /** A picked day that isn't booked yet; leaving would lose it (#210). Not while it's being sent. */
   private readonly hasUnconfirmedPick: Signal<boolean> = computed((): boolean =>
-    this.bookingFormValue().date !== null && !this.isSubmitting());
-
-  /** The sticky bar's picks on phones. */
-  protected readonly pickedDayLabel: Signal<string> = computed((): string => {
-    const date: string | null = this.bookingFormValue().date;
-    return date ? formatShortDate(fromIsoDate(date)) : 'No day picked';
-  });
-
-  protected readonly pickedTimeLabel: Signal<string> = computed((): string => {
-    const startAt: string | null = this.bookingFormValue().startAt;
-    const timeZone: string | null = this.timeZone();
-    return startAt && timeZone ? toTimeLabel(timeZone, startAt) : '—';
-  });
+    this.pickedDate() !== null && !this.isSubmitting());
 
   constructor() {
     this.askBeforeUnloadWhileUnconfirmed();
@@ -224,25 +246,12 @@ export class Booking {
       .subscribe((): void => {
         this.store.dispatch(BookingActions.SetActiveMonthView({ month: null }));
       });
+    // Subscribed after `bookingFormValue`, so the signals already hold the new value here.
     this.bookingForm.valueChanges
       .pipe(takeUntilDestroyed())
       .subscribe((): void => {
         this.startNewBooking();
-      });
-    this.bookingForm.controls.date.valueChanges
-      .pipe(takeUntilDestroyed())
-      .subscribe((date: string | null): void => {
-        if (date) {
-          this.showStep(BookingStep.Time);
-        }
-      });
-    this.bookingForm.controls.startAt.valueChanges
-      .pipe(takeUntilDestroyed())
-      .subscribe((startAt: string | null): void => {
-        if (startAt) {
-          const isReviewReady: boolean = canOpenStep(BookingStep.Review, this.readProgress());
-          this.showStep(this.isReturningToReview && isReviewReady ? BookingStep.Review : BookingStep.Details);
-        }
+        this.openStepAfterNewPick();
       });
   }
 
@@ -279,7 +288,7 @@ export class Booking {
 
   /** Opens `step` if every step before it is done, and moves focus to its heading. */
   protected showStep(step: BookingStep): void {
-    if (!canOpenStep(step, this.readProgress())) {
+    if (!canOpenStep(step, this.progress())) {
       return;
     }
     if (step === BookingStep.Review) {
@@ -300,17 +309,11 @@ export class Booking {
     this.showStep(step);
   }
 
-  protected showNextStep(): void {
-    const nextStep: BookingStep | null = toNextStep(this.openStep());
-    if (nextStep) {
-      this.showStep(nextStep);
-    }
-  }
-
-  protected showPreviousStep(): void {
-    const previousStep: BookingStep | null = toPreviousStep(this.openStep());
-    if (previousStep) {
-      this.showStep(previousStep);
+  /** Back (-1) and Continue (1). */
+  protected showAdjacentStep(offset: number): void {
+    const adjacentStep: BookingStep | undefined = BOOKING_STEPS[BOOKING_STEPS.indexOf(this.openStep()) + offset];
+    if (adjacentStep) {
+      this.showStep(adjacentStep);
     }
   }
 
@@ -369,8 +372,7 @@ export class Booking {
     this.store.dispatch(BookingActions.BookingConfirm({
       savedConfirmation: { booking: confirmedBooking, savedAt: new Date().toISOString() },
     }));
-    this.bookingForm.controls.startAt.reset();
-    this.bookingForm.controls.date.reset();
+    this.bookingForm.patchValue({ date: null, startAt: null });
     this.openStep.set(BookingStep.Date);
     this.reloadMonth();
     const timeZone: string | null = this.timeZone();
@@ -407,31 +409,33 @@ export class Booking {
     this.bookingNotice.set(null);
   }
 
-  /**
-   * A control's own `valueChanges` fires before the form's, so handlers for it read the progress here, not from
-   * `progress`.
-   */
-  private readProgress(): StepProgress {
-    const { controls }: BookingForm = this.bookingForm;
-    return {
-      hasDate: controls.date.value !== null,
-      hasTime: controls.startAt.value !== null,
-      areDetailsValid: controls.name.valid && controls.phone.valid,
-    };
+  /** Picking a day opens the time step; picking a time opens the details, or review after a review row's Change. */
+  private openStepAfterNewPick(): void {
+    const { date, startAt }: BookingFormValue = this.bookingFormValue();
+    const isNewDay: boolean = date !== null && date !== this.lastPicks.date;
+    const isNewTime: boolean = startAt !== null && startAt !== this.lastPicks.startAt;
+    this.lastPicks = { date, startAt };
+    if (isNewDay) {
+      this.showStep(BookingStep.Time);
+    } else if (isNewTime) {
+      const canReturnToReview: boolean = this.isReturningToReview && canOpenStep(BookingStep.Review, this.progress());
+      this.showStep(canReturnToReview ? BookingStep.Review : BookingStep.Details);
+    }
   }
 
   private toStepSummary(step: BookingStep, progress: StepProgress): string {
-    const formValue: BookingFormValue = this.bookingFormValue();
     switch (step) {
       case BookingStep.Date:
-        return formValue.date ? formatFullDate(fromIsoDate(formValue.date)) : 'Pick a day';
+        return this.pickedDateLabel() ?? 'Pick a day';
       case BookingStep.Time:
         if (!progress.hasDate) {
           return 'Pick a day first';
         }
-        return progress.hasTime ? this.pickedTimeLabel() : 'Pick a time';
-      case BookingStep.Details:
-        return progress.areDetailsValid ? `${formValue.name.trim()} · ${formValue.phone}` : 'Name and phone';
+        return this.pickedTimeLabel() ?? 'Pick a time';
+      case BookingStep.Details: {
+        const { name, phone }: BookingFormValue = this.bookingFormValue();
+        return progress.areDetailsValid ? `${name.trim()} · ${phone}` : 'Name and phone';
+      }
       case BookingStep.Review:
         return 'Check and book';
     }
@@ -458,22 +462,5 @@ export class Booking {
         window.removeEventListener('beforeunload', onBeforeUnload);
       });
     });
-  }
-
-  /** Whether `query` matches, kept up to date; false where there's no window (prerendering). */
-  private watchMediaQuery(query: string): Signal<boolean> {
-    if (typeof window === 'undefined') {
-      return signal(false);
-    }
-    const mediaQuery: MediaQueryList = window.matchMedia(query);
-    const isMatching: WritableSignal<boolean> = signal(mediaQuery.matches);
-    const onChange: (event: MediaQueryListEvent) => void = (event: MediaQueryListEvent): void => {
-      isMatching.set(event.matches);
-    };
-    mediaQuery.addEventListener('change', onChange);
-    this.destroyRef.onDestroy((): void => {
-      mediaQuery.removeEventListener('change', onChange);
-    });
-    return isMatching;
   }
 }

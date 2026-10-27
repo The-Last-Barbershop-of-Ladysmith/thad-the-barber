@@ -7,45 +7,46 @@
   margin-inline: auto;
   padding: 8rem 1rem 1.5rem;
 
+  // The open step's card stands out on phones; the desktop panel always holds the open step.
+  .step-card.is-open,
+  .step-panel {
+    border-color: color-mix(in srgb, var(--p-primary-color) 55%, transparent);
+  }
+
   // Phones: the steps collapse into cards, one open at a time (#207).
-  .step-cards {
-    display: flex;
-    flex-direction: column;
-    gap: 0.875rem;
+  .step-card {
+    .step-card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      width: 100%;
+      min-height: 4rem;
+      padding: 0.75rem 1rem;
+      border: 0;
+      background: none;
+      color: var(--p-text-color);
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
 
-    .step-card {
-      .step-card-header {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        width: 100%;
-        min-height: 4rem;
-        padding: 0.75rem 1rem;
-        border: 0;
-        background: none;
-        color: var(--p-text-color);
-        font: inherit;
-        text-align: left;
-        cursor: pointer;
-
-        &:disabled {
-          cursor: default;
-        }
-
-        .step-change {
-          font-size: 0.875rem;
-          font-weight: 700;
-          color: var(--p-primary-color);
-        }
+      &:disabled {
+        cursor: default;
       }
 
-      .step-card-body {
-        padding: 0 0.75rem 1rem;
+      .step-change {
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: var(--p-primary-color);
       }
+    }
+
+    .step-card-body {
+      padding: 0 0.75rem 1rem;
     }
   }
 
   // Phones: the picks and Review booking stay in view (#207).
+  // Sits on `glass-strong`, flattened into a full-width bar.
   .sticky-bar {
     position: sticky;
     bottom: 0;
@@ -55,9 +56,8 @@
     gap: 0.625rem;
     margin: 1rem -1rem -1.5rem;
     padding: 0.75rem 1rem 1.5rem;
-    border-top: 1px solid var(--p-brand-divider);
-    background: var(--p-brand-glass-strong-background);
-    backdrop-filter: blur(var(--p-brand-glass-blur));
+    border-width: 1px 0 0;
+    border-radius: 0;
 
     .sticky-picks {
       display: flex;
@@ -165,14 +165,6 @@
     flex-direction: column;
     gap: 0.2rem;
     min-width: 0;
-
-    .step-title {
-      font-size: 0.75rem;
-      font-weight: 700;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: var(--p-text-muted-color);
-    }
 
     .step-summary {
       font-size: 0.9375rem;

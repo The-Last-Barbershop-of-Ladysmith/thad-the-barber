@@ -60,7 +60,7 @@ describe(
     }
 
     function dayButtons(): HTMLElement[] {
-      return [...(fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('.date-list .p-togglebutton')];
+      return [...(fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('[data-testid="date-list"] .p-togglebutton')];
     }
 
     function laterMonths(): string[] {

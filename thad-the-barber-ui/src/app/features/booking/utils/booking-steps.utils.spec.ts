@@ -1,5 +1,5 @@
 import { BookingStep } from '../models/booking-step.model';
-import { StepProgress, canOpenStep, isStepDone, toNextStep, toPreviousStep } from './booking-steps.utils';
+import { StepProgress, canOpenStep, isStepDone } from './booking-steps.utils';
 
 const NOTHING: StepProgress = {
   hasDate: false,
@@ -66,14 +66,5 @@ describe(
       },
     );
 
-    it(
-      'steps forward and back, stopping at the ends',
-      (): void => {
-        expect(toNextStep(BookingStep.Date)).toBe(BookingStep.Time);
-        expect(toNextStep(BookingStep.Review)).toBeNull();
-        expect(toPreviousStep(BookingStep.Details)).toBe(BookingStep.Time);
-        expect(toPreviousStep(BookingStep.Date)).toBeNull();
-      },
-    );
   },
 );

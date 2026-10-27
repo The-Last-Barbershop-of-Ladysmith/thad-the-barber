@@ -3,8 +3,8 @@ import { ToggleButtonDesignTokens } from '@primeuix/themes/types/togglebutton';
 
 /**
  * Time-slot and date pickers. SelectButton renders ToggleButtons, so both token sets are tuned here.
- * The css override un-joins the segmented control so the options wrap into a grid; the booking page's date list
- * (`date-list`) is one column of bordered rows, the date left and its open count right, two columns from `lg`.
+ * The css override un-joins the segmented control so the options wrap into a grid. `option-list` lays the options out
+ * as full-width rows, the label left and any detail right, two columns from `lg` (the booking date list).
  * A picked day or time gets a copper border and tint rather than a solid fill.
  */
 export const selectbutton: SelectButtonDesignTokens = {
@@ -14,10 +14,10 @@ export const selectbutton: SelectButtonDesignTokens = {
     .p-selectbutton .p-togglebutton,
     .p-selectbutton .p-togglebutton:first-child,
     .p-selectbutton .p-togglebutton:last-child { border-radius: var(--p-selectbutton-border-radius); border-width: 1px; }
-    .p-selectbutton.date-list { grid-template-columns: minmax(0, 1fr); }
-    .p-selectbutton.date-list .p-togglebutton { min-height: 3.25rem; padding: 0.625rem 0.875rem; font-size: 0.9375rem; font-weight: 400; }
-    .p-selectbutton.date-list .p-togglebutton-content { width: 100%; justify-content: space-between; gap: 0.75rem; }
-    @media (min-width: 64rem) { .p-selectbutton.date-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    .p-selectbutton.option-list { grid-template-columns: minmax(0, 1fr); }
+    .p-selectbutton.option-list .p-togglebutton { min-height: 3.25rem; padding: 0.625rem 0.875rem; font-size: 0.9375rem; font-weight: 400; }
+    .p-selectbutton.option-list .p-togglebutton-content { width: 100%; justify-content: space-between; gap: 0.75rem; }
+    @media (min-width: 64rem) { .p-selectbutton.option-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   `,
 };
 

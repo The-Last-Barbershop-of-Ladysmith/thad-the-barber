@@ -37,6 +37,8 @@ describe(
       store.dispatch(ShopActions.ShopInfoRequestSuccess({ shopInfo: TEST_SHOP }));
       fixture = TestBed.createComponent(ReviewStep);
       fixture.componentRef.setInput('bookingFormValue', filledIn);
+      fixture.componentRef.setInput('dateLabel', 'Saturday, October 3rd 2026');
+      fixture.componentRef.setInput('timeLabel', '10:00 AM');
       fixture.componentRef.setInput('isFormValid', inputs.isFormValid ?? true);
       fixture.componentRef.setInput('isSubmitting', false);
       fixture.detectChanges();

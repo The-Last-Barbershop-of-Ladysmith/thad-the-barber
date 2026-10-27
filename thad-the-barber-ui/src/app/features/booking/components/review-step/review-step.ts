@@ -9,16 +9,11 @@ import {
   input,
   output,
 } from '@angular/core';
-import { Store } from '@ngrx/store';
 import { ButtonModule } from 'primeng/button';
 import { SpinnerIcon } from 'primeng/icons/spinner';
 import { SessionService } from '../../../../core/services/session.service';
-import { formatFullDate, fromIsoDate } from '../../../../shared/utils/date.utils';
-import { AppState } from '../../../../store/app.state';
-import { shopFeature } from '../../../shop/state/shop.feature';
 import { BookingFormValue } from '../../models/booking-form-value.model';
 import { BookingStep } from '../../models/booking-step.model';
-import { toTimeLabel } from '../../utils/booking-time.utils';
 
 /** A review row: what was picked, and the step its Change link opens. */
 interface SummaryRow {
@@ -40,27 +35,27 @@ interface SummaryRow {
 })
 export class ReviewStep {
   readonly bookingFormValue: InputSignal<BookingFormValue> = input.required<BookingFormValue>();
+  /** The page's labels for the picked day and time, on the shop's clock. */
+  readonly dateLabel: InputSignal<string | null> = input.required<string | null>();
+  readonly timeLabel: InputSignal<string | null> = input.required<string | null>();
   readonly isFormValid: InputSignal<boolean> = input.required<boolean>();
   readonly isSubmitting: InputSignal<boolean> = input.required<boolean>();
 
   readonly changeStep: OutputEmitterRef<BookingStep> = output();
 
-  private readonly timeZone: Signal<string | null> =
-    inject<Store<AppState>>(Store).selectSignal(shopFeature.selectTimeZone);
   protected readonly isBotCheckFailed: Signal<boolean> = inject(SessionService).isBotCheckFailed;
 
   protected readonly summaryRows: Signal<SummaryRow[]> = computed((): SummaryRow[] => {
     const formValue: BookingFormValue = this.bookingFormValue();
-    const timeZone: string | null = this.timeZone();
     return [
       {
         label: 'Date',
-        value: formValue.date ? formatFullDate(fromIsoDate(formValue.date)) : '—',
+        value: this.dateLabel() ?? '—',
         step: BookingStep.Date,
       },
       {
         label: 'Time',
-        value: formValue.startAt && timeZone ? toTimeLabel(timeZone, formValue.startAt) : '—',
+        value: this.timeLabel() ?? '—',
         step: BookingStep.Time,
       },
       {

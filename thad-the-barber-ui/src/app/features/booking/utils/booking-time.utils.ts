@@ -2,6 +2,8 @@ import { UPCOMING_DAY_COUNT } from '../../../core/config/booking-dates';
 import { BookingSettings } from '../../shop/models/booking-settings.model';
 import {
   addDays,
+  addMonths,
+  currentDateForTimeZone,
   formatLongDate,
   formatMinutes,
   fromIsoDate,
@@ -40,41 +42,27 @@ export function toDayRange(
   now: Date = new Date(),
 ): DayRange {
   if (month === null) {
-    const today: Date = timeZone ? fromIsoDate(toIsoDateIn(timeZone, now)) : now;
+    const today: Date = fromIsoDate(currentDateForTimeZone(timeZone, now));
     return { firstDay: toIsoDate(today), lastDay: toIsoDate(addDays(today, UPCOMING_DAY_COUNT - 1)) };
   }
   const firstDay: Date = fromMonthKey(month);
-  const lastDay: Date = new Date(
-    firstDay.getFullYear(),
-    firstDay.getMonth() + 1,
-    0,
-  );
-  return { firstDay: toIsoDate(firstDay), lastDay: toIsoDate(lastDay) };
+  return { firstDay: toIsoDate(firstDay), lastDay: toIsoDate(addDays(addMonths(firstDay, 1), -1)) };
 }
 
 /** Every month ("2026-11") after the booking window's first, through the one its last day falls in. */
 export function toLaterMonths(bookingWindow: DateRange): string[] {
-  const lastMonth: string = toMonthKey(bookingWindow.max);
   const months: string[] = [];
   for (
-    let month: Date = new Date(
-      bookingWindow.min.getFullYear(),
-      bookingWindow.min.getMonth() + 1,
-      1,
-    );
-    toMonthKey(month) <= lastMonth;
-    month = new Date(
-      month.getFullYear(),
-      month.getMonth() + 1,
-      1,
-    )
+    let month: Date = addMonths(bookingWindow.min, 1);
+    month <= bookingWindow.max;
+    month = addMonths(month, 1)
   ) {
     months.push(toMonthKey(month));
   }
   return months;
 }
 
-/** The picked day's open times, while its month is the one in view, labelled on the shop's clock. */
+/** The picked day's open times, from the days in view, labelled on the shop's clock. */
 export function toTimeSlots(
   availableDays: AvailableDay[],
   date: string | null,

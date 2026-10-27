@@ -30,13 +30,3 @@ export function canOpenStep(step: BookingStep, progress: StepProgress): boolean 
     .slice(0, BOOKING_STEPS.indexOf(step))
     .every((earlierStep: BookingStep): boolean => isStepDone(earlierStep, progress));
 }
-
-/** The step after `step`, or null after the last. */
-export function toNextStep(step: BookingStep): BookingStep | null {
-  return BOOKING_STEPS[BOOKING_STEPS.indexOf(step) + 1] ?? null;
-}
-
-/** The step before `step`, or null before the first. */
-export function toPreviousStep(step: BookingStep): BookingStep | null {
-  return BOOKING_STEPS[BOOKING_STEPS.indexOf(step) - 1] ?? null;
-}

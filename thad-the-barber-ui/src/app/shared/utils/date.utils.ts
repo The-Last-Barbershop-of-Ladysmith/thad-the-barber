@@ -66,6 +66,15 @@ export function fromMonthKey(month: string): Date {
   );
 }
 
+/** The 1st of the month `months` after `date`'s. */
+export function addMonths(date: Date, months: number): Date {
+  return new Date(
+    date.getFullYear(),
+    date.getMonth() + months,
+    1,
+  );
+}
+
 export function addDays(date: Date, days: number): Date {
   return new Date(
     date.getFullYear(),
@@ -94,13 +103,21 @@ export function fromTimeOfDay(time: string): number {
 
 type PartReader = (type: Intl.DateTimeFormatPartTypes) => string;
 
+/** Building an `Intl.DateTimeFormat` is slow, and a booking page formats dozens of times, so each is built once. */
+const formatsByZoneAndOptions: Map<string, Intl.DateTimeFormat> = new Map<string, Intl.DateTimeFormat>();
+
 function readPartsIn(
   timeZone: string,
   instant: Date,
   options: Intl.DateTimeFormatOptions,
 ): PartReader {
-  const parts: Intl.DateTimeFormatPart[] = new Intl.DateTimeFormat(DATE_LOCALE, { ...options, timeZone })
-    .formatToParts(instant);
+  const cacheKey: string = `${timeZone}|${JSON.stringify(options)}`;
+  let dateFormat: Intl.DateTimeFormat | undefined = formatsByZoneAndOptions.get(cacheKey);
+  if (!dateFormat) {
+    dateFormat = new Intl.DateTimeFormat(DATE_LOCALE, { ...options, timeZone });
+    formatsByZoneAndOptions.set(cacheKey, dateFormat);
+  }
+  const parts: Intl.DateTimeFormatPart[] = dateFormat.formatToParts(instant);
   return (type: Intl.DateTimeFormatPartTypes): string =>
     parts.find((entry: Intl.DateTimeFormatPart): boolean => entry.type === type)?.value ?? '';
 }
@@ -139,8 +156,7 @@ export function toIsoDateIn(timeZone: string, instant: Date): string {
 }
 
 /** Today ("2026-10-03") on the clocks in `timeZone`, or on the browser's while the timezone is unknown (`null`). */
-export function currentDateForTimeZone(timeZone: string | null): string {
-  const now: Date = new Date();
+export function currentDateForTimeZone(timeZone: string | null, now: Date = new Date()): string {
   if (timeZone === null) {
     return toIsoDate(now);
   }
