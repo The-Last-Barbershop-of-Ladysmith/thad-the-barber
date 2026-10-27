@@ -1,18 +1,22 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  ElementRef,
   InputSignal,
-  OnInit,
   Signal,
+  WritableSignal,
   computed,
   inject,
   input,
+  signal,
+  viewChild,
 } from '@angular/core';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { ButtonModule } from 'primeng/button';
-import { Popover, PopoverModule } from 'primeng/popover';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { filter, take } from 'rxjs';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { RequestStatus } from '../../../../shared/models/request.models';
 import { UPCOMING_DAY_COUNT } from '../../../../core/config/booking-dates';
@@ -49,7 +53,6 @@ import { NoticeMessage } from '../notice-message/notice-message';
   imports: [
     ReactiveFormsModule,
     ButtonModule,
-    PopoverModule,
     ProgressSpinnerModule,
     SelectButtonModule,
     NoticeMessage,
@@ -58,7 +61,7 @@ import { NoticeMessage } from '../notice-message/notice-message';
   templateUrl: './date-step.html',
   styleUrl: './date-step.scss',
 })
-export class DateStep implements OnInit {
+export class DateStep {
   readonly dateControl: InputSignal<FormControl<string | null>> = input.required<FormControl<string | null>>();
   readonly startAtControl: InputSignal<FormControl<string | null>> = input.required<FormControl<string | null>>();
 
@@ -73,6 +76,10 @@ export class DateStep implements OnInit {
   private readonly loadStatus: Signal<RequestStatus> = this.store.selectSignal(bookingFeature.selectLoadStatus);
   protected readonly visibleMonth: Signal<string | null> = this.store.selectSignal(bookingFeature.selectVisibleMonth);
   protected readonly isLoading: Signal<boolean> = this.store.selectSignal(bookingFeature.selectIsLoading);
+
+  protected readonly isMonthPickerOpen: WritableSignal<boolean> = signal(false);
+  private readonly monthPickerToggle: Signal<ElementRef<HTMLButtonElement> | undefined> =
+    viewChild<ElementRef<HTMLButtonElement>>('monthPickerToggle');
 
   private readonly bookingWindow: Signal<DateRange | null> = computed((): DateRange | null =>
     toBookingWindow(this.bookingSettings(), this.timeZone()));
@@ -112,17 +119,37 @@ export class DateStep implements OnInit {
     this.availableDays().map((availableDay: AvailableDay): DateOption => ({
       date: availableDay.date,
       label: formatFullDate(fromIsoDate(availableDay.date)),
+      openCount: availableDay.times.length,
     })));
 
   protected readonly hasNoOpenDays: Signal<boolean> = computed((): boolean =>
     this.loadStatus() === RequestStatus.Success && this.availableDays().length === 0);
 
-  ngOnInit(): void {
-    this.showView(null);
+  /** The first view waits for the shop's timezone, so "today" is the shop's, not the browser's. */
+  constructor() {
+    toObservable(this.timeZone)
+      .pipe(
+        filter((timeZone: string | null): boolean => timeZone !== null),
+        take(1),
+        takeUntilDestroyed(),
+      )
+      .subscribe((): void => {
+        this.showView(null);
+      });
   }
 
-  protected showView(month: string | null, monthPicker?: Popover): void {
-    monthPicker?.hide();
+  protected toggleMonthPicker(): void {
+    this.isMonthPickerOpen.update((isOpen: boolean): boolean => !isOpen);
+  }
+
+  /** Escape closes the picker and puts focus back on its button. */
+  protected closeMonthPicker(): void {
+    this.isMonthPickerOpen.set(false);
+    this.monthPickerToggle()?.nativeElement.focus();
+  }
+
+  protected showView(month: string | null): void {
+    this.isMonthPickerOpen.set(false);
     this.store.dispatch(BookingActions.SetActiveMonthView({ month }));
   }
 

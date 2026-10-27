@@ -82,10 +82,12 @@ describe(
       (): void => {
         load(OPEN_DAYS);
 
-        expect(dayButtons().map((button: HTMLElement): string => button.textContent.trim())).toEqual([
+        expect(dayButtons().map((button: HTMLElement): string | undefined =>
+          button.querySelector('.date-label')?.textContent.trim())).toEqual([
           'Saturday, November 21st 2026',
           'Sunday, November 1st 2026',
         ]);
+        expect(dayButtons()[0]?.querySelector('.open-count')?.textContent).toContain('1');
         expect(find('view-caption')?.textContent).toContain('2 open days');
 
         dayButtons()[1]?.click();

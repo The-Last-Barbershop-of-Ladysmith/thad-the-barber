@@ -17,6 +17,7 @@
       type="button"
       severity="secondary"
       [outlined]="true"
+      class="view-control view-arrow"
       aria-label="Previous month"
       data-testid="previous-view"
       [disabled]="isFirstView()"
@@ -25,24 +26,26 @@
       <i pButtonIcon class="pi pi-chevron-left"></i>
     </button>
     <button
+      #monthPickerToggle
       pButton
       type="button"
       severity="secondary"
       [outlined]="true"
-      class="view-picker-toggle"
-      aria-haspopup="true"
+      class="view-control view-picker-toggle"
+      aria-controls="month-picker"
       data-testid="view-picker"
-      [attr.aria-expanded]="monthPicker.overlayVisible()"
-      (click)="monthPicker.toggle($event)"
+      [attr.aria-expanded]="isMonthPickerOpen()"
+      (click)="toggleMonthPicker()"
     >
       <span pButtonLabel>{{ viewTitle() }}</span>
-      <i pButtonIcon class="pi pi-chevron-down"></i>
+      <i pButtonIcon class="pi pi-chevron-down view-picker-chevron"></i>
     </button>
     <button
       pButton
       type="button"
       severity="secondary"
       [outlined]="true"
+      class="view-control view-arrow"
       aria-label="Next month"
       data-testid="next-view"
       [disabled]="isLastView()"
@@ -52,33 +55,40 @@
     </button>
   </div>
 
-  <p-popover #monthPicker>
-    <div class="month-picker">
+  @if (isMonthPickerOpen()) {
+    <div
+      id="month-picker"
+      class="month-picker"
+      role="group"
+      aria-label="Pick a month"
+      tabindex="-1"
+      (keydown.escape)="closeMonthPicker()"
+    >
       <button
         pButton
         type="button"
-        class="w-full"
+        class="view-control"
         data-testid="upcoming-view"
         [outlined]="visibleMonth() !== null"
         [attr.aria-pressed]="visibleMonth() === null"
-        (click)="showView(null, monthPicker)"
+        (click)="showView(null)"
       >
         <span pButtonLabel>{{ upcomingLabel }}</span>
       </button>
       @for (monthOptionGroup of monthOptionGroups(); track monthOptionGroup.year) {
         <div class="stack gap-2">
-          <span class="eyebrow">{{ monthOptionGroup.year }}</span>
+          <span class="month-year">{{ monthOptionGroup.year }}</span>
           <div class="month-grid">
             @for (monthOption of monthOptionGroup.monthOptions; track monthOption.month) {
               <button
                 pButton
                 type="button"
-                size="small"
+                class="view-control"
                 [attr.data-testid]="'month-' + monthOption.month"
                 [outlined]="visibleMonth() !== monthOption.month"
                 [attr.aria-label]="monthOption.longLabel"
                 [attr.aria-pressed]="visibleMonth() === monthOption.month"
-                (click)="showView(monthOption.month, monthPicker)"
+                (click)="showView(monthOption.month)"
               >
                 <span pButtonLabel>{{ monthOption.shortLabel }}</span>
               </button>
@@ -87,7 +97,7 @@
         </div>
       }
     </div>
-  </p-popover>
+  }
 
   <span class="text-sm text-surface-200" aria-live="polite" data-testid="view-caption">{{
     rangeCaption()
@@ -106,6 +116,11 @@
       optionValue="date"
       [allowEmpty]="false"
       (onChange)="onDateChange()"
-    />
+    >
+      <ng-template #item let-dateOption>
+        <span class="date-label">{{ dateOption.label }}</span>
+        <span class="open-count">{{ dateOption.openCount }} open</span>
+      </ng-template>
+    </p-selectbutton>
   }
 </section>
