@@ -8,6 +8,7 @@ import {
   WritableSignal,
   afterNextRender,
   computed,
+  effect,
   inject,
   signal,
 } from '@angular/core';
@@ -15,7 +16,9 @@ import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-i
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { ButtonModule } from 'primeng/button';
+import { ConfirmationService } from 'primeng/api';
 import { CardModule } from 'primeng/card';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { filter, finalize, map, take } from 'rxjs';
 import { SessionService } from '../../core/services/session.service';
 import { Backdrop } from '../../shared/components/backdrop/backdrop';
@@ -78,6 +81,7 @@ const STEP_TITLES: Record<BookingStep, string> = {
     ReactiveFormsModule,
     ButtonModule,
     CardModule,
+    ConfirmDialogModule,
     Backdrop,
     NoticeMessage,
     DateStep,
@@ -85,6 +89,7 @@ const STEP_TITLES: Record<BookingStep, string> = {
     DetailsStep,
     ReviewStep,
   ],
+  providers: [ConfirmationService],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './booking.html',
   styleUrl: './booking.scss',
@@ -94,6 +99,7 @@ export class Booking {
   private readonly bookingService: BookingService = inject(BookingService);
   private readonly destroyRef: DestroyRef = inject(DestroyRef);
   private readonly injector: Injector = inject(Injector);
+  private readonly confirmationService: ConfirmationService = inject(ConfirmationService);
 
   private readonly timeZone: Signal<string | null> = this.store.selectSignal(shopFeature.selectTimeZone);
   private readonly visibleMonth: Signal<string | null> = this.store.selectSignal(bookingFeature.selectVisibleMonth);
@@ -177,6 +183,10 @@ export class Booking {
   protected readonly canReview: Signal<boolean> = computed((): boolean =>
     canOpenStep(BookingStep.Review, this.progress()));
 
+  /** A picked day that isn't booked yet; leaving would lose it (#210). Not while it's being sent. */
+  private readonly hasUnconfirmedPick: Signal<boolean> = computed((): boolean =>
+    this.bookingFormValue().date !== null && !this.isSubmitting());
+
   /** The sticky bar's picks on phones. */
   protected readonly pickedDayLabel: Signal<string> = computed((): string => {
     const date: string | null = this.bookingFormValue().date;
@@ -190,6 +200,7 @@ export class Booking {
   });
 
   constructor() {
+    this.askBeforeUnloadWhileUnconfirmed();
     // The page, not the date step, loads the first days: the date step goes away whenever its card collapses. They
     // wait for the shop's timezone, so "today" is the shop's, not the browser's.
     toObservable(this.timeZone)
@@ -221,6 +232,37 @@ export class Booking {
           this.showStep(this.isReturningToReview && isReviewReady ? BookingStep.Review : BookingStep.Details);
         }
       });
+  }
+
+  /**
+   * The route's leave guard: with a day picked and not booked, asks "Leave without booking?" (Keep booking is the
+   * default, and Escape keeps booking too); otherwise lets the customer go.
+   */
+  confirmLeave(): boolean | Promise<boolean> {
+    if (!this.hasUnconfirmedPick()) {
+      return true;
+    }
+    return new Promise<boolean>((resolve: (canLeave: boolean) => void): void => {
+      this.confirmationService.confirm({
+        key: 'leave-booking',
+        header: 'Leave without booking?',
+        message: 'Your booking isn’t confirmed yet, so the time you picked isn’t held for you. If you leave, you’ll start over.',
+        rejectButtonProps: { label: 'Keep booking' },
+        acceptButtonProps: {
+          label: 'Leave',
+          severity: 'secondary',
+          outlined: true,
+        },
+        defaultFocus: 'reject',
+        closeOnEscape: true,
+        accept: (): void => {
+          resolve(true);
+        },
+        reject: (): void => {
+          resolve(false);
+        },
+      });
+    });
   }
 
   /** Opens `step` if every step before it is done, and moves focus to its heading. */
@@ -381,6 +423,29 @@ export class Booking {
       case BookingStep.Review:
         return 'Check and book';
     }
+  }
+
+  /**
+   * Closing or reloading the tab with an unconfirmed pick gets the browser's own prompt; the browser picks its text.
+   * The listener is there only while there's a pick, since an always-on one keeps the page out of the back/forward
+   * cache.
+   */
+  private askBeforeUnloadWhileUnconfirmed(): void {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    const onBeforeUnload: (event: BeforeUnloadEvent) => void = (event: BeforeUnloadEvent): void => {
+      event.preventDefault();
+    };
+    effect((onCleanup: (cleanup: () => void) => void): void => {
+      if (!this.hasUnconfirmedPick()) {
+        return;
+      }
+      window.addEventListener('beforeunload', onBeforeUnload);
+      onCleanup((): void => {
+        window.removeEventListener('beforeunload', onBeforeUnload);
+      });
+    });
   }
 
   /** Whether `query` matches, kept up to date; false where there's no window (prerendering). */

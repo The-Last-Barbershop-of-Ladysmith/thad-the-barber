@@ -3,6 +3,7 @@ import { NO_ERRORS_SCHEMA, WritableSignal, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
 import { Action, ActionsSubject, Store, provideStore } from '@ngrx/store';
+import { Confirmation, ConfirmationService } from 'primeng/api';
 import { Observable, Subject } from 'rxjs';
 import { testSavedConfirmation } from '../../../testing/test-booking';
 import { TEST_SHOP } from '../../../testing/test-shop';
@@ -34,6 +35,7 @@ interface BookingPage {
   openStep: () => BookingStep;
   showStep: (step: BookingStep) => void;
   changeFromReview: (step: BookingStep) => void;
+  confirmLeave: () => boolean | Promise<boolean>;
 }
 
 const TODAY: string = toIsoDateIn(TEST_SHOP.timeZone, new Date());
@@ -357,6 +359,46 @@ describe(
           .querySelector('[data-testid="bot-check-failed"]');
         expect(botCheck?.querySelector('[data-testid="notice-booking-site"]')?.getAttribute('href'))
           .toBe(TEST_SHOP.squareBookingSiteUrl);
+      },
+    );
+
+    it(
+      'lets the customer leave without asking while nothing is picked (#210)',
+      (): void => {
+        openPage();
+
+        expect(page.confirmLeave()).toBe(true);
+      },
+    );
+
+    it(
+      'asks before leaving a picked day that is not booked, and Keep booking stays (#210)',
+      async (): Promise<void> => {
+        openPage();
+        page.bookingForm.controls.date.setValue(TODAY);
+        const confirmationService: ConfirmationService = fixture.debugElement.injector.get(ConfirmationService);
+        let asked: Confirmation | null = null;
+        confirmationService.requireConfirmation$.subscribe((confirmation: Confirmation | null): void => {
+          asked = confirmation;
+        });
+
+        const canLeave: boolean | Promise<boolean> = page.confirmLeave();
+        (asked as Confirmation | null)?.reject?.();
+
+        expect((asked as Confirmation | null)?.header).toBe('Leave without booking?');
+        expect(await canLeave).toBe(false);
+      },
+    );
+
+    it(
+      'lets the customer go once the booking went through (#210)',
+      (): void => {
+        openPage();
+        pickAndConfirm(FIRST_TIME);
+        responses[0]?.next(confirmation(requests[0]));
+        responses[0]?.complete();
+
+        expect(page.confirmLeave()).toBe(true);
       },
     );
   },

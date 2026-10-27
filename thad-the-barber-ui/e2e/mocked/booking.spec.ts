@@ -302,5 +302,39 @@ test.describe(
         await expect(openDays(page).first()).toBeVisible();
       },
     );
+
+    test(
+      'asks before leaving a picked day that is not booked: Keep booking stays, Leave goes (#210)',
+      async ({ page }: { page: Page; }): Promise<void> => {
+        await page.goto('/book');
+        await openDays(page).first().click();
+        const homeLink: Locator = page.locator('header a.home-link');
+        const leaveDialog: Locator = page.locator('.p-confirmdialog');
+
+        await homeLink.click();
+        await expect(leaveDialog).toBeVisible();
+        await expectNoA11yViolations(page);
+        await leaveDialog.locator('.p-confirmdialog-reject-button').click();
+        await expect(leaveDialog).toHaveCount(0);
+        await expect(page).toHaveURL(/\/book$/);
+
+        await homeLink.click();
+        await leaveDialog.locator('.p-confirmdialog-accept-button').click();
+        await expect(page).toHaveURL(/\/$/);
+      },
+    );
+
+    test(
+      'leaves without asking while nothing is picked (#210)',
+      async ({ page }: { page: Page; }): Promise<void> => {
+        await page.goto('/book');
+        await openDays(page).first().waitFor();
+
+        await page.locator('header a.home-link').click();
+
+        await expect(page).toHaveURL(/\/$/);
+        await expect(page.locator('.p-confirmdialog')).toHaveCount(0);
+      },
+    );
   },
 );
