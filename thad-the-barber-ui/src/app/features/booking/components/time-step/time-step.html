@@ -4,6 +4,9 @@
     <span class="text-sm text-surface-200"
       >{{ pickedDateLabel }} · {{ timeSlots().length }} open</span
     >
+    @if (fillingUpNote(); as fillingUp) {
+      <p-message severity="warn" size="small" data-testid="filling-up-note">{{ fillingUp }}</p-message>
+    }
     <p-selectbutton
       data-testid="time-list"
       [formControl]="startAtControl()"

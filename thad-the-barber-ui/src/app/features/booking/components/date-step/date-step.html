@@ -115,14 +115,20 @@
       data-testid="date-list"
       [formControl]="dateControl()"
       [options]="dateOptions()"
-      optionLabel="label"
+      optionLabel="accessibleLabel"
       optionValue="date"
       [allowEmpty]="false"
       (onChange)="onDateChange()"
     >
       <ng-template #item let-dateOption>
         <span class="date-label">{{ dateOption.label }}</span>
-        <span class="open-count">{{ dateOption.openCount }} open</span>
+        @if (dateOption.isFillingUp) {
+          <span class="filling-up-badge" data-testid="filling-up">
+            <i class="pi pi-clock" aria-hidden="true"></i>Only {{ dateOption.openCount }} left
+          </span>
+        } @else {
+          <span class="open-count">{{ dateOption.openCount }} open</span>
+        }
       </ng-template>
     </p-selectbutton>
   }

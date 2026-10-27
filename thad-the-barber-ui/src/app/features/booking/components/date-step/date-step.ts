@@ -19,7 +19,7 @@ import { filter, take } from 'rxjs';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { SkeletonModule } from 'primeng/skeleton';
 import { RequestStatus } from '../../../../shared/models/request.models';
-import { UPCOMING_DAY_COUNT } from '../../../../core/config/booking-dates';
+import { FILLING_UP_BELOW, UPCOMING_DAY_COUNT } from '../../../../core/config/booking-dates';
 import {
   formatFullDate,
   formatMonthDay,
@@ -118,11 +118,7 @@ export class DateStep {
   });
 
   protected readonly dateOptions: Signal<DateOption[]> = computed((): DateOption[] =>
-    this.availableDays().map((availableDay: AvailableDay): DateOption => ({
-      date: availableDay.date,
-      label: formatFullDate(fromIsoDate(availableDay.date)),
-      openCount: availableDay.times.length,
-    })));
+    this.availableDays().map(toDateOption));
 
   protected readonly hasNoOpenDays: Signal<boolean> = computed((): boolean =>
     this.loadStatus() === RequestStatus.Success && this.availableDays().length === 0);
@@ -189,4 +185,17 @@ function toMonthOptionGroups(months: string[]): MonthOptionGroup[] {
     }
   }
   return groups;
+}
+
+function toDateOption(availableDay: AvailableDay): DateOption {
+  const label: string = formatFullDate(fromIsoDate(availableDay.date));
+  const openCount: number = availableDay.times.length;
+  const isFillingUp: boolean = openCount < FILLING_UP_BELOW;
+  return {
+    date: availableDay.date,
+    label,
+    accessibleLabel: isFillingUp ? `${label}, only ${openCount} left` : `${label}, ${openCount} open`,
+    openCount,
+    isFillingUp,
+  };
 }

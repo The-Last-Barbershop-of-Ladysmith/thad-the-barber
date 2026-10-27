@@ -87,7 +87,7 @@ describe(
           'Saturday, November 21st 2026',
           'Sunday, November 1st 2026',
         ]);
-        expect(dayButtons()[0]?.querySelector('.open-count')?.textContent).toContain('1');
+        expect(dayButtons()[0]?.querySelector('[data-testid="filling-up"]')?.textContent).toContain('Only 1 left');
         expect(find('view-caption')?.textContent).toContain('2 open days');
 
         dayButtons()[1]?.click();
@@ -95,6 +95,30 @@ describe(
 
         expect(dateControl.value).toBe('2026-11-01');
         expect(startAtControl.value).toBeNull();
+      },
+    );
+
+    it(
+      'marks a day with fewer than 5 open times as filling up, in its accessible name too (BR-15)',
+      (): void => {
+        const timesFor: (count: number, date: string) => string[] = (count: number, date: string): string[] =>
+          Array.from({ length: count }, (_: unknown, index: number): string => `${date}T2${index}:00:00Z`);
+        load([
+          { date: '2026-11-01', times: timesFor(1, '2026-11-01') },
+          { date: '2026-11-02', times: timesFor(4, '2026-11-02') },
+          { date: '2026-11-03', times: timesFor(5, '2026-11-03') },
+          { date: '2026-11-04', times: timesFor(6, '2026-11-04') },
+        ]);
+
+        expect(dayButtons().map((button: HTMLElement): string | undefined =>
+          button.querySelector('[data-testid="filling-up"]')?.textContent.trim())).toEqual([
+          'Only 1 left',
+          'Only 4 left',
+          undefined,
+          undefined,
+        ]);
+        expect(dayButtons()[1]?.getAttribute('aria-label')).toBe('Monday, November 2nd 2026, only 4 left');
+        expect(dayButtons()[2]?.getAttribute('aria-label')).toBe('Tuesday, November 3rd 2026, 5 open');
       },
     );
 
