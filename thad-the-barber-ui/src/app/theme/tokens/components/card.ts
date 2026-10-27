@@ -15,5 +15,9 @@ export const card: CardDesignTokens = {
       backdrop-filter: blur(var(--p-brand-glass-blur));
       -webkit-backdrop-filter: blur(var(--p-brand-glass-blur));
     }
+    .p-card.is-open, .p-card.step-panel { border-color: color-mix(in srgb, var(--p-primary-color) 55%, transparent); }
+    .p-card.step-card .p-card-body { padding: 0; gap: 0; }
+    .p-card.step-rail .p-card-body { padding: 1.25rem; }
+    .p-card.step-panel .p-card-body { padding: 1.75rem; }
   `,
 };

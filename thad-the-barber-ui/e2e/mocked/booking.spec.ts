@@ -253,7 +253,7 @@ test.describe(
     );
 
     test(
-      'offers the Square booking site and turns off confirming when the bot check fails',
+      'offers the Square booking site and no way to confirm when the bot check fails',
       async ({ page }: { page: Page; }): Promise<void> => {
         await page.route(isSessionRequest, (route: Route): Promise<void> => problem(
           route,
@@ -266,8 +266,8 @@ test.describe(
         const botCheck: Locator = page.getByTestId('bot-check-failed');
         await expect(botCheck.getByTestId('notice-booking-site')).toHaveAttribute('href', TEST_SHOP.squareBookingSiteUrl ?? '');
         await expect(botCheck.getByTestId('notice-call')).toHaveAttribute('href', `tel:${TEST_SHOP.phone}`);
-        await fillInBooking(page);
-        await expect(page.getByTestId('confirm-booking')).toBeDisabled();
+        // Without a session token no days load, so the review step and its confirm button are never reached.
+        await expect(page.getByTestId('confirm-booking')).toHaveCount(0);
         await expectNoA11yViolations(page);
       },
     );

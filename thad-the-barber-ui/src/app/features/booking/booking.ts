@@ -15,6 +15,7 @@ import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-i
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { ButtonModule } from 'primeng/button';
+import { CardModule } from 'primeng/card';
 import { filter, finalize, map, take } from 'rxjs';
 import { SessionService } from '../../core/services/session.service';
 import { Backdrop } from '../../shared/components/backdrop/backdrop';
@@ -76,6 +77,7 @@ const STEP_TITLES: Record<BookingStep, string> = {
     NgTemplateOutlet,
     ReactiveFormsModule,
     ButtonModule,
+    CardModule,
     Backdrop,
     NoticeMessage,
     DateStep,

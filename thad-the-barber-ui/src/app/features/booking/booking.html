@@ -25,85 +25,98 @@
   <form [formGroup]="bookingForm" (ngSubmit)="confirm()">
     @if (isDesktop()) {
       <div class="step-rail-layout">
-        <nav class="step-rail" aria-label="Booking steps">
-          <ol class="step-rail-list">
-            @for (stepView of stepViews(); track stepView.step) {
-              <li>
-                <button
-                  type="button"
-                  class="step-rail-item"
-                  [class.is-open]="stepView.isOpen"
-                  [attr.data-testid]="'rail-' + stepView.step"
-                  [attr.aria-current]="stepView.isOpen ? 'step' : null"
-                  [disabled]="stepView.isLocked"
-                  (click)="showStep(stepView.step)"
-                >
-                  <span
-                    class="step-number"
+        <p-card class="step-rail">
+          <nav aria-label="Booking steps">
+            <ol class="step-rail-list">
+              @for (stepView of stepViews(); track stepView.step) {
+                <li>
+                  <button
+                    type="button"
+                    class="step-rail-item"
                     [class.is-open]="stepView.isOpen"
-                    [class.is-done]="stepView.isDone"
-                    >{{ stepView.number }}</span
+                    [attr.data-testid]="'rail-' + stepView.step"
+                    [attr.aria-current]="stepView.isOpen ? 'step' : null"
+                    [disabled]="stepView.isLocked"
+                    (click)="showStep(stepView.step)"
                   >
-                  <span class="step-text">
-                    <span class="step-title">{{ stepView.title }}</span>
-                    <span class="step-summary" [class.is-done]="stepView.isDone">{{
-                      stepView.summary
-                    }}</span>
-                  </span>
-                </button>
-              </li>
-            }
-          </ol>
-        </nav>
+                    <span
+                      class="step-number"
+                      [class.is-open]="stepView.isOpen"
+                      [class.is-done]="stepView.isDone"
+                      >{{ stepView.number }}</span
+                    >
+                    <span class="step-text">
+                      <span class="step-title">{{ stepView.title }}</span>
+                      <span class="step-summary" [class.is-done]="stepView.isDone">{{
+                        stepView.summary
+                      }}</span>
+                    </span>
+                  </button>
+                </li>
+              }
+            </ol>
+          </nav>
+        </p-card>
 
         @if (openStepView(); as currentStep) {
-          <section class="step-panel" [attr.aria-labelledby]="'step-heading-' + currentStep.step">
-            <div class="stack gap-1.5">
-              <span class="eyebrow">Step {{ currentStep.number }} of {{ stepViews().length }}</span>
-              <h2 class="step-panel-title" tabindex="-1" [id]="'step-heading-' + currentStep.step">
-                {{ currentStep.title }}
-              </h2>
-            </div>
-            <ng-container
-              [ngTemplateOutlet]="stepContent"
-              [ngTemplateOutletContext]="{ $implicit: currentStep.step }"
-            />
-            <div class="step-panel-actions">
-              @if (currentStep.number > 1) {
-                <button
-                  pButton
-                  type="button"
-                  severity="secondary"
-                  [outlined]="true"
-                  data-testid="previous-step"
-                  [disabled]="isSubmitting()"
-                  (click)="showPreviousStep()"
+          <p-card class="step-panel">
+            <section
+              class="stack gap-5"
+              [attr.aria-labelledby]="'step-heading-' + currentStep.step"
+            >
+              <div class="stack gap-1.5">
+                <span class="eyebrow"
+                  >Step {{ currentStep.number }} of {{ stepViews().length }}</span
                 >
-                  <span pButtonLabel>Back</span>
-                </button>
-              }
-              @if (currentStep.step !== bookingStep.Review) {
-                <button
-                  pButton
-                  type="button"
-                  class="ml-auto"
-                  [attr.data-testid]="
-                    currentStep.step === bookingStep.Details ? 'open-review' : 'next-step'
-                  "
-                  [disabled]="!currentStep.isDone"
-                  (click)="showNextStep()"
+                <h2
+                  class="step-panel-title"
+                  tabindex="-1"
+                  [id]="'step-heading-' + currentStep.step"
                 >
-                  <span pButtonLabel>Continue</span>
-                </button>
-              }
-            </div>
-          </section>
+                  {{ currentStep.title }}
+                </h2>
+              </div>
+              <ng-container
+                [ngTemplateOutlet]="stepContent"
+                [ngTemplateOutletContext]="{ $implicit: currentStep.step }"
+              />
+              <div class="step-panel-actions">
+                @if (currentStep.number > 1) {
+                  <button
+                    pButton
+                    type="button"
+                    severity="secondary"
+                    [outlined]="true"
+                    data-testid="previous-step"
+                    [disabled]="isSubmitting()"
+                    (click)="showPreviousStep()"
+                  >
+                    <span pButtonLabel>Back</span>
+                  </button>
+                }
+                @if (currentStep.step !== bookingStep.Review) {
+                  <button
+                    pButton
+                    type="button"
+                    class="ml-auto"
+                    [attr.data-testid]="
+                      currentStep.step === bookingStep.Details ? 'open-review' : 'next-step'
+                    "
+                    [disabled]="!currentStep.isDone"
+                    (click)="showNextStep()"
+                  >
+                    <span pButtonLabel>Continue</span>
+                  </button>
+                }
+              </div>
+            </section>
+          </p-card>
         }
       </div>
     } @else {
       <div class="step-cards">
         @for (stepView of stepViews(); track stepView.step) {
-          <section class="step-card" [class.is-open]="stepView.isOpen">
+          <p-card class="step-card" [class.is-open]="stepView.isOpen">
             <h2 class="m-0">
               <button
                 type="button"
@@ -140,7 +153,7 @@
                 />
               </div>
             }
-          </section>
+          </p-card>
         }
       </div>
 
