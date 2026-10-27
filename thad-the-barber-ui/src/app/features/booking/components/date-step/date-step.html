@@ -9,12 +9,13 @@
       aria-label="Previous month"
       data-testid="previous-view"
       [disabled]="isFirstView()"
-      (click)="showPrevious()"
+      (click)="showAdjacentView(-1)"
     >
       <i pButtonIcon class="pi pi-chevron-left"></i>
     </button>
     <button
       #monthPickerToggle
+      id="view-picker-label"
       pButton
       type="button"
       severity="secondary"
@@ -37,7 +38,7 @@
       aria-label="Next month"
       data-testid="next-view"
       [disabled]="isLastView()"
-      (click)="showNext()"
+      (click)="showAdjacentView(1)"
     >
       <i pButtonIcon class="pi pi-chevron-right"></i>
     </button>
@@ -52,36 +53,39 @@
       tabindex="-1"
       (keydown.escape)="closeMonthPicker()"
     >
-      <button
-        pButton
-        type="button"
-        class="view-control"
-        data-testid="upcoming-view"
-        [outlined]="visibleMonth() !== null"
-        [attr.aria-pressed]="visibleMonth() === null"
-        (click)="showView(null)"
+      <p-selectbutton
+        ariaLabelledBy="view-picker-label"
+        [options]="upcomingOptions"
+        optionLabel="label"
+        optionValue="view"
+        [allowEmpty]="false"
+        [ngModel]="viewKey()"
+        (onChange)="showViewKey($event.value)"
       >
-        <span pButtonLabel>{{ upcomingLabel }}</span>
-      </button>
+        <ng-template #item let-upcomingOption>
+          <span data-testid="upcoming-view">{{ upcomingOption.label }}</span>
+        </ng-template>
+      </p-selectbutton>
       @for (monthOptionGroup of monthOptionGroups(); track monthOptionGroup.year) {
         <div class="stack gap-2">
-          <span class="month-year">{{ monthOptionGroup.year }}</span>
-          <div class="month-grid">
-            @for (monthOption of monthOptionGroup.monthOptions; track monthOption.month) {
-              <button
-                pButton
-                type="button"
-                class="view-control"
-                [attr.data-testid]="'month-' + monthOption.month"
-                [outlined]="visibleMonth() !== monthOption.month"
-                [attr.aria-label]="monthOption.longLabel"
-                [attr.aria-pressed]="visibleMonth() === monthOption.month"
-                (click)="showView(monthOption.month)"
-              >
-                <span pButtonLabel>{{ monthOption.shortLabel }}</span>
-              </button>
-            }
-          </div>
+          <span class="field-label" [id]="'month-year-' + monthOptionGroup.year">{{
+            monthOptionGroup.year
+          }}</span>
+          <p-selectbutton
+            [ariaLabelledBy]="'month-year-' + monthOptionGroup.year"
+            [options]="monthOptionGroup.monthOptions"
+            optionLabel="longLabel"
+            optionValue="month"
+            [allowEmpty]="false"
+            [ngModel]="viewKey()"
+            (onChange)="showViewKey($event.value)"
+          >
+            <ng-template #item let-monthOption>
+              <span [attr.data-testid]="'month-' + monthOption.month">{{
+                monthOption.shortLabel
+              }}</span>
+            </ng-template>
+          </p-selectbutton>
         </div>
       }
     </div>
@@ -114,7 +118,6 @@
       optionLabel="accessibleLabel"
       optionValue="date"
       [allowEmpty]="false"
-      (onChange)="onDateChange()"
     >
       <ng-template #item let-dateOption>
         <span class="date-label">{{ dateOption.label }}</span>

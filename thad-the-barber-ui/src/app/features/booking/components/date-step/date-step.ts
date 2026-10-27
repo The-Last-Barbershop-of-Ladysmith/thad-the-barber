@@ -11,7 +11,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { ButtonModule } from 'primeng/button';
 import { SelectButtonModule } from 'primeng/selectbutton';
@@ -19,6 +19,7 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { RequestStatus } from '../../../../shared/models/request.models';
 import { FILLING_UP_BELOW, UPCOMING_DAY_COUNT } from '../../../../core/config/booking-dates';
 import {
+  addDays,
   formatFullDate,
   formatMonthDay,
   formatMonthYear,
@@ -32,12 +33,19 @@ import { shopFeature } from '../../../shop/state/shop.feature';
 import { AvailableDay } from '../../dtos/available-day.dto';
 import { BookingNotice } from '../../models/booking-notice.model';
 import { DateRange } from '../../models/date-range.model';
-import { DayRange } from '../../models/day-range.model';
 import * as BookingActions from '../../state/booking.actions';
 import { bookingFeature } from '../../state/booking.feature';
 import { NO_OPEN_DAYS_NOTICE } from '../../utils/booking-notice.utils';
-import { toBookingWindow, toDayRange, toLaterMonths } from '../../utils/booking-time.utils';
+import { toBookingWindow, toLaterMonths } from '../../utils/booking-time.utils';
 import { NoticeMessage } from '../notice-message/notice-message';
+
+const UPCOMING_VIEW: string = 'upcoming';
+
+/** The month picker's "Next 31 days" choice. */
+interface UpcomingOption {
+  label: string;
+  view: string;
+}
 
 /** An open day in the date step's list: the shop-calendar day ("2026-10-27") and how it reads. */
 interface DateOption {
@@ -70,6 +78,7 @@ interface MonthOptionGroup {
   selector: 'app-date-step',
   imports: [
     ButtonModule,
+    FormsModule,
     NoticeMessage,
     ReactiveFormsModule,
     SelectButtonModule,
@@ -84,9 +93,11 @@ export class DateStep {
   readonly startAtControl: InputSignal<FormControl<string | null>> = input.required<FormControl<string | null>>();
 
   protected readonly upcomingLabel: string = `Next ${UPCOMING_DAY_COUNT} days`;
+  /** The month picker's first choice; a SelectButton can't select a null value, so the upcoming view has a key. */
+  protected readonly upcomingOptions: UpcomingOption[] = [{ label: this.upcomingLabel, view: UPCOMING_VIEW }];
   protected readonly noOpenDaysNotice: BookingNotice = NO_OPEN_DAYS_NOTICE;
   /** Placeholder rows in the list's place while the days load. */
-  protected readonly skeletonRows: number[] = Array.from({ length: 10 }, (_: unknown, index: number): number => index);
+  protected readonly skeletonRows: number[] = Array<number>(10).fill(0);
 
   private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
   private readonly timeZone: Signal<string | null> = this.store.selectSignal(shopFeature.selectTimeZone);
@@ -96,6 +107,7 @@ export class DateStep {
   private readonly loadStatus: Signal<RequestStatus> = this.store.selectSignal(bookingFeature.selectLoadStatus);
   protected readonly visibleMonth: Signal<string | null> = this.store.selectSignal(bookingFeature.selectVisibleMonth);
   protected readonly isLoading: Signal<boolean> = this.store.selectSignal(bookingFeature.selectIsLoading);
+  protected readonly viewKey: Signal<string> = computed((): string => this.visibleMonth() ?? UPCOMING_VIEW);
 
   protected readonly isMonthPickerOpen: WritableSignal<boolean> = signal(false);
   private readonly monthPickerToggle: Signal<ElementRef<HTMLButtonElement> | undefined> =
@@ -130,10 +142,13 @@ export class DateStep {
     if (visibleMonth) {
       return `Showing all of ${this.viewTitle()}${openDayCount}`;
     }
-    const { firstDay, lastDay }: DayRange = toDayRange(null, this.timeZone());
-    const windowEnd: Date | undefined = this.bookingWindow()?.max;
-    const shownLastDay: Date = windowEnd && windowEnd < fromIsoDate(lastDay) ? windowEnd : fromIsoDate(lastDay);
-    return `Showing ${formatMonthDay(fromIsoDate(firstDay))} – ${formatMonthDay(shownLastDay)}${openDayCount}`;
+    const bookingWindow: DateRange | null = this.bookingWindow();
+    if (!bookingWindow) {
+      return '';
+    }
+    const upcomingEnd: Date = addDays(bookingWindow.min, UPCOMING_DAY_COUNT - 1);
+    const shownLastDay: Date = bookingWindow.max < upcomingEnd ? bookingWindow.max : upcomingEnd;
+    return `Showing ${formatMonthDay(bookingWindow.min)} – ${formatMonthDay(shownLastDay)}${openDayCount}`;
   });
 
   protected readonly dateOptions: Signal<DateOption[]> = computed((): DateOption[] =>
@@ -161,24 +176,22 @@ export class DateStep {
     if (month === this.visibleMonth()) {
       return;
     }
-    this.dateControl().reset();
+    // One form update for both: the day quietly, then the time, whose change carries the day's too.
+    this.dateControl().reset(null, { emitEvent: false });
     this.startAtControl().reset();
     this.store.dispatch(BookingActions.SetActiveMonthView({ month }));
   }
 
-  protected showPrevious(): void {
-    this.showView(this.views()[this.viewIndex() - 1] ?? null);
+  protected showViewKey(view: string): void {
+    this.showView(view === UPCOMING_VIEW ? null : view);
   }
 
-  protected showNext(): void {
-    const nextMonth: string | null | undefined = this.views()[this.viewIndex() + 1];
-    if (nextMonth !== undefined) {
-      this.showView(nextMonth);
+  /** The arrows: -1 back, 1 forward through the next 31 days and each later month. */
+  protected showAdjacentView(offset: number): void {
+    const adjacentView: string | null | undefined = this.views()[this.viewIndex() + offset];
+    if (adjacentView !== undefined) {
+      this.showView(adjacentView);
     }
-  }
-
-  protected onDateChange(): void {
-    this.startAtControl().reset();
   }
 }
 

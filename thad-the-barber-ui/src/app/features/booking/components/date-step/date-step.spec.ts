@@ -77,7 +77,7 @@ describe(
     );
 
     it(
-      'lists the open days written in full, and picking one clears a time picked for another day',
+      'lists the open days written in full, and picking one sets the date',
       (): void => {
         load(OPEN_DAYS);
 
@@ -93,7 +93,6 @@ describe(
         fixture.detectChanges();
 
         expect(dateControl.value).toBe('2026-11-01');
-        expect(startAtControl.value).toBeNull();
       },
     );
 
