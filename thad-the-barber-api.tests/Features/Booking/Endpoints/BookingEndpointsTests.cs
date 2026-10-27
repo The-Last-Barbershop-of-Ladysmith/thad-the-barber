@@ -22,7 +22,7 @@ public sealed class BookingEndpointsTests
     {
         using ApiFactory api = Api();
 
-        using HttpResponseMessage response = await api.CreateClient().GetAsync("/api/bookings/availability?month=2026-10", Cancellation);
+        using HttpResponseMessage response = await api.CreateClient().GetAsync("/api/bookings/availability?from=2026-10-01&to=2026-10-31", Cancellation);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         JsonElement days = await response.Content.ReadFromJsonAsync<JsonElement>(Cancellation);
@@ -32,51 +32,81 @@ public sealed class BookingEndpointsTests
     }
 
     [Fact]
+    public async Task AvailabilityIncludesTheLastDay()
+    {
+        using ApiFactory api = Api();
+
+        using HttpResponseMessage response = await api.CreateClient().GetAsync("/api/bookings/availability?from=2026-10-07&to=2026-10-08", Cancellation);
+
+        JsonElement days = await response.Content.ReadFromJsonAsync<JsonElement>(Cancellation);
+        Assert.Equal(
+            [
+                "2026-10-07",
+                "2026-10-08",
+            ],
+            days.EnumerateArray().Select(day => day.GetProperty("date").GetString()));
+    }
+
+    [Fact]
     public async Task AvailabilityIsNeverStored()
     {
         using ApiFactory api = Api();
 
-        using HttpResponseMessage response = await api.CreateClient().GetAsync("/api/bookings/availability?month=2026-10", Cancellation);
+        using HttpResponseMessage response = await api.CreateClient().GetAsync("/api/bookings/availability?from=2026-10-01&to=2026-10-31", Cancellation);
 
         Assert.True(response.Headers.CacheControl?.NoStore);
     }
 
     [Theory]
-    [InlineData("2026-1")]
-    [InlineData("2026-10-01")]
-    [InlineData("2026-13")]
-    [InlineData("10-2026")]
-    [InlineData("0001-01")]
-    [InlineData("9999-12")]
-    public async Task AMalformedMonthIs400ForTheMonth(string month)
+    [InlineData("from=2026-10&to=2026-10-31", "from")]
+    [InlineData("from=2026-10-1&to=2026-10-31", "from")]
+    [InlineData("from=2026-13-01&to=2026-10-31", "from")]
+    [InlineData("from=0001-01-01&to=0001-01-02", "from")]
+    [InlineData("from=2026-10-01&to=31-10-2026", "to")]
+    [InlineData("from=9999-12-01&to=9999-12-31", "from")]
+    [InlineData("from=2026-10-02&to=2026-10-01", "to")]
+    [InlineData("from=2026-10-01&to=2026-11-01", "to")]
+    public async Task AMalformedOrTooLongRangeIs400ForTheField(string query, string field)
     {
         using ApiFactory api = Api();
 
-        using HttpResponseMessage response = await api.CreateClient().GetAsync($"/api/bookings/availability?month={month}", Cancellation);
+        using HttpResponseMessage response = await api.CreateClient().GetAsync($"/api/bookings/availability?{query}", Cancellation);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         JsonElement problem = await response.Content.ReadFromJsonAsync<JsonElement>(Cancellation);
-        Assert.True(problem.GetProperty("errors").TryGetProperty("month", out _));
+        Assert.True(problem.GetProperty("errors").TryGetProperty(field, out _));
     }
 
     [Fact]
-    public async Task AMissingMonthIs400()
+    public async Task ThirtyOneDaysIsTheLongestRange()
     {
         using ApiFactory api = Api();
 
-        using HttpResponseMessage response = await api.CreateClient().GetAsync("/api/bookings/availability", Cancellation);
+        using HttpResponseMessage response = await api.CreateClient().GetAsync("/api/bookings/availability?from=2026-10-01&to=2026-10-31", Cancellation);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Theory]
+    [InlineData("availability?to=2026-10-31")]
+    [InlineData("availability?from=2026-10-01")]
+    public async Task AMissingDayIs400(string path)
+    {
+        using ApiFactory api = Api();
+
+        using HttpResponseMessage response = await api.CreateClient().GetAsync($"/api/bookings/{path}", Cancellation);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [Theory]
-    [InlineData("2026-09")]
-    [InlineData("2027-11")]
-    public async Task AMonthOutsideTheBookingWindowIs400WithItsCode(string month)
+    [InlineData("from=2026-09-01&to=2026-09-30")]
+    [InlineData("from=2027-11-01&to=2027-11-30")]
+    public async Task ARangeOutsideTheBookingWindowIs400WithItsCode(string query)
     {
         using ApiFactory api = Api();
 
-        using HttpResponseMessage response = await api.CreateClient().GetAsync($"/api/bookings/availability?month={month}", Cancellation);
+        using HttpResponseMessage response = await api.CreateClient().GetAsync($"/api/bookings/availability?{query}", Cancellation);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         JsonElement problem = await response.Content.ReadFromJsonAsync<JsonElement>(Cancellation);

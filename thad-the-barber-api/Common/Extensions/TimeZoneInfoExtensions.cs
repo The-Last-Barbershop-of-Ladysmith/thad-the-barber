@@ -18,15 +18,11 @@ public static class TimeZoneInfoExtensions
         timeZone.GetStartOfDay(date.AddDays(1))
     );
 
-    /// <summary>The whole calendar month that <paramref name="date"/> falls in.</summary>
-    public static DateTimeRange GetMonthRange(this TimeZoneInfo timeZone, DateOnly date)
-    {
-        DateOnly firstDay = new(date.Year, date.Month, 1);
-        return new DateTimeRange(
-            timeZone.GetStartOfDay(firstDay),
-            timeZone.GetStartOfDay(firstDay.AddMonths(1))
-        );
-    }
+    /// <summary>From the start of <paramref name="firstDay"/> to the end of <paramref name="lastDay"/>.</summary>
+    public static DateTimeRange GetDateRange(this TimeZoneInfo timeZone, DateOnly firstDay, DateOnly lastDay) => new(
+        timeZone.GetStartOfDay(firstDay),
+        timeZone.GetStartOfDay(lastDay.AddDays(1))
+    );
 
     /// <summary>
     /// Midnight; where clocks spring forward at midnight, the moment they jump (a skipped time gets the standard
