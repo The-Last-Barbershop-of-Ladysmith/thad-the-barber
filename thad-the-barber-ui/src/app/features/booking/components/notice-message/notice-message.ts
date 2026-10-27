@@ -46,6 +46,16 @@ export class NoticeMessage {
     [NoticeSeverity.Error]: 'danger',
   };
 
+  /** The icon tells the severity apart without relying on colour. */
+  private readonly severityIcons: Record<NoticeSeverity, string> = {
+    [NoticeSeverity.Success]: 'pi pi-check-circle',
+    [NoticeSeverity.Info]: 'pi pi-info-circle',
+    [NoticeSeverity.Warn]: 'pi pi-exclamation-triangle',
+    [NoticeSeverity.Error]: 'pi pi-exclamation-circle',
+  };
+
+  protected readonly severityIcon: Signal<string> = computed((): string => this.severityIcons[this.notice().severity]);
+
   protected readonly noticeSeverityToButtonSeverity: Signal<ButtonSeverity> = computed((): ButtonSeverity =>
     this.buttonSeverities[this.notice().severity]);
 }

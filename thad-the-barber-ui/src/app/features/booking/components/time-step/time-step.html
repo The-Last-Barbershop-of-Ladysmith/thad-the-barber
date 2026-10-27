@@ -4,7 +4,7 @@
       >{{ pickedDateLabel }} · {{ timeSlots().length }} open</span
     >
     @if (fillingUpNote(); as fillingUp) {
-      <p-message severity="warn" size="small" data-testid="filling-up-note">{{
+      <p-message severity="warn" size="small" icon="pi pi-clock" data-testid="filling-up-note">{{
         fillingUp
       }}</p-message>
     }
