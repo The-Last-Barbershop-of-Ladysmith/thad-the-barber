@@ -65,9 +65,9 @@ describe(
       fixture.detectChanges();
     });
 
-    function load(availableDays: AvailableDay[], view: AvailabilityView = firstBlock()): void {
-      store.dispatch(BookingActions.SetAvailabilityView({ view }));
-      store.dispatch(BookingActions.AvailabilityRequestSuccess({ view, availableDays }));
+    function load(availableDays: AvailableDay[], availabilityView: AvailabilityView = firstBlock()): void {
+      store.dispatch(BookingActions.SetAvailabilityView({ availabilityView }));
+      store.dispatch(BookingActions.AvailabilityRequestSuccess({ availabilityView, availableDays }));
       fixture.detectChanges();
     }
 
@@ -152,18 +152,18 @@ describe(
         const bookingWindow: DateRange = testWindow();
         const nextBlock: AvailabilityView = toUpcomingView(addDays(bookingWindow.min, 31), bookingWindow);
         load(OPEN_DAYS);
-        store.dispatch(BookingActions.SetAvailabilityView({ view: firstBlock() }));
+        store.dispatch(BookingActions.SetAvailabilityView({ availabilityView: firstBlock() }));
         load(OPEN_DAYS);
 
         find('next-view')?.click();
         load(OPEN_DAYS, nextBlock);
 
         // The test shop books 45 days ahead, so the second block is the last.
-        expect(dispatched).toContainEqual(BookingActions.SetAvailabilityView({ view: nextBlock }));
+        expect(dispatched).toContainEqual(BookingActions.SetAvailabilityView({ availabilityView: nextBlock }));
         expect(find('next-view')?.hasAttribute('disabled')).toBe(true);
         expect(find('view-picker')?.textContent).not.toContain('Next 31 days');
         find('previous-view')?.click();
-        expect(dispatched.at(-1)).toEqual(BookingActions.SetAvailabilityView({ view: firstBlock() }));
+        expect(dispatched.at(-1)).toEqual(BookingActions.SetAvailabilityView({ availabilityView: firstBlock() }));
       },
     );
 
@@ -172,14 +172,14 @@ describe(
       (): void => {
         const [firstMonth, secondMonth]: string[] = laterMonths();
         const firstMonthView: AvailabilityView = toMonthView(firstMonth ?? '');
-        store.dispatch(BookingActions.SetAvailabilityView({ view: firstMonthView }));
+        store.dispatch(BookingActions.SetAvailabilityView({ availabilityView: firstMonthView }));
         load(OPEN_DAYS, firstMonthView);
 
         expect(find('previous-view')?.hasAttribute('disabled')).toBe(true);
         find('next-view')?.click();
 
         expect(dispatched.at(-1)).toEqual(BookingActions.SetAvailabilityView({
-          view: toMonthView(secondMonth ?? ''),
+          availabilityView: toMonthView(secondMonth ?? ''),
         }));
       },
     );
@@ -201,13 +201,13 @@ describe(
         find(`month-${lastMonth}`)?.click();
 
         expect(dispatched.at(-1)).toEqual(BookingActions.SetAvailabilityView({
-          view: toMonthView(lastMonth ?? ''),
+          availabilityView: toMonthView(lastMonth ?? ''),
         }));
       },
     );
 
     it(
-      'clears the picked day and time when another view opens, since its days differ',
+      'clears the picked day and time when another availabilityView opens, since its days differ',
       (): void => {
         load(OPEN_DAYS);
         dateControl.setValue('2026-11-01');
@@ -220,7 +220,7 @@ describe(
     );
 
     it(
-      'keeps the picks when the view already showing is picked again',
+      'keeps the picks when the availabilityView already showing is picked again',
       (): void => {
         load(OPEN_DAYS);
         dateControl.setValue('2026-11-01');
@@ -242,7 +242,7 @@ describe(
         expect(find('view-caption')?.textContent).toContain('· 1 open day');
         expect(find('view-caption')?.textContent).not.toContain('days');
 
-        store.dispatch(BookingActions.SetAvailabilityView({ view: firstBlock() }));
+        store.dispatch(BookingActions.SetAvailabilityView({ availabilityView: firstBlock() }));
         fixture.detectChanges();
         expect(find('view-caption')?.textContent).not.toContain('open');
       },

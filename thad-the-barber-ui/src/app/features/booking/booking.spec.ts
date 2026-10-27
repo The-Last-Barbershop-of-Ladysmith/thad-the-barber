@@ -221,7 +221,7 @@ describe(
           startAt: null,
         });
         expect(page.openStep()).toBe(BookingStep.Date);
-        expect(dispatched).toContainEqual(BookingActions.SetAvailabilityView({ view: firstBlock() }));
+        expect(dispatched).toContainEqual(BookingActions.SetAvailabilityView({ availabilityView: firstBlock() }));
       },
     );
 
@@ -239,7 +239,7 @@ describe(
         expect(page.bookingForm.controls.startAt.value).toBeNull();
         expect(page.bookingNotice()).not.toBeNull();
         expect(page.openStep()).toBe(BookingStep.Time);
-        expect(dispatched).toContainEqual(BookingActions.SetAvailabilityView({ view: firstBlock() }));
+        expect(dispatched).toContainEqual(BookingActions.SetAvailabilityView({ availabilityView: firstBlock() }));
       },
     );
 
@@ -310,7 +310,7 @@ describe(
       (): void => {
         openPage();
 
-        expect(TestBed.inject<Store<AppState>>(Store).selectSignal(bookingFeature.selectView)())
+        expect(TestBed.inject<Store<AppState>>(Store).selectSignal(bookingFeature.selectAvailabilityView)())
           .toEqual(firstBlock());
         expect(TestBed.inject<Store<AppState>>(Store).selectSignal(bookingFeature.selectLoadStatus)())
           .toBe(RequestStatus.Pending);
@@ -450,7 +450,7 @@ describe(
           ProblemCode.SlotUnavailable,
         );
         TestBed.inject<Store<AppState>>(Store).dispatch(BookingActions.AvailabilityRequestSuccess({
-          view: firstBlock(),
+          availabilityView: firstBlock(),
           availableDays: [{ date: '2099-01-01', times: ['2099-01-01T20:00:00Z'] }],
         }));
 
@@ -461,16 +461,17 @@ describe(
     );
 
     it(
-      "moves a 31-day view left open past midnight to today's block when the customer comes back",
+      "moves a 31-day availabilityView left open past midnight to today's block when the customer comes back",
       (): void => {
         openPage();
         const today: AvailabilityView = firstBlock();
         const yesterdaysBlock: AvailabilityView = { ...today, firstDay: '2000-01-01' };
-        TestBed.inject<Store<AppState>>(Store).dispatch(BookingActions.SetAvailabilityView({ view: yesterdaysBlock }));
+        TestBed.inject<Store<AppState>>(Store)
+          .dispatch(BookingActions.SetAvailabilityView({ availabilityView: yesterdaysBlock }));
 
         document.dispatchEvent(new Event('visibilitychange'));
 
-        expect(dispatched.at(-1)).toEqual(BookingActions.SetAvailabilityView({ view: today }));
+        expect(dispatched.at(-1)).toEqual(BookingActions.SetAvailabilityView({ availabilityView: today }));
       },
     );
   },

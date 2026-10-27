@@ -15,12 +15,12 @@ export const loadAvailability: FunctionalEffect = createEffect(
   ): Observable<Action> =>
     actions$.pipe(
       ofType(BookingActions.SetAvailabilityView),
-      switchMap(({ view }: { view: AvailabilityView; }): Observable<Action> =>
-        availabilityService.getAvailableDays(view).pipe(
+      switchMap(({ availabilityView }: { availabilityView: AvailabilityView; }): Observable<Action> =>
+        availabilityService.getAvailableDays(availabilityView).pipe(
           map((availableDays: AvailableDay[]): Action =>
-            BookingActions.AvailabilityRequestSuccess({ view, availableDays })),
+            BookingActions.AvailabilityRequestSuccess({ availabilityView, availableDays })),
           catchError((): Observable<Action> =>
-            of(BookingActions.AvailabilityRequestFailure({ view }))),
+            of(BookingActions.AvailabilityRequestFailure({ availabilityView }))),
         )),
     ),
   { functional: true },

@@ -41,7 +41,7 @@ describe(
         .subscribe((action: Action): void => {
           emitted.push(action);
         });
-      actions$.next(BookingActions.SetAvailabilityView({ view: february }));
+      actions$.next(BookingActions.SetAvailabilityView({ availabilityView: february }));
       return emitted;
     }
 
@@ -49,7 +49,7 @@ describe(
       "asks for the view's own days and stores what comes back",
       (): void => {
         expect(viewWith((): Observable<AvailableDay[]> => of(availableDays)))
-          .toEqual([BookingActions.AvailabilityRequestSuccess({ view: february, availableDays })]);
+          .toEqual([BookingActions.AvailabilityRequestSuccess({ availabilityView: february, availableDays })]);
         expect(requestedRanges).toEqual([february]);
         expect(february).toEqual(expect.objectContaining({ firstDay: '2026-02-01', lastDay: '2026-02-28' }));
       },
@@ -60,7 +60,7 @@ describe(
       (): void => {
         const failing: () => Observable<AvailableDay[]> = (): Observable<AvailableDay[]> =>
           throwError((): HttpErrorResponse => new HttpErrorResponse({ status: 503 }));
-        expect(viewWith(failing)).toEqual([BookingActions.AvailabilityRequestFailure({ view: february })]);
+        expect(viewWith(failing)).toEqual([BookingActions.AvailabilityRequestFailure({ availabilityView: february })]);
       },
     );
   },

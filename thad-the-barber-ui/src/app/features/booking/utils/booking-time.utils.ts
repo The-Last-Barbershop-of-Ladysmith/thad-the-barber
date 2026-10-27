@@ -51,10 +51,10 @@ export function toMonthView(month: string): AvailabilityView {
   };
 }
 
-export function isSameView(view: AvailabilityView | null, otherView: AvailabilityView | null): boolean {
-  return view?.kind === otherView?.kind
-    && view?.firstDay === otherView?.firstDay
-    && view?.lastDay === otherView?.lastDay;
+export function isSameView(availabilityView: AvailabilityView | null, otherView: AvailabilityView | null): boolean {
+  return availabilityView?.kind === otherView?.kind
+    && availabilityView?.firstDay === otherView?.firstDay
+    && availabilityView?.lastDay === otherView?.lastDay;
 }
 
 /** Every month ("2026-11") after the booking window's first, through the one its last day falls in. */

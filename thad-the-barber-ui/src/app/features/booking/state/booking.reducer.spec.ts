@@ -15,7 +15,7 @@ const availableDays: AvailableDay[] = [
 const savedConfirmation: SavedConfirmation = testSavedConfirmation('2026-10-02T18:00:00Z');
 
 const october: BookingState = {
-  view: toMonthView('2026-10'),
+  availabilityView: toMonthView('2026-10'),
   availableDays,
   loadStatus: RequestStatus.Error,
   savedConfirmation,
@@ -27,10 +27,10 @@ describe(
     it(
       'empties the calendar and shows it loading while a month loads, keeping the saved confirmation',
       (): void => {
-        const state: BookingState = bookingReducer(october, BookingActions.SetAvailabilityView({ view: toMonthView('2026-11') }));
+        const state: BookingState = bookingReducer(october, BookingActions.SetAvailabilityView({ availabilityView: toMonthView('2026-11') }));
 
         expect(state).toEqual({
-          view: toMonthView('2026-11'),
+          availabilityView: toMonthView('2026-11'),
           availableDays: [],
           loadStatus: RequestStatus.Pending,
           savedConfirmation,
@@ -57,15 +57,15 @@ describe(
     it(
       'keeps availability only for the month in view',
       (): void => {
-        const viewing: BookingState = { ...initialBookingState, view: toMonthView('2026-11') };
+        const viewing: BookingState = { ...initialBookingState, availabilityView: toMonthView('2026-11') };
 
         const stale: BookingState = bookingReducer(
           viewing,
-          BookingActions.AvailabilityRequestSuccess({ view: toMonthView('2026-10'), availableDays }),
+          BookingActions.AvailabilityRequestSuccess({ availabilityView: toMonthView('2026-10'), availableDays }),
         );
         const current: BookingState = bookingReducer(
-          { ...viewing, view: toMonthView('2026-10') },
-          BookingActions.AvailabilityRequestSuccess({ view: toMonthView('2026-10'), availableDays }),
+          { ...viewing, availabilityView: toMonthView('2026-10') },
+          BookingActions.AvailabilityRequestSuccess({ availabilityView: toMonthView('2026-10'), availableDays }),
         );
 
         expect(stale.availableDays).toEqual([]);
@@ -79,17 +79,17 @@ describe(
       (): void => {
         const viewing: BookingState = {
           ...initialBookingState,
-          view: toMonthView('2026-10'),
+          availabilityView: toMonthView('2026-10'),
           loadStatus: RequestStatus.Pending,
         };
 
         const stale: BookingState = bookingReducer(
           viewing,
-          BookingActions.AvailabilityRequestFailure({ view: toMonthView('2026-09') }),
+          BookingActions.AvailabilityRequestFailure({ availabilityView: toMonthView('2026-09') }),
         );
         const current: BookingState = bookingReducer(
           viewing,
-          BookingActions.AvailabilityRequestFailure({ view: toMonthView('2026-10') }),
+          BookingActions.AvailabilityRequestFailure({ availabilityView: toMonthView('2026-10') }),
         );
 
         expect(stale.loadStatus).toBe(RequestStatus.Pending);

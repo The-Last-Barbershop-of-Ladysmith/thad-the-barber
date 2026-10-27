@@ -14,7 +14,7 @@ export enum BookingActionTypes {
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
 export const SetAvailabilityView = createAction(
   BookingActionTypes.SetAvailabilityView,
-  props<{ view: AvailabilityView; }>(),
+  props<{ availabilityView: AvailabilityView; }>(),
 );
 
 /** Keeps the booking for 24 hours, replacing any earlier one (BR-22). */
@@ -27,11 +27,11 @@ export const BookingConfirm = createAction(
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
 export const AvailabilityRequestSuccess = createAction(
   BookingActionTypes.AvailabilityRequestSuccess,
-  props<{ view: AvailabilityView; availableDays: AvailableDay[]; }>(),
+  props<{ availabilityView: AvailabilityView; availableDays: AvailableDay[]; }>(),
 );
 
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
 export const AvailabilityRequestFailure = createAction(
   BookingActionTypes.AvailabilityRequestFailure,
-  props<{ view: AvailabilityView; }>(),
+  props<{ availabilityView: AvailabilityView; }>(),
 );

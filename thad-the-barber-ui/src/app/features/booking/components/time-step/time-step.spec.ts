@@ -47,8 +47,8 @@ describe(
       });
       const store: Store<AppState> = TestBed.inject<Store<AppState>>(Store);
       store.dispatch(ShopActions.ShopInfoRequestSuccess({ shopInfo: TEST_SHOP }));
-      store.dispatch(BookingActions.SetAvailabilityView({ view: toMonthView('2026-11') }));
-      store.dispatch(BookingActions.AvailabilityRequestSuccess({ view: toMonthView('2026-11'), availableDays: DAYS }));
+      store.dispatch(BookingActions.SetAvailabilityView({ availabilityView: toMonthView('2026-11') }));
+      store.dispatch(BookingActions.AvailabilityRequestSuccess({ availabilityView: toMonthView('2026-11'), availableDays: DAYS }));
       const fixture: ComponentFixture<TimeStep> = TestBed.createComponent(TimeStep);
       fixture.componentRef.setInput('startAtControl', new FormControl<string | null>(null));
       fixture.componentRef.setInput('selectedDate', selectedDate);

@@ -68,7 +68,7 @@ describe(
     );
 
     it(
-      'makes a month view from its 1st through its last day, leap day included',
+      'makes a month availabilityView from its 1st through its last day, leap day included',
       (): void => {
         expect(toMonthView('2026-11')).toEqual({
           kind: AvailabilityViewKind.Month,
@@ -149,7 +149,7 @@ describe(
     );
 
     it(
-      'has none for a day outside the month in view, or before the shop has loaded',
+      'has none for a day outside the month in availabilityView, or before the shop has loaded',
       (): void => {
         expect(toTimeSlots(
           availableDays,

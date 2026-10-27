@@ -61,7 +61,7 @@ describe(
         const reducer: ActionReducer<AppState> = createSyncedReducer();
         const viewing: AppState = reducer(
           undefined,
-          BookingActions.SetAvailabilityView({ view: toMonthView('2026-10') }),
+          BookingActions.SetAvailabilityView({ availabilityView: toMonthView('2026-10') }),
         );
         reducer(viewing, BookingActions.BookingConfirm({ savedConfirmation }));
 
@@ -78,7 +78,7 @@ describe(
         seedBooking(savedConfirmation);
 
         expect(restoredBooking()).toEqual({
-          view: null,
+          availabilityView: null,
           availableDays: [],
           loadStatus: RequestStatus.Idle,
           savedConfirmation,

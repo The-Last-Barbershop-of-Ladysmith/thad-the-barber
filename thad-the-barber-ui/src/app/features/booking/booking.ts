@@ -115,7 +115,8 @@ export class Booking {
   private readonly timeZone: Signal<string | null> = this.store.selectSignal(shopFeature.selectTimeZone);
   private readonly bookingWindow: Signal<DateRange | null> = computed((): DateRange | null =>
     toBookingWindow(this.store.selectSignal(shopFeature.selectBookingSettings)(), this.timeZone()));
-  private readonly view: Signal<AvailabilityView | null> = this.store.selectSignal(bookingFeature.selectView);
+  private readonly availabilityView: Signal<AvailabilityView | null> =
+    this.store.selectSignal(bookingFeature.selectAvailabilityView);
   protected readonly isBotCheckFailed: Signal<boolean> = inject(SessionService).isBotCheckFailed;
   protected readonly botCheckFailedNotice: BookingNotice = BOT_CHECK_FAILED_NOTICE;
   protected readonly availabilityNotice: Signal<BookingNotice | null> =
@@ -259,7 +260,7 @@ export class Booking {
       )
       .subscribe((bookingWindow: DateRange): void => {
         this.store.dispatch(BookingActions.SetAvailabilityView({
-          view: toUpcomingView(bookingWindow.min, bookingWindow),
+          availabilityView: toUpcomingView(bookingWindow.min, bookingWindow),
         }));
       });
     this.store
@@ -341,9 +342,9 @@ export class Booking {
 
   /** Reloads the days in view; before the first load there's nothing to reload. */
   protected reloadMonth(): void {
-    const view: AvailabilityView | null = this.view();
-    if (view) {
-      this.store.dispatch(BookingActions.SetAvailabilityView({ view }));
+    const availabilityView: AvailabilityView | null = this.availabilityView();
+    if (availabilityView) {
+      this.store.dispatch(BookingActions.SetAvailabilityView({ availabilityView }));
     }
   }
 
@@ -509,17 +510,17 @@ export class Booking {
         takeUntilDestroyed(),
       )
       .subscribe((): void => {
-        const view: AvailabilityView | null = this.view();
+        const availabilityView: AvailabilityView | null = this.availabilityView();
         const bookingWindow: DateRange | null = toBookingWindow(
           this.store.selectSignal(shopFeature.selectBookingSettings)(),
           this.timeZone(),
         );
-        const isPastStart: boolean = view?.kind === AvailabilityViewKind.Upcoming
+        const isPastStart: boolean = availabilityView?.kind === AvailabilityViewKind.Upcoming
           && bookingWindow !== null
-          && view.firstDay < toIsoDate(bookingWindow.min);
+          && availabilityView.firstDay < toIsoDate(bookingWindow.min);
         if (bookingWindow && isPastStart) {
           this.store.dispatch(BookingActions.SetAvailabilityView({
-            view: toUpcomingView(bookingWindow.min, bookingWindow),
+            availabilityView: toUpcomingView(bookingWindow.min, bookingWindow),
           }));
         }
       });

@@ -11,9 +11,9 @@ export const bookingReducer: ActionReducer<BookingState> = createReducer(
   initialBookingState,
   on(
     BookingActions.SetAvailabilityView,
-    (state: BookingState, { view }: { view: AvailabilityView; }): BookingState => ({
+    (state: BookingState, { availabilityView }: { availabilityView: AvailabilityView; }): BookingState => ({
       ...state,
-      view,
+      availabilityView,
       availableDays: [],
       loadStatus: RequestStatus.Pending,
     }),
@@ -29,9 +29,9 @@ export const bookingReducer: ActionReducer<BookingState> = createReducer(
     BookingActions.AvailabilityRequestSuccess,
     (
       state: BookingState,
-      { view, availableDays }: { view: AvailabilityView; availableDays: AvailableDay[]; },
+      { availabilityView, availableDays }: { availabilityView: AvailabilityView; availableDays: AvailableDay[]; },
     ): BookingState => {
-      const isViewInPlace: boolean = isSameView(view, state.view);
+      const isViewInPlace: boolean = isSameView(availabilityView, state.availabilityView);
       if (!isViewInPlace) {
         return state;
       }
@@ -44,8 +44,8 @@ export const bookingReducer: ActionReducer<BookingState> = createReducer(
   ),
   on(
     BookingActions.AvailabilityRequestFailure,
-    (state: BookingState, { view }: { view: AvailabilityView; }): BookingState => {
-      const isViewInPlace: boolean = isSameView(view, state.view);
+    (state: BookingState, { availabilityView }: { availabilityView: AvailabilityView; }): BookingState => {
+      const isViewInPlace: boolean = isSameView(availabilityView, state.availabilityView);
       if (!isViewInPlace) {
         return state;
       }

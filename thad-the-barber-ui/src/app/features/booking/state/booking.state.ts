@@ -10,14 +10,14 @@ import { SavedConfirmation } from '../models/saved-confirmation.model';
  * and the booking in progress live in the booking page.
  */
 export interface BookingState {
-  view: AvailabilityView | null;
+  availabilityView: AvailabilityView | null;
   availableDays: AvailableDay[];
   loadStatus: RequestStatus;
   savedConfirmation: SavedConfirmation | null;
 }
 
 export const initialBookingState: BookingState = {
-  view: null,
+  availabilityView: null,
   availableDays: [],
   loadStatus: RequestStatus.Idle,
   savedConfirmation: null,
