@@ -14,19 +14,25 @@ namespace ThadTheBarber.Api.Features.Booking.Services;
 public sealed class AvailabilityService(ISquareService square, BookableServiceResolver resolver, TimeProvider time)
 {
     /// <summary>
-    /// The days in the month of <paramref name="month"/> (shop timezone) with their open times, leaving out days with
-    /// none. The search starts at now plus the minimum notice, which also leaves out today's past times.
+    /// Square searches at most 32 days at once, so this many whole days fit one call, even across a DST change.
     /// </summary>
-    public async Task<List<AvailableDay>> GetAvailableDaysAsync(DateOnly month, CancellationToken cancellationToken)
+    public const int MaxDayCount = 31;
+
+    /// <summary>
+    /// The days from <paramref name="firstDay"/> through <paramref name="lastDay"/> (shop timezone) with their open
+    /// times, leaving out days with none; at most <see cref="MaxDayCount"/> days. The search starts at now plus the
+    /// minimum notice, which also leaves out today's past times.
+    /// </summary>
+    public async Task<List<AvailableDay>> GetAvailableDaysAsync(DateOnly firstDay, DateOnly lastDay, CancellationToken cancellationToken)
     {
         ShopDetails shopDetails = await square.GetShopDetailsAsync(cancellationToken);
         BookingProfile bookingProfile = await square.GetBookingProfileAsync(shopDetails.LocationId, cancellationToken);
         TimeZoneInfo shopTimeZone = TimeZoneInfo.FindSystemTimeZoneById(shopDetails.TimeZone);
-        DateTimeRange monthRange = shopTimeZone.GetMonthRange(month);
+        DateTimeRange range = shopTimeZone.GetDateRange(firstDay, lastDay);
         DateTimeRange bookingWindow = GetBookingWindow(bookingProfile);
 
-        DateTimeRange searchRange = monthRange.Intersect(bookingWindow)
-            ?? throw new OutsideBookingWindowException($"{monthRange} doesn't overlap the booking window {bookingWindow}.");
+        DateTimeRange searchRange = range.Intersect(bookingWindow)
+            ?? throw new OutsideBookingWindowException($"{range} doesn't overlap the booking window {bookingWindow}.");
         BookableService bookableService = await resolver.ResolveAsync(cancellationToken);
         List<TimeSlot> timeSlots = await square.SearchAvailableTimeSlotsAsync(shopDetails.LocationId, bookableService, searchRange, cancellationToken);
 

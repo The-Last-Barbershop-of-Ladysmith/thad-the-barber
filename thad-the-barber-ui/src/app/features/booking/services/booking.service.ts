@@ -2,8 +2,8 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { BookingConfirmation } from '../models/booking-confirmation.model';
-import { BookingRequest } from '../models/booking-request.model';
+import { BookingConfirmation } from '../dtos/booking-confirmation.dto';
+import { BookingRequest } from '../dtos/booking-request.dto';
 
 export const BOOKINGS_URL: string = `${environment.apiBaseUrl}/bookings`;
 

@@ -1,5 +1,4 @@
 <section class="stack gap-3">
-  <span class="eyebrow">3 — Your details</span>
   <div class="grid gap-2.5 sm:grid-cols-2">
     <div class="stack gap-1.5">
       <label class="field-label" for="booking-name">Name</label>
@@ -22,6 +21,7 @@
         type="tel"
         autocomplete="tel"
         [fluid]="true"
+        (click)="moveCaretToFirstDigit($event)"
       />
     </div>
   </div>

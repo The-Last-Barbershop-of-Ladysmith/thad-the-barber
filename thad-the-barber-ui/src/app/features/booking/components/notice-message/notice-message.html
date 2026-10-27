@@ -1,6 +1,7 @@
 <p-message
   [attr.data-testid]="isProblem() ? 'booking-notice' : null"
   [severity]="notice().severity"
+  [icon]="severityIcon()"
   styleClass="w-full"
 >
   <div class="stack gap-2">

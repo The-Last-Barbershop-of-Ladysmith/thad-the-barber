@@ -139,7 +139,7 @@ Styling follows one rule: **if PrimeNG has a component for it, restyle it with t
 | Frosted section panels, booking summary | `p-card` | `card.ts` |
 | Announcements slider + dots | `p-carousel` (composable API) | `carousel.ts` |
 | Gallery lightbox | `p-galleria` full-screen | `galleria.ts` |
-| Booking calendar | `p-datepicker` inline | `datepicker.ts` |
+| Booking date list | `p-selectbutton` (`date-list`), month picker in `p-popover` | `selectbutton.ts` |
 | Time slots | `p-selectbutton` / toggle buttons | `selectbutton.ts` |
 | Phone inputs | `p-inputmask` (form field tokens) | `semantic.ts` → `formField` |
 | "You're on the list" / "You're booked", field errors, inline warnings | `p-message` (`info`, `success`, `warn`, `error`) | `message.ts` |

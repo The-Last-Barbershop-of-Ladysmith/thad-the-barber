@@ -8,6 +8,13 @@ import { WEEKDAY_SHORT_NAMES, WEEK_FROM_SUNDAY } from './weekday.utils';
 /** Locale for display labels. They use `formatDate`, the same formatter behind Angular's `DatePipe`. */
 const DATE_LOCALE: string = 'en-US';
 
+/** Day-of-month endings by last digit; every other digit, and 11–13, take "th". */
+const ORDINAL_SUFFIXES: Record<number, string> = {
+  1: 'st',
+  2: 'nd',
+  3: 'rd',
+};
+
 function pad(value: number): string {
   return String(value).padStart(2, '0');
 }
@@ -59,6 +66,15 @@ export function fromMonthKey(month: string): Date {
   );
 }
 
+/** The 1st of the month `months` after `date`'s. */
+export function addMonths(date: Date, months: number): Date {
+  return new Date(
+    date.getFullYear(),
+    date.getMonth() + months,
+    1,
+  );
+}
+
 export function addDays(date: Date, days: number): Date {
   return new Date(
     date.getFullYear(),
@@ -87,13 +103,21 @@ export function fromTimeOfDay(time: string): number {
 
 type PartReader = (type: Intl.DateTimeFormatPartTypes) => string;
 
+/** Building an `Intl.DateTimeFormat` is slow, and a booking page formats dozens of times, so each is built once. */
+const formatsByZoneAndOptions: Map<string, Intl.DateTimeFormat> = new Map<string, Intl.DateTimeFormat>();
+
 function readPartsIn(
   timeZone: string,
   instant: Date,
   options: Intl.DateTimeFormatOptions,
 ): PartReader {
-  const parts: Intl.DateTimeFormatPart[] = new Intl.DateTimeFormat(DATE_LOCALE, { ...options, timeZone })
-    .formatToParts(instant);
+  const cacheKey: string = `${timeZone}|${JSON.stringify(options)}`;
+  let dateFormat: Intl.DateTimeFormat | undefined = formatsByZoneAndOptions.get(cacheKey);
+  if (!dateFormat) {
+    dateFormat = new Intl.DateTimeFormat(DATE_LOCALE, { ...options, timeZone });
+    formatsByZoneAndOptions.set(cacheKey, dateFormat);
+  }
+  const parts: Intl.DateTimeFormatPart[] = dateFormat.formatToParts(instant);
   return (type: Intl.DateTimeFormatPartTypes): string =>
     parts.find((entry: Intl.DateTimeFormatPart): boolean => entry.type === type)?.value ?? '';
 }
@@ -132,8 +156,7 @@ export function toIsoDateIn(timeZone: string, instant: Date): string {
 }
 
 /** Today ("2026-10-03") on the clocks in `timeZone`, or on the browser's while the timezone is unknown (`null`). */
-export function currentDateForTimeZone(timeZone: string | null): string {
-  const now: Date = new Date();
+export function currentDateForTimeZone(timeZone: string | null, now: Date = new Date()): string {
   if (timeZone === null) {
     return toIsoDate(now);
   }
@@ -145,6 +168,52 @@ export function formatLongDate(date: Date): string {
   return formatDate(
     date,
     'EEEE, MMMM d',
+    DATE_LOCALE,
+  );
+}
+
+/** Date → "Saturday, October 3rd 2026". `formatDate` has no ordinals, so the suffix is added here. */
+export function formatFullDate(date: Date): string {
+  const day: number = date.getDate();
+  return `${formatDate(
+    date,
+    'EEEE, MMMM',
+    DATE_LOCALE,
+  )} ${day}${toOrdinalSuffix(day)} ${date.getFullYear()}`;
+}
+
+/** 1 → "st", 2 → "nd", 3 → "rd", 11–13 → "th", 21 → "st", … */
+function toOrdinalSuffix(day: number): string {
+  const isTeen: boolean = day % 100 >= 11 && day % 100 <= 13;
+  if (isTeen) {
+    return 'th';
+  }
+  return ORDINAL_SUFFIXES[day % 10] ?? 'th';
+}
+
+/** Date → "Oct 26" */
+export function formatMonthDay(date: Date): string {
+  return formatDate(
+    date,
+    'MMM d',
+    DATE_LOCALE,
+  );
+}
+
+/** Date → "Nov" */
+export function formatShortMonth(date: Date): string {
+  return formatDate(
+    date,
+    'MMM',
+    DATE_LOCALE,
+  );
+}
+
+/** Date → "November 2026" */
+export function formatMonthYear(date: Date): string {
+  return formatDate(
+    date,
+    'MMMM yyyy',
     DATE_LOCALE,
   );
 }

@@ -41,9 +41,20 @@ export class NoticeMessage {
   /** PrimeNG calls the error severity `danger`. */
   private readonly buttonSeverities: Record<NoticeSeverity, ButtonSeverity> = {
     [NoticeSeverity.Success]: 'success',
+    [NoticeSeverity.Info]: 'info',
     [NoticeSeverity.Warn]: 'warn',
     [NoticeSeverity.Error]: 'danger',
   };
+
+  /** The icon tells the severity apart without relying on colour. */
+  private readonly severityIcons: Record<NoticeSeverity, string> = {
+    [NoticeSeverity.Success]: 'pi pi-check-circle',
+    [NoticeSeverity.Info]: 'pi pi-info-circle',
+    [NoticeSeverity.Warn]: 'pi pi-exclamation-triangle',
+    [NoticeSeverity.Error]: 'pi pi-exclamation-circle',
+  };
+
+  protected readonly severityIcon: Signal<string> = computed((): string => this.severityIcons[this.notice().severity]);
 
   protected readonly noticeSeverityToButtonSeverity: Signal<ButtonSeverity> = computed((): ButtonSeverity =>
     this.buttonSeverities[this.notice().severity]);

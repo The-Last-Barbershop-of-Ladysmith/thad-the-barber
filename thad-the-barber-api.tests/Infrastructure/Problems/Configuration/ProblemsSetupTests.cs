@@ -29,7 +29,7 @@ public sealed class ProblemsSetupTests(ApiFactory factory) : IClassFixture<ApiFa
     [Fact]
     public async Task EndpointValidationProblemIsValidationFailed()
     {
-        using HttpResponseMessage response = await factory.CreateClient().GetAsync("/api/bookings/availability?month=13-2031", Cancellation);
+        using HttpResponseMessage response = await factory.CreateClient().GetAsync("/api/bookings/availability?from=13-2031&to=2031-01-31", Cancellation);
 
         await ProblemAssert.IsProblemAsync(response, 400, "validation_failed");
     }
@@ -47,7 +47,7 @@ public sealed class ProblemsSetupTests(ApiFactory factory) : IClassFixture<ApiFa
     [Fact]
     public async Task MissingTokenIsUnauthorized()
     {
-        using HttpResponseMessage response = await factory.CreateClientWithoutToken().GetAsync("/api/bookings/availability?month=2031-02", Cancellation);
+        using HttpResponseMessage response = await factory.CreateClientWithoutToken().GetAsync("/api/bookings/availability?from=2031-02-01&to=2031-02-28", Cancellation);
 
         await ProblemAssert.IsProblemAsync(response, 401, "unauthorized");
     }

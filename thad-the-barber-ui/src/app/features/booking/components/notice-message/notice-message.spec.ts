@@ -75,5 +75,24 @@ describe(
         expect(find(fixture, 'notice-retry')).toBeNull();
       },
     );
+
+    it(
+      'shows an icon for each severity, so it is not told apart by colour alone',
+      (): void => {
+        type IconReader = (severity: NoticeSeverity) => string | undefined;
+        const iconFor: IconReader = (severity: NoticeSeverity): string | undefined =>
+          (render({
+            severity,
+            text: 'Made-up notice',
+            canRetry: false,
+          }).nativeElement as HTMLElement)
+            .querySelector('.pi')?.className;
+
+        expect(iconFor(NoticeSeverity.Success)).toContain('pi-check-circle');
+        expect(iconFor(NoticeSeverity.Warn)).toContain('pi-exclamation-triangle');
+        expect(iconFor(NoticeSeverity.Error)).toContain('pi-exclamation-circle');
+        expect(iconFor(NoticeSeverity.Info)).toContain('pi-info-circle');
+      },
+    );
   },
 );

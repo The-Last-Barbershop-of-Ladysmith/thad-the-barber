@@ -3,39 +3,57 @@ import { NO_ERRORS_SCHEMA, WritableSignal, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
 import { Action, ActionsSubject, Store, provideStore } from '@ngrx/store';
+import { Confirmation, ConfirmationService } from 'primeng/api';
 import { Observable, Subject } from 'rxjs';
 import { testSavedConfirmation } from '../../../testing/test-booking';
 import { TEST_SHOP } from '../../../testing/test-shop';
 import { SessionService } from '../../core/services/session.service';
 import { ProblemCode } from '../../shared/models/problem-code.model';
-import { fromIsoDate, toIsoDateIn } from '../../shared/utils/date.utils';
+import { RequestStatus } from '../../shared/models/request.models';
+import { toIsoDateIn } from '../../shared/utils/date.utils';
 import { AppState } from '../../store/app.state';
 import * as ShopActions from '../shop/state/shop.actions';
 import { shopFeature } from '../shop/state/shop.feature';
 import { Booking } from './booking';
 import { NoticeMessage } from './components/notice-message/notice-message';
-import { BookingConfirmation } from './models/booking-confirmation.model';
+import { BookingConfirmation } from './dtos/booking-confirmation.dto';
 import { BookingForm } from './models/booking-form.model';
 import { BookingNotice } from './models/booking-notice.model';
-import { BookingRequest } from './models/booking-request.model';
+import { BookingStep } from './models/booking-step.model';
+import { BookingRequest } from './dtos/booking-request.dto';
 import { SavedConfirmation } from './models/saved-confirmation.model';
 import { BookingService } from './services/booking.service';
 import * as BookingActions from './state/booking.actions';
 import { bookingFeature } from './state/booking.feature';
+import { toBookingWindow, toUpcomingView } from './utils/booking-time.utils';
+import { AvailabilityView } from './models/availability-view.model';
+import { DateRange } from './models/date-range.model';
 
 /** The page's protected members the spec drives, read by name so the class stays unchanged. */
 interface BookingPage {
   bookingForm: BookingForm;
   confirm: () => void;
   bookingNotice: () => BookingNotice | null;
-  confirmedBooking: () => BookingConfirmation | null;
+  bookedNotice: () => BookingNotice | null;
+  openStep: () => BookingStep;
+  showStep: (step: BookingStep) => void;
+  changeFromReview: (step: BookingStep) => void;
+  confirmLeave: () => boolean | Promise<boolean>;
 }
 
 const TODAY: string = toIsoDateIn(TEST_SHOP.timeZone, new Date());
-const MONTH: string = TODAY.slice(0, 7);
 const FIRST_TIME: string = `${TODAY}T20:00:00Z`;
 const SECOND_TIME: string = `${TODAY}T20:30:00Z`;
 const TOMORROW: string = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+
+/** The view the page opens on for the test shop: today's 31-day block, on the shop's clock. */
+function firstBlock(): AvailabilityView {
+  const bookingWindow: DateRange | null = toBookingWindow(TEST_SHOP.bookingSettings, TEST_SHOP.timeZone);
+  if (!bookingWindow) {
+    throw new Error('The test shop has a booking window.');
+  }
+  return toUpcomingView(bookingWindow.min, bookingWindow);
+}
 
 describe(
   'Booking',
@@ -74,7 +92,7 @@ describe(
       page.bookingForm.setValue({
         name: 'Test Customer',
         phone: '(555) 010-0199',
-        date: fromIsoDate(TODAY),
+        date: TODAY,
         startAt,
       });
       page.confirm();
@@ -105,8 +123,6 @@ describe(
     function openPage(savedConfirmation: SavedConfirmation | null = null): void {
       const store: Store<AppState> = TestBed.inject<Store<AppState>>(Store);
       store.dispatch(ShopActions.ShopInfoRequestSuccess({ shopInfo: TEST_SHOP }));
-      // The date step, which opens the month, doesn't render here.
-      store.dispatch(BookingActions.SetActiveMonthView({ month: MONTH }));
       if (savedConfirmation) {
         store.dispatch(BookingActions.BookingConfirm({ savedConfirmation }));
       }
@@ -186,12 +202,31 @@ describe(
         responses[0]?.complete();
 
         expect(page.bookingForm.enabled).toBe(true);
-        expect(page.confirmedBooking()).toEqual(confirmation(requests[0]));
       },
     );
 
     it(
-      'drops a taken time and reloads the month in view',
+      'shows the booking with its phone and starts over at the date, keeping the name and phone',
+      (): void => {
+        openPage();
+        pickAndConfirm(FIRST_TIME);
+        responses[0]?.next(confirmation(requests[0]));
+        responses[0]?.complete();
+
+        expect(page.bookedNotice()?.text).toContain('(555) 010-0199');
+        expect(page.bookingForm.getRawValue()).toEqual({
+          name: 'Test Customer',
+          phone: '(555) 010-0199',
+          date: null,
+          startAt: null,
+        });
+        expect(page.openStep()).toBe(BookingStep.Date);
+        expect(dispatched).toContainEqual(BookingActions.SetAvailabilityView({ view: firstBlock() }));
+      },
+    );
+
+    it(
+      'drops a taken time, opens the time step and reloads the days in view',
       (): void => {
         openPage();
         pickAndConfirm(FIRST_TIME);
@@ -203,7 +238,8 @@ describe(
 
         expect(page.bookingForm.controls.startAt.value).toBeNull();
         expect(page.bookingNotice()).not.toBeNull();
-        expect(dispatched).toContainEqual(BookingActions.SetActiveMonthView({ month: MONTH }));
+        expect(page.openStep()).toBe(BookingStep.Time);
+        expect(dispatched).toContainEqual(BookingActions.SetAvailabilityView({ view: firstBlock() }));
       },
     );
 
@@ -266,6 +302,175 @@ describe(
         }));
 
         expect(savedBooking()).toBeNull();
+      },
+    );
+
+    it(
+      'loads the next 31 days once the shop is known',
+      (): void => {
+        openPage();
+
+        expect(TestBed.inject<Store<AppState>>(Store).selectSignal(bookingFeature.selectView)())
+          .toEqual(firstBlock());
+        expect(TestBed.inject<Store<AppState>>(Store).selectSignal(bookingFeature.selectLoadStatus)())
+          .toBe(RequestStatus.Pending);
+      },
+    );
+
+    it(
+      'opens the time step once a day is picked, then the details once a time is',
+      (): void => {
+        openPage();
+
+        page.bookingForm.controls.date.setValue(TODAY);
+        expect(page.openStep()).toBe(BookingStep.Time);
+        page.bookingForm.controls.startAt.setValue(FIRST_TIME);
+        expect(page.openStep()).toBe(BookingStep.Details);
+      },
+    );
+
+    it(
+      "won't open a step before the ones above it are done",
+      (): void => {
+        openPage();
+
+        page.showStep(BookingStep.Review);
+        expect(page.openStep()).toBe(BookingStep.Date);
+        page.bookingForm.controls.date.setValue(TODAY);
+        page.bookingForm.controls.startAt.setValue(FIRST_TIME);
+        page.showStep(BookingStep.Review);
+        expect(page.openStep()).toBe(BookingStep.Details);
+      },
+    );
+
+    it(
+      'comes back to review after a time is changed from it',
+      (): void => {
+        openPage();
+        page.bookingForm.setValue({
+          name: 'Test Customer',
+          phone: '(555) 010-0199',
+          date: TODAY,
+          startAt: FIRST_TIME,
+        });
+        page.showStep(BookingStep.Review);
+
+        page.changeFromReview(BookingStep.Time);
+        expect(page.openStep()).toBe(BookingStep.Time);
+        page.bookingForm.controls.startAt.setValue(SECOND_TIME);
+        expect(page.openStep()).toBe(BookingStep.Review);
+      },
+    );
+
+    it(
+      'shows a failed bot check at the top of the page, with the Square booking site to fall back on',
+      (): void => {
+        isBotCheckFailed.set(true);
+        openPage();
+
+        const botCheck: Element | null = (fixture.nativeElement as HTMLElement)
+          .querySelector('[data-testid="bot-check-failed"]');
+        expect(botCheck?.querySelector('[data-testid="notice-booking-site"]')?.getAttribute('href'))
+          .toBe(TEST_SHOP.squareBookingSiteUrl);
+      },
+    );
+
+    it(
+      'lets the customer leave without asking while nothing is picked (#210)',
+      (): void => {
+        openPage();
+
+        expect(page.confirmLeave()).toBe(true);
+      },
+    );
+
+    it(
+      'asks before leaving a picked day that is not booked, and Keep booking stays (#210)',
+      async (): Promise<void> => {
+        openPage();
+        page.bookingForm.controls.date.setValue(TODAY);
+        const confirmationService: ConfirmationService = fixture.debugElement.injector.get(ConfirmationService);
+        let asked: Confirmation | null = null;
+        confirmationService.requireConfirmation$.subscribe((confirmation: Confirmation | null): void => {
+          asked = confirmation;
+        });
+
+        const canLeave: boolean | Promise<boolean> = page.confirmLeave();
+        (asked as Confirmation | null)?.reject?.();
+
+        expect((asked as Confirmation | null)?.header).toBe('Leave without booking?');
+        expect(await canLeave).toBe(false);
+      },
+    );
+
+    it(
+      'lets the customer go once the booking went through (#210)',
+      (): void => {
+        openPage();
+        pickAndConfirm(FIRST_TIME);
+        responses[0]?.next(confirmation(requests[0]));
+        responses[0]?.complete();
+
+        expect(page.confirmLeave()).toBe(true);
+      },
+    );
+
+    it(
+      "clears the last day's time when another day is picked",
+      (): void => {
+        openPage();
+        page.bookingForm.controls.date.setValue(TODAY);
+        page.bookingForm.controls.startAt.setValue(FIRST_TIME);
+
+        page.bookingForm.controls.date.setValue('2099-01-01');
+
+        expect(page.bookingForm.controls.startAt.value).toBeNull();
+        expect(page.openStep()).toBe(BookingStep.Time);
+      },
+    );
+
+    it(
+      'still asks before leaving while the booking is being sent, since leaving would drop its response (#210)',
+      (): void => {
+        openPage();
+        pickAndConfirm(FIRST_TIME);
+
+        expect(page.confirmLeave()).toBeInstanceOf(Promise);
+      },
+    );
+
+    it(
+      'drops the picked day and opens the date step when a taken time left that day with none, keeping the notice',
+      (): void => {
+        openPage();
+        pickAndConfirm(FIRST_TIME);
+        fail(
+          0,
+          409,
+          ProblemCode.SlotUnavailable,
+        );
+        TestBed.inject<Store<AppState>>(Store).dispatch(BookingActions.AvailabilityRequestSuccess({
+          view: firstBlock(),
+          availableDays: [{ date: '2099-01-01', times: ['2099-01-01T20:00:00Z'] }],
+        }));
+
+        expect(page.bookingForm.controls.date.value).toBeNull();
+        expect(page.openStep()).toBe(BookingStep.Date);
+        expect(page.bookingNotice()).not.toBeNull();
+      },
+    );
+
+    it(
+      "moves a 31-day view left open past midnight to today's block when the customer comes back",
+      (): void => {
+        openPage();
+        const today: AvailabilityView = firstBlock();
+        const yesterdaysBlock: AvailabilityView = { ...today, firstDay: '2000-01-01' };
+        TestBed.inject<Store<AppState>>(Store).dispatch(BookingActions.SetAvailabilityView({ view: yesterdaysBlock }));
+
+        document.dispatchEvent(new Event('visibilitychange'));
+
+        expect(dispatched.at(-1)).toEqual(BookingActions.SetAvailabilityView({ view: today }));
       },
     );
   },

@@ -14,19 +14,4 @@ export const KNOWN_A11Y_ISSUES: readonly KnownA11yIssue[] = [
     selector: '.p-carousel-indicator-button',
     issue: '#80',
   },
-  {
-    rule: 'color-contrast',
-    selector: '.p-datepicker-day.p-disabled',
-    issue: '#84',
-  },
-  {
-    rule: 'aria-allowed-attr',
-    selector: '.p-datepicker-day-selected',
-    issue: '#84',
-  },
-  {
-    rule: 'color-contrast',
-    selector: '.p-datepicker-day-selected',
-    issue: '#84',
-  },
 ];

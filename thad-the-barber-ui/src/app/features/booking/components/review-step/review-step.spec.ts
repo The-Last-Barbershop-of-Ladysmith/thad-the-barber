@@ -3,42 +3,30 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Store, provideStore } from '@ngrx/store';
 import { TEST_SHOP } from '../../../../../testing/test-shop';
 import { SessionService } from '../../../../core/services/session.service';
-import { PhoneLinks } from '../../../../shared/models/phone-links.model';
 import { AppState } from '../../../../store/app.state';
 import * as ShopActions from '../../../shop/state/shop.actions';
 import { shopFeature } from '../../../shop/state/shop.feature';
-import { BookingConfirmation } from '../../models/booking-confirmation.model';
 import { BookingFormValue } from '../../models/booking-form-value.model';
-import { BookingSummary } from './booking-summary';
+import { BookingStep } from '../../models/booking-step.model';
+import { ReviewStep } from './review-step';
 
-interface SummaryInputs {
+interface ReviewInputs {
   isFormValid?: boolean;
   isBotCheckFailed?: boolean;
-  confirmedBooking?: BookingConfirmation | null;
 }
 
 describe(
-  'BookingSummary',
+  'ReviewStep',
   (): void => {
     const filledIn: BookingFormValue = {
       name: 'Test Customer',
       phone: '(555) 010-0199',
-      date: new Date(
-        2026,
-        9,
-        3,
-      ),
+      date: '2026-10-03',
       startAt: '2026-10-03T20:00:00Z',
     };
-    const confirmedBooking: BookingConfirmation = {
-      id: 'made-up-booking',
-      startAt: '2026-10-03T20:00:00Z',
-      manageToken: 'made-up-token',
-    };
-    let phone: PhoneLinks;
-    let bookingUrl: string;
+    let fixture: ComponentFixture<ReviewStep>;
 
-    function render(inputs: SummaryInputs = {}): HTMLElement {
+    function render(inputs: ReviewInputs = {}): HTMLElement {
       TestBed.configureTestingModule({
         providers: [
           provideStore({ [shopFeature.name]: shopFeature.reducer }),
@@ -47,14 +35,12 @@ describe(
       });
       const store: Store<AppState> = TestBed.inject<Store<AppState>>(Store);
       store.dispatch(ShopActions.ShopInfoRequestSuccess({ shopInfo: TEST_SHOP }));
-      phone = store.selectSignal(shopFeature.selectPhoneLinks)();
-      bookingUrl = store.selectSignal(shopFeature.selectBookingUrl)();
-      const fixture: ComponentFixture<BookingSummary> = TestBed.createComponent(BookingSummary);
+      fixture = TestBed.createComponent(ReviewStep);
       fixture.componentRef.setInput('bookingFormValue', filledIn);
+      fixture.componentRef.setInput('dateLabel', 'Saturday, October 3rd 2026');
+      fixture.componentRef.setInput('timeLabel', '10:00 AM');
       fixture.componentRef.setInput('isFormValid', inputs.isFormValid ?? true);
       fixture.componentRef.setInput('isSubmitting', false);
-      fixture.componentRef.setInput('confirmedBooking', inputs.confirmedBooking ?? null);
-      fixture.componentRef.setInput('bookingNotice', null);
       fixture.detectChanges();
       return fixture.nativeElement as HTMLElement;
     }
@@ -71,34 +57,33 @@ describe(
     );
 
     it(
-      'offers the Square booking site, call and text links and turns off confirming when the bot check failed',
+      'turns off confirming when the bot check failed',
       (): void => {
-        const host: HTMLElement = render({ isBotCheckFailed: true });
-
-        const botCheck: Element | null = host.querySelector('[data-testid="bot-check-failed"]');
-        expect(botCheck?.querySelector('[data-testid="notice-booking-site"]')?.getAttribute('href')).toBe(bookingUrl);
-        expect(botCheck?.querySelector('[data-testid="notice-call"]')?.getAttribute('href')).toBe(phone.tel);
-        expect(botCheck?.querySelector('[data-testid="notice-text"]')?.getAttribute('href')).toBe(phone.sms);
-        expect(confirmButton(host)?.disabled).toBe(true);
+        expect(confirmButton(render({ isBotCheckFailed: true }))?.disabled).toBe(true);
       },
     );
 
     it(
-      'shows no fallback while the bot check is fine',
+      'allows confirming while the bot check is fine',
+      (): void => {
+        expect(confirmButton(render())?.disabled).toBe(false);
+      },
+    );
+
+    it(
+      'lists every pick with a Change link to its step',
       (): void => {
         const host: HTMLElement = render();
+        const changedSteps: BookingStep[] = [];
+        fixture.componentInstance.changeStep.subscribe((step: BookingStep): void => {
+          changedSteps.push(step);
+        });
 
-        expect(host.querySelector('[data-testid="bot-check-failed"]')).toBeNull();
-        expect(confirmButton(host)?.disabled).toBe(false);
-      },
-    );
+        host.querySelector<HTMLElement>('[data-testid="change-time"]')?.click();
+        host.querySelector<HTMLElement>('[data-testid="change-phone"]')?.click();
 
-    it(
-      'confirms the booking with the phone it was sent to',
-      (): void => {
-        const host: HTMLElement = render({ confirmedBooking });
-
-        expect(host.querySelector('[data-testid="booking-confirmation"]')?.textContent).toContain('(555) 010-0199');
+        expect(host.querySelector('.summary-list')?.textContent).toContain('Saturday, October 3rd 2026');
+        expect(changedSteps).toEqual([BookingStep.Time, BookingStep.Details]);
       },
     );
 
