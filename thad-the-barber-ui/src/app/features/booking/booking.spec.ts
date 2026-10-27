@@ -25,6 +25,7 @@ import { SavedConfirmation } from './models/saved-confirmation.model';
 import { BookingService } from './services/booking.service';
 import * as BookingActions from './state/booking.actions';
 import { bookingFeature } from './state/booking.feature';
+import { FIRST_UPCOMING_VIEW } from './utils/booking-time.utils';
 
 /** The page's protected members the spec drives, read by name so the class stays unchanged. */
 interface BookingPage {
@@ -209,7 +210,7 @@ describe(
           startAt: null,
         });
         expect(page.openStep()).toBe(BookingStep.Date);
-        expect(dispatched).toContainEqual(BookingActions.SetActiveMonthView({ month: null }));
+        expect(dispatched).toContainEqual(BookingActions.SetAvailabilityView({ view: FIRST_UPCOMING_VIEW }));
       },
     );
 
@@ -227,7 +228,7 @@ describe(
         expect(page.bookingForm.controls.startAt.value).toBeNull();
         expect(page.bookingNotice()).not.toBeNull();
         expect(page.openStep()).toBe(BookingStep.Time);
-        expect(dispatched).toContainEqual(BookingActions.SetActiveMonthView({ month: null }));
+        expect(dispatched).toContainEqual(BookingActions.SetAvailabilityView({ view: FIRST_UPCOMING_VIEW }));
       },
     );
 
@@ -298,7 +299,8 @@ describe(
       (): void => {
         openPage();
 
-        expect(TestBed.inject<Store<AppState>>(Store).selectSignal(bookingFeature.selectVisibleMonth)()).toBeNull();
+        expect(TestBed.inject<Store<AppState>>(Store).selectSignal(bookingFeature.selectView)())
+          .toEqual(FIRST_UPCOMING_VIEW);
         expect(TestBed.inject<Store<AppState>>(Store).selectSignal(bookingFeature.selectLoadStatus)())
           .toBe(RequestStatus.Pending);
       },
@@ -436,8 +438,8 @@ describe(
           409,
           ProblemCode.SlotUnavailable,
         );
-        TestBed.inject<Store<AppState>>(Store).dispatch(BookingActions.MonthAvailabilityRequestSuccess({
-          month: null,
+        TestBed.inject<Store<AppState>>(Store).dispatch(BookingActions.AvailabilityRequestSuccess({
+          view: FIRST_UPCOMING_VIEW,
           availableDays: [{ date: '2099-01-01', times: ['2099-01-01T20:00:00Z'] }],
         }));
 

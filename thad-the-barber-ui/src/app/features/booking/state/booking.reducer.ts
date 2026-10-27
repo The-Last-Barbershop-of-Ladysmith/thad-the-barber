@@ -1,17 +1,19 @@
 import { ActionReducer, createReducer, on } from '@ngrx/store';
 import { RequestStatus } from '../../../shared/models/request.models';
 import { AvailableDay } from '../dtos/available-day.dto';
+import { AvailabilityView } from '../models/availability-view.model';
 import { SavedConfirmation } from '../models/saved-confirmation.model';
+import { isSameView } from '../utils/booking-time.utils';
 import * as BookingActions from './booking.actions';
 import { BookingState, initialBookingState } from './booking.state';
 
 export const bookingReducer: ActionReducer<BookingState> = createReducer(
   initialBookingState,
   on(
-    BookingActions.SetActiveMonthView,
-    (state: BookingState, { month }: { month: string | null; }): BookingState => ({
+    BookingActions.SetAvailabilityView,
+    (state: BookingState, { view }: { view: AvailabilityView; }): BookingState => ({
       ...state,
-      visibleMonth: month,
+      view,
       availableDays: [],
       loadStatus: RequestStatus.Pending,
     }),
@@ -24,13 +26,13 @@ export const bookingReducer: ActionReducer<BookingState> = createReducer(
     }),
   ),
   on(
-    BookingActions.MonthAvailabilityRequestSuccess,
+    BookingActions.AvailabilityRequestSuccess,
     (
       state: BookingState,
-      { month, availableDays }: { month: string | null; availableDays: AvailableDay[]; },
+      { view, availableDays }: { view: AvailabilityView; availableDays: AvailableDay[]; },
     ): BookingState => {
-      const isVisibleMonth: boolean = month === state.visibleMonth;
-      if (!isVisibleMonth) {
+      const isViewInPlace: boolean = isSameView(view, state.view);
+      if (!isViewInPlace) {
         return state;
       }
       return {
@@ -41,10 +43,10 @@ export const bookingReducer: ActionReducer<BookingState> = createReducer(
     },
   ),
   on(
-    BookingActions.MonthAvailabilityRequestFailure,
-    (state: BookingState, { month }: { month: string | null; }): BookingState => {
-      const isVisibleMonth: boolean = month === state.visibleMonth;
-      if (!isVisibleMonth) {
+    BookingActions.AvailabilityRequestFailure,
+    (state: BookingState, { view }: { view: AvailabilityView; }): BookingState => {
+      const isViewInPlace: boolean = isSameView(view, state.view);
+      if (!isViewInPlace) {
         return state;
       }
       return { ...state, loadStatus: RequestStatus.Error };

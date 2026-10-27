@@ -40,6 +40,7 @@ import { BookingConfirmation } from './dtos/booking-confirmation.dto';
 import { BookingForm } from './models/booking-form.model';
 import { BookingFormValue } from './models/booking-form-value.model';
 import { BookingNotice } from './models/booking-notice.model';
+import { AvailabilityView } from './models/availability-view.model';
 import { BookingStep } from './models/booking-step.model';
 import { StepProgress } from './models/step-progress.model';
 import { BookingService } from './services/booking.service';
@@ -47,7 +48,7 @@ import * as BookingActions from './state/booking.actions';
 import { bookingFeature } from './state/booking.feature';
 import { BOT_CHECK_FAILED_NOTICE, toBookedNotice, toBookingNotice } from './utils/booking-notice.utils';
 import { BOOKING_STEPS, canOpenStep, isStepDone } from './utils/booking-steps.utils';
-import { toTimeLabel } from './utils/booking-time.utils';
+import { FIRST_UPCOMING_VIEW, toTimeLabel } from './utils/booking-time.utils';
 import { toKeptBooking } from './utils/saved-confirmation.utils';
 
 /** How one step shows in the phone's step cards and the desktop's step rail. */
@@ -110,7 +111,7 @@ export class Booking {
   private readonly confirmationService: ConfirmationService = inject(ConfirmationService);
 
   private readonly timeZone: Signal<string | null> = this.store.selectSignal(shopFeature.selectTimeZone);
-  private readonly visibleMonth: Signal<string | null> = this.store.selectSignal(bookingFeature.selectVisibleMonth);
+  private readonly view: Signal<AvailabilityView | null> = this.store.selectSignal(bookingFeature.selectView);
   protected readonly isBotCheckFailed: Signal<boolean> = inject(SessionService).isBotCheckFailed;
   protected readonly botCheckFailedNotice: BookingNotice = BOT_CHECK_FAILED_NOTICE;
   protected readonly availabilityNotice: Signal<BookingNotice | null> =
@@ -252,7 +253,7 @@ export class Booking {
         takeUntilDestroyed(),
       )
       .subscribe((): void => {
-        this.store.dispatch(BookingActions.SetActiveMonthView({ month: null }));
+        this.store.dispatch(BookingActions.SetAvailabilityView({ view: FIRST_UPCOMING_VIEW }));
       });
     this.store
       .select(bookingFeature.selectAvailableDays)
@@ -332,7 +333,7 @@ export class Booking {
   }
 
   protected reloadMonth(): void {
-    this.store.dispatch(BookingActions.SetActiveMonthView({ month: this.visibleMonth() }));
+    this.store.dispatch(BookingActions.SetAvailabilityView({ view: this.view() ?? FIRST_UPCOMING_VIEW }));
   }
 
   /** The form's submit, and a failed booking's retry. */

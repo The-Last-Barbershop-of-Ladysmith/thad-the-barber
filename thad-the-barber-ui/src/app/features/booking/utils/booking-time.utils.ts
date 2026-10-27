@@ -14,6 +14,7 @@ import {
   weekTimeIn,
 } from '../../../shared/utils/date.utils';
 import { AvailableDay } from '../dtos/available-day.dto';
+import { AvailabilityView } from '../models/availability-view.model';
 import { DateRange } from '../models/date-range.model';
 import { DayRange } from '../models/day-range.model';
 import { TimeSlot } from '../models/time-slot.model';
@@ -31,21 +32,31 @@ export function toBookingWindow(
   return { min, max: addDays(min, bookingSettings.maxAdvanceDays) };
 }
 
+/** Today on, the view the booking page opens on. */
+export const FIRST_UPCOMING_VIEW: AvailabilityView = { month: null, upcomingPage: 0 };
+
+export function isSameView(view: AvailabilityView | null, otherView: AvailabilityView | null): boolean {
+  return view?.month === otherView?.month && view?.upcomingPage === otherView?.upcomingPage;
+}
+
 /**
- * The days a view asks for: a month's 1st through its last day, or with no month (`null`) today on the shop's clock
- * through the next `UPCOMING_DAY_COUNT` days (the browser's clock until the shop loads). The API cuts either to the
- * booking window.
+ * The days a view asks for: a month's 1st through its last day, or `UPCOMING_DAY_COUNT` days starting that many days
+ * per page after today on the shop's clock (the browser's until the shop loads). The API cuts either to the booking
+ * window.
  */
 export function toDayRange(
-  month: string | null,
+  view: AvailabilityView,
   timeZone: string | null,
   now: Date = new Date(),
 ): DayRange {
-  if (month === null) {
-    const today: Date = fromIsoDate(currentDateForTimeZone(timeZone, now));
-    return { firstDay: toIsoDate(today), lastDay: toIsoDate(addDays(today, UPCOMING_DAY_COUNT - 1)) };
+  if (view.month === null) {
+    const firstDay: Date = addDays(
+      fromIsoDate(currentDateForTimeZone(timeZone, now)),
+      view.upcomingPage * UPCOMING_DAY_COUNT,
+    );
+    return { firstDay: toIsoDate(firstDay), lastDay: toIsoDate(addDays(firstDay, UPCOMING_DAY_COUNT - 1)) };
   }
-  const firstDay: Date = fromMonthKey(month);
+  const firstDay: Date = fromMonthKey(view.month);
   return { firstDay: toIsoDate(firstDay), lastDay: toIsoDate(addDays(addMonths(firstDay, 1), -1)) };
 }
 

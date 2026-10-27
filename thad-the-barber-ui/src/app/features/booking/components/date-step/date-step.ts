@@ -32,14 +32,16 @@ import { BookingSettings } from '../../../shop/models/booking-settings.model';
 import { shopFeature } from '../../../shop/state/shop.feature';
 import { AvailableDay } from '../../dtos/available-day.dto';
 import { BookingNotice } from '../../models/booking-notice.model';
+import { AvailabilityView } from '../../models/availability-view.model';
 import { DateRange } from '../../models/date-range.model';
 import * as BookingActions from '../../state/booking.actions';
 import { bookingFeature } from '../../state/booking.feature';
 import { NO_OPEN_DAYS_NOTICE } from '../../utils/booking-notice.utils';
-import { toBookingWindow, toLaterMonths } from '../../utils/booking-time.utils';
+import { FIRST_UPCOMING_VIEW, isSameView, toBookingWindow, toLaterMonths } from '../../utils/booking-time.utils';
 import { NoticeMessage } from '../notice-message/notice-message';
 
-const UPCOMING_VIEW: string = 'upcoming';
+/** The month picker's key for the 31-day blocks; a SelectButton can't select a null month. */
+const UPCOMING_KEY: string = 'upcoming';
 
 /** The month picker's "Next 31 days" choice. */
 interface UpcomingOption {
@@ -93,8 +95,7 @@ export class DateStep {
   readonly startAtControl: InputSignal<FormControl<string | null>> = input.required<FormControl<string | null>>();
 
   protected readonly upcomingLabel: string = `Next ${UPCOMING_DAY_COUNT} days`;
-  /** The month picker's first choice; a SelectButton can't select a null value, so the upcoming view has a key. */
-  protected readonly upcomingOptions: UpcomingOption[] = [{ label: this.upcomingLabel, view: UPCOMING_VIEW }];
+  protected readonly upcomingOptions: UpcomingOption[] = [{ label: this.upcomingLabel, view: UPCOMING_KEY }];
   protected readonly noOpenDaysNotice: BookingNotice = NO_OPEN_DAYS_NOTICE;
   /** Placeholder rows in the list's place while the days load. */
   protected readonly skeletonRows: number[] = Array<number>(10).fill(0);
@@ -105,13 +106,17 @@ export class DateStep {
     this.store.selectSignal(shopFeature.selectBookingSettings);
   private readonly availableDays: Signal<AvailableDay[]> = this.store.selectSignal(bookingFeature.selectAvailableDays);
   private readonly loadStatus: Signal<RequestStatus> = this.store.selectSignal(bookingFeature.selectLoadStatus);
-  protected readonly visibleMonth: Signal<string | null> = this.store.selectSignal(bookingFeature.selectVisibleMonth);
+  private readonly storedView: Signal<AvailabilityView | null> = this.store.selectSignal(bookingFeature.selectView);
   protected readonly isLoading: Signal<boolean> = this.store.selectSignal(bookingFeature.selectIsLoading);
-  protected readonly viewKey: Signal<string> = computed((): string => this.visibleMonth() ?? UPCOMING_VIEW);
 
   protected readonly isMonthPickerOpen: WritableSignal<boolean> = signal(false);
   private readonly monthPickerToggle: Signal<ElementRef<HTMLButtonElement> | undefined> =
     viewChild<ElementRef<HTMLButtonElement>>('monthPickerToggle');
+
+  private readonly view: Signal<AvailabilityView> = computed((): AvailabilityView =>
+    this.storedView() ?? FIRST_UPCOMING_VIEW);
+  /** The month picker's choice: the month in view, or the 31-day blocks whichever block is showing. */
+  protected readonly viewKey: Signal<string> = computed((): string => this.view().month ?? UPCOMING_KEY);
 
   private readonly bookingWindow: Signal<DateRange | null> = computed((): DateRange | null =>
     toBookingWindow(this.bookingSettings(), this.timeZone()));
@@ -121,34 +126,69 @@ export class DateStep {
     return bookingWindow ? toLaterMonths(bookingWindow) : [];
   });
 
-  /** The arrows' order: the next 31 days, then each later month. */
-  private readonly views: Signal<(string | null)[]> = computed((): (string | null)[] => [null, ...this.laterMonths()]);
-  private readonly viewIndex: Signal<number> = computed((): number => this.views().indexOf(this.visibleMonth()));
-  protected readonly isFirstView: Signal<boolean> = computed((): boolean => this.viewIndex() <= 0);
-  protected readonly isLastView: Signal<boolean> = computed((): boolean => this.viewIndex() >= this.views().length - 1);
+  /** The days of the 31-day block in view, cut to the booking window; null for a month. */
+  private readonly upcomingBlock: Signal<DateRange | null> = computed((): DateRange | null => {
+    const bookingWindow: DateRange | null = this.bookingWindow();
+    const { month, upcomingPage }: AvailabilityView = this.view();
+    if (!bookingWindow || month !== null) {
+      return null;
+    }
+    const min: Date = addDays(bookingWindow.min, upcomingPage * UPCOMING_DAY_COUNT);
+    const blockEnd: Date = addDays(min, UPCOMING_DAY_COUNT - 1);
+    return { min, max: bookingWindow.max < blockEnd ? bookingWindow.max : blockEnd };
+  });
+
+  private readonly monthIndex: Signal<number> = computed((): number => {
+    const { month }: AvailabilityView = this.view();
+    return month === null ? -1 : this.laterMonths().indexOf(month);
+  });
+
+  /** On the 31-day blocks, back stops at today's block; on a month, at the first month offered. */
+  protected readonly isFirstView: Signal<boolean> = computed((): boolean => {
+    const { month, upcomingPage }: AvailabilityView = this.view();
+    return month === null ? upcomingPage === 0 : this.monthIndex() <= 0;
+  });
+
+  /** On the 31-day blocks, next stops at the block the booking window ends in; on a month, at its last month. */
+  protected readonly isLastView: Signal<boolean> = computed((): boolean => {
+    const bookingWindow: DateRange | null = this.bookingWindow();
+    const upcomingBlock: DateRange | null = this.upcomingBlock();
+    if (!bookingWindow) {
+      return true;
+    }
+    if (upcomingBlock) {
+      return addDays(upcomingBlock.min, UPCOMING_DAY_COUNT) > bookingWindow.max;
+    }
+    return this.monthIndex() >= this.laterMonths().length - 1;
+  });
 
   protected readonly monthOptionGroups: Signal<MonthOptionGroup[]> = computed((): MonthOptionGroup[] =>
     toMonthOptionGroups(this.laterMonths()));
 
+  /** "November 2026", "Next 31 days" for today's block, or a later block's dates ("Nov 26 – Dec 26"). */
   protected readonly viewTitle: Signal<string> = computed((): string => {
-    const visibleMonth: string | null = this.visibleMonth();
-    return visibleMonth ? formatMonthYear(fromMonthKey(visibleMonth)) : this.upcomingLabel;
+    const { month, upcomingPage }: AvailabilityView = this.view();
+    const upcomingBlock: DateRange | null = this.upcomingBlock();
+    if (month !== null) {
+      return formatMonthYear(fromMonthKey(month));
+    }
+    if (upcomingPage === 0 || !upcomingBlock) {
+      return this.upcomingLabel;
+    }
+    return `${formatMonthDay(upcomingBlock.min)} – ${formatMonthDay(upcomingBlock.max)}`;
   });
 
   protected readonly rangeCaption: Signal<string> = computed((): string => {
-    const visibleMonth: string | null = this.visibleMonth();
     const dayCount: number = this.availableDays().length;
     const openDayCount: string = this.isLoading() ? '' : ` · ${dayCount} open ${dayCount === 1 ? 'day' : 'days'}`;
-    if (visibleMonth) {
+    const upcomingBlock: DateRange | null = this.upcomingBlock();
+    if (this.view().month !== null) {
       return `Showing all of ${this.viewTitle()}${openDayCount}`;
     }
-    const bookingWindow: DateRange | null = this.bookingWindow();
-    if (!bookingWindow) {
+    if (!upcomingBlock) {
       return '';
     }
-    const upcomingEnd: Date = addDays(bookingWindow.min, UPCOMING_DAY_COUNT - 1);
-    const shownLastDay: Date = bookingWindow.max < upcomingEnd ? bookingWindow.max : upcomingEnd;
-    return `Showing ${formatMonthDay(bookingWindow.min)} – ${formatMonthDay(shownLastDay)}${openDayCount}`;
+    return `Showing ${formatMonthDay(upcomingBlock.min)} – ${formatMonthDay(upcomingBlock.max)}${openDayCount}`;
   });
 
   protected readonly dateOptions: Signal<DateOption[]> = computed((): DateOption[] =>
@@ -167,31 +207,40 @@ export class DateStep {
     this.monthPickerToggle()?.nativeElement.focus();
   }
 
+  /** The month picker: a month, or the 31-day blocks from today's. */
+  protected showViewKey(viewKey: string): void {
+    this.showView(viewKey === UPCOMING_KEY ? FIRST_UPCOMING_VIEW : { month: viewKey, upcomingPage: 0 });
+  }
+
+  /**
+   * The arrows, -1 back and 1 forward: on the 31-day blocks they page through blocks, and on a month through the
+   * months the window reaches.
+   */
+  protected showAdjacentView(offset: number): void {
+    const { month, upcomingPage }: AvailabilityView = this.view();
+    if (month === null) {
+      this.showView({ month: null, upcomingPage: Math.max(upcomingPage + offset, 0) });
+      return;
+    }
+    const adjacentMonth: string | undefined = this.laterMonths()[this.monthIndex() + offset];
+    if (adjacentMonth) {
+      this.showView({ month: adjacentMonth, upcomingPage: 0 });
+    }
+  }
+
   /**
    * The days of another view don't include the picked day, so the pick and its time are cleared; otherwise the time
    * step would show a day with no times.
    */
-  protected showView(month: string | null): void {
+  private showView(view: AvailabilityView): void {
     this.isMonthPickerOpen.set(false);
-    if (month === this.visibleMonth()) {
+    if (isSameView(view, this.view())) {
       return;
     }
     // One form update for both: the day quietly, then the time, whose change carries the day's too.
     this.dateControl().reset(null, { emitEvent: false });
     this.startAtControl().reset();
-    this.store.dispatch(BookingActions.SetActiveMonthView({ month }));
-  }
-
-  protected showViewKey(view: string): void {
-    this.showView(view === UPCOMING_VIEW ? null : view);
-  }
-
-  /** The arrows: -1 back, 1 forward through the next 31 days and each later month. */
-  protected showAdjacentView(offset: number): void {
-    const adjacentView: string | null | undefined = this.views()[this.viewIndex() + offset];
-    if (adjacentView !== undefined) {
-      this.showView(adjacentView);
-    }
+    this.store.dispatch(BookingActions.SetAvailabilityView({ view }));
   }
 }
 

@@ -58,7 +58,10 @@ describe(
       (): void => {
         const savedConfirmation: SavedConfirmation = savedConfirmationFrom(new Date());
         const reducer: ActionReducer<AppState> = createSyncedReducer();
-        const viewing: AppState = reducer(undefined, BookingActions.SetActiveMonthView({ month: '2026-10' }));
+        const viewing: AppState = reducer(
+          undefined,
+          BookingActions.SetAvailabilityView({ view: { month: '2026-10', upcomingPage: 0 } }),
+        );
         reducer(viewing, BookingActions.BookingConfirm({ savedConfirmation }));
 
         expect(saved('ttb-booking')).toEqual({ savedConfirmation });
@@ -74,7 +77,7 @@ describe(
         seedBooking(savedConfirmation);
 
         expect(restoredBooking()).toEqual({
-          visibleMonth: null,
+          view: null,
           availableDays: [],
           loadStatus: RequestStatus.Idle,
           savedConfirmation,

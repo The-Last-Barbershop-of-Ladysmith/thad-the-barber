@@ -17,6 +17,13 @@
     flex: none;
     width: 2.75rem;
     padding-inline: 0;
+
+    // Faded well past PrimeNG's disabled look, so a dead end reads at a glance.
+    &:disabled {
+      opacity: 0.25;
+      border-style: dashed;
+      cursor: not-allowed;
+    }
   }
 
   .view-picker-toggle {

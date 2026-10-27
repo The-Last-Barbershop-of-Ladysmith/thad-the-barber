@@ -2,7 +2,14 @@ import { TEST_SHOP } from '../../../../testing/test-shop';
 import { fromIsoDate, toIsoDate } from '../../../shared/utils/date.utils';
 import { AvailableDay } from '../dtos/available-day.dto';
 import { DateRange } from '../models/date-range.model';
-import { toBookingWindow, toDayRange, toLaterMonths, toLongDateTime, toTimeSlots } from './booking-time.utils';
+import {
+  FIRST_UPCOMING_VIEW,
+  toBookingWindow,
+  toDayRange,
+  toLaterMonths,
+  toLongDateTime,
+  toTimeSlots,
+} from './booking-time.utils';
 
 const HONOLULU: string = TEST_SHOP.timeZone;
 
@@ -42,7 +49,7 @@ describe(
       (): void => {
         // 05:00 UTC on Nov 1st is still Oct 31st in Honolulu.
         expect(toDayRange(
-          null,
+          FIRST_UPCOMING_VIEW,
           HONOLULU,
           new Date('2026-11-01T05:00:00Z'),
         )).toEqual({ firstDay: '2026-10-31', lastDay: '2026-11-30' });
@@ -53,12 +60,12 @@ describe(
       'runs the upcoming days across a year end and a leap day',
       (): void => {
         expect(toDayRange(
-          null,
+          FIRST_UPCOMING_VIEW,
           HONOLULU,
           new Date('2026-12-20T22:00:00Z'),
         )).toEqual({ firstDay: '2026-12-20', lastDay: '2027-01-19' });
         expect(toDayRange(
-          null,
+          FIRST_UPCOMING_VIEW,
           HONOLULU,
           new Date('2028-02-15T22:00:00Z'),
         )).toEqual({ firstDay: '2028-02-15', lastDay: '2028-03-16' });
@@ -66,11 +73,27 @@ describe(
     );
 
     it(
+      'pages the upcoming days in blocks of 31 from today',
+      (): void => {
+        expect(toDayRange(
+          { month: null, upcomingPage: 1 },
+          HONOLULU,
+          new Date('2026-10-14T22:00:00Z'),
+        )).toEqual({ firstDay: '2026-11-14', lastDay: '2026-12-14' });
+        expect(toDayRange(
+          { month: null, upcomingPage: 2 },
+          HONOLULU,
+          new Date('2026-10-14T22:00:00Z'),
+        )).toEqual({ firstDay: '2026-12-15', lastDay: '2027-01-14' });
+      },
+    );
+
+    it(
       "asks for a month's 1st through its last day",
       (): void => {
-        expect(toDayRange('2026-11', HONOLULU)).toEqual({ firstDay: '2026-11-01', lastDay: '2026-11-30' });
-        expect(toDayRange('2028-02', HONOLULU)).toEqual({ firstDay: '2028-02-01', lastDay: '2028-02-29' });
-        expect(toDayRange('2026-12', null)).toEqual({ firstDay: '2026-12-01', lastDay: '2026-12-31' });
+        expect(toDayRange({ month: '2026-11', upcomingPage: 0 }, HONOLULU)).toEqual({ firstDay: '2026-11-01', lastDay: '2026-11-30' });
+        expect(toDayRange({ month: '2028-02', upcomingPage: 0 }, HONOLULU)).toEqual({ firstDay: '2028-02-01', lastDay: '2028-02-29' });
+        expect(toDayRange({ month: '2026-12', upcomingPage: 0 }, null)).toEqual({ firstDay: '2026-12-01', lastDay: '2026-12-31' });
       },
     );
   },
