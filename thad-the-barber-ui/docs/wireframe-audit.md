@@ -137,15 +137,18 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 | Frosted section panels | 6 | `p-card` | `card.ts` | Border and backdrop blur via `css` |
 | Announcement slider, swipe, arrows, dots | 1 | `p-carousel` (PrimeNG 22 composable API) | `carousel.ts` | Ring dots that fill and scale when active |
 | Gallery lightbox, prev/next, close, counter, Esc/arrow keys | 1 | `p-galleria [fullScreen]` | `galleria.ts` | `#item` / `#footer` templates |
-| Booking month calendar and legend | 1 | `p-datepicker [inline]` | `datepicker.ts` | Square tiles, strike-through disabled days, fixed table layout |
-| Time slot grid | 1 | `p-selectbutton` + toggle buttons | `selectbutton.ts` | Segmented control un-joined into a wrapping grid |
+| Booking month calendar and legend | 1 | Replaced by a list of open days (#205, see §8): `p-selectbutton` | `selectbutton.ts` | One full-width row per day ("Monday, October 27th 2026"), with an amber "Only N left" badge on filling-up days (BR-15, #206) |
+| Month navigation (‹ month ›) | 1 | `pButton` arrows + a `p-selectbutton` month grid per year | `button.ts`, `selectbutton.ts` | "Next 31 days" first, then every later month in Square's booking window |
+| Time slot grid | 1 | `p-selectbutton` + toggle buttons | `selectbutton.ts` | Segmented control un-joined into a wrapping grid; a `p-message` `warn` note on a filling-up day |
+| Date, Time, Details, Summary panels | 4 | `p-card` steps (phones) or a `p-card` rail and panel (desktop, from `lg`) | `card.ts` | One open step at a time; the summary became the Review step (#207–#209) |
+| "Leave without booking?" prompt | new | `p-confirmdialog` | `dialog.ts` | Not in the wireframe (#210) |
 | Phone inputs (SMS + booking) | 2 | `p-inputmask` `(999) 999-9999` | `semantic.ts` `formField` | Replaces the wireframe's hand-written formatter |
 | Name input | 1 | `pInputText` | `semantic.ts` `formField` | |
 | "You're on the list" / "You're booked" | 2 | `p-message severity="info"` | `message.ts` | `info` re-skinned as copper (the app has no blue state) |
 | Success, warning and error notices | new | `p-message` (`success`, `warn`, `error`) and `p-toast` | `message.ts`, `toast.ts` | Not in the wireframe; which one to use is in the README's "Feedback messages" (#110) |
 | "★★★★★" text stars | 5 | `p-rating [readonly]` | `rating.ts` | |
 | Mobile slide-down menu | 1 | `p-drawer` | `drawer.ts` | |
-| Time-slot loading state | new | `p-progress-spinner` | Default | Not in the wireframe |
+| Open days loading state | new | `p-skeleton` rows shaped like the list | Default | Not in the wireframe |
 
 ### 4.2 Custom (no PrimeNG equivalent)
 
@@ -184,8 +187,8 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 | Testimonials markup | `features/home/data/home-content.data.ts` via `HomeContentService` | Ready to swap for `GET /api/reviews` (#37) |
 | `subscribe` / `setPhone` / `phoneErr` | `SmsSignup` component + `HomeActions.SmsSignupRequest` → `subscribeToSms` effect → `SmsSignupService` | Mocked 400ms |
 | `slots()`, `available()`, `hash()`, `daysAhead`, `slotMinutes` (`book.html`) | `AvailabilityService` → `GET /api/bookings/availability` (#41); window from `shopFeature.selectBookingSettings` | Real Square availability; the mock pattern and `BOOKING_RULES` are gone |
-| Month nav, `canPrev` / `canNext` | DatePicker `minDate` / `maxDate` + `BookingActions.MonthView` → `loadMonthAvailability` effect | |
-| Day / time pick, `done`, `tried`, `missing[]` | `booking` slice + `Booking` page computed signals | See state below |
+| Month nav, `canPrev` / `canNext` | `DateStep` view picker and arrows → `BookingActions.SetAvailabilityView` → `loadAvailability` effect (`?from=&to=`) | The view is the next 31 days or a month, limited to Square's booking window (#205) |
+| Day / time pick, `done`, `tried`, `missing[]` | The page's booking form + `utils/booking-steps.utils.ts` (open step, done and locked steps) | `missing[]` became the disabled Review/Confirm buttons (#207–#209) |
 | `confirm` | `Booking.confirm()` → `BookingService` → `POST /api/bookings` (#41); the page keeps the retry key, confirmation and notice | Error codes become inline `NoticeMessage`s (`toBookingNotice`) |
 | `ann`, `touchStart` / `touchEnd`, `goAnn` | Built into `p-carousel` | Removed |
 | `lb`, `stepLb`, `onKey` | Built into `p-galleria` | Removed |
@@ -199,7 +202,7 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 | `layout` (root) | `store/app.*.ts` | `menuOpen` |
 | `announcements` (root) | `features/announcements/state/announcements.{state,actions,reducer,feature,effects}.ts` | Announcements from the media container and their load status, loaded on the first navigation (#40); `selectActive` (BR-30, shop's clock), `selectIsHidden` (BR-32) |
 | `home` | `features/home/state/home.{state,actions,reducer,feature,effects}.ts` | Testimonials, gallery, content status, SMS sign-up status |
-| `booking` | `features/booking/state/booking.{state,actions,reducer,feature,effects}.ts` | Month in view, its open days, load status (the availability notice is derived from it), the last booking kept for 24 hours (the picks and the booking in progress live in the `Booking` page) |
+| `booking` | `features/booking/state/booking.{state,actions,reducer,feature,effects}.ts` The days in view (`availabilityView`: the next 31 days or a month, as `firstDay`/`lastDay`), their open days, load status (the availability notice is derived from it), the last booking kept for 24 hours (the picks and the booking in progress live in the `Booking` page) |
 
 - Each reducer lives in its own `*.reducer.ts`. Each `*.feature.ts` holds the feature key and uses `createFeature` for a scoped feature selector, with `extraSelectors` for derived values such as `selectOpenSlotCount`, `selectSelectedSlot` and `selectHomeSections`.
 - `home`, `shop` and `booking` persist to localStorage through `ngrx-store-localstorage` (`store/meta/meta.reducers.ts`), base64-encoded as `ttb-home`, `ttb-shop` and `ttb-booking`. `booking` keeps only the last booking's confirmation, without name or phone, for 24 hours (BR-22, #64); availability must be fresh, and the booking page keeps the picks and details itself. `home` clears its slice, and the saved copy, with its own `State Reset` action.
@@ -232,6 +235,9 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 | Instagram / Facebook URLs (`href="#"`) | From Square's location profile (#39) | Unset ones are hidden (BR-40) |
 | Announcement photos ("kid in the chair", "hot towel") | Placeholders dropped; images come from the media container | Thad uploads to `announcements/` and names the file in `image.fileName` |
 | Booking page monospace styling | Replaced with the brand sans | Intentional; the wireframe mono was a placeholder style |
+| Booking month calendar | Replaced by a list of open days written in full, the next 31 days by default or a chosen month, as far ahead as Square's booking window allows (#205) | Client's request (2026-10-26); fully booked days aren't listed |
+| Booking step layout (all four panels on one page) | One step open at a time: collapsing cards with a sticky bar on phones (#207), a step rail with Back/Continue from `lg` (#208), and a Review step before Confirm (#209) | Client's request (2026-10-26) |
+| Filling-up warning, leave prompt | New: "Only N left" under 5 open times (BR-15, #206); "Leave without booking?" with unconfirmed picks (#210) | Not in the wireframe |
 | Booking API, SMS provider, content API | Mocked services | Swap each service body for `HttpClient` calls (`environment.apiBaseUrl`) |
 | SSR / prerender | Not set up | Add `@angular/ssr` when hosting is decided |
 | Gallery images | The wireframe's 720–960px photos, served as uploaded in a fixed 4:5 frame (#168) | Thad uploads his own in the portal |
