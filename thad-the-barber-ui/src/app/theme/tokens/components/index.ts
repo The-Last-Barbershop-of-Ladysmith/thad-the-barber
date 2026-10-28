@@ -2,6 +2,7 @@ import { ComponentsDesignTokens } from '@primeuix/themes';
 import { button } from './button';
 import { card } from './card';
 import { carousel } from './carousel';
+import { dialog } from './dialog';
 import { drawer } from './drawer';
 import { galleria } from './galleria';
 import { message } from './message';
@@ -14,6 +15,7 @@ export const components: ComponentsDesignTokens = {
   button,
   card,
   carousel,
+  dialog,
   drawer,
   galleria,
   message,
