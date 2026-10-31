@@ -32,7 +32,7 @@
   display: flex;
   min-height: 100svh;
   align-items: center;
-  max-width: 75rem;
+  max-width: var(--p-brand-page-width);
   margin-inline: auto;
   padding-block: 8rem 3rem;
 

@@ -124,6 +124,9 @@ export const semantic: TokenSection = {
       },
       tile: { background: alpha('{espresso.50}', 4), borderColor: alpha('{copper.500}', 18) },
       divider: alpha('{copper.500}', 15),
+      // The content width the footer, the `page` utility and the 404 page share, and the gutter beside it.
+      pageWidth: '75rem',
+      pageGutter: '1.5rem',
       headerFade: `linear-gradient(180deg, ${alpha('{ink}', 92)} 0%, ${alpha('{ink}', 60)} 55%, transparent 100%)`,
       ctaGradient: 'linear-gradient(100deg, {ink} 0%, {espresso.800} 30%, {copper.500} 65%, {copper.300} 100%)',
       ctaGlow: `0 16px 36px -10px ${alpha('{copper.500}', 80)}`,
