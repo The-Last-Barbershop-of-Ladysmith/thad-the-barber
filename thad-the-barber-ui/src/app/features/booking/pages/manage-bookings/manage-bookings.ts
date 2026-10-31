@@ -10,11 +10,9 @@ import { BookingConfirmation } from '../../dtos/booking-confirmation.dto';
 import { bookingFeature } from '../../state/booking.feature';
 import { toLongDateTime } from '../../utils/booking-time.utils';
 import { toManagePath } from '../../utils/manage-link.utils';
-import { toUpcomingConfirmations } from '../../utils/saved-confirmation.utils';
 
 /** One row of the list: where it opens and its time on the shop's clock. */
 interface SavedBookingView {
-  id: string;
   path: string;
   time: string;
 }
@@ -38,8 +36,8 @@ interface SavedBookingView {
 export class ManageBookings {
   private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
   private readonly timeZone: Signal<string | null> = this.store.selectSignal(shopFeature.selectTimeZone);
-  private readonly savedConfirmations: Signal<BookingConfirmation[]> =
-    this.store.selectSignal(bookingFeature.selectSavedConfirmations);
+  private readonly upcomingConfirmations: Signal<BookingConfirmation[]> =
+    this.store.selectSignal(bookingFeature.selectUpcomingConfirmations);
 
   protected readonly bookingUrl: Signal<string> = this.store.selectSignal(shopFeature.selectBookingUrl);
 
@@ -49,9 +47,8 @@ export class ManageBookings {
     if (!timeZone) {
       return null;
     }
-    return toUpcomingConfirmations(this.savedConfirmations())
+    return this.upcomingConfirmations()
       .map((confirmation: BookingConfirmation): SavedBookingView => ({
-        id: confirmation.id,
         path: toManagePath(confirmation.id),
         time: toLongDateTime(timeZone, confirmation.startAt),
       }));

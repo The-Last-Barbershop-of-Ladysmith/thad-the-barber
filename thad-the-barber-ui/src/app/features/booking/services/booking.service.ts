@@ -9,7 +9,7 @@ import { ManagedBooking } from '../dtos/managed-booking.dto';
 export const BOOKINGS_URL: string = `${environment.apiBaseUrl}/bookings`;
 
 /** The manage token goes in this header only, never the URL, so it stays out of server logs (BR-08). */
-export const MANAGE_TOKEN_HEADER: string = 'X-Manage-Token';
+const MANAGE_TOKEN_HEADER: string = 'X-Manage-Token';
 
 @Injectable({ providedIn: 'root' })
 export class BookingService {

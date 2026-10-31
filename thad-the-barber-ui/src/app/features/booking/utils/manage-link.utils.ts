@@ -9,7 +9,7 @@ export function toManagePath(id: string): string {
 }
 
 /** `t=…`: the fragment carrying the manage token. Browsers never send a fragment to the server (BR-08). */
-export function toManageFragment(manageToken: string): string {
+function toManageFragment(manageToken: string): string {
   return new URLSearchParams({ [TOKEN_KEY]: manageToken }).toString();
 }
 

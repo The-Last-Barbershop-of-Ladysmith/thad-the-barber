@@ -1,4 +1,3 @@
-import { Location } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -15,7 +14,7 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
@@ -24,10 +23,8 @@ import { InputTextModule } from 'primeng/inputtext';
 import { Backdrop } from '../../../../shared/components/backdrop/backdrop';
 import { NoticeMessage } from '../../../../shared/components/notice-message/notice-message';
 import { Notice } from '../../../../shared/models/notice.model';
-import { RequestStatus } from '../../../../shared/models/request.models';
 import { AppState } from '../../../../store/app.state';
 import { BookingSettings } from '../../../shop/models/booking-settings.model';
-import { ShopAddress } from '../../../shop/models/shop-address.model';
 import { shopFeature } from '../../../shop/state/shop.feature';
 import { BookingConfirmation } from '../../dtos/booking-confirmation.dto';
 import { ManagedBooking } from '../../dtos/managed-booking.dto';
@@ -43,15 +40,15 @@ import {
   toManageLoadNotice,
 } from '../../utils/booking-notice.utils';
 import { toLongDateTime } from '../../utils/booking-time.utils';
-import { toIcsFile } from '../../utils/ics.utils';
+import { toCalendarEvent, toIcsFile } from '../../utils/ics.utils';
 import { readManageToken, toManageLink, toManagePath } from '../../utils/manage-link.utils';
 
 /**
- * One booking, opened from its manage link (`/book/manage/{id}#t=…`) or from this device's list. The token comes from
- * the link's fragment, which is then cleared from the address bar and kept in `history.state` instead, or from the
- * bookings saved on this device (BR-22); it's sent only in the `X-Manage-Token` header (BR-08). Right after a booking,
- * this is its confirmation, with the link to keep, a copy button and an "Add to calendar" file. Every time shows on the
- * shop's clock.
+ * One booking, opened from its manage link (`/book/manage/{id}#t=…`), from this device's list, or by the booking page
+ * right after booking. The token comes from the link's fragment, which then leaves the address bar for the router's
+ * navigation state, or from the bookings saved on this device (BR-22); it's sent only in the `X-Manage-Token` header
+ * (BR-08). Right after booking, this is its confirmation, with the link to keep first; opened later, the appointment's
+ * actions come first. Every time shows on the shop's clock.
  */
 @Component({
   selector: 'app-manage-booking',
@@ -74,27 +71,29 @@ export class ManageBooking implements OnInit {
   private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
   private readonly bookingService: BookingService = inject(BookingService);
   private readonly messageService: MessageService = inject(MessageService);
-  private readonly location: Location = inject(Location);
+  private readonly router: Router = inject(Router);
   private readonly route: ActivatedRoute = inject(ActivatedRoute);
   private readonly destroyRef: DestroyRef = inject(DestroyRef);
   private readonly injector: Injector = inject(Injector);
 
   private readonly timeZone: Signal<string | null> = this.store.selectSignal(shopFeature.selectTimeZone);
   private readonly shopName: Signal<string> = this.store.selectSignal(shopFeature.selectShopName);
-  private readonly address: Signal<ShopAddress | null> = this.store.selectSignal(shopFeature.selectAddress);
+  private readonly addressLine: Signal<string | null> = this.store.selectSignal(shopFeature.selectAddressLine);
   private readonly bookingSettings: Signal<BookingSettings | null> =
     this.store.selectSignal(shopFeature.selectBookingSettings);
+  private readonly savedConfirmations: Signal<BookingConfirmation[]> =
+    this.store.selectSignal(bookingFeature.selectSavedConfirmations);
 
-  private readonly pageState: ManagePageState = (this.location.getState() as ManagePageState | null) ?? {};
+  /** Read while this page's navigation runs; the router restores it on a reload. */
+  private readonly pageState: ManagePageState = this.router.currentNavigation()?.extras.state ?? {};
   private readonly manageToken: WritableSignal<string | null> = signal(null);
 
   /** Right after booking, the link to keep comes first; opened later, the appointment's actions do. */
   protected readonly isJustBooked: boolean = this.pageState.isJustBooked === true;
   protected readonly justBookedNotice: Notice = JUST_BOOKED_NOTICE;
-  protected readonly loadStatus: WritableSignal<RequestStatus> = signal(RequestStatus.Idle);
+  protected readonly isLoading: WritableSignal<boolean> = signal(false);
   protected readonly loadNotice: WritableSignal<Notice | null> = signal(null);
   protected readonly managedBooking: WritableSignal<ManagedBooking | null> = signal(null);
-  protected readonly requestStatus: typeof RequestStatus = RequestStatus;
 
   protected readonly appointmentTime: Signal<string | null> = computed((): string | null => {
     const managedBooking: ManagedBooking | null = this.managedBooking();
@@ -117,51 +116,61 @@ export class ManageBooking implements OnInit {
   });
 
   /** Waits for the shop, which holds the appointment's length and address. */
-  private readonly calendarEvent: Signal<CalendarEvent | null> = computed((): CalendarEvent | null => {
+  protected readonly calendarEvent: Signal<CalendarEvent | null> = computed((): CalendarEvent | null => {
     const managedBooking: ManagedBooking | null = this.managedBooking();
     const bookingSettings: BookingSettings | null = this.bookingSettings();
     const manageLink: string | null = this.manageLink();
     if (!managedBooking || !bookingSettings || !manageLink) {
       return null;
     }
-    return {
-      uid: `${managedBooking.id}@thad-the-barber`,
-      startAt: managedBooking.startAt,
-      durationMinutes: bookingSettings.slotMinutes,
-      title: `Appointment at ${this.shopName()}`,
-      location: toAddressLine(this.address()),
-      description: `Change or cancel: ${manageLink}`,
-      url: manageLink,
-    };
+    return toCalendarEvent(
+      managedBooking,
+      {
+        name: this.shopName(),
+        addressLine: this.addressLine(),
+        slotMinutes: bookingSettings.slotMinutes,
+      },
+      manageLink,
+    );
   });
 
-  protected readonly canAddToCalendar: Signal<boolean> = computed((): boolean => this.calendarEvent() !== null);
-
   ngOnInit(): void {
-    this.manageToken.set(this.findManageToken());
+    const savedConfirmation: BookingConfirmation | undefined = this.savedConfirmations()
+      .find((confirmation: BookingConfirmation): boolean => confirmation.id === this.id());
+    this.manageToken.set(this.findManageToken(savedConfirmation));
+    // The booking page just made it: the device holds its time, and it can't be cancelled yet, so there's no need to
+    // ask the API (and Square). Once it has started, the API says so.
+    const isUpcoming: boolean = savedConfirmation !== undefined && Date.parse(savedConfirmation.startAt) > Date.now();
+    if (this.isJustBooked && savedConfirmation && isUpcoming) {
+      this.show({
+        id: savedConfirmation.id,
+        startAt: savedConfirmation.startAt,
+        isCancelled: false,
+        canChange: true,
+      });
+      return;
+    }
     this.load();
   }
 
   protected load(): void {
     const manageToken: string | null = this.manageToken();
     if (!manageToken) {
-      this.loadStatus.set(RequestStatus.Error);
       this.loadNotice.set(BOOKING_NOT_FOUND_NOTICE);
       return;
     }
-    this.loadStatus.set(RequestStatus.Pending);
+    this.isLoading.set(true);
     this.loadNotice.set(null);
     this.bookingService
       .getBooking(this.id(), manageToken)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (managedBooking: ManagedBooking): void => {
-          this.managedBooking.set(managedBooking);
-          this.loadStatus.set(RequestStatus.Success);
-          this.focusHeading();
+          this.isLoading.set(false);
+          this.show(managedBooking);
         },
         error: (error: unknown): void => {
-          this.loadStatus.set(RequestStatus.Error);
+          this.isLoading.set(false);
           this.loadNotice.set(toManageLoadNotice(error));
         },
       });
@@ -204,30 +213,8 @@ export class ManageBooking implements OnInit {
     });
   }
 
-  /**
-   * The link's `#t=…`, which then leaves the address bar (it would otherwise show in screenshots and shared tabs) and
-   * moves into `history.state`; else a token kept there from before a reload; else one saved on this device.
-   */
-  private findManageToken(): string | null {
-    const fragmentToken: string | null = readManageToken(this.route.snapshot.fragment);
-    if (fragmentToken) {
-      this.location.replaceState(
-        toManagePath(this.id()),
-        '',
-        { ...this.pageState, manageToken: fragmentToken },
-      );
-      return fragmentToken;
-    }
-    if (this.pageState.manageToken) {
-      return this.pageState.manageToken;
-    }
-    const savedConfirmation: BookingConfirmation | undefined = this.store
-      .selectSignal(bookingFeature.selectSavedConfirmations)()
-      .find((confirmation: BookingConfirmation): boolean => confirmation.id === this.id());
-    return savedConfirmation?.manageToken ?? null;
-  }
-
-  private focusHeading(): void {
+  private show(managedBooking: ManagedBooking): void {
+    this.managedBooking.set(managedBooking);
     afterNextRender(
       (): void => {
         document.getElementById('manage-heading')?.focus();
@@ -235,16 +222,25 @@ export class ManageBooking implements OnInit {
       { injector: this.injector },
     );
   }
-}
 
-/** "1 Made-up St, Testville, VA 22401" */
-function toAddressLine(address: ShopAddress | null): string | null {
-  if (!address) {
-    return null;
+  /**
+   * The link's `#t=…`, which then leaves the address bar (it would otherwise show in screenshots and shared tabs) for
+   * the navigation state, so a reload still has it; else the one in the navigation state; else the one saved on this
+   * device.
+   */
+  private findManageToken(savedConfirmation: BookingConfirmation | undefined): string | null {
+    const fragmentToken: string | null = readManageToken(this.route.snapshot.fragment);
+    if (fragmentToken) {
+      const managePageState: ManagePageState = { ...this.pageState, manageToken: fragmentToken };
+      void this.router.navigateByUrl(
+        toManagePath(this.id()),
+        {
+          replaceUrl: true,
+          state: managePageState,
+        },
+      );
+      return fragmentToken;
+    }
+    return this.pageState.manageToken ?? savedConfirmation?.manageToken ?? null;
   }
-  return [
-    address.street,
-    address.city,
-    `${address.state} ${address.postalCode}`,
-  ].join(', ');
 }

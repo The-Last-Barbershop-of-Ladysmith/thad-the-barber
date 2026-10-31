@@ -10,7 +10,7 @@
     <app-notice-message [notice]="failureNotice" (retry)="load()" />
   }
 
-  @if (loadStatus() === requestStatus.Pending) {
+  @if (isLoading()) {
     <p class="text-muted-color" data-testid="manage-loading" role="status">
       <i class="pi pi-spin pi-spinner" aria-hidden="true"></i> Loading your booking…
     </p>
@@ -44,39 +44,33 @@
               />
             </div>
           }
+          <!-- Right after booking, Copy link leads; opened later, it trails as a small text button. -->
           <div class="manage-actions">
-            @if (isJustBooked) {
-              <button pButton type="button" data-testid="copy-link" (click)="copyManageLink()">
-                <i pButtonIcon class="pi pi-copy" aria-hidden="true"></i>
-                <span pButtonLabel>Copy link</span>
-              </button>
-            }
+            <button
+              pButton
+              type="button"
+              [class.order-last]="!isJustBooked"
+              [severity]="isJustBooked ? undefined : 'secondary'"
+              [text]="!isJustBooked"
+              [size]="isJustBooked ? undefined : 'small'"
+              data-testid="copy-link"
+              (click)="copyManageLink()"
+            >
+              <i pButtonIcon class="pi pi-copy" aria-hidden="true"></i>
+              <span pButtonLabel>Copy link</span>
+            </button>
             <button
               pButton
               type="button"
               [severity]="isJustBooked ? 'secondary' : undefined"
               [outlined]="isJustBooked"
               data-testid="add-to-calendar"
-              [disabled]="!canAddToCalendar()"
+              [disabled]="!calendarEvent()"
               (click)="addToCalendar()"
             >
               <i pButtonIcon class="pi pi-calendar-plus" aria-hidden="true"></i>
               <span pButtonLabel>Add to calendar</span>
             </button>
-            @if (!isJustBooked) {
-              <button
-                pButton
-                type="button"
-                severity="secondary"
-                size="small"
-                [text]="true"
-                data-testid="copy-link"
-                (click)="copyManageLink()"
-              >
-                <i pButtonIcon class="pi pi-copy" aria-hidden="true"></i>
-                <span pButtonLabel>Copy link</span>
-              </button>
-            }
           </div>
         }
       </div>
@@ -84,7 +78,7 @@
   }
 
   <nav class="manage-actions" aria-label="More bookings">
-    <a class="nav-link" routerLink="/book/manage" data-testid="all-bookings">All your bookings</a>
-    <a class="nav-link" routerLink="/book" data-testid="book-another">Book another appointment</a>
+    <a class="nav-link" routerLink="/book/manage">All your bookings</a>
+    <a class="nav-link" routerLink="/book">Book another appointment</a>
   </nav>
 </div>

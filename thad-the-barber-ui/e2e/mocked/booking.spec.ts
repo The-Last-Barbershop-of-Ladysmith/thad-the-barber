@@ -2,11 +2,11 @@ import { Locator, Page, Request, Route } from '@playwright/test';
 import { BookingConfirmation } from '../../src/app/features/booking/dtos/booking-confirmation.dto';
 import { BookingRequest } from '../../src/app/features/booking/dtos/booking-request.dto';
 import { ProblemCode } from '../../src/app/shared/models/problem-code.model';
-import { decodeBase64, encodeBase64 } from '../../src/app/shared/utils/base64.utils';
-import { testConfirmation } from '../../src/testing/test-booking';
+import { decodeBase64 } from '../../src/app/shared/utils/base64.utils';
+import { testConfirmationIn } from '../../src/testing/test-booking';
 import { TEST_SHOP } from '../../src/testing/test-shop';
 import { expectNoA11yViolations } from '../support/axe';
-import { fulfillAvailability, isAvailabilityRequest, isBookingRequest } from '../support/booking';
+import { fulfillAvailability, isAvailabilityRequest, isBookingRequest, saveBookings } from '../support/booking';
 import { expect, test } from '../support/fixtures';
 import { fulfillSession, isSessionRequest } from '../support/session';
 
@@ -131,11 +131,7 @@ test.describe(
     test(
       'drops a booking once it has started',
       async ({ page }: { page: Page; }): Promise<void> => {
-        const aMinuteAgo: string = new Date(Date.now() - 60_000).toISOString();
-        const encoded: string = encodeBase64(JSON.stringify({ savedConfirmations: [testConfirmation(aMinuteAgo)] }));
-        await page.addInitScript((value: string): void => {
-          localStorage.setItem('ttb-booking', value);
-        }, encoded);
+        await saveBookings(page, [testConfirmationIn(-1, 'made-up-yesterday')]);
 
         await page.goto('/book');
         await waitForShop(page);

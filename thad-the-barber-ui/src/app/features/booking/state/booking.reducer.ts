@@ -34,7 +34,7 @@ export const bookingReducer: ActionReducer<BookingState> = createReducer(
     BookingActions.SavedConfirmationsAdopt,
     (state: BookingState, { savedConfirmations }: { savedConfirmations: BookingConfirmation[]; }): BookingState => ({
       ...state,
-      savedConfirmations,
+      savedConfirmations: toSortedConfirmations(savedConfirmations),
     }),
   ),
   on(

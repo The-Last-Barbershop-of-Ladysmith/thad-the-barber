@@ -50,11 +50,10 @@ import { StepProgress } from './models/step-progress.model';
 import { BookingService } from './services/booking.service';
 import * as BookingActions from './state/booking.actions';
 import { bookingFeature } from './state/booking.feature';
-import { BOT_CHECK_FAILED_NOTICE, UPCOMING_BOOKING_NOTICE, toBookingNotice } from './utils/booking-notice.utils';
+import { BOT_CHECK_FAILED_NOTICE, toBookingNotice } from './utils/booking-notice.utils';
 import { BOOKING_STEPS, canOpenStep, isStepDone } from './utils/booking-steps.utils';
 import { toBookingWindow, toTimeLabel, toUpcomingView } from './utils/booking-time.utils';
-import { toManageFragment, toManagePath } from './utils/manage-link.utils';
-import { toUpcomingConfirmations } from './utils/saved-confirmation.utils';
+import { toManagePath } from './utils/manage-link.utils';
 
 /** How one step shows in the phone's step cards and the desktop's step rail. */
 interface StepView {
@@ -126,10 +125,9 @@ export class Booking {
   protected readonly availabilityNotice: Signal<Notice | null> =
     this.store.selectSignal(bookingFeature.selectNotice);
 
-  /** Bookings kept on this device from an earlier visit (BR-22), read once when the page opens. */
-  private readonly hasUpcomingBooking: boolean =
-    toUpcomingConfirmations(this.store.selectSignal(bookingFeature.selectSavedConfirmations)()).length > 0;
-  protected readonly upcomingBookingNotice: Notice | null = this.hasUpcomingBooking ? UPCOMING_BOOKING_NOTICE : null;
+  /** "You have an upcoming booking", while this device keeps one (BR-22). */
+  protected readonly upcomingBookingNotice: Signal<Notice | null> =
+    this.store.selectSignal(bookingFeature.selectUpcomingBookingNotice);
 
   protected readonly bookingForm: BookingForm = new FormGroup({
     name: new FormControl('', {
@@ -152,6 +150,8 @@ export class Booking {
 
   protected readonly isSubmitting: WritableSignal<boolean> = signal(false);
   protected readonly bookingNotice: WritableSignal<Notice | null> = signal(null);
+  /** Set once the booking went through, as the page leaves for the booking's own page: nothing more is sent. */
+  private readonly isBooked: WritableSignal<boolean> = signal(false);
   /** Kept while the same booking is retried, so a booking whose response was lost isn't made twice. */
   private idempotencyKey: string | null = null;
 
@@ -234,7 +234,10 @@ export class Booking {
    * A picked day that isn't booked yet; leaving would lose it (#210). That includes a booking being sent: leaving then
    * drops its response, so it would be neither shown nor kept.
    */
-  private readonly hasUnconfirmedPick: Signal<boolean> = computed((): boolean => this.pickedDate() !== null);
+  private readonly hasUnconfirmedPick: Signal<boolean> = computed((): boolean => {
+    const hasPick: boolean = this.pickedDate() !== null;
+    return hasPick && !this.isBooked();
+  });
 
   constructor() {
     this.askBeforeUnloadWhileUnconfirmed();
@@ -344,7 +347,8 @@ export class Booking {
       phone,
       startAt,
     }: BookingFormValue = this.bookingForm.getRawValue();
-    if (this.bookingForm.invalid || !startAt || this.isSubmitting() || this.isBotCheckFailed()) {
+    const canSend: boolean = !this.isSubmitting() && !this.isBooked() && !this.isBotCheckFailed();
+    if (this.bookingForm.invalid || !startAt || !canSend) {
       return;
     }
     if (!this.idempotencyKey) {
@@ -379,18 +383,15 @@ export class Booking {
   }
 
   /**
-   * Keeps the booking (BR-22) and opens its manage page, which confirms it with the link to keep. The picks are cleared
-   * first, so leaving doesn't ask "Leave without booking?" (#210).
+   * Keeps the booking (BR-22), where its manage page finds the token and time, and opens that page to confirm it. Once
+   * booked, leaving doesn't ask "Leave without booking?" (#210).
    */
   private onBooked(confirmedBooking: BookingConfirmation): void {
     this.idempotencyKey = null;
     this.store.dispatch(BookingActions.BookingConfirm({ bookingConfirmation: confirmedBooking }));
-    this.bookingForm.patchValue({ date: null, startAt: null });
+    this.isBooked.set(true);
     const managePageState: ManagePageState = { isJustBooked: true };
-    void this.router.navigateByUrl(
-      `${toManagePath(confirmedBooking.id)}#${toManageFragment(confirmedBooking.manageToken)}`,
-      { state: managePageState },
-    );
+    void this.router.navigateByUrl(toManagePath(confirmedBooking.id), { state: managePageState });
   }
 
   /**

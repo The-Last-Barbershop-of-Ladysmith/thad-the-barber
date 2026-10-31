@@ -40,6 +40,7 @@ describe(
           'has no location, timezone, hours, socials or booking settings',
           (): void => {
             expect(shopFeature.selectAddress(state)).toBeNull();
+            expect(shopFeature.selectAddressLine(state)).toBeNull();
             expect(shopFeature.selectMapEmbedUrl(state)).toBeNull();
             expect(shopFeature.selectDirectionsUrl(state)).toBeNull();
             expect(shopFeature.selectTimeZone(state)).toBeNull();
@@ -90,6 +91,7 @@ describe(
             const query: string = encodeURIComponent('12 Pretend Pl, Faketown, HI 96999-0001');
 
             expect(shopFeature.selectAddress(state)).toEqual(TEST_SHOP.address);
+            expect(shopFeature.selectAddressLine(state)).toBe('12 Pretend Pl, Faketown, HI 96999-0001');
             expect(shopFeature.selectMapEmbedUrl(state)).toBe(`https://maps.google.com/maps?q=${query}&z=14&output=embed`);
             expect(shopFeature.selectDirectionsUrl(state))
               .toBe(`https://www.google.com/maps/dir/?api=1&destination=${query}`);

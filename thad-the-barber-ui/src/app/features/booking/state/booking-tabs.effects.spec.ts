@@ -2,20 +2,14 @@ import { PLATFORM_ID } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Action } from '@ngrx/store';
 import { Observable } from 'rxjs';
-import { testConfirmation } from '../../../../testing/test-booking';
-import { encodeBase64 } from '../../../shared/utils/base64.utils';
+import { encodeSavedBookings, testConfirmationIn } from '../../../../testing/test-booking';
 import { BookingConfirmation } from '../dtos/booking-confirmation.dto';
 import * as BookingActions from './booking.actions';
 import { adoptBookingFromOtherTab } from './booking-tabs.effects';
 
-const ONE_DAY_MS: number = 24 * 60 * 60 * 1000;
-const tomorrow: BookingConfirmation = testConfirmation(new Date(Date.now() + ONE_DAY_MS).toISOString(), 'made-up-tomorrow');
-const nextWeek: BookingConfirmation = testConfirmation(new Date(Date.now() + 7 * ONE_DAY_MS).toISOString(), 'made-up-next-week');
-const yesterday: BookingConfirmation = testConfirmation(new Date(Date.now() - ONE_DAY_MS).toISOString(), 'made-up-yesterday');
-
-function saved(savedConfirmations: BookingConfirmation[]): string {
-  return encodeBase64(JSON.stringify({ savedConfirmations }));
-}
+const tomorrow: BookingConfirmation = testConfirmationIn(1, 'made-up-tomorrow');
+const nextWeek: BookingConfirmation = testConfirmationIn(7, 'made-up-next-week');
+const yesterday: BookingConfirmation = testConfirmationIn(-1, 'made-up-yesterday');
 
 describe(
   'adoptBookingFromOtherTab',
@@ -39,7 +33,7 @@ describe(
       (): void => {
         const emitted: Action[] = listen('browser');
 
-        otherTabWrites('ttb-booking', saved([
+        otherTabWrites('ttb-booking', encodeSavedBookings([
           nextWeek,
           yesterday,
           tomorrow,
@@ -54,7 +48,7 @@ describe(
       (): void => {
         const emitted: Action[] = listen('browser');
 
-        otherTabWrites('ttb-booking', saved([]));
+        otherTabWrites('ttb-booking', encodeSavedBookings([]));
 
         expect(emitted).toEqual([BookingActions.SavedConfirmationsAdopt({ savedConfirmations: [] })]);
       },
@@ -65,7 +59,7 @@ describe(
       (): void => {
         const emitted: Action[] = listen('browser');
 
-        otherTabWrites('ttb-shop', saved([tomorrow]));
+        otherTabWrites('ttb-shop', encodeSavedBookings([tomorrow]));
         otherTabWrites('ttb-booking', 'not base64 {');
         otherTabWrites('ttb-booking', null);
 
@@ -78,7 +72,7 @@ describe(
       (): void => {
         const emitted: Action[] = listen('server');
 
-        otherTabWrites('ttb-booking', saved([tomorrow]));
+        otherTabWrites('ttb-booking', encodeSavedBookings([tomorrow]));
 
         expect(emitted).toEqual([]);
       },

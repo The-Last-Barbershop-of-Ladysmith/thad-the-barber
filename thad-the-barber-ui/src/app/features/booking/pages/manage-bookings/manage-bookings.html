@@ -10,7 +10,7 @@
     <p-card [dt]="{ body: { padding: '1.25rem' } }">
       @if (bookings.length > 0) {
         <ul class="saved-bookings" data-testid="saved-bookings">
-          @for (savedBooking of bookings; track savedBooking.id) {
+          @for (savedBooking of bookings; track savedBooking.path) {
             <li>
               <a class="saved-booking" data-testid="saved-booking" [routerLink]="savedBooking.path">
                 <span>{{ savedBooking.time }}</span>

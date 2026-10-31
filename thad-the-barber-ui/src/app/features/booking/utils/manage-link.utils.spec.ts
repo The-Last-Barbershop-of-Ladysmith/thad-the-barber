@@ -1,4 +1,4 @@
-import { readManageToken, toManageFragment, toManageLink, toManagePath } from './manage-link.utils';
+import { readManageToken, toManageLink, toManagePath } from './manage-link.utils';
 
 describe(
   'manage link',
@@ -17,7 +17,9 @@ describe(
       'encodes an ID or token that would otherwise break the URL',
       (): void => {
         expect(toManagePath('made-up/booking?x')).toBe('/book/manage/made-up%2Fbooking%3Fx');
-        expect(readManageToken(toManageFragment('made+up&token='))).toBe('made+up&token=');
+        const link: string = toManageLink('https://site.example', { id: 'made-up-booking', manageToken: 'made+up&token=' });
+
+        expect(readManageToken(new URL(link).hash.slice(1))).toBe('made+up&token=');
       },
     );
 

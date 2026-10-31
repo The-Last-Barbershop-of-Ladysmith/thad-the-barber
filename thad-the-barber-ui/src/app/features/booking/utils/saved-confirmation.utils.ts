@@ -1,24 +1,24 @@
 import { BookingConfirmation } from '../dtos/booking-confirmation.dto';
 import { BookingState } from '../state/booking.state';
 
-/** Soonest first. */
+/** Soonest first: the order the booking slice keeps its saved confirmations in. */
 export function toSortedConfirmations(confirmations: BookingConfirmation[]): BookingConfirmation[] {
   return [...confirmations].sort((first: BookingConfirmation, second: BookingConfirmation): number =>
     Date.parse(first.startAt) - Date.parse(second.startAt));
 }
 
-/** The bookings that haven't started, soonest first: one that has can't be changed, so it's dropped (BR-07, BR-22). */
+/** The bookings that haven't started, in the order given: one that has can't be changed (BR-07, BR-22). */
 export function toUpcomingConfirmations(
   confirmations: BookingConfirmation[],
   now: Date = new Date(),
 ): BookingConfirmation[] {
-  return toSortedConfirmations(confirmations.filter((confirmation: BookingConfirmation): boolean =>
-    Date.parse(confirmation.startAt) > now.getTime()));
+  return confirmations.filter((confirmation: BookingConfirmation): boolean =>
+    Date.parse(confirmation.startAt) > now.getTime());
 }
 
 /**
- * Reads a saved booking slice: only the upcoming bookings' ID, time and manage token, so nothing else stored under the
- * key (an older build's slice, a tampered value, a name or phone) reaches the state.
+ * Reads a saved booking slice: only the upcoming bookings' ID, time and manage token, soonest first, so nothing else
+ * stored under the key (an older build's slice, a tampered value, a name or phone) reaches the state.
  */
 export function toKeptConfirmations(
   saved: unknown,
@@ -39,7 +39,7 @@ export function toKeptConfirmations(
       startAt,
       manageToken,
     }));
-  return { savedConfirmations: toUpcomingConfirmations(confirmations, now) };
+  return { savedConfirmations: toSortedConfirmations(toUpcomingConfirmations(confirmations, now)) };
 }
 
 function isBookingConfirmation(value: unknown): value is BookingConfirmation {

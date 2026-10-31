@@ -1,6 +1,8 @@
-import { Route } from '@playwright/test';
+import { Page, Route } from '@playwright/test';
+import { BookingConfirmation } from '../../src/app/features/booking/dtos/booking-confirmation.dto';
 import { AvailableDay } from '../../src/app/features/booking/dtos/available-day.dto';
 import { ManagedBooking } from '../../src/app/features/booking/dtos/managed-booking.dto';
+import { encodeSavedBookings } from '../../src/testing/test-booking';
 import { TEST_SHOP } from '../../src/testing/test-shop';
 import { servedEnvironment } from './served-environment';
 
@@ -17,10 +19,19 @@ export function isBookingRequest(url: URL): boolean {
   return url.href === BOOKINGS_URL;
 }
 
-/** `GET /api/bookings/{id}`, the manage page's load. */
+/** `/api/bookings/{id}`, one booking by its ID: not its `/cancel` or `/reschedule`, nor availability. */
 export function isManagedBookingRequest(url: URL): boolean {
-  const isUnderBookings: boolean = `${url.origin}${url.pathname}`.startsWith(`${BOOKINGS_URL}/`);
-  return isUnderBookings && !isAvailabilityRequest(url);
+  const address: string = `${url.origin}${url.pathname}`;
+  const id: string = address.slice(BOOKINGS_URL.length + 1);
+  const isOneSegmentUnderBookings: boolean = address.startsWith(`${BOOKINGS_URL}/`) && /^[^/]+$/.test(id);
+  return isOneSegmentUnderBookings && !isAvailabilityRequest(url);
+}
+
+/** Saves bookings to the device as the app does, before the page's scripts run. */
+export async function saveBookings(page: Page, savedConfirmations: BookingConfirmation[]): Promise<void> {
+  await page.addInitScript((value: string): void => {
+    localStorage.setItem('ttb-booking', value);
+  }, encodeSavedBookings(savedConfirmations));
 }
 
 /**
@@ -44,8 +55,13 @@ function toAvailableDays(from: string, to: string): AvailableDay[] {
   return days;
 }
 
-/** Any booking asked for by ID is upcoming and can still change, a day from now. */
+/** `GET`s any booking by ID as upcoming and still changeable, a day from now; other methods fall through. */
 export async function fulfillManagedBooking(route: Route): Promise<void> {
+  const isGet: boolean = route.request().method() === 'GET';
+  if (!isGet) {
+    await route.fallback();
+    return;
+  }
   const id: string = decodeURIComponent(new URL(route.request().url()).pathname.split('/').at(-1) ?? '');
   const managedBooking: ManagedBooking = {
     id,

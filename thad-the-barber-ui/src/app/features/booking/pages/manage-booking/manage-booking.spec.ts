@@ -1,13 +1,12 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Location } from '@angular/common';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Store, provideStore } from '@ngrx/store';
 import { MessageService, ToastMessageOptions } from 'primeng/api';
 import { Observable, Subject } from 'rxjs';
 import { Mock } from 'vitest';
-import { testConfirmation } from '../../../../../testing/test-booking';
+import { testConfirmationIn } from '../../../../../testing/test-booking';
 import { TEST_SHOP } from '../../../../../testing/test-shop';
 import { NoticeMessage } from '../../../../shared/components/notice-message/notice-message';
 import { ProblemCode } from '../../../../shared/models/problem-code.model';
@@ -22,18 +21,18 @@ import { bookingFeature } from '../../state/booking.feature';
 import { ManageBooking } from './manage-booking';
 
 const BOOKING_ID: string = 'made-up-booking';
-const TOMORROW: string = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+const savedTomorrow: BookingConfirmation = testConfirmationIn(1, BOOKING_ID);
 
 const upcoming: ManagedBooking = {
   id: BOOKING_ID,
-  startAt: TOMORROW,
+  startAt: savedTomorrow.startAt,
   isCancelled: false,
   canChange: true,
 };
 
 interface PageSetup {
   fragment?: string | null;
-  historyState?: object | null;
+  navigationState?: object | null;
   savedConfirmations?: BookingConfirmation[];
 }
 
@@ -43,7 +42,7 @@ describe(
     let fixture: ComponentFixture<ManageBooking>;
     let tokensSent: string[];
     let responses: Subject<ManagedBooking>[];
-    let replaceState: Mock;
+    let navigateByUrl: Mock;
     let toasts: ToastMessageOptions[];
 
     function getBooking(_id: string, manageToken: string): Observable<ManagedBooking> {
@@ -55,7 +54,7 @@ describe(
 
     function openPage({
       fragment = 't=made-up-link-token',
-      historyState = null,
+      navigationState = null,
       savedConfirmations = [],
     }: PageSetup = {}): void {
       TestBed.configureTestingModule({
@@ -66,7 +65,13 @@ describe(
           }),
           { provide: BookingService, useValue: { getBooking } },
           { provide: ActivatedRoute, useValue: { snapshot: { fragment } } },
-          { provide: Location, useValue: { getState: (): unknown => historyState, replaceState } },
+          {
+            provide: Router,
+            useValue: {
+              currentNavigation: (): object | null => (navigationState ? { extras: { state: navigationState } } : null),
+              navigateByUrl,
+            },
+          },
           {
             provide: MessageService,
             useValue: {
@@ -107,41 +112,43 @@ describe(
     beforeEach((): void => {
       tokensSent = [];
       responses = [];
-      replaceState = vi.fn();
+      navigateByUrl = vi.fn().mockResolvedValue(true);
       toasts = [];
     });
 
     it(
-      "loads the booking with the link's token, then clears the token from the address bar into history.state",
+      "loads the booking with the link's token, then moves the token from the address bar into the navigation state",
       (): void => {
-        openPage({ historyState: { isJustBooked: true } });
+        openPage({ navigationState: { isJustBooked: true } });
 
         expect(tokensSent).toEqual(['made-up-link-token']);
-        expect(replaceState).toHaveBeenCalledWith(
+        expect(navigateByUrl).toHaveBeenCalledWith(
           '/book/manage/made-up-booking',
-          '',
-          { isJustBooked: true, manageToken: 'made-up-link-token' },
+          {
+            replaceUrl: true,
+            state: { isJustBooked: true, manageToken: 'made-up-link-token' },
+          },
         );
         expect(byTestId('manage-loading')).not.toBeNull();
       },
     );
 
     it(
-      'uses the token kept in history.state after a reload',
+      'uses the token kept in the navigation state after a reload',
       (): void => {
-        openPage({ fragment: null, historyState: { manageToken: 'made-up-kept-token' } });
+        openPage({ fragment: null, navigationState: { manageToken: 'made-up-kept-token' } });
 
         expect(tokensSent).toEqual(['made-up-kept-token']);
-        expect(replaceState).not.toHaveBeenCalled();
+        expect(navigateByUrl).not.toHaveBeenCalled();
       },
     );
 
     it(
       'uses the token saved on this device when opened from the list',
       (): void => {
-        openPage({ fragment: null, savedConfirmations: [testConfirmation(TOMORROW, BOOKING_ID)] });
+        openPage({ fragment: null, savedConfirmations: [savedTomorrow] });
 
-        expect(tokensSent).toEqual([testConfirmation(TOMORROW, BOOKING_ID).manageToken]);
+        expect(tokensSent).toEqual([savedTomorrow.manageToken]);
       },
     );
 
@@ -157,18 +164,35 @@ describe(
     );
 
     it(
-      "right after booking, says it's booked and puts the link to keep first, with copy and calendar buttons",
+      'right after booking, shows it from the device without asking the API, with the link to keep first',
       (): void => {
-        openPage({ historyState: { isJustBooked: true } });
-        respond(upcoming);
+        openPage({
+          fragment: null,
+          navigationState: { isJustBooked: true },
+          savedConfirmations: [savedTomorrow],
+        });
 
+        expect(tokensSent).toEqual([]);
         expect(byTestId('booking-confirmation')).not.toBeNull();
         expect(byTestId('appointment-time')?.textContent).toBeTruthy();
         expect((byTestId('manage-link') as HTMLInputElement | null)?.value)
-          .toBe(`${window.location.origin}/book/manage/made-up-booking#t=made-up-link-token`);
+          .toBe(`${window.location.origin}/book/manage/made-up-booking#t=${savedTomorrow.manageToken}`);
         expect(byTestId('copy-link')).not.toBeNull();
         expect(byTestId('add-to-calendar')).not.toBeNull();
         expect(byTestId('booking-status')).toBeNull();
+      },
+    );
+
+    it(
+      'asks the API when the booking it was opened as just booked has since started',
+      (): void => {
+        openPage({
+          fragment: null,
+          navigationState: { isJustBooked: true },
+          savedConfirmations: [testConfirmationIn(-1, BOOKING_ID)],
+        });
+
+        expect(tokensSent).toEqual([testConfirmationIn(-1, BOOKING_ID).manageToken]);
       },
     );
 
@@ -197,7 +221,7 @@ describe(
       it(
         `shows a ${changedBooking.isCancelled ? 'cancelled' : 'started'} booking's status and no link or actions`,
         (): void => {
-          openPage({ historyState: { isJustBooked: true } });
+          openPage({ navigationState: { isJustBooked: true } });
           respond(changedBooking);
 
           expect(byTestId('booking-status')).not.toBeNull();

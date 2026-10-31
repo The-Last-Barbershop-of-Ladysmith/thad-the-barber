@@ -1,4 +1,29 @@
+import { ManagedBooking } from '../dtos/managed-booking.dto';
 import { CalendarEvent } from '../models/calendar-event.model';
+
+/** The shop facts an appointment's calendar event shows. */
+interface CalendarShop {
+  name: string;
+  addressLine: string | null;
+  slotMinutes: number;
+}
+
+/** The appointment as a calendar event: at the shop, for one slot, with the link to change or cancel it. */
+export function toCalendarEvent(
+  booking: Pick<ManagedBooking, 'id' | 'startAt'>,
+  shop: CalendarShop,
+  manageLink: string,
+): CalendarEvent {
+  return {
+    uid: `${booking.id}@thad-the-barber`,
+    startAt: booking.startAt,
+    durationMinutes: shop.slotMinutes,
+    title: `Appointment at ${shop.name}`,
+    location: shop.addressLine,
+    description: `Change or cancel: ${manageLink}`,
+    url: manageLink,
+  };
+}
 
 /** iCalendar lines end in CRLF (RFC 5545 §3.1). */
 const LINE_BREAK: string = '\r\n';

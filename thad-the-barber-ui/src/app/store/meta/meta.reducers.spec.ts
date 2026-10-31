@@ -1,5 +1,5 @@
 import { ActionReducer, INIT, combineReducers } from '@ngrx/store';
-import { testConfirmation } from '../../../testing/test-booking';
+import { encodeSavedBookings, testConfirmationIn } from '../../../testing/test-booking';
 import { TEST_SHOP } from '../../../testing/test-shop';
 import { decodeBase64, encodeBase64 } from '../../shared/utils/base64.utils';
 import { layoutReducer } from '../app.reducer';
@@ -16,15 +16,8 @@ import { RequestStatus } from '../../shared/models/request.models';
 import { localStorageSyncReducer } from './meta.reducers';
 import { toMonthView } from '../../features/booking/utils/booking-time.utils';
 
-const ONE_DAY_MS: number = 24 * 60 * 60 * 1000;
-
-/** A booking `daysAway` days from now; negative for one that has started. */
-function bookingIn(daysAway: number, id: string): BookingConfirmation {
-  return testConfirmation(new Date(Date.now() + daysAway * ONE_DAY_MS).toISOString(), id);
-}
-
 function seedBookings(savedConfirmations: BookingConfirmation[]): void {
-  localStorage.setItem('ttb-booking', encodeBase64(JSON.stringify({ savedConfirmations })));
+  localStorage.setItem('ttb-booking', encodeSavedBookings(savedConfirmations));
 }
 
 function restoredBooking(): BookingState | undefined {
@@ -57,7 +50,7 @@ describe(
     it(
       "saves only booking's confirmations, with no name or phone, and nothing from layout",
       (): void => {
-        const bookingConfirmation: BookingConfirmation = bookingIn(1, 'made-up-tomorrow');
+        const bookingConfirmation: BookingConfirmation = testConfirmationIn(1, 'made-up-tomorrow');
         const reducer: ActionReducer<AppState> = createSyncedReducer();
         const viewing: AppState = reducer(
           undefined,
@@ -73,8 +66,8 @@ describe(
     it(
       'restores the upcoming bookings, however long ago they were made, with the rest of the slice intact',
       (): void => {
-        const tomorrow: BookingConfirmation = bookingIn(1, 'made-up-tomorrow');
-        const nextMonth: BookingConfirmation = bookingIn(30, 'made-up-next-month');
+        const tomorrow: BookingConfirmation = testConfirmationIn(1, 'made-up-tomorrow');
+        const nextMonth: BookingConfirmation = testConfirmationIn(30, 'made-up-next-month');
         seedBookings([nextMonth, tomorrow]);
 
         expect(restoredBooking()).toEqual({
@@ -89,8 +82,8 @@ describe(
     it(
       'drops the bookings that have started on start-up',
       (): void => {
-        const tomorrow: BookingConfirmation = bookingIn(1, 'made-up-tomorrow');
-        seedBookings([bookingIn(-1, 'made-up-yesterday'), tomorrow]);
+        const tomorrow: BookingConfirmation = testConfirmationIn(1, 'made-up-tomorrow');
+        seedBookings([testConfirmationIn(-1, 'made-up-yesterday'), tomorrow]);
 
         expect(restoredBooking()?.savedConfirmations).toEqual([tomorrow]);
       },

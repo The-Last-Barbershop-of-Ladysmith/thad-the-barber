@@ -1,33 +1,21 @@
 import { Locator, Page, Request, Route } from '@playwright/test';
 import { BookingConfirmation } from '../../src/app/features/booking/dtos/booking-confirmation.dto';
-import { encodeBase64 } from '../../src/app/shared/utils/base64.utils';
-import { testConfirmation } from '../../src/testing/test-booking';
+import { testConfirmationIn } from '../../src/testing/test-booking';
 import { TEST_SHOP } from '../../src/testing/test-shop';
 import { expectNoA11yViolations } from '../support/axe';
-import { fulfillManagedBooking, isManagedBookingRequest } from '../support/booking';
+import { isManagedBookingRequest, saveBookings } from '../support/booking';
 import { expect, test } from '../support/fixtures';
 
-const ONE_DAY_MS: number = 24 * 60 * 60 * 1000;
-
-function bookingIn(days: number, id: string): BookingConfirmation {
-  return testConfirmation(new Date(Date.now() + days * ONE_DAY_MS).toISOString(), id);
-}
-
-/** Answers every `GET /api/bookings/{id}` as the fixture does, keeping the requests to check their token. */
-async function serveBookings(page: Page): Promise<Request[]> {
+/** The `GET /api/bookings/{id}` calls the fixture answers, to check their token. */
+function recordBookingLoads(page: Page): Request[] {
   const requests: Request[] = [];
-  await page.route(isManagedBookingRequest, (route: Route): Promise<void> => {
-    requests.push(route.request());
-    return fulfillManagedBooking(route);
+  page.on('request', (request: Request): void => {
+    const isBookingLoad: boolean = request.method() === 'GET' && isManagedBookingRequest(new URL(request.url()));
+    if (isBookingLoad) {
+      requests.push(request);
+    }
   });
   return requests;
-}
-
-async function saveBookings(page: Page, savedConfirmations: BookingConfirmation[]): Promise<void> {
-  const encoded: string = encodeBase64(JSON.stringify({ savedConfirmations }));
-  await page.addInitScript((value: string): void => {
-    localStorage.setItem('ttb-booking', value);
-  }, encoded);
 }
 
 test.describe(
@@ -36,7 +24,7 @@ test.describe(
     test(
       'opens a manage link, sends its token in the header only and clears it from the address bar, through a reload',
       async ({ page }: { page: Page; }): Promise<void> => {
-        const requests: Request[] = await serveBookings(page);
+        const requests: Request[] = recordBookingLoads(page);
 
         await page.goto('/book/manage/made-up-booking#t=made-up-link-token');
 
@@ -81,11 +69,11 @@ test.describe(
     test(
       "lists this device's upcoming bookings, soonest first, and opens one with its saved token",
       async ({ page }: { page: Page; }): Promise<void> => {
-        const requests: Request[] = await serveBookings(page);
-        const tomorrow: BookingConfirmation = bookingIn(1, 'made-up-tomorrow');
+        const requests: Request[] = recordBookingLoads(page);
+        const tomorrow: BookingConfirmation = testConfirmationIn(1, 'made-up-tomorrow');
         await saveBookings(page, [
-          bookingIn(7, 'made-up-next-week'),
-          bookingIn(-1, 'made-up-yesterday'),
+          testConfirmationIn(7, 'made-up-next-week'),
+          testConfirmationIn(-1, 'made-up-yesterday'),
           tomorrow,
         ]);
 
@@ -107,7 +95,6 @@ test.describe(
     test(
       'copies the link with a toast',
       async ({ page }: { page: Page; }): Promise<void> => {
-        await serveBookings(page);
         // Browsers differ on clipboard permissions in tests; the page only needs writeText to succeed.
         await page.addInitScript((): void => {
           Object.defineProperty(

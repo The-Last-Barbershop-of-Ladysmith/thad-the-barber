@@ -7,7 +7,7 @@ import { Action, ActionsSubject, Store, provideStore } from '@ngrx/store';
 import { Confirmation, ConfirmationService } from 'primeng/api';
 import { Observable, Subject } from 'rxjs';
 import { Mock } from 'vitest';
-import { testConfirmation } from '../../../testing/test-booking';
+import { testConfirmationIn } from '../../../testing/test-booking';
 import { TEST_SHOP } from '../../../testing/test-shop';
 import { SessionService } from '../../core/services/session.service';
 import { ProblemCode } from '../../shared/models/problem-code.model';
@@ -44,8 +44,6 @@ interface BookingPage {
 const TODAY: string = toIsoDateIn(TEST_SHOP.timeZone, new Date());
 const FIRST_TIME: string = `${TODAY}T20:00:00Z`;
 const SECOND_TIME: string = `${TODAY}T20:30:00Z`;
-const TOMORROW: string = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-
 /** The view the page opens on for the test shop: today's 31-day block, on the shop's clock. */
 function firstBlock(): AvailabilityView {
   const bookingWindow: DateRange | null = toBookingWindow(TEST_SHOP.bookingSettings, TEST_SHOP.timeZone);
@@ -207,7 +205,7 @@ describe(
     );
 
     it(
-      "opens the booking's own page to confirm it, with its manage token and the just-booked flag",
+      "opens the booking's own page to confirm it, as just booked, leaving the token on the device rather than the URL",
       (): void => {
         openPage();
         pickAndConfirm(FIRST_TIME);
@@ -215,10 +213,9 @@ describe(
         responses[0]?.complete();
 
         expect(navigateByUrl).toHaveBeenCalledWith(
-          '/book/manage/made-up-booking#t=made-up-token',
+          '/book/manage/made-up-booking',
           { state: { isJustBooked: true } },
         );
-        expect(page.bookingForm.controls.date.value).toBeNull();
       },
     );
 
@@ -273,7 +270,7 @@ describe(
     it(
       'says there is an upcoming booking, with no time, and links to the list of them',
       (): void => {
-        openPage([testConfirmation(TOMORROW)]);
+        openPage([testConfirmationIn(1, 'made-up-tomorrow')]);
 
         expect(upcomingBooking()).not.toBeNull();
         expect(upcomingBooking()?.querySelector('[data-testid="notice-link"]')?.getAttribute('href')).toBe('/book/manage');
@@ -284,21 +281,21 @@ describe(
     it(
       'says nothing when no booking is kept or every kept one has started',
       (): void => {
-        openPage([testConfirmation('2020-01-04T20:00:00Z')]);
+        openPage([testConfirmationIn(-1, 'made-up-yesterday')]);
 
         expect(upcomingBooking()).toBeNull();
       },
     );
 
     it(
-      'shows only the booking kept when the page opened, not one made since',
+      'shows a booking saved in another tab while the page is open',
       (): void => {
         openPage();
-        TestBed.inject<Store<AppState>>(Store).dispatch(BookingActions.BookingConfirm({
-          bookingConfirmation: testConfirmation(TOMORROW),
+        TestBed.inject<Store<AppState>>(Store).dispatch(BookingActions.SavedConfirmationsAdopt({
+          savedConfirmations: [testConfirmationIn(1, 'made-up-other-tab')],
         }));
 
-        expect(upcomingBooking()).toBeNull();
+        expect(upcomingBooking()).not.toBeNull();
       },
     );
 

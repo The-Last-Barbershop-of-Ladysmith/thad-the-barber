@@ -25,9 +25,9 @@ describe(
   'toUpcomingConfirmations',
   (): void => {
     it(
-      'keeps every booking still to come, soonest first, with no age limit',
+      'keeps every booking still to come, in the order given, with no age limit',
       (): void => {
-        expect(toUpcomingConfirmations([later, earlier], beforeBoth)).toEqual([earlier, later]);
+        expect(toUpcomingConfirmations([later, earlier], beforeBoth)).toEqual([later, earlier]);
       },
     );
 
