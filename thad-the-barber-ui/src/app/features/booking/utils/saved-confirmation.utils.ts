@@ -1,48 +1,51 @@
 import { BookingConfirmation } from '../dtos/booking-confirmation.dto';
-import { SavedConfirmation } from '../models/saved-confirmation.model';
 import { BookingState } from '../state/booking.state';
 
-/** BR-22: the confirmation is kept for 24 hours. */
-export const KEEP_CONFIRMATION_MS: number = 24 * 60 * 60 * 1000;
-
-/** Kept for 24 hours, or until the appointment starts if that's sooner: after that it can't be changed (BR-07). */
-export function isKept(savedConfirmation: SavedConfirmation, now: Date = new Date()): boolean {
-  const age: number = now.getTime() - Date.parse(savedConfirmation.savedAt);
-  const isFresh: boolean = age < KEEP_CONFIRMATION_MS;
-  const hasNotStarted: boolean = Date.parse(savedConfirmation.booking.startAt) > now.getTime();
-  return isFresh && hasNotStarted;
+/** Soonest first. */
+export function toSortedConfirmations(confirmations: BookingConfirmation[]): BookingConfirmation[] {
+  return [...confirmations].sort((first: BookingConfirmation, second: BookingConfirmation): number =>
+    Date.parse(first.startAt) - Date.parse(second.startAt));
 }
 
-/** The saved booking while it's still kept; a tab left open past that drops it (BR-22). */
-export function toKeptBooking(
-  savedConfirmation: SavedConfirmation | null,
+/** The bookings that haven't started, soonest first: one that has can't be changed, so it's dropped (BR-07, BR-22). */
+export function toUpcomingConfirmations(
+  confirmations: BookingConfirmation[],
   now: Date = new Date(),
-): BookingConfirmation | null {
-  if (savedConfirmation === null || !isKept(savedConfirmation, now)) {
-    return null;
-  }
-  return savedConfirmation.booking;
+): BookingConfirmation[] {
+  return toSortedConfirmations(confirmations.filter((confirmation: BookingConfirmation): boolean =>
+    Date.parse(confirmation.startAt) > now.getTime()));
 }
 
 /**
- * Reads a saved booking slice: only a still-kept `savedConfirmation`, so nothing else stored under the key (an older
- * build's whole slice, a tampered value) reaches the state.
+ * Reads a saved booking slice: only the upcoming bookings' ID, time and manage token, so nothing else stored under the
+ * key (an older build's slice, a tampered value, a name or phone) reaches the state.
  */
-export function toKeptConfirmation(
+export function toKeptConfirmations(
   saved: unknown,
   now: Date = new Date(),
-): Pick<BookingState, 'savedConfirmation'> {
-  const candidate: unknown = (saved as { savedConfirmation?: unknown; } | null)?.savedConfirmation;
-  const isKeptConfirmation: boolean = isSavedConfirmation(candidate) && isKept(candidate, now);
-  if (!isKeptConfirmation) {
-    return { savedConfirmation: null };
+): Pick<BookingState, 'savedConfirmations'> {
+  const candidates: unknown = (saved as { savedConfirmations?: unknown; } | null)?.savedConfirmations;
+  if (!Array.isArray(candidates)) {
+    return { savedConfirmations: [] };
   }
-  return { savedConfirmation: candidate as SavedConfirmation };
+  const confirmations: BookingConfirmation[] = candidates
+    .filter(isBookingConfirmation)
+    .map(({
+      id,
+      startAt,
+      manageToken,
+    }: BookingConfirmation): BookingConfirmation => ({
+      id,
+      startAt,
+      manageToken,
+    }));
+  return { savedConfirmations: toUpcomingConfirmations(confirmations, now) };
 }
 
-function isSavedConfirmation(value: unknown): value is SavedConfirmation {
-  const confirmation: Partial<SavedConfirmation> | null = value as Partial<SavedConfirmation> | null;
-  const hasSavedAt: boolean = typeof confirmation?.savedAt === 'string';
-  const hasStartAt: boolean = typeof confirmation?.booking?.startAt === 'string';
-  return hasSavedAt && hasStartAt;
+function isBookingConfirmation(value: unknown): value is BookingConfirmation {
+  const confirmation: Partial<BookingConfirmation> | null = value as Partial<BookingConfirmation> | null;
+  const hasId: boolean = typeof confirmation?.id === 'string';
+  const hasStartAt: boolean = typeof confirmation?.startAt === 'string' && !Number.isNaN(Date.parse(confirmation.startAt));
+  const hasManageToken: boolean = typeof confirmation?.manageToken === 'string';
+  return hasId && hasStartAt && hasManageToken;
 }

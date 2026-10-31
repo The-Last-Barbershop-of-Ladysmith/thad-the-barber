@@ -51,7 +51,7 @@ import { bookingFeature } from './state/booking.feature';
 import { BOT_CHECK_FAILED_NOTICE, toBookedNotice, toBookingNotice } from './utils/booking-notice.utils';
 import { BOOKING_STEPS, canOpenStep, isStepDone } from './utils/booking-steps.utils';
 import { toBookingWindow, toTimeLabel, toUpcomingView } from './utils/booking-time.utils';
-import { toKeptBooking } from './utils/saved-confirmation.utils';
+import { toUpcomingConfirmations } from './utils/saved-confirmation.utils';
 
 /** How one step shows in the phone's step cards and the desktop's step rail. */
 interface StepView {
@@ -81,8 +81,8 @@ const STEP_TITLES: Record<BookingStep, string> = {
  * beside one step with Back and Continue. Both share `openStep` and the form's progress (#207–#209).
  *
  * The page owns the form and sends the booking when it's submitted; each step gets the controls it edits, and reads
- * the rest from the store. The booking in progress is thrown away with the page; the last one is kept in the booking
- * slice for 24 hours, without name or phone (BR-22). Every date and time shows on the shop's clock (`timeZone`), so
+ * the rest from the store. The booking in progress is thrown away with the page; each one made is kept in the booking
+ * slice until it starts, without name or phone (BR-22). Every date and time shows on the shop's clock (`timeZone`), so
  * none shows until the shop has loaded at least once.
  */
 @Component({
@@ -123,11 +123,11 @@ export class Booking {
     this.store.selectSignal(bookingFeature.selectNotice);
 
   /**
-   * The booking kept from an earlier visit (24 hours, without name or phone, BR-22). Read once when the page opens, so
-   * a booking made now shows only in its own notice.
+   * The soonest booking kept from an earlier visit (until it starts, without name or phone, BR-22). Read once when the
+   * page opens, so a booking made now shows only in its own notice.
    */
   private readonly savedBooking: BookingConfirmation | null =
-    toKeptBooking(this.store.selectSignal(bookingFeature.selectSavedConfirmation)());
+    toUpcomingConfirmations(this.store.selectSignal(bookingFeature.selectSavedConfirmations)())[0] ?? null;
   protected readonly savedBookingNotice: Signal<Notice | null> = computed((): Notice | null => {
     const timeZone: string | null = this.timeZone();
     if (!this.savedBooking || !timeZone) {
@@ -396,9 +396,7 @@ export class Booking {
    */
   private onBooked(confirmedBooking: BookingConfirmation, phone: string): void {
     this.idempotencyKey = null;
-    this.store.dispatch(BookingActions.BookingConfirm({
-      savedConfirmation: { booking: confirmedBooking, savedAt: new Date().toISOString() },
-    }));
+    this.store.dispatch(BookingActions.BookingConfirm({ bookingConfirmation: confirmedBooking }));
     this.bookingForm.patchValue({ date: null, startAt: null });
     this.openStep.set(BookingStep.Date);
     this.reloadMonth();

@@ -1,30 +1,30 @@
 import { ActionReducer, INIT, combineReducers } from '@ngrx/store';
-import { testSavedConfirmation } from '../../../testing/test-booking';
+import { testConfirmation } from '../../../testing/test-booking';
 import { TEST_SHOP } from '../../../testing/test-shop';
 import { decodeBase64, encodeBase64 } from '../../shared/utils/base64.utils';
 import { layoutReducer } from '../app.reducer';
 import { AppState } from '../app.state';
 import * as ShopActions from '../../features/shop/state/shop.actions';
 import { shopReducer } from '../../features/shop/state/shop.reducer';
-import { SavedConfirmation } from '../../features/booking/models/saved-confirmation.model';
+import { BookingConfirmation } from '../../features/booking/dtos/booking-confirmation.dto';
 import * as BookingActions from '../../features/booking/state/booking.actions';
 import { bookingReducer } from '../../features/booking/state/booking.reducer';
 import { BookingState } from '../../features/booking/state/booking.state';
-import { KEEP_CONFIRMATION_MS } from '../../features/booking/utils/saved-confirmation.utils';
 import * as HomeActions from '../../features/home/state/home.actions';
 import { homeReducer } from '../../features/home/state/home.reducer';
 import { RequestStatus } from '../../shared/models/request.models';
 import { localStorageSyncReducer } from './meta.reducers';
 import { toMonthView } from '../../features/booking/utils/booking-time.utils';
 
-/** Saved at `savedAt` for an appointment a day from now, so only its age decides whether it's kept. */
-function savedConfirmationFrom(savedAt: Date): SavedConfirmation {
-  const tomorrow: string = new Date(Date.now() + KEEP_CONFIRMATION_MS).toISOString();
-  return testSavedConfirmation(savedAt.toISOString(), tomorrow);
+const ONE_DAY_MS: number = 24 * 60 * 60 * 1000;
+
+/** A booking `daysAway` days from now; negative for one that has started. */
+function bookingIn(daysAway: number, id: string): BookingConfirmation {
+  return testConfirmation(new Date(Date.now() + daysAway * ONE_DAY_MS).toISOString(), id);
 }
 
-function seedBooking(savedConfirmation: SavedConfirmation): void {
-  localStorage.setItem('ttb-booking', encodeBase64(JSON.stringify({ savedConfirmation })));
+function seedBookings(savedConfirmations: BookingConfirmation[]): void {
+  localStorage.setItem('ttb-booking', encodeBase64(JSON.stringify({ savedConfirmations })));
 }
 
 function restoredBooking(): BookingState | undefined {
@@ -55,43 +55,44 @@ describe(
     });
 
     it(
-      "saves only booking's last confirmation, with no name or phone, and nothing from layout",
+      "saves only booking's confirmations, with no name or phone, and nothing from layout",
       (): void => {
-        const savedConfirmation: SavedConfirmation = savedConfirmationFrom(new Date());
+        const bookingConfirmation: BookingConfirmation = bookingIn(1, 'made-up-tomorrow');
         const reducer: ActionReducer<AppState> = createSyncedReducer();
         const viewing: AppState = reducer(
           undefined,
           BookingActions.SetAvailabilityView({ availabilityView: toMonthView('2026-10') }),
         );
-        reducer(viewing, BookingActions.BookingConfirm({ savedConfirmation }));
+        reducer(viewing, BookingActions.BookingConfirm({ bookingConfirmation }));
 
-        expect(saved('ttb-booking')).toEqual({ savedConfirmation });
+        expect(saved('ttb-booking')).toEqual({ savedConfirmations: [bookingConfirmation] });
         expect(localStorage.getItem('ttb-layout')).toBeNull();
       },
     );
 
     it(
-      'restores a booking confirmed within 24 hours, with the rest of the slice intact',
+      'restores the upcoming bookings, however long ago they were made, with the rest of the slice intact',
       (): void => {
-        const almostExpired: Date = new Date(Date.now() - KEEP_CONFIRMATION_MS + 60_000);
-        const savedConfirmation: SavedConfirmation = savedConfirmationFrom(almostExpired);
-        seedBooking(savedConfirmation);
+        const tomorrow: BookingConfirmation = bookingIn(1, 'made-up-tomorrow');
+        const nextMonth: BookingConfirmation = bookingIn(30, 'made-up-next-month');
+        seedBookings([nextMonth, tomorrow]);
 
         expect(restoredBooking()).toEqual({
           availabilityView: null,
           availableDays: [],
           loadStatus: RequestStatus.Idle,
-          savedConfirmation,
+          savedConfirmations: [tomorrow, nextMonth],
         });
       },
     );
 
     it(
-      'drops a saved confirmation over 24 hours old on start-up',
+      'drops the bookings that have started on start-up',
       (): void => {
-        seedBooking(savedConfirmationFrom(new Date(Date.now() - KEEP_CONFIRMATION_MS - 60_000)));
+        const tomorrow: BookingConfirmation = bookingIn(1, 'made-up-tomorrow');
+        seedBookings([bookingIn(-1, 'made-up-yesterday'), tomorrow]);
 
-        expect(restoredBooking()?.savedConfirmation).toBeNull();
+        expect(restoredBooking()?.savedConfirmations).toEqual([tomorrow]);
       },
     );
 

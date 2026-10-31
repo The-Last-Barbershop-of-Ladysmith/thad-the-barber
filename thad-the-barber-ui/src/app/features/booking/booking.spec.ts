@@ -5,7 +5,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { Action, ActionsSubject, Store, provideStore } from '@ngrx/store';
 import { Confirmation, ConfirmationService } from 'primeng/api';
 import { Observable, Subject } from 'rxjs';
-import { testSavedConfirmation } from '../../../testing/test-booking';
+import { testConfirmation } from '../../../testing/test-booking';
 import { TEST_SHOP } from '../../../testing/test-shop';
 import { SessionService } from '../../core/services/session.service';
 import { ProblemCode } from '../../shared/models/problem-code.model';
@@ -21,7 +21,6 @@ import { BookingForm } from './models/booking-form.model';
 import { Notice } from '../../shared/models/notice.model';
 import { BookingStep } from './models/booking-step.model';
 import { BookingRequest } from './dtos/booking-request.dto';
-import { SavedConfirmation } from './models/saved-confirmation.model';
 import { BookingService } from './services/booking.service';
 import * as BookingActions from './state/booking.actions';
 import { bookingFeature } from './state/booking.feature';
@@ -119,13 +118,11 @@ describe(
       );
     });
 
-    /** Opens the page as after a reload, with `savedConfirmation` as the booking kept from the last 24 hours. */
-    function openPage(savedConfirmation: SavedConfirmation | null = null): void {
+    /** Opens the page as after a reload, with `savedConfirmations` as the bookings kept on this device. */
+    function openPage(savedConfirmations: BookingConfirmation[] = []): void {
       const store: Store<AppState> = TestBed.inject<Store<AppState>>(Store);
       store.dispatch(ShopActions.ShopInfoRequestSuccess({ shopInfo: TEST_SHOP }));
-      if (savedConfirmation) {
-        store.dispatch(BookingActions.BookingConfirm({ savedConfirmation }));
-      }
+      store.dispatch(BookingActions.SavedConfirmationsAdopt({ savedConfirmations }));
       fixture = TestBed.createComponent(Booking);
       fixture.detectChanges();
       page = fixture.componentInstance as unknown as BookingPage;
@@ -262,22 +259,21 @@ describe(
     );
 
     it(
-      'keeps the booking it confirmed for 24 hours, so a reload still shows it',
+      'keeps the booking it confirmed until it starts, so a reload still shows it',
       (): void => {
         openPage();
         pickAndConfirm(FIRST_TIME);
         responses[0]?.next(confirmation(requests[0]));
 
-        expect(dispatched).toContainEqual(BookingActions.BookingConfirm({
-          savedConfirmation: { booking: confirmation(requests[0]), savedAt: expect.any(String) as string },
-        }));
+        expect(dispatched)
+          .toContainEqual(BookingActions.BookingConfirm({ bookingConfirmation: confirmation(requests[0]) }));
       },
     );
 
     it(
-      'shows a booking kept from the last 24 hours, without the phone, which is never saved',
+      'shows a kept booking, without the phone, which is never saved',
       (): void => {
-        openPage(testSavedConfirmation(new Date().toISOString(), TOMORROW));
+        openPage([testConfirmation(TOMORROW)]);
 
         expect(savedBooking()).not.toBeNull();
         expect(savedBooking()?.textContent).not.toContain('text confirmation');
@@ -298,7 +294,7 @@ describe(
       (): void => {
         openPage();
         TestBed.inject<Store<AppState>>(Store).dispatch(BookingActions.BookingConfirm({
-          savedConfirmation: testSavedConfirmation(new Date().toISOString(), TOMORROW),
+          bookingConfirmation: testConfirmation(TOMORROW),
         }));
 
         expect(savedBooking()).toBeNull();

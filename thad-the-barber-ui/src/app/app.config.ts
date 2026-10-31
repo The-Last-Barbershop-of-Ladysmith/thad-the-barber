@@ -40,7 +40,7 @@ export const appConfig: ApplicationConfig = {
     ),
     // Shop, home and announcements are root reducers, not `provideState`, because the header and footer read them on
     // every page.
-    // Shop and booking also save only part of their slice (`shopInfo`, `savedConfirmation`), and a partial saved copy
+    // Shop and booking also save only part of their slice (`shopInfo`, `savedConfirmations`), and a partial saved copy
     // merged before `provideState` would drop the rest.
     provideStore(
       {

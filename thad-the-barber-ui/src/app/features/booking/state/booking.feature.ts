@@ -13,10 +13,10 @@ export type BookingExtraSelectors = {
   selectNotice: MemoizedSelector<object, Notice | null>;
 };
 
-/** Store key for this slice; also names its localStorage entry (`ttb-booking`), holding only `savedConfirmation`. */
+/** Store key for this slice; also names its localStorage entry (`ttb-booking`), holding only `savedConfirmations`. */
 export const bookingFeatureKey: 'booking' = 'booking' as const;
 
-/** The booking page's availability and the last booking kept for 24 hours. A root reducer (`app.config.ts`). */
+/** The booking page's availability and the bookings made on this device. A root reducer (`app.config.ts`). */
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the Feature type.
 export const bookingFeature = createFeature({
   name: bookingFeatureKey,
