@@ -16,8 +16,11 @@
         [formControl]="phone"
         [invalid]="phone.invalid && phone.touched"
       />
-      <button pButton type="submit" [loading]="submitting()">
-        <span pButtonLabel>Text me</span>
+      <button pButton type="submit" [disabled]="submitting()">
+        @if (submitting()) {
+          <svg data-p-icon="spinner" class="animate-spin"></svg>
+        }
+        Text me
       </button>
     </div>
     <small

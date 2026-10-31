@@ -138,6 +138,13 @@ module.exports = defineConfig([
           ignoreIfStatements: true,
         },
       ],
+      // Static methods such as `Validators.required` don't use `this`, so they can be passed on their own.
+      '@typescript-eslint/unbound-method': [
+        'error',
+        {
+          ignoreStatic: true,
+        },
+      ],
 
       // ---- General correctness -----------------------------------------------------------------
       eqeqeq: [

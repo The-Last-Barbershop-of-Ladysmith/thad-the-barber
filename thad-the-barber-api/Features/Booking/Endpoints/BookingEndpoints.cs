@@ -34,26 +34,43 @@ public static class BookingEndpoints
     }
 
     /// <summary>
-    /// The open days in <c>?month=YYYY-MM</c> (shop timezone), each with its open times as UTC instants. Years 1 and
-    /// 9999 are rejected because their month ranges in UTC can overflow <see cref="DateTimeOffset"/>.
+    /// The open days from <c>?from=</c> through <c>?to=</c> (<c>YYYY-MM-DD</c>, both included, shop timezone), each
+    /// with its open times as UTC instants; at most <see cref="AvailabilityService.MaxDayCount"/> days, one Square
+    /// search. Years 1 and 9999 are rejected because their day ranges in UTC can overflow <see cref="DateTimeOffset"/>.
     /// </summary>
     internal static async Task<Results<Ok<List<AvailableDay>>, ValidationProblem>> GetAvailabilityAsync(
-        string month,
+        string from,
+        string to,
         AvailabilityService availability,
         CancellationToken cancellationToken)
     {
-        if (!DateOnly.TryParseExact(month, "yyyy-MM", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateOnly firstDay)
-            || firstDay.Year == DateOnly.MinValue.Year
-            || firstDay.Year == DateOnly.MaxValue.Year)
+        Dictionary<string, string[]> errors = [];
+        if (!TryParseDay(from, out DateOnly firstDay))
         {
-            return TypedResults.ValidationProblem(new Dictionary<string, string[]>
-            {
-                [nameof(month)] = ["Use YYYY-MM."],
-            });
+            errors[nameof(from)] = ["Use YYYY-MM-DD."];
         }
 
-        return TypedResults.Ok(await availability.GetAvailableDaysAsync(firstDay, cancellationToken));
+        if (!TryParseDay(to, out DateOnly lastDay))
+        {
+            errors[nameof(to)] = ["Use YYYY-MM-DD."];
+        }
+        else if (errors.Count == 0 && (lastDay < firstDay || lastDay.DayNumber - firstDay.DayNumber >= AvailabilityService.MaxDayCount))
+        {
+            errors[nameof(to)] = [$"Use a day from {nameof(from)} to {AvailabilityService.MaxDayCount} days later."];
+        }
+
+        if (errors.Count > 0)
+        {
+            return TypedResults.ValidationProblem(errors);
+        }
+
+        return TypedResults.Ok(await availability.GetAvailableDaysAsync(firstDay, lastDay, cancellationToken));
     }
+
+    private static bool TryParseDay(string text, out DateOnly day) =>
+        DateOnly.TryParseExact(text, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out day)
+        && day.Year != DateOnly.MinValue.Year
+        && day.Year != DateOnly.MaxValue.Year;
 
     /// <summary>
     /// Books the time for the customer. A taken time is 409 <c>slot_unavailable</c>; the request itself is checked by

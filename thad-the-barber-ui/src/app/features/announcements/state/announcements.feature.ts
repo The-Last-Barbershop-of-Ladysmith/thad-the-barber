@@ -2,7 +2,7 @@ import { MemoizedSelector, createFeature, createSelector } from '@ngrx/store';
 import { Announcement } from '../models/announcement.model';
 import { FeatureSelectors } from '../../../shared/models/ngrx.models';
 import { RequestStatus } from '../../../shared/models/request.models';
-import { toIsoDate, toIsoDateIn } from '../../../shared/utils/date.utils';
+import { currentDateForTimeZone } from '../../../shared/utils/date.utils';
 import { isSettledEmpty } from '../../../shared/utils/request.utils';
 import { shopFeature } from '../../shop/state/shop.feature';
 import { announcementsReducer } from './announcements.reducer';
@@ -46,18 +46,12 @@ export const announcementsFeature = createFeature({
   },
 });
 
-/** BR-30: the ones showing today, from the first day through the last, on the shop's calendar. */
+/**
+ * BR-30: the ones showing today, from the first day through the last, on the shop's calendar. The visitor's date
+ * stands in until the shop (and its timezone) first loads.
+ */
 export function toActiveAnnouncements(announcements: Announcement[], timeZone: string | null): Announcement[] {
-  const today: string = toShopToday(timeZone);
+  const today: string = currentDateForTimeZone(timeZone);
   return announcements.filter((announcement: Announcement): boolean =>
     announcement.startDate <= today && today <= announcement.endDate);
-}
-
-/** The visitor's date stands in until the shop (and its timezone) first loads. */
-function toShopToday(timeZone: string | null): string {
-  const now: Date = new Date();
-  if (timeZone === null) {
-    return toIsoDate(now);
-  }
-  return toIsoDateIn(timeZone, now);
 }

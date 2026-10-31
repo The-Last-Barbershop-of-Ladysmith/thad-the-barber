@@ -1,5 +1,5 @@
 import { Route } from '@playwright/test';
-import { AvailableDay } from '../../src/app/features/booking/models/available-day.model';
+import { AvailableDay } from '../../src/app/features/booking/dtos/available-day.dto';
 import { TEST_SHOP } from '../../src/testing/test-shop';
 import { servedEnvironment } from './served-environment';
 
@@ -17,16 +17,16 @@ export function isBookingRequest(url: URL): boolean {
 }
 
 /**
- * Every day of the month from today on the test shop's clock, so the month in view always has an open day, even on its
- * last. Each opens at 20:00 and 20:30 UTC, mid-morning on the test shop's Honolulu clock.
+ * Every day from `from` through `to` that isn't before today on the test shop's clock, so the days in view always have
+ * an open day. Each opens at 20:00 and 20:30 UTC, mid-morning on the test shop's Honolulu clock.
  */
-function toAvailableDays(month: string): AvailableDay[] {
+function toAvailableDays(from: string, to: string): AvailableDay[] {
   // en-CA writes dates as YYYY-MM-DD; date.utils can't be imported here (it pulls in @angular/common).
   const today: string = new Intl.DateTimeFormat('en-CA', { timeZone: TEST_SHOP.timeZone }).format(new Date());
   const days: AvailableDay[] = [];
   for (
-    let day: Date = new Date(`${month}-01T00:00:00Z`);
-    day.toISOString().startsWith(month);
+    let day: Date = new Date(`${from}T00:00:00Z`);
+    day.toISOString().slice(0, 10) <= to;
     day = new Date(day.getTime() + DAY_MS)
   ) {
     const date: string = day.toISOString().slice(0, 10);
@@ -38,6 +38,6 @@ function toAvailableDays(month: string): AvailableDay[] {
 }
 
 export async function fulfillAvailability(route: Route): Promise<void> {
-  const month: string = new URL(route.request().url()).searchParams.get('month') ?? '';
-  await route.fulfill({ json: toAvailableDays(month) });
+  const { searchParams }: URL = new URL(route.request().url());
+  await route.fulfill({ json: toAvailableDays(searchParams.get('from') ?? '', searchParams.get('to') ?? '') });
 }

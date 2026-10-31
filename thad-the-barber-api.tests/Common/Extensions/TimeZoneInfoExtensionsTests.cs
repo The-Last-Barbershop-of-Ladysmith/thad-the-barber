@@ -41,18 +41,19 @@ public sealed class TimeZoneInfoExtensionsTests
     }
 
     [Theory]
-    [InlineData("2026-10-17", "2026-10-01T04:00:00Z", "2026-11-01T04:00:00Z")]
-    [InlineData("2026-11-01", "2026-11-01T04:00:00Z", "2026-12-01T05:00:00Z")]
-    [InlineData("2026-12-31", "2026-12-01T05:00:00Z", "2027-01-01T05:00:00Z")]
-    [InlineData("2028-02-29", "2028-02-01T05:00:00Z", "2028-03-01T05:00:00Z")]
-    public void AMonthCoversItsUtcRangeAcrossDstAndYearEnd(string anyDate, string start, string end)
+    [InlineData("2026-10-26", "2026-11-25", "2026-10-26T04:00:00Z", "2026-11-26T05:00:00Z")]
+    [InlineData("2026-11-01", "2026-11-30", "2026-11-01T04:00:00Z", "2026-12-01T05:00:00Z")]
+    [InlineData("2026-12-20", "2027-01-19", "2026-12-20T05:00:00Z", "2027-01-20T05:00:00Z")]
+    [InlineData("2028-02-15", "2028-03-16", "2028-02-15T05:00:00Z", "2028-03-17T04:00:00Z")]
+    [InlineData("2026-10-26", "2026-10-26", "2026-10-26T04:00:00Z", "2026-10-27T04:00:00Z")]
+    public void DaysCoverTheirUtcRangeAcrossDstLeapDayAndYearEnd(string firstDay, string lastDay, string start, string end)
     {
         Assert.Equal(
             new DateTimeRange(
                 ParseInstant(start),
                 ParseInstant(end)
             ),
-            _newYork.GetMonthRange(ParseDate(anyDate)));
+            _newYork.GetDateRange(ParseDate(firstDay), ParseDate(lastDay)));
     }
 
     [Property(Arbitrary = new[] { typeof(TimeZoneArbitraries) })]

@@ -20,13 +20,13 @@ export const adoptBookingFromOtherTab: FunctionalEffect = createEffect(
     platformId: object = inject(PLATFORM_ID),
     document: Document = inject(DOCUMENT),
   ): Observable<Action> => {
-    const view: Window | null = document.defaultView;
+    const browserWindow: Window | null = document.defaultView;
     const isBrowser: boolean = isPlatformBrowser(platformId);
-    if (!isBrowser || !view) {
+    if (!isBrowser || !browserWindow) {
       return EMPTY;
     }
     const storageKey: string = toStorageKey(bookingFeatureKey);
-    return fromEvent<StorageEvent>(view, 'storage').pipe(
+    return fromEvent<StorageEvent>(browserWindow, 'storage').pipe(
       filter((event: StorageEvent): boolean => event.key === storageKey),
       map((event: StorageEvent): SavedConfirmation | null =>
         toKeptConfirmation(readSaved(event.newValue)).savedConfirmation),

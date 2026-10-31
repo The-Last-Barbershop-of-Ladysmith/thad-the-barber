@@ -3,16 +3,16 @@ import { ButtonVariant } from '../../../../shared/models/button.models';
 import { Router, provideRouter } from '@angular/router';
 import { Store, provideStore } from '@ngrx/store';
 import { MockInstance } from 'vitest';
-import { Announcement } from '../../../announcements/models/announcement.model';
-import { AnnouncementImagePosition } from '../../../announcements/models/announcement-image-position.model';
-import * as AnnouncementsActions from '../../../announcements/state/announcements.actions';
-import { announcementsFeature } from '../../../announcements/state/announcements.feature';
+import { Announcement } from '../../models/announcement.model';
+import { AnnouncementImagePosition } from '../../models/announcement-image-position.model';
+import * as AnnouncementsActions from '../../state/announcements.actions';
+import { announcementsFeature } from '../../state/announcements.feature';
 import { shopFeature } from '../../../shop/state/shop.feature';
-import { Announcements } from './announcements';
+import { AnnouncementsCarousel } from './announcements-carousel';
 import { LinkKind } from '../../../../shared/models/link.models';
 
 describe(
-  'Announcements',
+  'AnnouncementsCarousel',
   (): void => {
     const base: Announcement = {
       title: 'Made-up special',
@@ -34,7 +34,7 @@ describe(
         ],
       });
       TestBed.inject(Store).dispatch(AnnouncementsActions.AnnouncementsRequestSuccess({ announcements }));
-      const fixture: ComponentFixture<Announcements> = TestBed.createComponent(Announcements);
+      const fixture: ComponentFixture<AnnouncementsCarousel> = TestBed.createComponent(AnnouncementsCarousel);
       fixture.detectChanges();
       return fixture.nativeElement as HTMLElement;
     }

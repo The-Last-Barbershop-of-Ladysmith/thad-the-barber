@@ -1,3 +1,4 @@
+import { BookingConfirmation } from '../dtos/booking-confirmation.dto';
 import { SavedConfirmation } from '../models/saved-confirmation.model';
 import { BookingState } from '../state/booking.state';
 
@@ -10,6 +11,17 @@ export function isKept(savedConfirmation: SavedConfirmation, now: Date = new Dat
   const isFresh: boolean = age < KEEP_CONFIRMATION_MS;
   const hasNotStarted: boolean = Date.parse(savedConfirmation.booking.startAt) > now.getTime();
   return isFresh && hasNotStarted;
+}
+
+/** The saved booking while it's still kept; a tab left open past that drops it (BR-22). */
+export function toKeptBooking(
+  savedConfirmation: SavedConfirmation | null,
+  now: Date = new Date(),
+): BookingConfirmation | null {
+  if (savedConfirmation === null || !isKept(savedConfirmation, now)) {
+    return null;
+  }
+  return savedConfirmation.booking;
 }
 
 /**

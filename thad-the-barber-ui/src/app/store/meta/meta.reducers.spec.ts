@@ -15,6 +15,7 @@ import * as HomeActions from '../../features/home/state/home.actions';
 import { homeReducer } from '../../features/home/state/home.reducer';
 import { RequestStatus } from '../../shared/models/request.models';
 import { localStorageSyncReducer } from './meta.reducers';
+import { toMonthView } from '../../features/booking/utils/booking-time.utils';
 
 /** Saved at `savedAt` for an appointment a day from now, so only its age decides whether it's kept. */
 function savedConfirmationFrom(savedAt: Date): SavedConfirmation {
@@ -58,7 +59,10 @@ describe(
       (): void => {
         const savedConfirmation: SavedConfirmation = savedConfirmationFrom(new Date());
         const reducer: ActionReducer<AppState> = createSyncedReducer();
-        const viewing: AppState = reducer(undefined, BookingActions.SetActiveMonthView({ month: '2026-10' }));
+        const viewing: AppState = reducer(
+          undefined,
+          BookingActions.SetAvailabilityView({ availabilityView: toMonthView('2026-10') }),
+        );
         reducer(viewing, BookingActions.BookingConfirm({ savedConfirmation }));
 
         expect(saved('ttb-booking')).toEqual({ savedConfirmation });
@@ -74,7 +78,7 @@ describe(
         seedBooking(savedConfirmation);
 
         expect(restoredBooking()).toEqual({
-          visibleMonth: null,
+          availabilityView: null,
           availableDays: [],
           loadStatus: RequestStatus.Idle,
           savedConfirmation,

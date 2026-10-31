@@ -1,13 +1,20 @@
+import { UPCOMING_DAY_COUNT } from '../../../core/config/booking-dates';
 import { BookingSettings } from '../../shop/models/booking-settings.model';
 import {
   addDays,
+  addMonths,
   formatLongDate,
   formatMinutes,
   fromIsoDate,
+  fromMonthKey,
+  toIsoDate,
   toIsoDateIn,
+  toMonthKey,
   weekTimeIn,
 } from '../../../shared/utils/date.utils';
-import { AvailableDay } from '../models/available-day.model';
+import { AvailableDay } from '../dtos/available-day.dto';
+import { AvailabilityViewKind } from '../models/availability-view-kind.model';
+import { AvailabilityView } from '../models/availability-view.model';
 import { DateRange } from '../models/date-range.model';
 import { TimeSlot } from '../models/time-slot.model';
 
@@ -24,7 +31,46 @@ export function toBookingWindow(
   return { min, max: addDays(min, bookingSettings.maxAdvanceDays) };
 }
 
-/** The picked day's open times, while its month is the one in view, labelled on the shop's clock. */
+/** `UPCOMING_DAY_COUNT` days from `firstDay`, cut to the booking window's last day. */
+export function toUpcomingView(firstDay: Date, bookingWindow: DateRange): AvailabilityView {
+  const blockEnd: Date = addDays(firstDay, UPCOMING_DAY_COUNT - 1);
+  return {
+    kind: AvailabilityViewKind.Upcoming,
+    firstDay: toIsoDate(firstDay),
+    lastDay: toIsoDate(bookingWindow.max < blockEnd ? bookingWindow.max : blockEnd),
+  };
+}
+
+/** A whole calendar month ("2026-11"), its 1st through its last day. */
+export function toMonthView(month: string): AvailabilityView {
+  const firstDay: Date = fromMonthKey(month);
+  return {
+    kind: AvailabilityViewKind.Month,
+    firstDay: toIsoDate(firstDay),
+    lastDay: toIsoDate(addDays(addMonths(firstDay, 1), -1)),
+  };
+}
+
+export function isSameView(availabilityView: AvailabilityView | null, otherView: AvailabilityView | null): boolean {
+  return availabilityView?.kind === otherView?.kind
+    && availabilityView?.firstDay === otherView?.firstDay
+    && availabilityView?.lastDay === otherView?.lastDay;
+}
+
+/** Every month ("2026-11") after the booking window's first, through the one its last day falls in. */
+export function toLaterMonths(bookingWindow: DateRange): string[] {
+  const months: string[] = [];
+  for (
+    let month: Date = addMonths(bookingWindow.min, 1);
+    month <= bookingWindow.max;
+    month = addMonths(month, 1)
+  ) {
+    months.push(toMonthKey(month));
+  }
+  return months;
+}
+
+/** The picked day's open times, from the days in view, labelled on the shop's clock. */
 export function toTimeSlots(
   availableDays: AvailableDay[],
   date: string | null,

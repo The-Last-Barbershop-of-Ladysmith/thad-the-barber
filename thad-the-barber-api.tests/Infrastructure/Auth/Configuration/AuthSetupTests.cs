@@ -21,10 +21,10 @@ namespace ThadTheBarber.Api.Tests.Infrastructure.Auth.Configuration;
 
 public sealed class AuthSetupTests(ApiFactory factory) : IClassFixture<ApiFactory>
 {
-    // The factory runs on the real clock, and only months inside the booking window return 200.
+    // The factory runs on the real clock, and only ranges inside the booking window return 200.
     private static readonly string ProtectedPath = string.Create(
         CultureInfo.InvariantCulture,
-        $"/api/bookings/availability?month={DateTime.UtcNow:yyyy-MM}"
+        $"/api/bookings/availability?from={DateTime.UtcNow:yyyy-MM-dd}&to={DateTime.UtcNow.AddDays(30):yyyy-MM-dd}"
     );
 
     private static readonly string[] exemptRoutes = ["/api/health", "/api/session", "/api/shop", "/api/webhooks/square"];

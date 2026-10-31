@@ -1,6 +1,6 @@
 import { Locator, Page, Request, Route } from '@playwright/test';
-import { BookingConfirmation } from '../../src/app/features/booking/models/booking-confirmation.model';
-import { BookingRequest } from '../../src/app/features/booking/models/booking-request.model';
+import { BookingConfirmation } from '../../src/app/features/booking/dtos/booking-confirmation.dto';
+import { BookingRequest } from '../../src/app/features/booking/dtos/booking-request.dto';
 import { SavedConfirmation } from '../../src/app/features/booking/models/saved-confirmation.model';
 import { KEEP_CONFIRMATION_MS } from '../../src/app/features/booking/utils/saved-confirmation.utils';
 import { ProblemCode } from '../../src/app/shared/models/problem-code.model';
@@ -49,15 +49,22 @@ async function offerTimeSoon(page: Page): Promise<void> {
     route.fulfill({ json: [{ date, times: [soon.toISOString()] }] }));
 }
 
+function openDays(page: Page): Locator {
+  return page.getByTestId('date-list').locator('[role="button"]');
+}
+
 /** The shop has loaded, so the page can show times and a kept booking. */
 async function waitForShop(page: Page): Promise<void> {
   await expect(page.locator(`a[href="tel:${TEST_SHOP.phone}"]`).first()).toBeAttached();
 }
 
-/** Picks the first open day and time, fills in the made-up customer and confirms. */
-async function book(page: Page): Promise<void> {
-  await page.locator('.p-datepicker-day:not(.p-disabled)').first().click();
-  await page.getByRole('group').locator('[role="button"]').first().click();
+/**
+ * Picks the first open day and time and fills in the made-up customer; each pick opens the next step. Then opens the
+ * review step from the phone's sticky bar or the desktop's Continue (both `open-review`).
+ */
+async function fillInBooking(page: Page): Promise<void> {
+  await openDays(page).first().click();
+  await page.getByTestId('time-list').locator('[role="button"]').first().click();
   await page.locator('#booking-name').fill('Jordan Customer');
   const phone: Locator = page.locator('#booking-phone');
   // InputMask redraws its buffer on a timer after focus, which can wipe a value filled too soon.
@@ -65,6 +72,12 @@ async function book(page: Page): Promise<void> {
     await phone.fill(CUSTOMER_PHONE);
     await expect(phone).toHaveValue('(540) 555-0123', { timeout: 1_000 });
   }).toPass();
+  await page.getByTestId('open-review').click();
+}
+
+/** Fills in the booking and confirms it from the review step. */
+async function book(page: Page): Promise<void> {
+  await fillInBooking(page);
   await page.getByTestId('confirm-booking').click();
 }
 
@@ -107,7 +120,7 @@ test.describe(
 
         await page.reload();
 
-        await expect(page.getByTestId('booking-confirmation')).toBeVisible();
+        await expect(page.getByTestId('saved-booking')).toBeVisible();
         const saved: string = decodeBase64(await page.evaluate((): string => localStorage.getItem('ttb-booking') ?? ''));
         expect(Object.keys(JSON.parse(saved) as object)).toEqual(['savedConfirmation']);
         expect(saved).not.toContain('Jordan');
@@ -130,7 +143,7 @@ test.describe(
         await page.goto('/book');
         await waitForShop(page);
 
-        await expect(page.getByTestId('booking-confirmation')).toHaveCount(0);
+        await expect(page.getByTestId('saved-booking')).toHaveCount(0);
         const saved: string = decodeBase64(await page.evaluate((): string => localStorage.getItem('ttb-booking') ?? ''));
         expect(JSON.parse(saved)).toEqual({ savedConfirmation: null });
       },
@@ -152,12 +165,12 @@ test.describe(
 
         const loading: Locator = page.getByTestId('dates-loading');
         await expect(loading).toBeVisible();
-        await expect(page.locator('.p-datepicker-day:not(.p-disabled)')).toHaveCount(0);
+        await expect(openDays(page)).toHaveCount(0);
         await expectNoA11yViolations(page);
         release();
 
         await expect(loading).toHaveCount(0);
-        await expect(page.locator('.p-datepicker-day:not(.p-disabled)').first()).toBeVisible();
+        await expect(openDays(page).first()).toBeVisible();
       },
     );
 
@@ -212,14 +225,14 @@ test.describe(
 
         const notice: Locator = page.getByTestId('booking-notice');
         await expect(notice).toHaveClass(/p-message-warn/);
-        await expect(notice.getByTestId('notice-call')).toHaveCount(0);
+        await expect(notice.getByTestId('notice-booking-site')).toHaveAttribute('href', TEST_SHOP.squareBookingSiteUrl ?? '');
         await expect.poll((): number => availabilityLoads).toBe(2);
         await expectNoA11yViolations(page);
       },
     );
 
     test(
-      'offers the shop phone, not the Square booking site, when the booking limit is reached',
+      'offers the shop phone and the Square booking site when the booking limit is reached',
       async ({ page }: { page: Page; }): Promise<void> => {
         await page.route(isBookingRequest, (route: Route): Promise<void> => problem(
           route,
@@ -234,14 +247,13 @@ test.describe(
         await expect(notice).toHaveClass(/p-message-warn/);
         await expect(notice.getByTestId('notice-call')).toHaveAttribute('href', `tel:${TEST_SHOP.phone}`);
         await expect(notice.getByTestId('notice-text')).toHaveAttribute('href', `sms:${TEST_SHOP.phone}`);
-        // Square's booking site doesn't know the per-phone cap, so it isn't offered (BR-13).
-        await expect(notice.getByTestId('notice-booking-site')).toHaveCount(0);
+        await expect(notice.getByTestId('notice-booking-site')).toHaveAttribute('href', TEST_SHOP.squareBookingSiteUrl ?? '');
         await expectNoA11yViolations(page);
       },
     );
 
     test(
-      'offers the Square booking site and turns off confirming when the bot check fails',
+      'offers the Square booking site and no way to confirm when the bot check fails',
       async ({ page }: { page: Page; }): Promise<void> => {
         await page.route(isSessionRequest, (route: Route): Promise<void> => problem(
           route,
@@ -254,7 +266,8 @@ test.describe(
         const botCheck: Locator = page.getByTestId('bot-check-failed');
         await expect(botCheck.getByTestId('notice-booking-site')).toHaveAttribute('href', TEST_SHOP.squareBookingSiteUrl ?? '');
         await expect(botCheck.getByTestId('notice-call')).toHaveAttribute('href', `tel:${TEST_SHOP.phone}`);
-        await expect(page.getByTestId('confirm-booking')).toBeDisabled();
+        // Without a session token no days load, so the review step and its confirm button are never reached.
+        await expect(page.getByTestId('confirm-booking')).toHaveCount(0);
         await expectNoA11yViolations(page);
       },
     );
@@ -281,12 +294,46 @@ test.describe(
         const notice: Locator = page.getByTestId('booking-notice');
         await expect(notice).toHaveClass(/p-message-error/);
         await expect(notice.getByTestId('notice-booking-site')).toHaveAttribute('href', TEST_SHOP.squareBookingSiteUrl ?? '');
-        await expect(page.locator('.p-datepicker-day:not(.p-disabled)')).toHaveCount(0);
+        await expect(openDays(page)).toHaveCount(0);
         await expectNoA11yViolations(page);
         await notice.getByTestId('notice-retry').click();
 
         await expect(notice).toHaveCount(0);
-        await expect(page.locator('.p-datepicker-day:not(.p-disabled)').first()).toBeVisible();
+        await expect(openDays(page).first()).toBeVisible();
+      },
+    );
+
+    test(
+      'asks before leaving a picked day that is not booked: Keep booking stays, Leave goes (#210)',
+      async ({ page }: { page: Page; }): Promise<void> => {
+        await page.goto('/book');
+        await openDays(page).first().click();
+        const homeLink: Locator = page.locator('header a.home-link');
+        const leaveDialog: Locator = page.locator('.p-confirmdialog');
+
+        await homeLink.click();
+        await expect(leaveDialog).toBeVisible();
+        await expectNoA11yViolations(page);
+        await leaveDialog.locator('.p-confirmdialog-reject-button').click();
+        await expect(leaveDialog).toHaveCount(0);
+        await expect(page).toHaveURL(/\/book$/);
+
+        await homeLink.click();
+        await leaveDialog.locator('.p-confirmdialog-accept-button').click();
+        await expect(page).toHaveURL(/\/$/);
+      },
+    );
+
+    test(
+      'leaves without asking while nothing is picked (#210)',
+      async ({ page }: { page: Page; }): Promise<void> => {
+        await page.goto('/book');
+        await openDays(page).first().waitFor();
+
+        await page.locator('header a.home-link').click();
+
+        await expect(page).toHaveURL(/\/$/);
+        await expect(page.locator('.p-confirmdialog')).toHaveCount(0);
       },
     );
   },
