@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
+import { SkeletonModule } from 'primeng/skeleton';
 import { Backdrop } from '../../../../shared/components/backdrop/backdrop';
 import { AppState } from '../../../../store/app.state';
 import { shopFeature } from '../../../shop/state/shop.feature';
@@ -27,6 +28,7 @@ interface SavedBookingView {
     RouterLink,
     ButtonModule,
     CardModule,
+    SkeletonModule,
     Backdrop,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,

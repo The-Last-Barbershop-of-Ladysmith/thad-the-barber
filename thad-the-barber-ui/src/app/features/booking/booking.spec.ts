@@ -398,6 +398,31 @@ describe(
     );
 
     it(
+      "confirms the booking here, ready for another, when the booking's own page doesn't open",
+      async (): Promise<void> => {
+        openPage();
+        navigateByUrl.mockRejectedValue(new Error('Made-up failed chunk download'));
+        pickAndConfirm(FIRST_TIME);
+        responses[0]?.next(confirmation(requests[0]));
+        responses[0]?.complete();
+        await vi.waitFor((): void => {
+          expect(page.bookingNotice()?.link?.path).toBe('/book/manage/made-up-booking');
+        });
+
+        expect(page.bookingForm.controls.date.value).toBeNull();
+        expect(page.openStep()).toBe(BookingStep.Date);
+        page.bookingForm.setValue({
+          name: 'Test Customer',
+          phone: '(555) 010-0199',
+          date: TODAY,
+          startAt: SECOND_TIME,
+        });
+        page.confirm();
+        expect(requests).toHaveLength(2);
+      },
+    );
+
+    it(
       'lets the customer go once the booking went through (#210)',
       (): void => {
         openPage();

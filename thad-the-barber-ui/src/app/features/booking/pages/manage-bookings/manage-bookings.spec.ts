@@ -85,6 +85,7 @@ describe(
 
         expect(byTestId('saved-bookings')).toBeNull();
         expect(byTestId('no-saved-bookings')).toBeNull();
+        expect(byTestId('saved-bookings-loading')).not.toBeNull();
       },
     );
 

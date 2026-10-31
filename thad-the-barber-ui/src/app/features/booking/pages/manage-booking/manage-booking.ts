@@ -20,6 +20,7 @@ import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { InputTextModule } from 'primeng/inputtext';
+import { SkeletonModule } from 'primeng/skeleton';
 import { Backdrop } from '../../../../shared/components/backdrop/backdrop';
 import { NoticeMessage } from '../../../../shared/components/notice-message/notice-message';
 import { Notice } from '../../../../shared/models/notice.model';
@@ -57,6 +58,7 @@ import { readManageToken, toManageLink, toManagePath } from '../../utils/manage-
     ButtonModule,
     CardModule,
     InputTextModule,
+    SkeletonModule,
     Backdrop,
     NoticeMessage,
   ],
@@ -91,6 +93,8 @@ export class ManageBooking implements OnInit {
   /** Right after booking, the link to keep comes first; opened later, the appointment's actions do. */
   protected readonly isJustBooked: boolean = this.pageState.isJustBooked === true;
   protected readonly justBookedNotice: Notice = JUST_BOOKED_NOTICE;
+  /** The link field: shown right after booking, and whenever copying fails, so the link can be selected by hand. */
+  protected readonly isLinkShown: WritableSignal<boolean> = signal(this.isJustBooked);
   protected readonly isLoading: WritableSignal<boolean> = signal(false);
   protected readonly loadNotice: WritableSignal<Notice | null> = signal(null);
   protected readonly managedBooking: WritableSignal<ManagedBooking | null> = signal(null);
@@ -138,8 +142,8 @@ export class ManageBooking implements OnInit {
     const savedConfirmation: BookingConfirmation | undefined = this.savedConfirmations()
       .find((confirmation: BookingConfirmation): boolean => confirmation.id === this.id());
     this.manageToken.set(this.findManageToken(savedConfirmation));
-    // The booking page just made it: the device holds its time, and it can't be cancelled yet, so there's no need to
-    // ask the API (and Square). Once it has started, the API says so.
+    // Right after booking, the device already holds its time, so the confirmation shows at once. The router restores
+    // the just-booked state on a reload or Back too, when the booking may have changed since, so it's still loaded.
     const isUpcoming: boolean = savedConfirmation !== undefined && Date.parse(savedConfirmation.startAt) > Date.now();
     if (this.isJustBooked && savedConfirmation && isUpcoming) {
       this.show({
@@ -148,7 +152,6 @@ export class ManageBooking implements OnInit {
         isCancelled: false,
         canChange: true,
       });
-      return;
     }
     this.load();
   }
@@ -189,6 +192,7 @@ export class ManageBooking implements OnInit {
           this.messageService.add({ severity: 'success', summary: 'Link copied' });
         },
         (): void => {
+          this.isLinkShown.set(true);
           this.messageService.add({
             severity: 'warn',
             summary: 'Couldn’t copy. Select the link and copy it.',
@@ -198,19 +202,18 @@ export class ManageBooking implements OnInit {
       );
   }
 
+  /** The file is a few hundred bytes, so it rides in a `data:` URL: nothing to create or release around the click. */
   protected addToCalendar(): void {
     const calendarEvent: CalendarEvent | null = this.calendarEvent();
     if (!calendarEvent) {
       return;
     }
-    const fileUrl: string = URL.createObjectURL(new Blob([toIcsFile(calendarEvent)], { type: 'text/calendar' }));
     const download: HTMLAnchorElement = document.createElement('a');
-    download.href = fileUrl;
+    download.href = `data:text/calendar;charset=utf-8,${encodeURIComponent(toIcsFile(calendarEvent))}`;
     download.download = 'appointment.ics';
+    document.body.append(download);
     download.click();
-    setTimeout((): void => {
-      URL.revokeObjectURL(fileUrl);
-    });
+    download.remove();
   }
 
   private show(managedBooking: ManagedBooking): void {

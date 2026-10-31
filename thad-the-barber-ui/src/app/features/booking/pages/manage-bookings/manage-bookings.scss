@@ -1,4 +1,10 @@
 .manage-page {
+  .saved-bookings-skeleton {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
   .saved-bookings {
     display: flex;
     flex-direction: column;

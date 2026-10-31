@@ -50,7 +50,7 @@ import { StepProgress } from './models/step-progress.model';
 import { BookingService } from './services/booking.service';
 import * as BookingActions from './state/booking.actions';
 import { bookingFeature } from './state/booking.feature';
-import { BOT_CHECK_FAILED_NOTICE, toBookingNotice } from './utils/booking-notice.utils';
+import { BOT_CHECK_FAILED_NOTICE, toBookedHereNotice, toBookingNotice } from './utils/booking-notice.utils';
 import { BOOKING_STEPS, canOpenStep, isStepDone } from './utils/booking-steps.utils';
 import { toBookingWindow, toTimeLabel, toUpcomingView } from './utils/booking-time.utils';
 import { toManagePath } from './utils/manage-link.utils';
@@ -391,7 +391,27 @@ export class Booking {
     this.store.dispatch(BookingActions.BookingConfirm({ bookingConfirmation: confirmedBooking }));
     this.isBooked.set(true);
     const managePageState: ManagePageState = { isJustBooked: true };
-    void this.router.navigateByUrl(toManagePath(confirmedBooking.id), { state: managePageState });
+    this.router.navigateByUrl(toManagePath(confirmedBooking.id), { state: managePageState }).then(
+      (isNavigated: boolean): void => {
+        if (!isNavigated) {
+          this.confirmHere(confirmedBooking);
+        }
+      },
+      (): void => {
+        this.confirmHere(confirmedBooking);
+      },
+    );
+  }
+
+  /**
+   * The booking's page didn't open, so this page confirms it and starts over at the date for another booking. Clearing
+   * the day clears the notices, so the booked notice is set last.
+   */
+  private confirmHere(confirmedBooking: BookingConfirmation): void {
+    this.isBooked.set(false);
+    this.bookingForm.patchValue({ date: null, startAt: null });
+    this.openStep.set(BookingStep.Date);
+    this.bookingNotice.set(toBookedHereNotice(confirmedBooking.id));
   }
 
   /**

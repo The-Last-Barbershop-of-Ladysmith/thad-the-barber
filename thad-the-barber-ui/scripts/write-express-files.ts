@@ -136,4 +136,6 @@ writeFileSync(join(outDir, 'client-routes.json'), `${JSON.stringify(
   null,
   2,
 )}\n`);
-process.stdout.write(`Wrote csp-sources.json from ${environmentFile}, brand.css, shop.json and client-routes.json to ${outDir}\n`);
+process.stdout.write(
+  `Wrote csp-sources.json from ${environmentFile}, brand.css, shop.json and client-routes.json to ${outDir}\n`,
+);

@@ -28,6 +28,18 @@
         </div>
       }
     </p-card>
+  } @else {
+    <p-card [dt]="{ body: { padding: '1.25rem' } }">
+      <div
+        class="saved-bookings-skeleton"
+        data-testid="saved-bookings-loading"
+        aria-busy="true"
+        aria-label="Loading your bookings"
+      >
+        <p-skeleton height="3rem" />
+        <p-skeleton height="3rem" />
+      </div>
+    </p-card>
   }
 
   <p class="m-0 text-muted-color">

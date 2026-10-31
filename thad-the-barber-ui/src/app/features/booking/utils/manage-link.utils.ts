@@ -14,7 +14,10 @@ function toManageFragment(manageToken: string): string {
 }
 
 /** The full manage link a customer keeps: `https://…/book/manage/{id}#t=…`. */
-export function toManageLink(origin: string, { id, manageToken }: Pick<BookingConfirmation, 'id' | 'manageToken'>): string {
+export function toManageLink(
+  origin: string,
+  { id, manageToken }: Pick<BookingConfirmation, 'id' | 'manageToken'>,
+): string {
   return `${origin}${toManagePath(id)}#${toManageFragment(manageToken)}`;
 }
 

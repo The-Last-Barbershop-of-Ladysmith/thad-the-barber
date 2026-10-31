@@ -28,13 +28,18 @@ export const adoptBookingFromOtherTab: FunctionalEffect = createEffect(
     return fromEvent<StorageEvent>(browserWindow, 'storage').pipe(
       filter((event: StorageEvent): boolean => event.key === storageKey),
       map((event: StorageEvent): unknown => readSaved(event.newValue)),
-      filter((saved: unknown): boolean => saved !== null),
+      filter(hasSavedConfirmations),
       map((saved: unknown): Action =>
         BookingActions.SavedConfirmationsAdopt({ savedConfirmations: toKeptConfirmations(saved).savedConfirmations })),
     );
   },
   { functional: true },
 );
+
+/** A tab running an older build saves another shape; adopting it as an empty list would erase this tab's bookings. */
+function hasSavedConfirmations(saved: unknown): boolean {
+  return Array.isArray((saved as { savedConfirmations?: unknown; } | null)?.savedConfirmations);
+}
 
 /** The other tab's saved slice, or null for a value that isn't base64 JSON. */
 function readSaved(value: string | null): unknown {

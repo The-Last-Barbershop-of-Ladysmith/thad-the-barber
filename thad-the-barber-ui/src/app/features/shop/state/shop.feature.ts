@@ -57,7 +57,7 @@ export const shopFeature = createFeature({
     ),
     selectAddressLine: createSelector(
       selectShopInfo,
-      (shopInfo: ShopInfo | null): string | null => (shopInfo ? toAddressLine(shopInfo.address) : null),
+      toShopAddressLine,
     ),
     selectMapEmbedUrl: createSelector(
       selectShopInfo,
@@ -108,6 +108,10 @@ function toAddressLine({
   postalCode,
 }: ShopAddress): string {
   return `${street}, ${city}, ${state} ${postalCode}`;
+}
+
+function toShopAddressLine(shopInfo: ShopInfo | null): string | null {
+  return shopInfo ? toAddressLine(shopInfo.address) : null;
 }
 
 /** The address line, encoded for a Google Maps query. */

@@ -45,7 +45,8 @@ export function toKeptConfirmations(
 function isBookingConfirmation(value: unknown): value is BookingConfirmation {
   const confirmation: Partial<BookingConfirmation> | null = value as Partial<BookingConfirmation> | null;
   const hasId: boolean = typeof confirmation?.id === 'string';
-  const hasStartAt: boolean = typeof confirmation?.startAt === 'string' && !Number.isNaN(Date.parse(confirmation.startAt));
+  const hasStartAt: boolean = typeof confirmation?.startAt === 'string'
+    && !Number.isNaN(Date.parse(confirmation.startAt));
   const hasManageToken: boolean = typeof confirmation?.manageToken === 'string';
   return hasId && hasStartAt && hasManageToken;
 }

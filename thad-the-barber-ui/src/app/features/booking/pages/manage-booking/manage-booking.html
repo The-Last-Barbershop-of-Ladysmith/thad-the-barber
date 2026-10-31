@@ -10,10 +10,21 @@
     <app-notice-message [notice]="failureNotice" (retry)="load()" />
   }
 
-  @if (isLoading()) {
-    <p class="text-muted-color" data-testid="manage-loading" role="status">
-      <i class="pi pi-spin pi-spinner" aria-hidden="true"></i> Loading your booking…
-    </p>
+  @if (isLoading() && !managedBooking()) {
+    <p-card [dt]="{ body: { padding: '1.75rem' } }">
+      <div
+        class="stack gap-5"
+        data-testid="manage-loading"
+        aria-busy="true"
+        aria-label="Loading your booking"
+      >
+        <p-skeleton width="100%" height="1.75rem" />
+        <div class="manage-actions">
+          <p-skeleton width="11rem" height="2.75rem" />
+          <p-skeleton width="8rem" height="2.75rem" />
+        </div>
+      </div>
+    </p-card>
   }
 
   @if (managedBooking(); as booking) {
@@ -29,7 +40,7 @@
           <app-notice-message data-testid="booking-status" [notice]="status" />
         }
         @if (booking.canChange && manageLink(); as link) {
-          @if (isJustBooked) {
+          @if (isLinkShown()) {
             <div class="stack gap-2">
               <label class="field-label" for="manage-link">Your link to change or cancel</label>
               <input

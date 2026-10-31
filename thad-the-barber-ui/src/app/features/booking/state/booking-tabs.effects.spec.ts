@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { Action } from '@ngrx/store';
 import { Observable } from 'rxjs';
 import { encodeSavedBookings, testConfirmationIn } from '../../../../testing/test-booking';
+import { encodeBase64 } from '../../../shared/utils/base64.utils';
 import { BookingConfirmation } from '../dtos/booking-confirmation.dto';
 import * as BookingActions from './booking.actions';
 import { adoptBookingFromOtherTab } from './booking-tabs.effects';
@@ -55,13 +56,14 @@ describe(
     );
 
     it(
-      "ignores other keys, a removed entry and a value that isn't the app's",
+      "ignores other keys, a removed entry, a value that isn't the app's and an older build's shape",
       (): void => {
         const emitted: Action[] = listen('browser');
 
         otherTabWrites('ttb-shop', encodeSavedBookings([tomorrow]));
         otherTabWrites('ttb-booking', 'not base64 {');
         otherTabWrites('ttb-booking', null);
+        otherTabWrites('ttb-booking', encodeBase64(JSON.stringify({ savedConfirmation: { booking: tomorrow } })));
 
         expect(emitted).toEqual([]);
       },

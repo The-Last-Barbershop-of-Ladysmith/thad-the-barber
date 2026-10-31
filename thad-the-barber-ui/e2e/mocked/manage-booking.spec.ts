@@ -1,4 +1,5 @@
-import { Locator, Page, Request, Route } from '@playwright/test';
+import { readFile } from 'node:fs/promises';
+import { Download, Locator, Page, Request, Route } from '@playwright/test';
 import { BookingConfirmation } from '../../src/app/features/booking/dtos/booking-confirmation.dto';
 import { testConfirmationIn } from '../../src/testing/test-booking';
 import { TEST_SHOP } from '../../src/testing/test-shop';
@@ -89,6 +90,23 @@ test.describe(
 
         await expect(page.getByTestId('managed-booking')).toBeVisible();
         expect(await requests[0]?.headerValue('x-manage-token')).toBe(tomorrow.manageToken);
+      },
+    );
+
+    test(
+      'downloads the appointment as an .ics file',
+      async ({ page }: { page: Page; }): Promise<void> => {
+        await page.goto('/book/manage/made-up-booking#t=made-up-link-token');
+        await expect(page.getByTestId('add-to-calendar')).toBeEnabled();
+
+        const downloadEvent: Promise<Download> = page.waitForEvent('download');
+        await page.getByTestId('add-to-calendar').click();
+        const download: Download = await downloadEvent;
+        const icsFile: string = await readFile(await download.path(), 'utf8');
+
+        expect(download.suggestedFilename()).toBe('appointment.ics');
+        expect(icsFile).toContain('BEGIN:VEVENT');
+        expect(icsFile).toContain(`SUMMARY:Appointment at ${TEST_SHOP.name}`);
       },
     );
 

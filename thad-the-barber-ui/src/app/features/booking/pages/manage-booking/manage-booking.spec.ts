@@ -164,7 +164,7 @@ describe(
     );
 
     it(
-      'right after booking, shows it from the device without asking the API, with the link to keep first',
+      'right after booking, shows it from the device at once, with the link to keep first, and still loads it',
       (): void => {
         openPage({
           fragment: null,
@@ -172,7 +172,8 @@ describe(
           savedConfirmations: [savedTomorrow],
         });
 
-        expect(tokensSent).toEqual([]);
+        expect(tokensSent).toEqual([savedTomorrow.manageToken]);
+        expect(byTestId('manage-loading')).toBeNull();
         expect(byTestId('booking-confirmation')).not.toBeNull();
         expect(byTestId('appointment-time')?.textContent).toBeTruthy();
         expect((byTestId('manage-link') as HTMLInputElement | null)?.value)
@@ -180,6 +181,25 @@ describe(
         expect(byTestId('copy-link')).not.toBeNull();
         expect(byTestId('add-to-calendar')).not.toBeNull();
         expect(byTestId('booking-status')).toBeNull();
+      },
+    );
+
+    it(
+      'replaces the saved booking with what the API says, since a reload or Back restores the just-booked state',
+      (): void => {
+        openPage({
+          fragment: null,
+          navigationState: { isJustBooked: true },
+          savedConfirmations: [savedTomorrow],
+        });
+        respond({
+          ...upcoming,
+          isCancelled: true,
+          canChange: false,
+        });
+
+        expect(byTestId('booking-status')).not.toBeNull();
+        expect(byTestId('booking-confirmation')).toBeNull();
       },
     );
 
@@ -295,6 +315,8 @@ describe(
 
           expect(toasts[0]?.severity).toBe('warn');
           expect(toasts[0]?.sticky).toBe(true);
+          fixture.detectChanges();
+          expect(byTestId('manage-link')).not.toBeNull();
           vi.unstubAllGlobals();
           TestBed.resetTestingModule();
         }
@@ -303,21 +325,21 @@ describe(
 
     it(
       'downloads the appointment as an .ics file with its length from the shop',
-      async (): Promise<void> => {
-        let file: Blob | null = null;
-        vi.spyOn(URL, 'createObjectURL').mockImplementation((blob: Blob | MediaSource): string => {
-          file = blob as Blob;
-          return 'blob:made-up';
+      (): void => {
+        const downloads: HTMLAnchorElement[] = [];
+        vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement): void {
+          downloads.push(this);
         });
-        vi.spyOn(URL, 'revokeObjectURL').mockImplementation((): void => undefined);
-        const click: Mock = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation((): void => undefined);
         openPage();
         respond({ ...upcoming, startAt: '2030-10-05T20:00:00Z' });
 
         byTestId('add-to-calendar')?.click();
-        const icsFile: string = await (file as Blob | null)?.text() ?? '';
+        const [download]: HTMLAnchorElement[] = downloads;
+        const icsFile: string = decodeURIComponent(download?.href.replace('data:text/calendar;charset=utf-8,', '') ?? '');
 
-        expect(click).toHaveBeenCalledTimes(1);
+        expect(downloads).toHaveLength(1);
+        expect(download?.download).toBe('appointment.ics');
+        expect(download?.isConnected).toBe(false);
         expect(icsFile).toContain('DTSTART:20301005T200000Z');
         // The test shop's appointments are 30 minutes long.
         expect(icsFile).toContain('DTEND:20301005T203000Z');

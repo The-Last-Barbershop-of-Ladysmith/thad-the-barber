@@ -2,6 +2,7 @@ import { ProblemCode } from '../../../shared/models/problem-code.model';
 import { getProblemCode } from '../../../shared/utils/problem.utils';
 import { Notice } from '../../../shared/models/notice.model';
 import { NoticeSeverity } from '../../../shared/models/notice-severity.model';
+import { toManagePath } from './manage-link.utils';
 
 /**
  * The booking page's reminder of bookings kept on this device (BR-22). No times, since there may be several; the link
@@ -67,6 +68,17 @@ const BOOKING_NOTICES: Record<string, Notice> = {
 /** Any other failure (network, 5xx, or a refusal the page's checks should have caught) offers a retry. */
 export function toBookingNotice(error: unknown): Notice {
   return BOOKING_NOTICES[getProblemCode(error) ?? ''] ?? BOOKING_FAILED_NOTICE;
+}
+
+/** The booking went through but its own page didn't open (a failed download after a deploy, say). */
+export function toBookedHereNotice(bookingId: string): Notice {
+  return {
+    severity: NoticeSeverity.Success,
+    title: 'You’re booked.',
+    text: 'Your booking is saved on this device.',
+    link: { label: 'See your booking', path: toManagePath(bookingId) },
+    canRetry: false,
+  };
 }
 
 /** Shown on the manage page right after booking, above the link to keep. */
