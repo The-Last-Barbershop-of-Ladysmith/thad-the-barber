@@ -1,11 +1,12 @@
 import { createAction, props } from '@ngrx/store';
 import { AvailableDay } from '../dtos/available-day.dto';
 import { AvailabilityView } from '../models/availability-view.model';
-import { SavedConfirmation } from '../models/saved-confirmation.model';
+import { BookingConfirmation } from '../dtos/booking-confirmation.dto';
 
 export enum BookingActionTypes {
   SetAvailabilityView = '[Booking Page] Set Availability View',
   BookingConfirm = '[Booking Page] Booking Confirmed',
+  SavedConfirmationsAdopt = '[Booking Tabs] Saved Confirmations Adopted',
   AvailabilityRequestSuccess = '[Booking API] Availability Loaded',
   AvailabilityRequestFailure = '[Booking API] Availability Load Failed',
 }
@@ -17,11 +18,18 @@ export const SetAvailabilityView = createAction(
   props<{ availabilityView: AvailabilityView; }>(),
 );
 
-/** Keeps the booking for 24 hours, replacing any earlier one (BR-22). */
+/** Adds the booking to this device's list, kept until it starts (BR-22). */
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
 export const BookingConfirm = createAction(
   BookingActionTypes.BookingConfirm,
-  props<{ savedConfirmation: SavedConfirmation; }>(),
+  props<{ bookingConfirmation: BookingConfirmation; }>(),
+);
+
+/** Replaces this tab's list with the one another tab saved. */
+// eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
+export const SavedConfirmationsAdopt = createAction(
+  BookingActionTypes.SavedConfirmationsAdopt,
+  props<{ savedConfirmations: BookingConfirmation[]; }>(),
 );
 
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.

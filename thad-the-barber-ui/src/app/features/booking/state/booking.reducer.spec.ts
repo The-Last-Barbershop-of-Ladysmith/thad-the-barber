@@ -1,7 +1,7 @@
-import { testSavedConfirmation } from '../../../../testing/test-booking';
+import { testConfirmation } from '../../../../testing/test-booking';
 import { RequestStatus } from '../../../shared/models/request.models';
 import { AvailableDay } from '../dtos/available-day.dto';
-import { SavedConfirmation } from '../models/saved-confirmation.model';
+import { BookingConfirmation } from '../dtos/booking-confirmation.dto';
 import * as BookingActions from './booking.actions';
 import { bookingReducer } from './booking.reducer';
 import { BookingState, initialBookingState } from './booking.state';
@@ -12,20 +12,20 @@ const availableDays: AvailableDay[] = [
   { date: '2026-10-04', times: ['2026-10-04T23:30:00Z'] },
 ];
 
-const savedConfirmation: SavedConfirmation = testSavedConfirmation('2026-10-02T18:00:00Z');
+const saturday: BookingConfirmation = testConfirmation('2026-10-03T20:00:00Z', 'made-up-saturday');
 
 const october: BookingState = {
   availabilityView: toMonthView('2026-10'),
   availableDays,
   loadStatus: RequestStatus.Error,
-  savedConfirmation,
+  savedConfirmations: [saturday],
 };
 
 describe(
   'booking reducer',
   (): void => {
     it(
-      'empties the calendar and shows it loading while a month loads, keeping the saved confirmation',
+      'empties the calendar and shows it loading while a month loads, keeping the saved bookings',
       (): void => {
         const state: BookingState = bookingReducer(october, BookingActions.SetAvailabilityView({ availabilityView: toMonthView('2026-11') }));
 
@@ -33,24 +33,56 @@ describe(
           availabilityView: toMonthView('2026-11'),
           availableDays: [],
           loadStatus: RequestStatus.Pending,
-          savedConfirmation,
+          savedConfirmations: [saturday],
         });
       },
     );
 
     it(
-      'keeps the latest booking, replacing an earlier one',
+      'adds each booking to the saved ones, soonest first',
       (): void => {
-        const later: SavedConfirmation = {
-          booking: { ...savedConfirmation.booking, id: 'made-up-later-booking' },
-          savedAt: '2026-10-02T19:00:00Z',
-        };
-        const state: BookingState = bookingReducer(
+        const friday: BookingConfirmation = testConfirmation('2026-10-02T14:00:00Z', 'made-up-friday');
+        const sunday: BookingConfirmation = testConfirmation('2026-10-04T15:00:00Z', 'made-up-sunday');
+        const withSunday: BookingState = bookingReducer(
           october,
-          BookingActions.BookingConfirm({ savedConfirmation: later }),
+          BookingActions.BookingConfirm({ bookingConfirmation: sunday }),
+        );
+        const state: BookingState = bookingReducer(
+          withSunday,
+          BookingActions.BookingConfirm({ bookingConfirmation: friday }),
         );
 
-        expect(state.savedConfirmation).toEqual(later);
+        expect(state.savedConfirmations).toEqual([
+          friday,
+          saturday,
+          sunday,
+        ]);
+      },
+    );
+
+    it(
+      'replaces a saved booking confirmed again, instead of listing it twice',
+      (): void => {
+        const moved: BookingConfirmation = { ...saturday, startAt: '2026-10-03T21:00:00Z' };
+        const state: BookingState = bookingReducer(
+          october,
+          BookingActions.BookingConfirm({ bookingConfirmation: moved }),
+        );
+
+        expect(state.savedConfirmations).toEqual([moved]);
+      },
+    );
+
+    it(
+      "replaces the saved bookings with another tab's",
+      (): void => {
+        const fromOtherTab: BookingConfirmation[] = [testConfirmation('2026-10-05T16:00:00Z', 'made-up-other-tab')];
+        const state: BookingState = bookingReducer(
+          october,
+          BookingActions.SavedConfirmationsAdopt({ savedConfirmations: fromOtherTab }),
+        );
+
+        expect(state.savedConfirmations).toEqual(fromOtherTab);
       },
     );
 

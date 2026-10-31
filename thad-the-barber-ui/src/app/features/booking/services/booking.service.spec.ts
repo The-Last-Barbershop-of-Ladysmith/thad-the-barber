@@ -3,6 +3,7 @@ import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@a
 import { TestBed } from '@angular/core/testing';
 import { BookingConfirmation } from '../dtos/booking-confirmation.dto';
 import { BookingRequest } from '../dtos/booking-request.dto';
+import { ManagedBooking } from '../dtos/managed-booking.dto';
 import { BOOKINGS_URL, BookingService } from './booking.service';
 
 describe(
@@ -41,6 +42,32 @@ describe(
         expect(call.request.method).toBe('POST');
         expect(call.request.body).toEqual(request);
         expect(result).toEqual(confirmation);
+      },
+    );
+
+    it(
+      'gets a booking with its manage token in the header only, never the URL (BR-08)',
+      (): void => {
+        const managedBooking: ManagedBooking = {
+          id: 'made-up/booking',
+          startAt: '2026-10-03T20:30:00Z',
+          isCancelled: false,
+          canChange: true,
+        };
+        let result: ManagedBooking | undefined;
+        TestBed.inject(BookingService)
+          .getBooking(managedBooking.id, 'made-up-token')
+          .subscribe((booking: ManagedBooking): void => {
+            result = booking;
+          });
+
+        const call: TestRequest = TestBed.inject(HttpTestingController).expectOne(`${BOOKINGS_URL}/made-up%2Fbooking`);
+        call.flush(managedBooking);
+
+        expect(call.request.method).toBe('GET');
+        expect(call.request.headers.get('X-Manage-Token')).toBe('made-up-token');
+        expect(call.request.urlWithParams).not.toContain('made-up-token');
+        expect(result).toEqual(managedBooking);
       },
     );
   },

@@ -2,8 +2,9 @@ import { ActionReducer, createReducer, on } from '@ngrx/store';
 import { RequestStatus } from '../../../shared/models/request.models';
 import { AvailableDay } from '../dtos/available-day.dto';
 import { AvailabilityView } from '../models/availability-view.model';
-import { SavedConfirmation } from '../models/saved-confirmation.model';
+import { BookingConfirmation } from '../dtos/booking-confirmation.dto';
 import { isSameView } from '../utils/booking-time.utils';
+import { toSortedConfirmations } from '../utils/saved-confirmation.utils';
 import * as BookingActions from './booking.actions';
 import { BookingState, initialBookingState } from './booking.state';
 
@@ -20,9 +21,20 @@ export const bookingReducer: ActionReducer<BookingState> = createReducer(
   ),
   on(
     BookingActions.BookingConfirm,
-    (state: BookingState, { savedConfirmation }: { savedConfirmation: SavedConfirmation; }): BookingState => ({
+    (state: BookingState, { bookingConfirmation }: { bookingConfirmation: BookingConfirmation; }): BookingState => ({
       ...state,
-      savedConfirmation,
+      savedConfirmations: toSortedConfirmations([
+        ...state.savedConfirmations.filter((savedConfirmation: BookingConfirmation): boolean =>
+          savedConfirmation.id !== bookingConfirmation.id),
+        bookingConfirmation,
+      ]),
+    }),
+  ),
+  on(
+    BookingActions.SavedConfirmationsAdopt,
+    (state: BookingState, { savedConfirmations }: { savedConfirmations: BookingConfirmation[]; }): BookingState => ({
+      ...state,
+      savedConfirmations: toSortedConfirmations(savedConfirmations),
     }),
   ),
   on(

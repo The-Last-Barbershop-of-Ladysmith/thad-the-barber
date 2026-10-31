@@ -38,6 +38,8 @@ interface ShopInfoModule { SHOP_FALLBACK: ShopFallback; }
 
 interface PhoneUtilsModule { toPhoneLinks: (e164: string) => PhoneLinks; }
 
+interface ClientRoutesModule { CLIENT_ROUTES: string[]; }
+
 interface FileReplacement {
   replace: string;
   with: string;
@@ -59,6 +61,7 @@ interface AngularJson { projects: Record<string, AngularProject>; }
  *   angular.json swaps in for that configuration, so the origins live in one place.
  * - brand.css: the theme's CSS variables for the error pages (src/app/theme/brand-css.ts).
  * - shop.json: the shop name, phone and Square booking URL for the error page, from src/app/core/config/shop-info.ts.
+ * - client-routes.json: the routes Express serves the app shell for, from src/app/core/config/client-routes.ts.
  */
 const ENVIRONMENT_FILE: string = 'src/environments/environment.ts';
 
@@ -93,10 +96,12 @@ const environmentModule: Promise<EnvironmentModule> = importSource(environmentFi
 const brandCssModule: Promise<BrandCssModule> = importSource('src/app/theme/brand-css.ts');
 const shopInfoModule: Promise<ShopInfoModule> = importSource('src/app/core/config/shop-info.ts');
 const phoneUtilsModule: Promise<PhoneUtilsModule> = importSource('src/app/shared/utils/phone.utils.ts');
+const clientRoutesModule: Promise<ClientRoutesModule> = importSource('src/app/core/config/client-routes.ts');
 const { environment }: EnvironmentModule = await environmentModule;
 const { brandCss }: BrandCssModule = await brandCssModule;
 const { SHOP_FALLBACK }: ShopInfoModule = await shopInfoModule;
 const { toPhoneLinks }: PhoneUtilsModule = await phoneUtilsModule;
+const { CLIENT_ROUTES }: ClientRoutesModule = await clientRoutesModule;
 const shop: ErrorPageShop = {
   name: SHOP_FALLBACK.name,
   phone: toPhoneLinks(SHOP_FALLBACK.phone),
@@ -126,4 +131,11 @@ writeFileSync(join(outDir, 'shop.json'), `${JSON.stringify(
   null,
   2,
 )}\n`);
-process.stdout.write(`Wrote csp-sources.json from ${environmentFile}, brand.css and shop.json to ${outDir}\n`);
+writeFileSync(join(outDir, 'client-routes.json'), `${JSON.stringify(
+  CLIENT_ROUTES,
+  null,
+  2,
+)}\n`);
+process.stdout.write(
+  `Wrote csp-sources.json from ${environmentFile}, brand.css, shop.json and client-routes.json to ${outDir}\n`,
+);

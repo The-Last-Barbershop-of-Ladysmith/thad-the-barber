@@ -18,6 +18,7 @@ export type ShopExtraSelectors = {
   selectPhoneLinks: MemoizedSelector<object, PhoneLinks>;
   selectBookingUrl: MemoizedSelector<object, string>;
   selectAddress: MemoizedSelector<object, ShopAddress | null>;
+  selectAddressLine: MemoizedSelector<object, string | null>;
   selectMapEmbedUrl: MemoizedSelector<object, string | null>;
   selectDirectionsUrl: MemoizedSelector<object, string | null>;
   selectTimeZone: MemoizedSelector<object, string | null>;
@@ -53,6 +54,10 @@ export const shopFeature = createFeature({
     selectAddress: createSelector(
       selectShopInfo,
       (shopInfo: ShopInfo | null): ShopAddress | null => shopInfo?.address ?? null,
+    ),
+    selectAddressLine: createSelector(
+      selectShopInfo,
+      toShopAddressLine,
     ),
     selectMapEmbedUrl: createSelector(
       selectShopInfo,
@@ -95,14 +100,23 @@ function toDirectionsUrl(shopInfo: ShopInfo | null): string | null {
   return `https://www.google.com/maps/dir/?api=1&destination=${toMapQuery(shopInfo.address)}`;
 }
 
-/** "12 Pretend Pl, Faketown, HI 96999-0001", encoded for a Google Maps query. */
-function toMapQuery({
+/** "12 Pretend Pl, Faketown, HI 96999-0001" */
+function toAddressLine({
   street,
   city,
   state,
   postalCode,
 }: ShopAddress): string {
-  return encodeURIComponent(`${street}, ${city}, ${state} ${postalCode}`);
+  return `${street}, ${city}, ${state} ${postalCode}`;
+}
+
+function toShopAddressLine(shopInfo: ShopInfo | null): string | null {
+  return shopInfo ? toAddressLine(shopInfo.address) : null;
+}
+
+/** The address line, encoded for a Google Maps query. */
+function toMapQuery(address: ShopAddress): string {
+  return encodeURIComponent(toAddressLine(address));
 }
 
 /** Only the profiles Square has. */

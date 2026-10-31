@@ -1,89 +1,106 @@
-import { testSavedConfirmation } from '../../../../testing/test-booking';
-import { SavedConfirmation } from '../models/saved-confirmation.model';
-import { toKeptBooking, toKeptConfirmation } from './saved-confirmation.utils';
+import { testConfirmation } from '../../../../testing/test-booking';
+import { BookingConfirmation } from '../dtos/booking-confirmation.dto';
+import { toKeptConfirmations, toSortedConfirmations, toUpcomingConfirmations } from './saved-confirmation.utils';
 
-/** Saved 26 hours before its 2026-10-03T20:00Z appointment. */
-const savedConfirmation: SavedConfirmation = testSavedConfirmation('2026-10-02T18:00:00Z');
+const earlier: BookingConfirmation = testConfirmation('2026-10-03T20:00:00Z', 'made-up-earlier-booking');
+const later: BookingConfirmation = testConfirmation('2026-10-10T14:30:00Z', 'made-up-later-booking');
+const beforeBoth: Date = new Date('2026-10-01T12:00:00Z');
 
 describe(
-  'toKeptConfirmation',
+  'toSortedConfirmations',
   (): void => {
     it(
-      'keeps a confirmation saved less than 24 hours ago for an appointment still to come',
+      'puts the soonest booking first without changing the list it was given',
       (): void => {
-        const almostADayLater: Date = new Date('2026-10-03T17:59:59Z');
+        const confirmations: BookingConfirmation[] = [later, earlier];
 
-        expect(toKeptConfirmation({ savedConfirmation }, almostADayLater)).toEqual({ savedConfirmation });
-      },
-    );
-
-    it(
-      'drops it once 24 hours have passed',
-      (): void => {
-        const aDayLater: Date = new Date('2026-10-03T18:00:00Z');
-
-        expect(toKeptConfirmation({ savedConfirmation }, aDayLater)).toEqual({ savedConfirmation: null });
-      },
-    );
-
-    it(
-      'drops it once the appointment has started, even within 24 hours',
-      (): void => {
-        const bookedAnHourBefore: SavedConfirmation = testSavedConfirmation('2026-10-03T19:00:00Z');
-        const atTheStart: Date = new Date('2026-10-03T20:00:00Z');
-
-        expect(toKeptConfirmation({ savedConfirmation: bookedAnHourBefore }, atTheStart))
-          .toEqual({ savedConfirmation: null });
-      },
-    );
-
-    it(
-      'returns only the confirmation, never other fields an older build saved under the key',
-      (): void => {
-        const olderBuildSlice: object = {
-          savedConfirmation,
-          confirmation: { name: 'Test Customer', phone: '+15550100199' },
-          status: 'booked',
-        };
-
-        expect(toKeptConfirmation(olderBuildSlice, new Date('2026-10-03T12:00:00Z'))).toEqual({ savedConfirmation });
-      },
-    );
-
-    it(
-      'reads anything else as no confirmation instead of failing start-up',
-      (): void => {
-        const unreadable: unknown[] = [
-          null,
-          'null',
-          {},
-          { savedConfirmation: { savedAt: '2026-10-03T12:00:00Z' } },
-          { savedConfirmation: { ...savedConfirmation, savedAt: 'not a date' } },
-        ];
-
-        for (const saved of unreadable) {
-          expect(toKeptConfirmation(saved)).toEqual({ savedConfirmation: null });
-        }
+        expect(toSortedConfirmations(confirmations)).toEqual([earlier, later]);
+        expect(confirmations).toEqual([later, earlier]);
       },
     );
   },
 );
 
 describe(
-  'toKeptBooking',
+  'toUpcomingConfirmations',
   (): void => {
     it(
-      'returns the booking while it is kept',
+      'keeps every booking still to come, in the order given, with no age limit',
       (): void => {
-        expect(toKeptBooking(savedConfirmation, new Date('2026-10-03T12:00:00Z'))).toEqual(savedConfirmation.booking);
+        expect(toUpcomingConfirmations([later, earlier], beforeBoth)).toEqual([later, earlier]);
       },
     );
 
     it(
-      'returns none once it is no longer kept, or when nothing was saved',
+      'drops a booking from the moment it starts',
       (): void => {
-        expect(toKeptBooking(savedConfirmation, new Date('2026-10-03T18:00:00Z'))).toBeNull();
-        expect(toKeptBooking(null)).toBeNull();
+        const atTheFirstStart: Date = new Date(earlier.startAt);
+
+        expect(toUpcomingConfirmations([earlier, later], atTheFirstStart)).toEqual([later]);
+      },
+    );
+  },
+);
+
+describe(
+  'toKeptConfirmations',
+  (): void => {
+    it(
+      'keeps the upcoming bookings, soonest first, and drops the started ones',
+      (): void => {
+        const started: BookingConfirmation = testConfirmation('2026-09-30T15:00:00Z', 'made-up-started-booking');
+
+        expect(toKeptConfirmations({
+          savedConfirmations: [
+            later,
+            started,
+            earlier,
+          ],
+        }, beforeBoth))
+          .toEqual({ savedConfirmations: [earlier, later] });
+      },
+    );
+
+    it(
+      'keeps only the ID, time and manage token, never a name or phone saved beside them',
+      (): void => {
+        const tampered: object = {
+          savedConfirmations: [
+            {
+              ...earlier,
+              name: 'Test Customer',
+              phone: '+15550100199',
+            },
+          ],
+          savedConfirmation: { booking: later, savedAt: '2026-10-01T11:00:00Z' },
+        };
+
+        expect(toKeptConfirmations(tampered, beforeBoth)).toEqual({ savedConfirmations: [earlier] });
+      },
+    );
+
+    it(
+      'skips malformed entries and reads anything else as no bookings instead of failing start-up',
+      (): void => {
+        const malformed: object = {
+          savedConfirmations: [
+            null,
+            { id: 'made-up-no-token', startAt: later.startAt },
+            { ...later, startAt: 'not a date' },
+            earlier,
+          ],
+        };
+        const unreadable: unknown[] = [
+          null,
+          'null',
+          {},
+          { savedConfirmations: 'not a list' },
+        ];
+
+        expect(toKeptConfirmations(malformed, beforeBoth)).toEqual({ savedConfirmations: [earlier] });
+        for (const saved of unreadable) {
+          expect(toKeptConfirmations(saved, beforeBoth)).toEqual({ savedConfirmations: [] });
+        }
       },
     );
   },

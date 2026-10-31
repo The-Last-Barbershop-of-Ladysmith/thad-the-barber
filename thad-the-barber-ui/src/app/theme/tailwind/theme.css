@@ -153,6 +153,22 @@
   padding: 7rem 1.5rem 4rem;
 }
 
+/*
+ * A page's content column below the fixed header, with its blocks stacked. It shares the footer's width and gutters
+ * (`--p-brand-page-width`, `--p-brand-page-gutter`), so their edges line up at every width; pages set no width or
+ * padding of their own.
+ */
+@utility page {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  width: 100%;
+  max-width: calc(var(--p-brand-page-width) + 2 * var(--p-brand-page-gutter));
+  margin-inline: auto;
+  padding: 8rem var(--p-brand-page-gutter) 1.5rem;
+}
+
 /* ---- Surfaces ------------------------------------------------------------ */
 
 /* Frosted panel for non-card containers (the p-card token override covers cards) */

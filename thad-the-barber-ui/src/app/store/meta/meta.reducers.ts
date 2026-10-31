@@ -1,7 +1,7 @@
 import { ActionReducer, MetaReducer } from '@ngrx/store';
 import { Keys, localStorageSync } from 'ngrx-store-localstorage';
 import { bookingFeatureKey } from '../../features/booking/state/booking.feature';
-import { toKeptConfirmation } from '../../features/booking/utils/saved-confirmation.utils';
+import { toKeptConfirmations } from '../../features/booking/utils/saved-confirmation.utils';
 import { homeFeatureKey } from '../../features/home/state/home.feature';
 import { decodeBase64, encodeBase64 } from '../../shared/utils/base64.utils';
 import { shopFeatureKey } from '../../features/shop/state/shop.feature';
@@ -35,14 +35,14 @@ const keys: Keys = [
       filter: ['shopInfo'],
     },
   },
-  // Only the last booking, without name or phone, dropped on load once it's 24 hours old or under way (BR-22); its
+  // Only the bookings made on this device, without name or phone, each dropped on load once it has started (BR-22);
   // availability must be fresh.
   {
     [bookingFeatureKey]: {
       encrypt: encodeBase64,
       decrypt: decodeBase64,
-      filter: ['savedConfirmation'],
-      deserialize: toKeptConfirmation,
+      filter: ['savedConfirmations'],
+      deserialize: toKeptConfirmations,
     },
   },
 ];
