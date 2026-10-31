@@ -45,6 +45,22 @@
 /* ---- Typography ---------------------------------------------------------- */
 
 /* Small copper label above headings: "VISIT US", "TESTIMONIALS" */
+/*
+ * A page's content column below the fixed header: the footer's width and side padding, so their edges line up, with the
+ * page's blocks stacked. Pages set no width or padding of their own.
+ */
+@utility page {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  width: 100%;
+  /* The footer's 75rem panel plus its 1.5rem gutters, so the content edges meet the panel's at every width. */
+  max-width: calc(75rem + 3rem);
+  margin-inline: auto;
+  padding: 8rem 1.5rem 1.5rem;
+}
+
 @utility eyebrow {
   font-size: 0.75rem;
   font-weight: 700;
