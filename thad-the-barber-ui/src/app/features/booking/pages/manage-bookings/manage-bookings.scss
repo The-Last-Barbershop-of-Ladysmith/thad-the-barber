@@ -1,0 +1,30 @@
+.manage-page {
+  .saved-bookings {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    li + li {
+      border-top: 1px solid var(--p-brand-divider);
+    }
+
+    .saved-booking {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      min-height: 3rem;
+      padding-block: 0.75rem;
+      font-weight: 700;
+      color: var(--p-text-color);
+      text-decoration: none;
+
+      &:hover,
+      &:focus-visible {
+        color: var(--p-primary-color);
+      }
+    }
+  }
+}

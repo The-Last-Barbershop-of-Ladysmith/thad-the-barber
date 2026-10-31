@@ -76,3 +76,43 @@ const BOOKING_NOTICES: Record<string, Notice> = {
 export function toBookingNotice(error: unknown): Notice {
   return BOOKING_NOTICES[getProblemCode(error) ?? ''] ?? BOOKING_FAILED_NOTICE;
 }
+
+/** Shown on the manage page right after booking, above the link to keep. */
+export const JUST_BOOKED_NOTICE: Notice = {
+  severity: NoticeSeverity.Success,
+  title: 'You’re booked.',
+  text: 'Keep the link below to change or cancel your appointment.',
+  canRetry: false,
+};
+
+/** A manage link with no token, or one whose booking doesn't exist or doesn't match (404 `booking_not_found`). */
+export const BOOKING_NOT_FOUND_NOTICE: Notice = {
+  severity: NoticeSeverity.Error,
+  text: 'We couldn’t find that booking.',
+  canRetry: false,
+};
+
+const BOOKING_LOAD_FAILED_NOTICE: Notice = {
+  severity: NoticeSeverity.Error,
+  text: 'We couldn’t load your booking.',
+  canRetry: true,
+};
+
+export const BOOKING_CANCELLED_NOTICE: Notice = {
+  severity: NoticeSeverity.Info,
+  text: 'This appointment was cancelled.',
+  canRetry: false,
+};
+
+/** A booking can't change once its start time has passed (BR-07). */
+export const BOOKING_PASSED_NOTICE: Notice = {
+  severity: NoticeSeverity.Info,
+  text: 'This appointment has started or passed.',
+  canRetry: false,
+};
+
+/** Loading a booking from its manage link: not found, or any other failure with a retry. */
+export function toManageLoadNotice(error: unknown): Notice {
+  const isNotFound: boolean = getProblemCode(error) === ProblemCode.BookingNotFound;
+  return isNotFound ? BOOKING_NOT_FOUND_NOTICE : BOOKING_LOAD_FAILED_NOTICE;
+}

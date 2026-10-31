@@ -16,6 +16,12 @@ export function isBookingRequest(url: URL): boolean {
   return url.href === BOOKINGS_URL;
 }
 
+/** `GET /api/bookings/{id}`, the manage page's load. */
+export function isManagedBookingRequest(url: URL): boolean {
+  const isUnderBookings: boolean = `${url.origin}${url.pathname}`.startsWith(`${BOOKINGS_URL}/`);
+  return isUnderBookings && !isAvailabilityRequest(url);
+}
+
 /**
  * Every day from `from` through `to` that isn't before today on the test shop's clock, so the days in view always have
  * an open day. Each opens at 20:00 and 20:30 UTC, mid-morning on the test shop's Honolulu clock.

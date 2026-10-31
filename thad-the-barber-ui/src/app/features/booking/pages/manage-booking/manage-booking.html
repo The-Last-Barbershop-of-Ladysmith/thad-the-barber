@@ -1,0 +1,90 @@
+<app-backdrop mode="still" [still]="5" />
+
+<div class="page manage-page">
+  <header class="stack gap-2">
+    <span class="eyebrow">Your booking</span>
+    <h1 id="manage-heading" class="section-title" tabindex="-1">Your appointment</h1>
+  </header>
+
+  @if (loadNotice(); as failureNotice) {
+    <app-notice-message [notice]="failureNotice" (retry)="load()" />
+  }
+
+  @if (loadStatus() === requestStatus.Pending) {
+    <p class="text-muted-color" data-testid="manage-loading" role="status">
+      <i class="pi pi-spin pi-spinner" aria-hidden="true"></i> Loading your booking…
+    </p>
+  }
+
+  @if (managedBooking(); as booking) {
+    <p-card [dt]="{ body: { padding: '1.75rem' } }">
+      <div class="stack gap-5" data-testid="managed-booking" aria-live="polite">
+        @if (isJustBooked && booking.canChange) {
+          <app-notice-message data-testid="booking-confirmation" [notice]="justBookedNotice" />
+        }
+        @if (appointmentTime(); as time) {
+          <p class="appointment-time" data-testid="appointment-time">{{ time }}</p>
+        }
+        @if (statusNotice(); as status) {
+          <app-notice-message data-testid="booking-status" [notice]="status" />
+        }
+        @if (booking.canChange && manageLink(); as link) {
+          @if (isJustBooked) {
+            <div class="stack gap-2">
+              <label class="field-label" for="manage-link">Your link to change or cancel</label>
+              <input
+                #linkField
+                pInputText
+                id="manage-link"
+                class="w-full"
+                readonly
+                data-testid="manage-link"
+                [value]="link"
+                (focus)="linkField.select()"
+              />
+            </div>
+          }
+          <div class="manage-actions">
+            @if (isJustBooked) {
+              <button pButton type="button" data-testid="copy-link" (click)="copyManageLink()">
+                <i pButtonIcon class="pi pi-copy" aria-hidden="true"></i>
+                <span pButtonLabel>Copy link</span>
+              </button>
+            }
+            <button
+              pButton
+              type="button"
+              [severity]="isJustBooked ? 'secondary' : undefined"
+              [outlined]="isJustBooked"
+              data-testid="add-to-calendar"
+              [disabled]="!canAddToCalendar()"
+              (click)="addToCalendar()"
+            >
+              <i pButtonIcon class="pi pi-calendar-plus" aria-hidden="true"></i>
+              <span pButtonLabel>Add to calendar</span>
+            </button>
+            @if (!isJustBooked) {
+              <button
+                pButton
+                type="button"
+                severity="secondary"
+                size="small"
+                [text]="true"
+                data-testid="copy-link"
+                (click)="copyManageLink()"
+              >
+                <i pButtonIcon class="pi pi-copy" aria-hidden="true"></i>
+                <span pButtonLabel>Copy link</span>
+              </button>
+            }
+          </div>
+        }
+      </div>
+    </p-card>
+  }
+
+  <nav class="manage-actions" aria-label="More bookings">
+    <a class="nav-link" routerLink="/book/manage" data-testid="all-bookings">All your bookings</a>
+    <a class="nav-link" routerLink="/book" data-testid="book-another">Book another appointment</a>
+  </nav>
+</div>

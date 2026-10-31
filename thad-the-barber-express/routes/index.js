@@ -10,8 +10,18 @@ var cspSources = JSON.parse(fs.readFileSync(path.join(angularDist, 'csp-sources.
 var cspHeader = process.env.CSP_REPORT_ONLY === 'true' ? 'Content-Security-Policy-Report-Only' : 'Content-Security-Policy';
 
 // Client-rendered routes, served the app shell with a 200. Prerendered pages need no entry: their file is the route.
-// #58: once /book is prerendered, remove it here.
-var clientRoutes = new Set(['/book']);
+// #58: once /book is prerendered, remove it here. A booking's manage page takes its ID from the path.
+var clientRoutes = [
+  /^\/book$/,
+  /^\/book\/manage$/,
+  /^\/book\/manage\/[A-Za-z0-9_-]+$/,
+];
+
+function isClientRoute(route) {
+  return clientRoutes.some(function(clientRoute) {
+    return clientRoute.test(route);
+  });
+}
 
 var ONE_YEAR_SECONDS = 365 * 24 * 60 * 60;
 var ONE_DAY_SECONDS = 24 * 60 * 60;
@@ -80,7 +90,7 @@ router.get('/{*splat}', function(req, res, next) {
   if (pages.has(route)) {
     return sendPage(res, 200, pages.get(route));
   }
-  if (appShell && clientRoutes.has(route)) {
+  if (appShell && isClientRoute(route)) {
     return sendPage(res, 200, appShell);
   }
   sendPage(res, 404, notFoundPage);
