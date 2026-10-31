@@ -12,13 +12,13 @@ import {
 import { ButtonModule, ButtonSeverity } from 'primeng/button';
 import { Store } from '@ngrx/store';
 import { MessageModule } from 'primeng/message';
-import { PhoneLinks } from '../../../../shared/models/phone-links.model';
-import { AppState } from '../../../../store/app.state';
-import { shopFeature } from '../../../shop/state/shop.feature';
-import { BookingNotice } from '../../models/booking-notice.model';
+import { PhoneLinks } from '../../models/phone-links.model';
+import { AppState } from '../../../store/app.state';
+import { shopFeature } from '../../../features/shop/state/shop.feature';
+import { Notice } from '../../models/notice.model';
 import { NoticeSeverity } from '../../models/notice-severity.model';
 
-/** An inline booking message. Every problem ends with call, text and Square booking links, and maybe a retry. */
+/** An inline message. Every problem ends with call, text and Square booking links, and maybe a retry. */
 @Component({
   selector: 'app-notice-message',
   imports: [ButtonModule, MessageModule],
@@ -27,7 +27,7 @@ import { NoticeSeverity } from '../../models/notice-severity.model';
   styleUrl: './notice-message.scss',
 })
 export class NoticeMessage {
-  readonly notice: InputSignal<BookingNotice> = input.required<BookingNotice>();
+  readonly notice: InputSignal<Notice> = input.required<Notice>();
   readonly retry: OutputEmitterRef<void> = output();
 
   private readonly store: Store<AppState> = inject<Store<AppState>>(Store);

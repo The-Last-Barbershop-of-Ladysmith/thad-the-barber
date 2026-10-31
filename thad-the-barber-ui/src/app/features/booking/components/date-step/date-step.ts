@@ -34,7 +34,7 @@ import { AppState } from '../../../../store/app.state';
 import { BookingSettings } from '../../../shop/models/booking-settings.model';
 import { shopFeature } from '../../../shop/state/shop.feature';
 import { AvailableDay } from '../../dtos/available-day.dto';
-import { BookingNotice } from '../../models/booking-notice.model';
+import { Notice } from '../../../../shared/models/notice.model';
 import { AvailabilityViewKind } from '../../models/availability-view-kind.model';
 import { AvailabilityView } from '../../models/availability-view.model';
 import { DateRange } from '../../models/date-range.model';
@@ -48,7 +48,7 @@ import {
   toMonthView,
   toUpcomingView,
 } from '../../utils/booking-time.utils';
-import { NoticeMessage } from '../notice-message/notice-message';
+import { NoticeMessage } from '../../../../shared/components/notice-message/notice-message';
 
 /** The month picker's key for the 31-day blocks; a SelectButton can't select a null month. */
 const UPCOMING_KEY: string = 'upcoming';
@@ -106,7 +106,7 @@ export class DateStep {
 
   protected readonly upcomingLabel: string = `Next ${UPCOMING_DAY_COUNT} days`;
   protected readonly upcomingOptions: UpcomingOption[] = [{ label: this.upcomingLabel, viewKey: UPCOMING_KEY }];
-  protected readonly noOpenDaysNotice: BookingNotice = NO_OPEN_DAYS_NOTICE;
+  protected readonly noOpenDaysNotice: Notice = NO_OPEN_DAYS_NOTICE;
   /** Placeholder rows in the list's place while the days load. */
   protected readonly skeletonRows: number[] = Array<number>(10).fill(0);
 

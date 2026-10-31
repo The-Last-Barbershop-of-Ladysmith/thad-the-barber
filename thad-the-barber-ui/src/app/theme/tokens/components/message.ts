@@ -18,8 +18,15 @@ export const message: MessageDesignTokens = {
   root: { borderRadius: '{border.radius.md}' },
   content: { padding: '0.875rem 1.125rem', gap: '0.625rem' },
   text: { fontWeight: '600' },
+  icon: { size: '1.5rem' },
   info: severity('info'),
   success: severity('success'),
   warn: severity('warn'),
   error: severity('error'),
+  // Notices run to several lines (title, text, help line, retry), so the icon sits by the first line, not the middle.
+  css: `
+    .p-message-content {
+      align-items: flex-start;
+    }
+  `,
 };

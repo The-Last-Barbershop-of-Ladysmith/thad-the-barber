@@ -1,7 +1,7 @@
 import { ProblemCode } from '../../../shared/models/problem-code.model';
 import { getProblemCode } from '../../../shared/utils/problem.utils';
-import { BookingNotice } from '../models/booking-notice.model';
-import { NoticeSeverity } from '../models/notice-severity.model';
+import { Notice } from '../../../shared/models/notice.model';
+import { NoticeSeverity } from '../../../shared/models/notice-severity.model';
 import { toLongDateTime } from './booking-time.utils';
 
 /**
@@ -12,7 +12,7 @@ export function toBookedNotice(
   timeZone: string,
   startAt: string,
   phone: string | null,
-): BookingNotice {
+): Notice {
   const appointmentTime: string = `${toLongDateTime(timeZone, startAt)}.`;
   return {
     severity: NoticeSeverity.Success,
@@ -22,34 +22,34 @@ export function toBookedNotice(
   };
 }
 
-export const AVAILABILITY_FAILED_NOTICE: BookingNotice = {
+export const AVAILABILITY_FAILED_NOTICE: Notice = {
   severity: NoticeSeverity.Error,
   text: 'We couldn’t load the open times.',
   canRetry: true,
 };
 
 /** The days in view have no open times (Square doesn't list closed or full days). */
-export const NO_OPEN_DAYS_NOTICE: BookingNotice = {
+export const NO_OPEN_DAYS_NOTICE: Notice = {
   severity: NoticeSeverity.Info,
   text: 'No open times in these days.',
   canRetry: false,
 };
 
 /** The browser didn't pass reCAPTCHA, so booking here won't work from it at all. */
-export const BOT_CHECK_FAILED_NOTICE: BookingNotice = {
+export const BOT_CHECK_FAILED_NOTICE: Notice = {
   severity: NoticeSeverity.Warn,
   text: 'We can’t book online from this browser.',
   canRetry: false,
 };
 
-const BOOKING_FAILED_NOTICE: BookingNotice = {
+const BOOKING_FAILED_NOTICE: Notice = {
   severity: NoticeSeverity.Error,
   text: 'That booking didn’t go through.',
   canRetry: true,
 };
 
 /** The booking API's ProblemDetails codes the customer can act on (BR-13 for the limits). */
-const BOOKING_NOTICES: Record<string, BookingNotice> = {
+const BOOKING_NOTICES: Record<string, Notice> = {
   [ProblemCode.SlotUnavailable]: {
     severity: NoticeSeverity.Warn,
     text: 'That time was just taken, pick another.',
@@ -73,6 +73,6 @@ const BOOKING_NOTICES: Record<string, BookingNotice> = {
 };
 
 /** Any other failure (network, 5xx, or a refusal the page's checks should have caught) offers a retry. */
-export function toBookingNotice(error: unknown): BookingNotice {
+export function toBookingNotice(error: unknown): Notice {
   return BOOKING_NOTICES[getProblemCode(error) ?? ''] ?? BOOKING_FAILED_NOTICE;
 }

@@ -1,11 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Store, provideStore } from '@ngrx/store';
-import { TEST_SHOP } from '../../../../../testing/test-shop';
-import { PhoneLinks } from '../../../../shared/models/phone-links.model';
-import { AppState } from '../../../../store/app.state';
-import * as ShopActions from '../../../shop/state/shop.actions';
-import { shopFeature } from '../../../shop/state/shop.feature';
-import { BookingNotice } from '../../models/booking-notice.model';
+import { TEST_SHOP } from '../../../../testing/test-shop';
+import { PhoneLinks } from '../../models/phone-links.model';
+import { AppState } from '../../../store/app.state';
+import * as ShopActions from '../../../features/shop/state/shop.actions';
+import { shopFeature } from '../../../features/shop/state/shop.feature';
+import { Notice } from '../../models/notice.model';
 import { NoticeSeverity } from '../../models/notice-severity.model';
 import { NoticeMessage } from './notice-message';
 
@@ -23,7 +23,7 @@ describe(
       bookingUrl = store.selectSignal(shopFeature.selectBookingUrl)();
     });
 
-    function render(notice: BookingNotice): ComponentFixture<NoticeMessage> {
+    function render(notice: Notice): ComponentFixture<NoticeMessage> {
       const fixture: ComponentFixture<NoticeMessage> = TestBed.createComponent(NoticeMessage);
       fixture.componentRef.setInput('notice', notice);
       fixture.detectChanges();

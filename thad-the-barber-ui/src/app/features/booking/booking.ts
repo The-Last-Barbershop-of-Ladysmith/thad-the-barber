@@ -32,14 +32,14 @@ import { AppState } from '../../store/app.state';
 import { shopFeature } from '../shop/state/shop.feature';
 import { DateStep } from './components/date-step/date-step';
 import { DetailsStep } from './components/details-step/details-step';
-import { NoticeMessage } from './components/notice-message/notice-message';
+import { NoticeMessage } from '../../shared/components/notice-message/notice-message';
 import { ReviewStep } from './components/review-step/review-step';
 import { TimeStep } from './components/time-step/time-step';
 import { AvailableDay } from './dtos/available-day.dto';
 import { BookingConfirmation } from './dtos/booking-confirmation.dto';
 import { BookingForm } from './models/booking-form.model';
 import { BookingFormValue } from './models/booking-form-value.model';
-import { BookingNotice } from './models/booking-notice.model';
+import { Notice } from '../../shared/models/notice.model';
 import { AvailabilityViewKind } from './models/availability-view-kind.model';
 import { AvailabilityView } from './models/availability-view.model';
 import { BookingStep } from './models/booking-step.model';
@@ -118,8 +118,8 @@ export class Booking {
   private readonly availabilityView: Signal<AvailabilityView | null> =
     this.store.selectSignal(bookingFeature.selectAvailabilityView);
   protected readonly isBotCheckFailed: Signal<boolean> = inject(SessionService).isBotCheckFailed;
-  protected readonly botCheckFailedNotice: BookingNotice = BOT_CHECK_FAILED_NOTICE;
-  protected readonly availabilityNotice: Signal<BookingNotice | null> =
+  protected readonly botCheckFailedNotice: Notice = BOT_CHECK_FAILED_NOTICE;
+  protected readonly availabilityNotice: Signal<Notice | null> =
     this.store.selectSignal(bookingFeature.selectNotice);
 
   /**
@@ -128,7 +128,7 @@ export class Booking {
    */
   private readonly savedBooking: BookingConfirmation | null =
     toKeptBooking(this.store.selectSignal(bookingFeature.selectSavedConfirmation)());
-  protected readonly savedBookingNotice: Signal<BookingNotice | null> = computed((): BookingNotice | null => {
+  protected readonly savedBookingNotice: Signal<Notice | null> = computed((): Notice | null => {
     const timeZone: string | null = this.timeZone();
     if (!this.savedBooking || !timeZone) {
       return null;
@@ -160,9 +160,9 @@ export class Booking {
   );
 
   protected readonly isSubmitting: WritableSignal<boolean> = signal(false);
-  protected readonly bookingNotice: WritableSignal<BookingNotice | null> = signal(null);
+  protected readonly bookingNotice: WritableSignal<Notice | null> = signal(null);
   /** "You're booked", until the next booking starts. */
-  protected readonly bookedNotice: WritableSignal<BookingNotice | null> = signal(null);
+  protected readonly bookedNotice: WritableSignal<Notice | null> = signal(null);
   /** Kept while the same booking is retried, so a booking whose response was lost isn't made twice. */
   private idempotencyKey: string | null = null;
 
@@ -467,7 +467,7 @@ export class Booking {
     if (!date || !isLoaded || availableDays.some((availableDay: AvailableDay): boolean => availableDay.date === date)) {
       return;
     }
-    const takenTimeNotice: BookingNotice | null = this.bookingNotice();
+    const takenTimeNotice: Notice | null = this.bookingNotice();
     this.bookingForm.patchValue({ date: null, startAt: null });
     this.bookingNotice.set(takenTimeNotice);
     this.openStep.set(BookingStep.Date);

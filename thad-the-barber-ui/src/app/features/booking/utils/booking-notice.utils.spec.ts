@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { BookingNotice } from '../models/booking-notice.model';
+import { Notice } from '../../../shared/models/notice.model';
 import { ProblemCode } from '../../../shared/models/problem-code.model';
-import { NoticeSeverity } from '../models/notice-severity.model';
+import { NoticeSeverity } from '../../../shared/models/notice-severity.model';
 import { toBookingNotice } from './booking-notice.utils';
 
 const RAW_DETAIL: string = 'Made-up server detail that must never reach the page';
@@ -83,7 +83,7 @@ describe(
       it(
         `maps ${testCase.name} to its severity and retry, never the raw error`,
         (): void => {
-          const notice: BookingNotice = toBookingNotice(testCase.error);
+          const notice: Notice = toBookingNotice(testCase.error);
 
           expect(notice).toEqual({
             severity: testCase.severity,
