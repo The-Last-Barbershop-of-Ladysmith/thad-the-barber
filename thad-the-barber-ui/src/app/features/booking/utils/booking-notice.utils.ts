@@ -2,25 +2,17 @@ import { ProblemCode } from '../../../shared/models/problem-code.model';
 import { getProblemCode } from '../../../shared/utils/problem.utils';
 import { Notice } from '../../../shared/models/notice.model';
 import { NoticeSeverity } from '../../../shared/models/notice-severity.model';
-import { toLongDateTime } from './booking-time.utils';
 
 /**
- * The booking's time on the shop's clock, and, while it's known, the phone the confirmation text goes to. A booking
- * kept from an earlier visit has no phone: it's never saved (BR-22).
+ * The booking page's reminder of bookings kept on this device (BR-22). No times, since there may be several; the link
+ * lists them. Whether a text confirmation goes out waits on #89, so the page doesn't promise one.
  */
-export function toBookedNotice(
-  timeZone: string,
-  startAt: string,
-  phone: string | null,
-): Notice {
-  const appointmentTime: string = `${toLongDateTime(timeZone, startAt)}.`;
-  return {
-    severity: NoticeSeverity.Success,
-    title: 'You’re booked.',
-    text: phone ? `${appointmentTime} A text confirmation goes to ${phone}.` : appointmentTime,
-    canRetry: false,
-  };
-}
+export const UPCOMING_BOOKING_NOTICE: Notice = {
+  severity: NoticeSeverity.Success,
+  text: 'You have an upcoming booking.',
+  link: { label: 'See your bookings', path: '/book/manage' },
+  canRetry: false,
+};
 
 export const AVAILABILITY_FAILED_NOTICE: Notice = {
   severity: NoticeSeverity.Error,

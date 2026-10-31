@@ -6,11 +6,8 @@
     <h1 class="section-title">Schedule your cut</h1>
   </header>
 
-  @if (savedBookingNotice(); as savedNotice) {
-    <app-notice-message data-testid="saved-booking" [notice]="savedNotice" />
-  }
-  @if (bookedNotice(); as booked) {
-    <app-notice-message data-testid="booking-confirmation" [notice]="booked" />
+  @if (upcomingBookingNotice; as upcomingNotice) {
+    <app-notice-message data-testid="upcoming-booking" [notice]="upcomingNotice" />
   }
   @if (isBotCheckFailed()) {
     <app-notice-message data-testid="bot-check-failed" [notice]="botCheckFailedNotice" />

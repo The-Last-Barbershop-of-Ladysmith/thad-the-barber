@@ -1,11 +1,10 @@
 import { Locator, Page, Request, Route } from '@playwright/test';
 import { BookingConfirmation } from '../../src/app/features/booking/dtos/booking-confirmation.dto';
-import { ManagedBooking } from '../../src/app/features/booking/dtos/managed-booking.dto';
 import { encodeBase64 } from '../../src/app/shared/utils/base64.utils';
 import { testConfirmation } from '../../src/testing/test-booking';
 import { TEST_SHOP } from '../../src/testing/test-shop';
 import { expectNoA11yViolations } from '../support/axe';
-import { isManagedBookingRequest } from '../support/booking';
+import { fulfillManagedBooking, isManagedBookingRequest } from '../support/booking';
 import { expect, test } from '../support/fixtures';
 
 const ONE_DAY_MS: number = 24 * 60 * 60 * 1000;
@@ -14,19 +13,12 @@ function bookingIn(days: number, id: string): BookingConfirmation {
   return testConfirmation(new Date(Date.now() + days * ONE_DAY_MS).toISOString(), id);
 }
 
-/** Answers every `GET /api/bookings/{id}` as an upcoming booking, and keeps the requests to check their token. */
+/** Answers every `GET /api/bookings/{id}` as the fixture does, keeping the requests to check their token. */
 async function serveBookings(page: Page): Promise<Request[]> {
   const requests: Request[] = [];
-  await page.route(isManagedBookingRequest, async (route: Route): Promise<void> => {
+  await page.route(isManagedBookingRequest, (route: Route): Promise<void> => {
     requests.push(route.request());
-    const id: string = decodeURIComponent(new URL(route.request().url()).pathname.split('/').at(-1) ?? '');
-    const managedBooking: ManagedBooking = {
-      id,
-      startAt: new Date(Date.now() + ONE_DAY_MS).toISOString(),
-      isCancelled: false,
-      canChange: true,
-    };
-    await route.fulfill({ json: managedBooking });
+    return fulfillManagedBooking(route);
   });
   return requests;
 }

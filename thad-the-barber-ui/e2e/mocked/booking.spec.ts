@@ -96,7 +96,9 @@ test.describe(
         await expectNoA11yViolations(page);
         await book(page);
 
-        await expect(page.getByTestId('booking-confirmation')).toContainText('(540) 555-0123');
+        await expect(page).toHaveURL(/\/book\/manage\/made-up-booking$/);
+        await expect(page.getByTestId('booking-confirmation')).toBeVisible();
+        await expect(page.getByTestId('manage-link')).toHaveValue(/\/book\/manage\/made-up-booking#t=made-up-manage-token$/);
         await expectNoA11yViolations(page);
         const [booking]: Request[] = bookings;
         const body: BookingRequest = booking?.postDataJSON() as BookingRequest;
@@ -116,9 +118,9 @@ test.describe(
         await book(page);
         await expect(page.getByTestId('booking-confirmation')).toBeVisible();
 
-        await page.reload();
+        await page.goto('/book');
 
-        await expect(page.getByTestId('saved-booking')).toBeVisible();
+        await expect(page.getByTestId('upcoming-booking')).toBeVisible();
         const saved: string = decodeBase64(await page.evaluate((): string => localStorage.getItem('ttb-booking') ?? ''));
         expect(Object.keys(JSON.parse(saved) as object)).toEqual(['savedConfirmations']);
         expect(saved).not.toContain('Jordan');
@@ -138,7 +140,7 @@ test.describe(
         await page.goto('/book');
         await waitForShop(page);
 
-        await expect(page.getByTestId('saved-booking')).toHaveCount(0);
+        await expect(page.getByTestId('upcoming-booking')).toHaveCount(0);
         const saved: string = decodeBase64(await page.evaluate((): string => localStorage.getItem('ttb-booking') ?? ''));
         expect(JSON.parse(saved)).toEqual({ savedConfirmations: [] });
       },

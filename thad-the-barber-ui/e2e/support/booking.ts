@@ -1,5 +1,6 @@
 import { Route } from '@playwright/test';
 import { AvailableDay } from '../../src/app/features/booking/dtos/available-day.dto';
+import { ManagedBooking } from '../../src/app/features/booking/dtos/managed-booking.dto';
 import { TEST_SHOP } from '../../src/testing/test-shop';
 import { servedEnvironment } from './served-environment';
 
@@ -41,6 +42,18 @@ function toAvailableDays(from: string, to: string): AvailableDay[] {
     }
   }
   return days;
+}
+
+/** Any booking asked for by ID is upcoming and can still change, a day from now. */
+export async function fulfillManagedBooking(route: Route): Promise<void> {
+  const id: string = decodeURIComponent(new URL(route.request().url()).pathname.split('/').at(-1) ?? '');
+  const managedBooking: ManagedBooking = {
+    id,
+    startAt: new Date(Date.now() + DAY_MS).toISOString(),
+    isCancelled: false,
+    canChange: true,
+  };
+  await route.fulfill({ json: managedBooking });
 }
 
 export async function fulfillAvailability(route: Route): Promise<void> {

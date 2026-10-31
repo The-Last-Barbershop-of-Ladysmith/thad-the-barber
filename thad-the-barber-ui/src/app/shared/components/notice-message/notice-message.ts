@@ -10,6 +10,7 @@ import {
   Signal,
 } from '@angular/core';
 import { ButtonModule, ButtonSeverity } from 'primeng/button';
+import { RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { MessageModule } from 'primeng/message';
 import { PhoneLinks } from '../../models/phone-links.model';
@@ -21,7 +22,11 @@ import { NoticeSeverity } from '../../models/notice-severity.model';
 /** An inline message. Every problem ends with call, text and Square booking links, and maybe a retry. */
 @Component({
   selector: 'app-notice-message',
-  imports: [ButtonModule, MessageModule],
+  imports: [
+    RouterLink,
+    ButtonModule,
+    MessageModule,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './notice-message.html',
   styleUrl: './notice-message.scss',

@@ -32,6 +32,7 @@ import { shopFeature } from '../../../shop/state/shop.feature';
 import { BookingConfirmation } from '../../dtos/booking-confirmation.dto';
 import { ManagedBooking } from '../../dtos/managed-booking.dto';
 import { CalendarEvent } from '../../models/calendar-event.model';
+import { ManagePageState } from '../../models/manage-page-state.model';
 import { BookingService } from '../../services/booking.service';
 import { bookingFeature } from '../../state/booking.feature';
 import {
@@ -44,13 +45,6 @@ import {
 import { toLongDateTime } from '../../utils/booking-time.utils';
 import { toIcsFile } from '../../utils/ics.utils';
 import { readManageToken, toManageLink, toManagePath } from '../../utils/manage-link.utils';
-
-/** What this page keeps in `history.state`, so a reload still has it once the link's fragment is gone. */
-interface ManagePageState {
-  /** Set by the booking page when it opens this page after a booking. */
-  isJustBooked?: boolean;
-  manageToken?: string;
-}
 
 /**
  * One booking, opened from its manage link (`/book/manage/{id}#t=…`) or from this device's list. The token comes from
