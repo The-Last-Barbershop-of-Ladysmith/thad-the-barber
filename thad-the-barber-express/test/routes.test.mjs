@@ -44,6 +44,7 @@ describe('pages', function() {
     '/book/manage',
     '/book/manage/',
     '/book/manage/made-up_Booking-1',
+    '/book/manage/made%20up',
   ])('serves the app shell for the client route %s', async function(path) {
     var response = await request(app).get(path);
     expect(response.status).toBe(200);
@@ -55,7 +56,7 @@ describe('pages', function() {
     '/nope',
     '/book/extra',
     '/book/manage/made-up-booking/extra',
-    '/book/manage/made%20up',
+    '/bookxmanage',
     '/404',
     '/../../etc',
     '/_test/error',

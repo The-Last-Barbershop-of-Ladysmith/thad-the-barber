@@ -9,13 +9,16 @@ var router = express.Router();
 var cspSources = JSON.parse(fs.readFileSync(path.join(angularDist, 'csp-sources.json'), 'utf8'));
 var cspHeader = process.env.CSP_REPORT_ONLY === 'true' ? 'Content-Security-Policy-Report-Only' : 'Content-Security-Policy';
 
-// Client-rendered routes, served the app shell with a 200. Prerendered pages need no entry: their file is the route.
-// #58: once /book is prerendered, remove it here. A booking's manage page takes its ID from the path.
-var clientRoutes = [
-  /^\/book$/,
-  /^\/book\/manage$/,
-  /^\/book\/manage\/[A-Za-z0-9_-]+$/,
-];
+// Client-rendered routes, served the app shell with a 200, from the app's CLIENT_ROUTES (client-routes.json, written by
+// the UI's post-build hook). A :param matches any one path segment. Prerendered pages need no entry: their file is the
+// route.
+var clientRoutes = JSON.parse(fs.readFileSync(path.join(angularDist, 'client-routes.json'), 'utf8'))
+  .map(function(route) {
+    var pattern = route.split('/').map(function(segment) {
+      return segment.startsWith(':') ? '[^/]+' : segment.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }).join('\\/');
+    return new RegExp('^\\/' + pattern + '$');
+  });
 
 function isClientRoute(route) {
   return clientRoutes.some(function(clientRoute) {
