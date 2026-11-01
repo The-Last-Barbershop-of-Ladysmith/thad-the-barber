@@ -71,7 +71,6 @@ import { readManageToken, toManageLink, toManagePath, toReschedulePath } from '.
     Backdrop,
     NoticeMessage,
   ],
-  providers: [ConfirmationService],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './manage-booking.html',
   styleUrl: './manage-booking.scss',
@@ -224,10 +223,10 @@ export class ManageBooking implements OnInit {
     this.bookingService
       .cancelBooking(this.id(), manageToken)
       .pipe(
+        // Not tied to the page: a cancel the server made still leaves this device's list if the customer moved on.
         finalize((): void => {
           this.isCancelling.set(false);
         }),
-        takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
         next: (managedBooking: ManagedBooking): void => {

@@ -3,7 +3,20 @@ import { Router } from '@angular/router';
 import { Actions, FunctionalEffect, createEffect, ofType } from '@ngrx/effects';
 import { Action, Store } from '@ngrx/store';
 import { MessageService } from 'primeng/api';
-import { Observable, catchError, combineLatest, exhaustMap, filter, from, map, of, switchMap, take, tap } from 'rxjs';
+import {
+  Observable,
+  catchError,
+  combineLatest,
+  exhaustMap,
+  filter,
+  from,
+  map,
+  of,
+  switchMap,
+  take,
+  takeUntil,
+  tap,
+} from 'rxjs';
 import { SessionService } from '../../../core/services/session.service';
 import { Notice } from '../../../shared/models/notice.model';
 import { ProblemCode } from '../../../shared/models/problem-code.model';
@@ -98,7 +111,7 @@ export const loadAvailability: FunctionalEffect = createEffect(
   { functional: true },
 );
 
-/** Sends the booking; one at a time, since the page locks its form while one is sent. */
+/** Sends the booking; one at a time, since the page locks its form while one is sent, and only while it's open. */
 export const requestBooking: FunctionalEffect = createEffect(
   (
     actions$: Actions = inject<Actions>(Actions),
@@ -109,6 +122,7 @@ export const requestBooking: FunctionalEffect = createEffect(
       ofType(BookingActions.BookingRequest),
       exhaustMap(({ bookingRequest }: { bookingRequest: BookingRequest; }): Observable<Action> =>
         bookingService.createBooking(bookingRequest).pipe(
+          takeUntil(actions$.pipe(ofType(BookingActions.BookingPageClose))),
           map((bookingConfirmation: BookingConfirmation): Action =>
             BookingActions.BookingRequestSuccess({ bookingConfirmation })),
           catchError((error: unknown): Observable<Action> => from(toFailureActions(
@@ -168,6 +182,7 @@ export const requestReschedule: FunctionalEffect = createEffect(
           manageToken,
           { startAt },
         ).pipe(
+          takeUntil(actions$.pipe(ofType(BookingActions.BookingPageClose))),
           map((managedBooking: ManagedBooking): Action =>
             BookingActions.RescheduleRequestSuccess({ managedBooking, manageToken })),
           catchError((error: unknown): Observable<Action> => {

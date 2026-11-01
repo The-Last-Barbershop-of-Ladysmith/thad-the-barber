@@ -11,6 +11,7 @@ export enum BookingActionTypes {
   UpcomingDaysOpen = '[Booking Page] Upcoming Days Opened',
   AvailabilityReload = '[Booking Page] Availability Reloaded',
   BookingPageOpen = '[Booking Page] Opened',
+  BookingPageClose = '[Booking Page] Closed',
   BookingDraftChange = '[Booking Page] Draft Changed',
   BookingRequest = '[Booking Page] Booking Requested',
   RescheduleRequest = '[Booking Page] Reschedule Requested',
@@ -52,6 +53,12 @@ export const BookingPageOpen = createAction(
   BookingActionTypes.BookingPageOpen,
 );
 
+/** Stops a booking or move still being sent: its response would land on a page the customer left. */
+// eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
+export const BookingPageClose = createAction(
+  BookingActionTypes.BookingPageClose,
+);
+
 /**
  * Any field changed, so the next confirm is a new booking with a new key. The page keeps the notice when it drops a
  * pick itself (a taken time, a day left without times), since the notice says why.
@@ -74,7 +81,9 @@ export const BookingRequest = createAction(
 export const RescheduleRequest = createAction(
   BookingActionTypes.RescheduleRequest,
   props<{
-    bookingId: string; manageToken: string; startAt: string;
+    bookingId: string;
+    manageToken: string;
+    startAt: string;
   }>(),
 );
 

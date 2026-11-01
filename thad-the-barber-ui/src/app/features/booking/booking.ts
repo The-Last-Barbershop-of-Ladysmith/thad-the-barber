@@ -1,20 +1,19 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   Injector,
-  InputSignal,
   Signal,
   WritableSignal,
   afterNextRender,
   computed,
   effect,
   inject,
-  input,
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { Actions, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
@@ -89,9 +88,15 @@ export class Booking implements LeaveConfirmable {
   private readonly injector: Injector = inject(Injector);
 
   // Rescheduling: the booking being moved, its token and current time.
-  /** The booking being moved, from `/book/manage/{id}/reschedule`; none when booking. */
-  readonly id: InputSignal<string | undefined> = input<string>();
-  readonly isRescheduling: Signal<boolean> = computed((): boolean => this.id() !== undefined);
+  /**
+   * The booking being moved, from `/book/manage/{id}/reschedule`'s path; none when booking. Read from the route, not
+   * an input, since input binding also binds query params, which would put `/book?id=…` into reschedule mode.
+   */
+  private readonly id: Signal<string | null> = toSignal(
+    inject(ActivatedRoute).paramMap.pipe(map((paramMap: ParamMap): string | null => paramMap.get('id'))),
+    { requireSync: true },
+  );
+  readonly isRescheduling: Signal<boolean> = computed((): boolean => this.id() !== null);
   private readonly steps: Signal<readonly BookingStep[]> = computed((): readonly BookingStep[] =>
     (this.isRescheduling() ? RESCHEDULE_STEPS : BOOKING_STEPS));
   /** Read while this page's navigation runs; the router restores it on a reload. */
@@ -234,6 +239,10 @@ export class Booking implements LeaveConfirmable {
 
   constructor() {
     this.store.dispatch(BookingActions.BookingPageOpen());
+    // A send still in flight stops with the page, so its response can't take the customer away from where they went.
+    inject(DestroyRef).onDestroy((): void => {
+      this.store.dispatch(BookingActions.BookingPageClose());
+    });
     // The page, not the date step, opens the first days: the date step goes away whenever its card collapses.
     this.store.dispatch(BookingActions.UpcomingDaysOpen());
     this.askBeforeUnloadWhileUnconfirmed();
@@ -307,7 +316,7 @@ export class Booking implements LeaveConfirmable {
     if (!this.isFormValid() || !startAt || !canSend) {
       return;
     }
-    const id: string | undefined = this.id();
+    const id: string | null = this.id();
     const manageToken: string | null = this.manageToken();
     if (id && manageToken) {
       this.store.dispatch(BookingActions.RescheduleRequest({

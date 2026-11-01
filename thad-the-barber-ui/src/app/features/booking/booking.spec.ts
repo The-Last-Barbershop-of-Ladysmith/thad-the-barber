@@ -1,9 +1,10 @@
 import { NO_ERRORS_SCHEMA, Signal, WritableSignal, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
-import { provideRouter } from '@angular/router';
+import { ActivatedRoute, ParamMap, convertToParamMap, provideRouter } from '@angular/router';
 import { provideEffects } from '@ngrx/effects';
 import { Action, ActionsSubject, Store, provideStore } from '@ngrx/store';
+import { BehaviorSubject } from 'rxjs';
 import { testFirstBlock } from '../../../testing/test-availability';
 import { testConfirmationIn } from '../../../testing/test-booking';
 import { TEST_SHOP } from '../../../testing/test-shop';
@@ -58,9 +59,11 @@ describe(
     let store: Store<AppState>;
     let isBotCheckFailed: WritableSignal<boolean>;
     let dispatched: Action[];
+    let routeParams: BehaviorSubject<ParamMap>;
 
     beforeEach((): void => {
       isBotCheckFailed = signal(false);
+      routeParams = new BehaviorSubject<ParamMap>(convertToParamMap({}));
       TestBed.configureTestingModule({
         providers: [
           provideStore({
@@ -71,6 +74,7 @@ describe(
           provideEffects({ openUpcomingDays, reloadAvailability }),
           provideRouter([]),
           { provide: SessionService, useValue: { isBotCheckFailed } },
+          { provide: ActivatedRoute, useValue: { paramMap: routeParams } },
         ],
       });
       // Only the page's own messages render; the steps and the layout have their own specs.
@@ -85,10 +89,8 @@ describe(
     function openPage(savedConfirmations: BookingConfirmation[] = [], bookingId?: string): void {
       store.dispatch(ShopActions.ShopInfoRequestSuccess({ shopInfo: TEST_SHOP }));
       store.dispatch(BookingActions.SavedConfirmationsAdopt({ savedConfirmations }));
+      routeParams.next(convertToParamMap(bookingId ? { id: bookingId } : {}));
       fixture = TestBed.createComponent(Booking);
-      if (bookingId) {
-        fixture.componentRef.setInput('id', bookingId);
-      }
       fixture.detectChanges();
       page = fixture.componentInstance as unknown as BookingPage;
       dispatched = [];
@@ -366,6 +368,16 @@ describe(
         }));
 
         expect(byTestId('upcoming-booking')).not.toBeNull();
+      },
+    );
+
+    it(
+      'stops a booking still being sent when the page closes',
+      (): void => {
+        openPage();
+        fixture.destroy();
+
+        expect(dispatched).toContainEqual(BookingActions.BookingPageClose());
       },
     );
 

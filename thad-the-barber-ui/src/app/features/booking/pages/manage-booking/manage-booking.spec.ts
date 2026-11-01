@@ -75,6 +75,8 @@ describe(
     }: PageSetup = {}): Promise<void> {
       TestBed.configureTestingModule({
         providers: [
+          // The booking routes provide it in the app.
+          ConfirmationService,
           provideStore({
             [shopFeature.name]: shopFeature.reducer,
             [bookingFeature.name]: bookingFeature.reducer,

@@ -270,6 +270,19 @@ describe(
     );
 
     it(
+      'drops a booking still being sent once the page closes, so its response goes nowhere',
+      (): void => {
+        actions$.next(BookingActions.BookingRequest({ bookingRequest }));
+        actions$.next(BookingActions.BookingPageClose());
+        response.next(confirmation);
+        actions$.next(BookingActions.BookingRequest({ bookingRequest }));
+
+        expect(emitted).toEqual([]);
+        expect(response.observed).toBe(true);
+      },
+    );
+
+    it(
       'leaves a failed bot check to its own message',
       (): void => {
         actions$.next(BookingActions.BookingRequest({ bookingRequest }));
