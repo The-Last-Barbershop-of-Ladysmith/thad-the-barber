@@ -10,6 +10,7 @@ import {
   exhaustMap,
   filter,
   from,
+  fromEvent,
   map,
   of,
   switchMap,
@@ -39,6 +40,8 @@ import {
   toBookingNotice,
   toManageActionNotice,
 } from '../utils/booking-notice.utils';
+import { toIsoDate } from '../../../shared/utils/date.utils';
+import { AvailabilityViewKind } from '../models/availability-view-kind.model';
 import { toBookingWindow, toUpcomingView } from '../utils/booking-time.utils';
 import { toManagePath } from '../utils/manage-link.utils';
 import * as BookingActions from './booking.actions';
@@ -71,6 +74,39 @@ export const openUpcomingDays: FunctionalEffect = createEffect(
       map((bookingWindow: DateRange): Action => BookingActions.SetAvailabilityView({
         availabilityView: toUpcomingView(bookingWindow.min, bookingWindow),
       })),
+    ),
+  { functional: true },
+);
+
+/**
+ * A 31-day view starts on the day it was opened; left open past midnight, it would start on a day that's gone. While
+ * the booking page is open, coming back to the tab moves a view that starts before the shop's today to today's block.
+ */
+export const openTodayOnReturn: FunctionalEffect = createEffect(
+  (
+    actions$: Actions = inject<Actions>(Actions),
+    store: Store<AppState> = inject<Store<AppState>>(Store),
+  ): Observable<Action> =>
+    actions$.pipe(
+      ofType(BookingActions.BookingPageOpen),
+      filter((): boolean => typeof document !== 'undefined'),
+      switchMap((): Observable<Event> => fromEvent(document, 'visibilitychange').pipe(
+        filter((): boolean => document.visibilityState === 'visible'),
+        takeUntil(actions$.pipe(ofType(BookingActions.BookingPageClose))),
+      )),
+      switchMap((): Observable<[AvailabilityView | null, DateRange | null]> => combineLatest([
+        store.select(bookingFeature.selectAvailabilityView),
+        combineLatest([
+          store.select(shopFeature.selectBookingSettings),
+          store.select(shopFeature.selectTimeZone),
+        ]).pipe(map(([bookingSettings, timeZone]: [BookingSettings | null, string | null]): DateRange | null =>
+          toBookingWindow(bookingSettings, timeZone))),
+      ]).pipe(take(1))),
+      filter(([availabilityView, bookingWindow]: [AvailabilityView | null, DateRange | null]): boolean =>
+        availabilityView?.kind === AvailabilityViewKind.Upcoming
+        && bookingWindow !== null
+        && availabilityView.firstDay < toIsoDate(bookingWindow.min)),
+      map((): Action => BookingActions.UpcomingDaysOpen()),
     ),
   { functional: true },
 );

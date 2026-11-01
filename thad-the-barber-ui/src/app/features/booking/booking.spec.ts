@@ -24,7 +24,7 @@ import { BookingForm } from './models/booking-form.model';
 import { BookingStep } from './models/booking-step.model';
 import { StepView } from './models/step-view.model';
 import * as BookingActions from './state/booking.actions';
-import { openUpcomingDays, reloadAvailability } from './state/booking.effects';
+import { openTodayOnReturn, openUpcomingDays, reloadAvailability } from './state/booking.effects';
 import { bookingFeature } from './state/booking.feature';
 
 /** The page's protected members the spec drives, read by name so the class stays unchanged. */
@@ -71,7 +71,11 @@ describe(
             [bookingFeature.name]: bookingFeature.reducer,
           }),
           // The page opens and reloads its days through these; sending is left to the effects' own spec.
-          provideEffects({ openUpcomingDays, reloadAvailability }),
+          provideEffects({
+            openUpcomingDays,
+            reloadAvailability,
+            openTodayOnReturn,
+          }),
           provideRouter([]),
           { provide: SessionService, useValue: { isBotCheckFailed } },
           { provide: ActivatedRoute, useValue: { paramMap: routeParams } },
@@ -429,6 +433,27 @@ describe(
               startAt: SECOND_TIME,
             }));
             expect(sentBookings()).toEqual([]);
+          },
+        );
+
+        it(
+          'starts over for another booking when the router reuses the page, using that booking’s own token',
+          (): void => {
+            const otherBooked: BookingConfirmation = testConfirmationIn(4, 'made-up-other-booking');
+            openPage([booked, otherBooked], booked.id);
+            pick(SECOND_TIME);
+
+            routeParams.next(convertToParamMap({ id: otherBooked.id }));
+            expect(page.bookingForm.controls.date.value).toBeNull();
+            expect(page.openStep()).toBe(BookingStep.Date);
+            pick(SECOND_TIME);
+            page.confirm();
+
+            expect(dispatched).toContainEqual(BookingActions.RescheduleRequest({
+              bookingId: otherBooked.id,
+              manageToken: otherBooked.manageToken,
+              startAt: SECOND_TIME,
+            }));
           },
         );
 

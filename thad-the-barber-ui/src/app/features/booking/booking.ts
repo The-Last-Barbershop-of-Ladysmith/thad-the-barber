@@ -17,16 +17,15 @@ import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { Actions, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { filter, fromEvent, map } from 'rxjs';
+import { map, skip } from 'rxjs';
 import { SessionService } from '../../core/services/session.service';
 import { Backdrop } from '../../shared/components/backdrop/backdrop';
 import { NoticeMessage } from '../../shared/components/notice-message/notice-message';
 import { Notice } from '../../shared/models/notice.model';
 import { RequestStatus } from '../../shared/models/request.models';
-import { formatFullDate, formatShortDate, fromIsoDate, toIsoDate } from '../../shared/utils/date.utils';
+import { formatFullDate, formatShortDate, fromIsoDate } from '../../shared/utils/date.utils';
 import { toE164 } from '../../shared/utils/phone.utils';
 import { AppState } from '../../store/app.state';
-import { BookingSettings } from '../shop/models/booking-settings.model';
 import { shopFeature } from '../shop/state/shop.feature';
 import { DateStep } from './components/date-step/date-step';
 import { DetailsStep } from './components/details-step/details-step';
@@ -35,12 +34,9 @@ import { StepFlow } from './components/step-flow/step-flow';
 import { TimeStep } from './components/time-step/time-step';
 import { AvailableDay } from './dtos/available-day.dto';
 import { BookingConfirmation } from './dtos/booking-confirmation.dto';
-import { AvailabilityViewKind } from './models/availability-view-kind.model';
-import { AvailabilityView } from './models/availability-view.model';
 import { BookingForm } from './models/booking-form.model';
 import { BookingFormValue } from './models/booking-form-value.model';
 import { BookingStep } from './models/booking-step.model';
-import { DateRange } from './models/date-range.model';
 import { LeaveConfirmable } from './models/leave-confirmable.model';
 import { ReschedulePageState } from './models/reschedule-page-state.model';
 import { StepProgress } from './models/step-progress.model';
@@ -56,7 +52,7 @@ import {
   toStepSummaries,
   toStepViews,
 } from './utils/booking-steps.utils';
-import { toBookingWindow, toLongDateTime, toTimeLabel } from './utils/booking-time.utils';
+import { toLongDateTime, toTimeLabel } from './utils/booking-time.utils';
 
 /**
  * Booking page: date → time → details → review, one step open at a time, laid out by `StepFlow` (#207–#209). The page
@@ -92,15 +88,19 @@ export class Booking implements LeaveConfirmable {
    * The booking being moved, from `/book/manage/{id}/reschedule`'s path; none when booking. Read from the route, not
    * an input, since input binding also binds query params, which would put `/book?id=…` into reschedule mode.
    */
+  private readonly route: ActivatedRoute = inject(ActivatedRoute);
   private readonly id: Signal<string | null> = toSignal(
-    inject(ActivatedRoute).paramMap.pipe(map((paramMap: ParamMap): string | null => paramMap.get('id'))),
+    this.route.paramMap.pipe(map((paramMap: ParamMap): string | null => paramMap.get('id'))),
     { requireSync: true },
   );
   readonly isRescheduling: Signal<boolean> = computed((): boolean => this.id() !== null);
   private readonly steps: Signal<readonly BookingStep[]> = computed((): readonly BookingStep[] =>
     (this.isRescheduling() ? RESCHEDULE_STEPS : BOOKING_STEPS));
-  /** Read while this page's navigation runs; the router restores it on a reload. */
-  private readonly reschedulePageState: ReschedulePageState = inject(Router).currentNavigation()?.extras.state ?? {};
+  /**
+   * The token and current time the booking's page handed over, read while the navigation to each booking runs (the
+   * router restores it on a reload).
+   */
+  private readonly reschedulePageState: WritableSignal<ReschedulePageState> = signal({});
   private readonly savedConfirmations: Signal<BookingConfirmation[]> =
     this.store.selectSignal(bookingFeature.selectSavedConfirmations);
   private readonly savedConfirmation: Signal<BookingConfirmation | undefined> = computed(
@@ -108,22 +108,18 @@ export class Booking implements LeaveConfirmable {
       .find((confirmation: BookingConfirmation): boolean => confirmation.id === this.id()),
   );
   private readonly manageToken: Signal<string | null> = computed((): string | null =>
-    this.reschedulePageState.manageToken ?? this.savedConfirmation()?.manageToken ?? null);
+    this.reschedulePageState().manageToken ?? this.savedConfirmation()?.manageToken ?? null);
   /** Moving needs the booking's token; without one the booking can't be found. */
   protected readonly canReschedule: Signal<boolean> = computed((): boolean => this.manageToken() !== null);
   /** "Saturday, November 8 at 10:00 AM", the time being moved. */
   protected readonly currentTimeLabel: Signal<string | null> = computed((): string | null => {
-    const startAt: string | undefined = this.reschedulePageState.startAt ?? this.savedConfirmation()?.startAt;
+    const startAt: string | undefined = this.reschedulePageState().startAt ?? this.savedConfirmation()?.startAt;
     const timeZone: string | null = this.timeZone();
     return startAt && timeZone ? toLongDateTime(timeZone, startAt) : null;
   });
 
   // The shop, the days in view and the notices.
   private readonly timeZone: Signal<string | null> = this.store.selectSignal(shopFeature.selectTimeZone);
-  private readonly bookingSettings: Signal<BookingSettings | null> =
-    this.store.selectSignal(shopFeature.selectBookingSettings);
-  private readonly availabilityView: Signal<AvailabilityView | null> =
-    this.store.selectSignal(bookingFeature.selectAvailabilityView);
   private readonly loadStatus: Signal<RequestStatus> = this.store.selectSignal(bookingFeature.selectLoadStatus);
   protected readonly isBotCheckFailed: Signal<boolean> = inject(SessionService).isBotCheckFailed;
   protected readonly botCheckFailedNotice: Notice = BOT_CHECK_FAILED_NOTICE;
@@ -246,9 +242,9 @@ export class Booking implements LeaveConfirmable {
     // The page, not the date step, opens the first days: the date step goes away whenever its card collapses.
     this.store.dispatch(BookingActions.UpcomingDaysOpen());
     this.askBeforeUnloadWhileUnconfirmed();
-    this.moveUpcomingDaysToTodayOnReturn();
     this.lockFormWhileSubmitting();
     this.followSendOutcomes();
+    this.followMovedBooking(inject(Router));
     this.store
       .select(bookingFeature.selectAvailableDays)
       .pipe(takeUntilDestroyed())
@@ -373,6 +369,29 @@ export class Booking implements LeaveConfirmable {
       });
   }
 
+  /**
+   * Keeps the handed-over state for the booking in the path. The router reuses this page when another booking's
+   * reschedule opens from here, so a new booking starts over: no picks, no notice, no send.
+   */
+  private followMovedBooking(router: Router): void {
+    this.route.paramMap
+      .pipe(takeUntilDestroyed())
+      .subscribe((): void => {
+        this.reschedulePageState.set(router.currentNavigation()?.extras.state ?? {});
+      });
+    this.route.paramMap
+      .pipe(
+        skip(1),
+        takeUntilDestroyed(),
+      )
+      .subscribe((): void => {
+        this.store.dispatch(BookingActions.BookingPageOpen());
+        this.isReturningToReview = false;
+        this.bookingForm.reset();
+        this.openStep.set(BookingStep.Date);
+      });
+  }
+
   /** Drops picks the customer didn't change, keeping the notice that says why. */
   private dropPicks(picks: Partial<Pick<BookingFormValue, 'date' | 'startAt'>>): void {
     this.isDroppingPick = true;
@@ -410,31 +429,6 @@ export class Booking implements LeaveConfirmable {
     }
     this.dropPicks({ date: null, startAt: null });
     this.openStep.set(BookingStep.Date);
-  }
-
-  /**
-   * A 31-day view starts on the day it was opened; left open past midnight, it would start on a day that's gone. When
-   * the customer comes back to the tab, a view that starts before the shop's today moves to today's block.
-   */
-  private moveUpcomingDaysToTodayOnReturn(): void {
-    if (typeof document === 'undefined') {
-      return;
-    }
-    fromEvent(document, 'visibilitychange')
-      .pipe(
-        filter((): boolean => document.visibilityState === 'visible'),
-        takeUntilDestroyed(),
-      )
-      .subscribe((): void => {
-        const availabilityView: AvailabilityView | null = this.availabilityView();
-        const bookingWindow: DateRange | null = toBookingWindow(this.bookingSettings(), this.timeZone());
-        const isPastStart: boolean = availabilityView?.kind === AvailabilityViewKind.Upcoming
-          && bookingWindow !== null
-          && availabilityView.firstDay < toIsoDate(bookingWindow.min);
-        if (isPastStart) {
-          this.store.dispatch(BookingActions.UpcomingDaysOpen());
-        }
-      });
   }
 
   /**
