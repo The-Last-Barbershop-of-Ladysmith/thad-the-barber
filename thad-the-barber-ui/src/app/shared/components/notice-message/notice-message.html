@@ -9,6 +9,11 @@
       <strong>{{ notice().title }}</strong>
     }
     <span>{{ notice().text }}</span>
+    @if (notice().link; as link) {
+      <a class="notice-link w-fit" data-testid="notice-link" [routerLink]="link.path">{{
+        link.label
+      }}</a>
+    }
     @if (isProblem()) {
       <span>
         Still having trouble? Call

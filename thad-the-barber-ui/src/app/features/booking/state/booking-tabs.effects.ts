@@ -5,14 +5,13 @@ import { Action } from '@ngrx/store';
 import { EMPTY, Observable, filter, fromEvent, map } from 'rxjs';
 import { decodeBase64 } from '../../../shared/utils/base64.utils';
 import { toStorageKey } from '../../../store/meta/meta.reducers';
-import { SavedConfirmation } from '../models/saved-confirmation.model';
-import { toKeptConfirmation } from '../utils/saved-confirmation.utils';
+import { toKeptConfirmations } from '../utils/saved-confirmation.utils';
 import * as BookingActions from './booking.actions';
 import { bookingFeatureKey } from './booking.feature';
 
 /**
- * A booking saved in another tab is copied into this one. Every tab writes its own booking slice to localStorage after
- * each action, so a tab still holding none would otherwise overwrite it (BR-22). A root effect, so it runs on every
+ * The bookings another tab saved replace this tab's. Every tab writes its own booking slice to localStorage after each
+ * action, so a tab holding an older list would otherwise overwrite them (BR-22). A root effect, so it runs on every
  * page, not just /book.
  */
 export const adoptBookingFromOtherTab: FunctionalEffect = createEffect(
@@ -28,15 +27,19 @@ export const adoptBookingFromOtherTab: FunctionalEffect = createEffect(
     const storageKey: string = toStorageKey(bookingFeatureKey);
     return fromEvent<StorageEvent>(browserWindow, 'storage').pipe(
       filter((event: StorageEvent): boolean => event.key === storageKey),
-      map((event: StorageEvent): SavedConfirmation | null =>
-        toKeptConfirmation(readSaved(event.newValue)).savedConfirmation),
-      filter((savedConfirmation: SavedConfirmation | null): savedConfirmation is SavedConfirmation =>
-        savedConfirmation !== null),
-      map((savedConfirmation: SavedConfirmation): Action => BookingActions.BookingConfirm({ savedConfirmation })),
+      map((event: StorageEvent): unknown => readSaved(event.newValue)),
+      filter(hasSavedConfirmations),
+      map((saved: unknown): Action =>
+        BookingActions.SavedConfirmationsAdopt({ savedConfirmations: toKeptConfirmations(saved).savedConfirmations })),
     );
   },
   { functional: true },
 );
+
+/** A tab running an older build saves another shape; adopting it as an empty list would erase this tab's bookings. */
+function hasSavedConfirmations(saved: unknown): boolean {
+  return Array.isArray((saved as { savedConfirmations?: unknown; } | null)?.savedConfirmations);
+}
 
 /** The other tab's saved slice, or null for a value that isn't base64 JSON. */
 function readSaved(value: string | null): unknown {

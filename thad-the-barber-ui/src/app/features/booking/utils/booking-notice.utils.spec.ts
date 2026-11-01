@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Notice } from '../../../shared/models/notice.model';
 import { ProblemCode } from '../../../shared/models/problem-code.model';
 import { NoticeSeverity } from '../../../shared/models/notice-severity.model';
-import { toBookingNotice } from './booking-notice.utils';
+import { BOOKING_NOT_FOUND_NOTICE, toBookingNotice, toManageLoadNotice } from './booking-notice.utils';
 
 const RAW_DETAIL: string = 'Made-up server detail that must never reach the page';
 
@@ -94,5 +94,37 @@ describe(
         },
       );
     }
+  },
+);
+
+describe(
+  'toManageLoadNotice',
+  (): void => {
+    it(
+      'shows a booking the API can\'t find, or whose token doesn\'t match, as not found, with no retry',
+      (): void => {
+        expect(toManageLoadNotice(problem(404, ProblemCode.BookingNotFound))).toEqual(BOOKING_NOT_FOUND_NOTICE);
+      },
+    );
+
+    it(
+      'offers a retry for any other failure, never the raw error',
+      (): void => {
+        const notices: Notice[] = [
+          problem(503, 'square_unavailable'),
+          new HttpErrorResponse({ status: 0 }),
+          new Error(RAW_DETAIL),
+        ].map(toManageLoadNotice);
+
+        for (const notice of notices) {
+          expect(notice).toEqual({
+            severity: NoticeSeverity.Error,
+            text: expect.any(String) as string,
+            canRetry: true,
+          });
+          expect(notice.text).not.toContain(RAW_DETAIL);
+        }
+      },
+    );
   },
 );

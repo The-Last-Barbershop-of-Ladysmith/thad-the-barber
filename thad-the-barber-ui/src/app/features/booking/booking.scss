@@ -1,12 +1,4 @@
 .booking-page {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  max-width: 75rem;
-  margin-inline: auto;
-  padding: 8rem 1rem 1.5rem;
-
   // The open step's card stands out on phones; the desktop panel always holds the open step.
   .step-card.is-open,
   .step-panel {

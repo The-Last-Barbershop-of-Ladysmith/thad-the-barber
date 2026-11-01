@@ -38,14 +38,29 @@ describe('pages', function() {
     expect(response.text).toContain('home');
   });
 
-  it.each(['/book', '/book/'])('serves the app shell for the client route %s', async function(path) {
+  it.each([
+    '/book',
+    '/book/',
+    '/book/manage',
+    '/book/manage/',
+    '/book/manage/made-up_Booking-1',
+    '/book/manage/made%20up',
+  ])('serves the app shell for the client route %s', async function(path) {
     var response = await request(app).get(path);
     expect(response.status).toBe(200);
     expect(response.text).toContain('shell');
   });
 
   // /_test/error only exists with ERROR_TEST_ROUTE=true (error-page.test.mjs).
-  it.each(['/nope', '/book/extra', '/404', '/../../etc', '/_test/error'])('serves the not-found page with a 404 for %s', async function(path) {
+  it.each([
+    '/nope',
+    '/book/extra',
+    '/book/manage/made-up-booking/extra',
+    '/bookxmanage',
+    '/404',
+    '/../../etc',
+    '/_test/error',
+  ])('serves the not-found page with a 404 for %s', async function(path) {
     var response = await request(app).get(path);
     expect(response.status).toBe(404);
     expect(response.text).toContain('not found');

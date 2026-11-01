@@ -2,25 +2,18 @@ import { ProblemCode } from '../../../shared/models/problem-code.model';
 import { getProblemCode } from '../../../shared/utils/problem.utils';
 import { Notice } from '../../../shared/models/notice.model';
 import { NoticeSeverity } from '../../../shared/models/notice-severity.model';
-import { toLongDateTime } from './booking-time.utils';
+import { toManagePath } from './manage-link.utils';
 
 /**
- * The booking's time on the shop's clock, and, while it's known, the phone the confirmation text goes to. A booking
- * kept from an earlier visit has no phone: it's never saved (BR-22).
+ * The booking page's reminder of bookings kept on this device (BR-22). No times, since there may be several; the link
+ * lists them. Whether a text confirmation goes out waits on #89, so the page doesn't promise one.
  */
-export function toBookedNotice(
-  timeZone: string,
-  startAt: string,
-  phone: string | null,
-): Notice {
-  const appointmentTime: string = `${toLongDateTime(timeZone, startAt)}.`;
-  return {
-    severity: NoticeSeverity.Success,
-    title: 'You’re booked.',
-    text: phone ? `${appointmentTime} A text confirmation goes to ${phone}.` : appointmentTime,
-    canRetry: false,
-  };
-}
+export const UPCOMING_BOOKING_NOTICE: Notice = {
+  severity: NoticeSeverity.Success,
+  text: 'You have an upcoming booking.',
+  link: { label: 'See your bookings', path: '/book/manage' },
+  canRetry: false,
+};
 
 export const AVAILABILITY_FAILED_NOTICE: Notice = {
   severity: NoticeSeverity.Error,
@@ -75,4 +68,55 @@ const BOOKING_NOTICES: Record<string, Notice> = {
 /** Any other failure (network, 5xx, or a refusal the page's checks should have caught) offers a retry. */
 export function toBookingNotice(error: unknown): Notice {
   return BOOKING_NOTICES[getProblemCode(error) ?? ''] ?? BOOKING_FAILED_NOTICE;
+}
+
+/** The booking went through but its own page didn't open (a failed download after a deploy, say). */
+export function toBookedHereNotice(bookingId: string): Notice {
+  return {
+    severity: NoticeSeverity.Success,
+    title: 'You’re booked.',
+    text: 'Your booking is saved on this device.',
+    link: { label: 'See your booking', path: toManagePath(bookingId) },
+    canRetry: false,
+  };
+}
+
+/** Shown on the manage page right after booking, above the link to keep. */
+export const JUST_BOOKED_NOTICE: Notice = {
+  severity: NoticeSeverity.Success,
+  title: 'You’re booked.',
+  text: 'Keep the link below to change or cancel your appointment.',
+  canRetry: false,
+};
+
+/** A manage link with no token, or one whose booking doesn't exist or doesn't match (404 `booking_not_found`). */
+export const BOOKING_NOT_FOUND_NOTICE: Notice = {
+  severity: NoticeSeverity.Error,
+  text: 'We couldn’t find that booking.',
+  canRetry: false,
+};
+
+const BOOKING_LOAD_FAILED_NOTICE: Notice = {
+  severity: NoticeSeverity.Error,
+  text: 'We couldn’t load your booking.',
+  canRetry: true,
+};
+
+export const BOOKING_CANCELLED_NOTICE: Notice = {
+  severity: NoticeSeverity.Info,
+  text: 'This appointment was cancelled.',
+  canRetry: false,
+};
+
+/** A booking can't change once its start time has passed (BR-07). */
+export const BOOKING_PASSED_NOTICE: Notice = {
+  severity: NoticeSeverity.Info,
+  text: 'This appointment has started or passed.',
+  canRetry: false,
+};
+
+/** Loading a booking from its manage link: not found, or any other failure with a retry. */
+export function toManageLoadNotice(error: unknown): Notice {
+  const isNotFound: boolean = getProblemCode(error) === ProblemCode.BookingNotFound;
+  return isNotFound ? BOOKING_NOT_FOUND_NOTICE : BOOKING_LOAD_FAILED_NOTICE;
 }

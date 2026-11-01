@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { Store, provideStore } from '@ngrx/store';
 import { TEST_SHOP } from '../../../../testing/test-shop';
 import { PhoneLinks } from '../../models/phone-links.model';
@@ -16,7 +17,12 @@ describe(
     let bookingUrl: string;
 
     beforeEach((): void => {
-      TestBed.configureTestingModule({ providers: [provideStore({ [shopFeature.name]: shopFeature.reducer })] });
+      TestBed.configureTestingModule({
+        providers: [
+          provideStore({ [shopFeature.name]: shopFeature.reducer }),
+          provideRouter([]),
+        ],
+      });
       const store: Store<AppState> = TestBed.inject<Store<AppState>>(Store);
       store.dispatch(ShopActions.ShopInfoRequestSuccess({ shopInfo: TEST_SHOP }));
       phone = store.selectSignal(shopFeature.selectPhoneLinks)();
@@ -73,6 +79,26 @@ describe(
         expect(find(fixture, 'notice-booking-site')).toBeNull();
         expect(find(fixture, 'notice-call')).toBeNull();
         expect(find(fixture, 'notice-retry')).toBeNull();
+      },
+    );
+
+    it(
+      "links to another page of the app when the notice has a link, and shows none when it hasn't",
+      (): void => {
+        const withLink: ComponentFixture<NoticeMessage> = render({
+          severity: NoticeSeverity.Success,
+          text: 'Made-up notice',
+          link: { label: 'Made-up link', path: '/made-up/path' },
+          canRetry: false,
+        });
+        const withoutLink: ComponentFixture<NoticeMessage> = render({
+          severity: NoticeSeverity.Success,
+          text: 'Made-up notice',
+          canRetry: false,
+        });
+
+        expect(find(withLink, 'notice-link')?.getAttribute('href')).toBe('/made-up/path');
+        expect(find(withoutLink, 'notice-link')).toBeNull();
       },
     );
 

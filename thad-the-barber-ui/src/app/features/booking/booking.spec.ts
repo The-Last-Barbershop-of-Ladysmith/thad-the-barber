@@ -2,10 +2,12 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { NO_ERRORS_SCHEMA, WritableSignal, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
+import { Router, provideRouter } from '@angular/router';
 import { Action, ActionsSubject, Store, provideStore } from '@ngrx/store';
 import { Confirmation, ConfirmationService } from 'primeng/api';
 import { Observable, Subject } from 'rxjs';
-import { testSavedConfirmation } from '../../../testing/test-booking';
+import { Mock } from 'vitest';
+import { testConfirmationIn } from '../../../testing/test-booking';
 import { TEST_SHOP } from '../../../testing/test-shop';
 import { SessionService } from '../../core/services/session.service';
 import { ProblemCode } from '../../shared/models/problem-code.model';
@@ -21,7 +23,6 @@ import { BookingForm } from './models/booking-form.model';
 import { Notice } from '../../shared/models/notice.model';
 import { BookingStep } from './models/booking-step.model';
 import { BookingRequest } from './dtos/booking-request.dto';
-import { SavedConfirmation } from './models/saved-confirmation.model';
 import { BookingService } from './services/booking.service';
 import * as BookingActions from './state/booking.actions';
 import { bookingFeature } from './state/booking.feature';
@@ -34,7 +35,6 @@ interface BookingPage {
   bookingForm: BookingForm;
   confirm: () => void;
   bookingNotice: () => Notice | null;
-  bookedNotice: () => Notice | null;
   openStep: () => BookingStep;
   showStep: (step: BookingStep) => void;
   changeFromReview: (step: BookingStep) => void;
@@ -44,8 +44,6 @@ interface BookingPage {
 const TODAY: string = toIsoDateIn(TEST_SHOP.timeZone, new Date());
 const FIRST_TIME: string = `${TODAY}T20:00:00Z`;
 const SECOND_TIME: string = `${TODAY}T20:30:00Z`;
-const TOMORROW: string = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-
 /** The view the page opens on for the test shop: today's 31-day block, on the shop's clock. */
 function firstBlock(): AvailabilityView {
   const bookingWindow: DateRange | null = toBookingWindow(TEST_SHOP.bookingSettings, TEST_SHOP.timeZone);
@@ -64,6 +62,7 @@ describe(
     let responses: Subject<BookingConfirmation>[];
     let isBotCheckFailed: WritableSignal<boolean>;
     let dispatched: Action[];
+    let navigateByUrl: Mock;
 
     function createBooking(request: BookingRequest): Observable<BookingConfirmation> {
       const response: Subject<BookingConfirmation> = new Subject<BookingConfirmation>();
@@ -110,6 +109,7 @@ describe(
           }),
           { provide: BookingService, useValue: { createBooking } },
           { provide: SessionService, useValue: { isBotCheckFailed } },
+          provideRouter([]),
         ],
       });
       // Only the page's own messages render; the steps and summary have their own specs.
@@ -119,13 +119,12 @@ describe(
       );
     });
 
-    /** Opens the page as after a reload, with `savedConfirmation` as the booking kept from the last 24 hours. */
-    function openPage(savedConfirmation: SavedConfirmation | null = null): void {
+    /** Opens the page as after a reload, with `savedConfirmations` as the bookings kept on this device. */
+    function openPage(savedConfirmations: BookingConfirmation[] = []): void {
       const store: Store<AppState> = TestBed.inject<Store<AppState>>(Store);
       store.dispatch(ShopActions.ShopInfoRequestSuccess({ shopInfo: TEST_SHOP }));
-      if (savedConfirmation) {
-        store.dispatch(BookingActions.BookingConfirm({ savedConfirmation }));
-      }
+      store.dispatch(BookingActions.SavedConfirmationsAdopt({ savedConfirmations }));
+      navigateByUrl = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
       fixture = TestBed.createComponent(Booking);
       fixture.detectChanges();
       page = fixture.componentInstance as unknown as BookingPage;
@@ -135,9 +134,9 @@ describe(
       });
     }
 
-    function savedBooking(): HTMLElement | null {
+    function upcomingBooking(): HTMLElement | null {
       fixture.detectChanges();
-      return (fixture.nativeElement as HTMLElement).querySelector<HTMLElement>('[data-testid="saved-booking"]');
+      return (fixture.nativeElement as HTMLElement).querySelector<HTMLElement>('[data-testid="upcoming-booking"]');
     }
 
     it(
@@ -206,22 +205,17 @@ describe(
     );
 
     it(
-      'shows the booking with its phone and starts over at the date, keeping the name and phone',
+      "opens the booking's own page to confirm it, as just booked, leaving the token on the device rather than the URL",
       (): void => {
         openPage();
         pickAndConfirm(FIRST_TIME);
         responses[0]?.next(confirmation(requests[0]));
         responses[0]?.complete();
 
-        expect(page.bookedNotice()?.text).toContain('(555) 010-0199');
-        expect(page.bookingForm.getRawValue()).toEqual({
-          name: 'Test Customer',
-          phone: '(555) 010-0199',
-          date: null,
-          startAt: null,
-        });
-        expect(page.openStep()).toBe(BookingStep.Date);
-        expect(dispatched).toContainEqual(BookingActions.SetAvailabilityView({ availabilityView: firstBlock() }));
+        expect(navigateByUrl).toHaveBeenCalledWith(
+          '/book/manage/made-up-booking',
+          { state: { isJustBooked: true } },
+        );
       },
     );
 
@@ -262,46 +256,46 @@ describe(
     );
 
     it(
-      'keeps the booking it confirmed for 24 hours, so a reload still shows it',
+      'keeps the booking it confirmed until it starts, so a reload still shows it',
       (): void => {
         openPage();
         pickAndConfirm(FIRST_TIME);
         responses[0]?.next(confirmation(requests[0]));
 
-        expect(dispatched).toContainEqual(BookingActions.BookingConfirm({
-          savedConfirmation: { booking: confirmation(requests[0]), savedAt: expect.any(String) as string },
-        }));
+        expect(dispatched)
+          .toContainEqual(BookingActions.BookingConfirm({ bookingConfirmation: confirmation(requests[0]) }));
       },
     );
 
     it(
-      'shows a booking kept from the last 24 hours, without the phone, which is never saved',
+      'says there is an upcoming booking, with no time, and links to the list of them',
       (): void => {
-        openPage(testSavedConfirmation(new Date().toISOString(), TOMORROW));
+        openPage([testConfirmationIn(1, 'made-up-tomorrow')]);
 
-        expect(savedBooking()).not.toBeNull();
-        expect(savedBooking()?.textContent).not.toContain('text confirmation');
+        expect(upcomingBooking()).not.toBeNull();
+        expect(upcomingBooking()?.querySelector('[data-testid="notice-link"]')?.getAttribute('href')).toBe('/book/manage');
+        expect(upcomingBooking()?.textContent).not.toMatch(/\d:\d\d/);
       },
     );
 
     it(
-      'shows no saved booking when none is kept',
+      'says nothing when no booking is kept or every kept one has started',
+      (): void => {
+        openPage([testConfirmationIn(-1, 'made-up-yesterday')]);
+
+        expect(upcomingBooking()).toBeNull();
+      },
+    );
+
+    it(
+      'shows a booking saved in another tab while the page is open',
       (): void => {
         openPage();
-
-        expect(savedBooking()).toBeNull();
-      },
-    );
-
-    it(
-      'shows only the booking kept when the page opened, not one made since',
-      (): void => {
-        openPage();
-        TestBed.inject<Store<AppState>>(Store).dispatch(BookingActions.BookingConfirm({
-          savedConfirmation: testSavedConfirmation(new Date().toISOString(), TOMORROW),
+        TestBed.inject<Store<AppState>>(Store).dispatch(BookingActions.SavedConfirmationsAdopt({
+          savedConfirmations: [testConfirmationIn(1, 'made-up-other-tab')],
         }));
 
-        expect(savedBooking()).toBeNull();
+        expect(upcomingBooking()).not.toBeNull();
       },
     );
 
@@ -400,6 +394,31 @@ describe(
 
         expect((asked as Confirmation | null)?.header).toBe('Leave without booking?');
         expect(await canLeave).toBe(false);
+      },
+    );
+
+    it(
+      "confirms the booking here, ready for another, when the booking's own page doesn't open",
+      async (): Promise<void> => {
+        openPage();
+        navigateByUrl.mockRejectedValue(new Error('Made-up failed chunk download'));
+        pickAndConfirm(FIRST_TIME);
+        responses[0]?.next(confirmation(requests[0]));
+        responses[0]?.complete();
+        await vi.waitFor((): void => {
+          expect(page.bookingNotice()?.link?.path).toBe('/book/manage/made-up-booking');
+        });
+
+        expect(page.bookingForm.controls.date.value).toBeNull();
+        expect(page.openStep()).toBe(BookingStep.Date);
+        page.bookingForm.setValue({
+          name: 'Test Customer',
+          phone: '(555) 010-0199',
+          date: TODAY,
+          startAt: SECOND_TIME,
+        });
+        page.confirm();
+        expect(requests).toHaveLength(2);
       },
     );
 

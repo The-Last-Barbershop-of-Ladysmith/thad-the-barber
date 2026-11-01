@@ -1,0 +1,56 @@
+<app-backdrop mode="still" [still]="5" />
+
+<div class="page manage-page">
+  <header class="stack gap-2">
+    <span class="eyebrow">Your bookings</span>
+    <h1 class="section-title">Upcoming appointments</h1>
+  </header>
+
+  @if (savedBookings(); as bookings) {
+    <p-card [dt]="{ body: { padding: '1.25rem' } }">
+      @if (bookings.length > 0) {
+        <ul class="saved-bookings" data-testid="saved-bookings">
+          @for (savedBooking of bookings; track savedBooking.path) {
+            <li>
+              <a class="saved-booking" data-testid="saved-booking" [routerLink]="savedBooking.path">
+                <span>{{ savedBooking.time }}</span>
+                <i class="pi pi-chevron-right" aria-hidden="true"></i>
+              </a>
+            </li>
+          }
+        </ul>
+      } @else {
+        <div class="stack gap-4" data-testid="no-saved-bookings">
+          <p class="m-0">No upcoming appointments booked on this device.</p>
+          <a pButton class="w-fit" routerLink="/book">
+            <span pButtonLabel>Book an appointment</span>
+          </a>
+        </div>
+      }
+    </p-card>
+  } @else {
+    <p-card [dt]="{ body: { padding: '1.25rem' } }">
+      <div
+        class="saved-bookings-skeleton"
+        data-testid="saved-bookings-loading"
+        aria-busy="true"
+        aria-label="Loading your bookings"
+      >
+        <p-skeleton height="3rem" />
+        <p-skeleton height="3rem" />
+      </div>
+    </p-card>
+  }
+
+  <p class="m-0 text-muted-color">
+    Booked on another device or by phone? See all your appointments on
+    <a
+      class="nav-link"
+      data-testid="all-bookings-on-square"
+      target="_blank"
+      rel="noopener"
+      [href]="bookingUrl()"
+      >our Square booking page</a
+    >.
+  </p>
+</div>

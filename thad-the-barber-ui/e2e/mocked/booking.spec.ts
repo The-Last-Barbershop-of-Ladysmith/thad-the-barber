@@ -1,14 +1,12 @@
 import { Locator, Page, Request, Route } from '@playwright/test';
 import { BookingConfirmation } from '../../src/app/features/booking/dtos/booking-confirmation.dto';
 import { BookingRequest } from '../../src/app/features/booking/dtos/booking-request.dto';
-import { SavedConfirmation } from '../../src/app/features/booking/models/saved-confirmation.model';
-import { KEEP_CONFIRMATION_MS } from '../../src/app/features/booking/utils/saved-confirmation.utils';
 import { ProblemCode } from '../../src/app/shared/models/problem-code.model';
-import { decodeBase64, encodeBase64 } from '../../src/app/shared/utils/base64.utils';
-import { testSavedConfirmation } from '../../src/testing/test-booking';
+import { decodeBase64 } from '../../src/app/shared/utils/base64.utils';
+import { testConfirmationIn } from '../../src/testing/test-booking';
 import { TEST_SHOP } from '../../src/testing/test-shop';
 import { expectNoA11yViolations } from '../support/axe';
-import { fulfillAvailability, isAvailabilityRequest, isBookingRequest } from '../support/booking';
+import { fulfillAvailability, isAvailabilityRequest, isBookingRequest, saveBookings } from '../support/booking';
 import { expect, test } from '../support/fixtures';
 import { fulfillSession, isSessionRequest } from '../support/session';
 
@@ -98,7 +96,9 @@ test.describe(
         await expectNoA11yViolations(page);
         await book(page);
 
-        await expect(page.getByTestId('booking-confirmation')).toContainText('(540) 555-0123');
+        await expect(page).toHaveURL(/\/book\/manage\/made-up-booking$/);
+        await expect(page.getByTestId('booking-confirmation')).toBeVisible();
+        await expect(page.getByTestId('manage-link')).toHaveValue(/\/book\/manage\/made-up-booking#t=made-up-manage-token$/);
         await expectNoA11yViolations(page);
         const [booking]: Request[] = bookings;
         const body: BookingRequest = booking?.postDataJSON() as BookingRequest;
@@ -118,34 +118,27 @@ test.describe(
         await book(page);
         await expect(page.getByTestId('booking-confirmation')).toBeVisible();
 
-        await page.reload();
+        await page.goto('/book');
 
-        await expect(page.getByTestId('saved-booking')).toBeVisible();
+        await expect(page.getByTestId('upcoming-booking')).toBeVisible();
         const saved: string = decodeBase64(await page.evaluate((): string => localStorage.getItem('ttb-booking') ?? ''));
-        expect(Object.keys(JSON.parse(saved) as object)).toEqual(['savedConfirmation']);
+        expect(Object.keys(JSON.parse(saved) as object)).toEqual(['savedConfirmations']);
         expect(saved).not.toContain('Jordan');
         expect(saved).not.toContain(CUSTOMER_PHONE.slice(-4));
       },
     );
 
     test(
-      'drops a booking kept for more than 24 hours',
+      'drops a booking once it has started',
       async ({ page }: { page: Page; }): Promise<void> => {
-        // The appointment is still a day away, so only the 24 hours can drop it.
-        const savedAt: string = new Date(Date.now() - KEEP_CONFIRMATION_MS - 60_000).toISOString();
-        const tomorrow: string = new Date(Date.now() + KEEP_CONFIRMATION_MS).toISOString();
-        const savedConfirmation: SavedConfirmation = testSavedConfirmation(savedAt, tomorrow);
-        const encoded: string = encodeBase64(JSON.stringify({ savedConfirmation }));
-        await page.addInitScript((value: string): void => {
-          localStorage.setItem('ttb-booking', value);
-        }, encoded);
+        await saveBookings(page, [testConfirmationIn(-1, 'made-up-yesterday')]);
 
         await page.goto('/book');
         await waitForShop(page);
 
-        await expect(page.getByTestId('saved-booking')).toHaveCount(0);
+        await expect(page.getByTestId('upcoming-booking')).toHaveCount(0);
         const saved: string = decodeBase64(await page.evaluate((): string => localStorage.getItem('ttb-booking') ?? ''));
-        expect(JSON.parse(saved)).toEqual({ savedConfirmation: null });
+        expect(JSON.parse(saved)).toEqual({ savedConfirmations: [] });
       },
     );
 

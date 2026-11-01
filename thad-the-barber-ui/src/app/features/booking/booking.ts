@@ -15,6 +15,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmationService } from 'primeng/api';
@@ -43,15 +44,16 @@ import { Notice } from '../../shared/models/notice.model';
 import { AvailabilityViewKind } from './models/availability-view-kind.model';
 import { AvailabilityView } from './models/availability-view.model';
 import { BookingStep } from './models/booking-step.model';
+import { ManagePageState } from './models/manage-page-state.model';
 import { DateRange } from './models/date-range.model';
 import { StepProgress } from './models/step-progress.model';
 import { BookingService } from './services/booking.service';
 import * as BookingActions from './state/booking.actions';
 import { bookingFeature } from './state/booking.feature';
-import { BOT_CHECK_FAILED_NOTICE, toBookedNotice, toBookingNotice } from './utils/booking-notice.utils';
+import { BOT_CHECK_FAILED_NOTICE, toBookedHereNotice, toBookingNotice } from './utils/booking-notice.utils';
 import { BOOKING_STEPS, canOpenStep, isStepDone } from './utils/booking-steps.utils';
 import { toBookingWindow, toTimeLabel, toUpcomingView } from './utils/booking-time.utils';
-import { toKeptBooking } from './utils/saved-confirmation.utils';
+import { toManagePath } from './utils/manage-link.utils';
 
 /** How one step shows in the phone's step cards and the desktop's step rail. */
 interface StepView {
@@ -81,9 +83,9 @@ const STEP_TITLES: Record<BookingStep, string> = {
  * beside one step with Back and Continue. Both share `openStep` and the form's progress (#207–#209).
  *
  * The page owns the form and sends the booking when it's submitted; each step gets the controls it edits, and reads
- * the rest from the store. The booking in progress is thrown away with the page; the last one is kept in the booking
- * slice for 24 hours, without name or phone (BR-22). Every date and time shows on the shop's clock (`timeZone`), so
- * none shows until the shop has loaded at least once.
+ * the rest from the store. The booking in progress is thrown away with the page; each one made is kept in the booking
+ * slice until it starts, without name or phone (BR-22), and opens its own page to confirm it. Every date and time
+ * shows on the shop's clock (`timeZone`), so none shows until the shop has loaded at least once.
  */
 @Component({
   selector: 'app-booking',
@@ -111,6 +113,7 @@ export class Booking {
   private readonly destroyRef: DestroyRef = inject(DestroyRef);
   private readonly injector: Injector = inject(Injector);
   private readonly confirmationService: ConfirmationService = inject(ConfirmationService);
+  private readonly router: Router = inject(Router);
 
   private readonly timeZone: Signal<string | null> = this.store.selectSignal(shopFeature.selectTimeZone);
   private readonly bookingWindow: Signal<DateRange | null> = computed((): DateRange | null =>
@@ -122,23 +125,9 @@ export class Booking {
   protected readonly availabilityNotice: Signal<Notice | null> =
     this.store.selectSignal(bookingFeature.selectNotice);
 
-  /**
-   * The booking kept from an earlier visit (24 hours, without name or phone, BR-22). Read once when the page opens, so
-   * a booking made now shows only in its own notice.
-   */
-  private readonly savedBooking: BookingConfirmation | null =
-    toKeptBooking(this.store.selectSignal(bookingFeature.selectSavedConfirmation)());
-  protected readonly savedBookingNotice: Signal<Notice | null> = computed((): Notice | null => {
-    const timeZone: string | null = this.timeZone();
-    if (!this.savedBooking || !timeZone) {
-      return null;
-    }
-    return toBookedNotice(
-      timeZone,
-      this.savedBooking.startAt,
-      null,
-    );
-  });
+  /** "You have an upcoming booking", while this device keeps one (BR-22). */
+  protected readonly upcomingBookingNotice: Signal<Notice | null> =
+    this.store.selectSignal(bookingFeature.selectUpcomingBookingNotice);
 
   protected readonly bookingForm: BookingForm = new FormGroup({
     name: new FormControl('', {
@@ -161,8 +150,8 @@ export class Booking {
 
   protected readonly isSubmitting: WritableSignal<boolean> = signal(false);
   protected readonly bookingNotice: WritableSignal<Notice | null> = signal(null);
-  /** "You're booked", until the next booking starts. */
-  protected readonly bookedNotice: WritableSignal<Notice | null> = signal(null);
+  /** Set once the booking went through, as the page leaves for the booking's own page: nothing more is sent. */
+  private readonly isBooked: WritableSignal<boolean> = signal(false);
   /** Kept while the same booking is retried, so a booking whose response was lost isn't made twice. */
   private idempotencyKey: string | null = null;
 
@@ -245,7 +234,10 @@ export class Booking {
    * A picked day that isn't booked yet; leaving would lose it (#210). That includes a booking being sent: leaving then
    * drops its response, so it would be neither shown nor kept.
    */
-  private readonly hasUnconfirmedPick: Signal<boolean> = computed((): boolean => this.pickedDate() !== null);
+  private readonly hasUnconfirmedPick: Signal<boolean> = computed((): boolean => {
+    const hasPick: boolean = this.pickedDate() !== null;
+    return hasPick && !this.isBooked();
+  });
 
   constructor() {
     this.askBeforeUnloadWhileUnconfirmed();
@@ -355,7 +347,8 @@ export class Booking {
       phone,
       startAt,
     }: BookingFormValue = this.bookingForm.getRawValue();
-    if (this.bookingForm.invalid || !startAt || this.isSubmitting() || this.isBotCheckFailed()) {
+    const canSend: boolean = !this.isSubmitting() && !this.isBooked() && !this.isBotCheckFailed();
+    if (this.bookingForm.invalid || !startAt || !canSend) {
       return;
     }
     if (!this.idempotencyKey) {
@@ -381,7 +374,7 @@ export class Booking {
       )
       .subscribe({
         next: (confirmedBooking: BookingConfirmation): void => {
-          this.onBooked(confirmedBooking, phone);
+          this.onBooked(confirmedBooking);
         },
         error: (error: unknown): void => {
           this.onBookingFailed(error);
@@ -390,26 +383,35 @@ export class Booking {
   }
 
   /**
-   * Keeps the booking (BR-22), shows it, and starts the flow over at the date with the name and phone kept, so a
-   * second booking for someone else is quick. Clearing the day starts a new booking, which clears the notices, so the
-   * booked notice is set last; the booked time is gone, so the days reload.
+   * Keeps the booking (BR-22), where its manage page finds the token and time, and opens that page to confirm it. Once
+   * booked, leaving doesn't ask "Leave without booking?" (#210).
    */
-  private onBooked(confirmedBooking: BookingConfirmation, phone: string): void {
+  private onBooked(confirmedBooking: BookingConfirmation): void {
     this.idempotencyKey = null;
-    this.store.dispatch(BookingActions.BookingConfirm({
-      savedConfirmation: { booking: confirmedBooking, savedAt: new Date().toISOString() },
-    }));
+    this.store.dispatch(BookingActions.BookingConfirm({ bookingConfirmation: confirmedBooking }));
+    this.isBooked.set(true);
+    const managePageState: ManagePageState = { isJustBooked: true };
+    this.router.navigateByUrl(toManagePath(confirmedBooking.id), { state: managePageState }).then(
+      (isNavigated: boolean): void => {
+        if (!isNavigated) {
+          this.confirmHere(confirmedBooking);
+        }
+      },
+      (): void => {
+        this.confirmHere(confirmedBooking);
+      },
+    );
+  }
+
+  /**
+   * The booking's page didn't open, so this page confirms it and starts over at the date for another booking. Clearing
+   * the day clears the notices, so the booked notice is set last.
+   */
+  private confirmHere(confirmedBooking: BookingConfirmation): void {
+    this.isBooked.set(false);
     this.bookingForm.patchValue({ date: null, startAt: null });
     this.openStep.set(BookingStep.Date);
-    this.reloadMonth();
-    const timeZone: string | null = this.timeZone();
-    if (timeZone) {
-      this.bookedNotice.set(toBookedNotice(
-        timeZone,
-        confirmedBooking.startAt,
-        phone,
-      ));
-    }
+    this.bookingNotice.set(toBookedHereNotice(confirmedBooking.id));
   }
 
   /**
@@ -432,7 +434,6 @@ export class Booking {
   /** Changing any field makes the next confirm a new booking with a new key. */
   private startNewBooking(): void {
     this.idempotencyKey = null;
-    this.bookedNotice.set(null);
     this.bookingNotice.set(null);
   }
 
