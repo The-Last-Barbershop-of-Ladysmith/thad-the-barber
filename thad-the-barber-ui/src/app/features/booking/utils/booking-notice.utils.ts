@@ -41,13 +41,16 @@ const BOOKING_FAILED_NOTICE: Notice = {
   canRetry: true,
 };
 
+/** A time someone else booked first, on /book or when moving a booking. */
+const SLOT_TAKEN_NOTICE: Notice = {
+  severity: NoticeSeverity.Warn,
+  text: 'That time was just taken, pick another.',
+  canRetry: false,
+};
+
 /** The booking API's ProblemDetails codes the customer can act on (BR-13 for the limits). */
 const BOOKING_NOTICES: Record<string, Notice> = {
-  [ProblemCode.SlotUnavailable]: {
-    severity: NoticeSeverity.Warn,
-    text: 'That time was just taken, pick another.',
-    canRetry: false,
-  },
+  [ProblemCode.SlotUnavailable]: SLOT_TAKEN_NOTICE,
   [ProblemCode.BookingLimit]: {
     severity: NoticeSeverity.Warn,
     text: 'This phone number has reached its limit of upcoming appointments.',
@@ -115,16 +118,24 @@ export const BOOKING_PASSED_NOTICE: Notice = {
   canRetry: false,
 };
 
-/** Reasons a cancel or reschedule can't go through that retrying won't fix; the page reloads the booking for them. */
+/** The codes saying the booking itself changed: it started, was cancelled, or is gone. */
+const BOOKING_CHANGED_CODES: string[] = [
+  ProblemCode.BookingStarted,
+  ProblemCode.BookingCancelled,
+  ProblemCode.BookingNotFound,
+];
+
+/**
+ * A cancel or move refused because the booking changed meanwhile. The page reloads it rather than showing a notice,
+ * so the booking's own state says why it can't change.
+ */
+export function hasBookingChanged(error: unknown): boolean {
+  return BOOKING_CHANGED_CODES.includes(getProblemCode(error) ?? '');
+}
+
+/** A cancel or move refused for a reason retrying won't fix. */
 const MANAGE_ACTION_NOTICES: Record<string, Notice> = {
-  [ProblemCode.BookingStarted]: BOOKING_PASSED_NOTICE,
-  [ProblemCode.BookingCancelled]: BOOKING_CANCELLED_NOTICE,
-  [ProblemCode.BookingNotFound]: BOOKING_NOT_FOUND_NOTICE,
-  [ProblemCode.SlotUnavailable]: {
-    severity: NoticeSeverity.Warn,
-    text: 'That time was just taken, pick another.',
-    canRetry: false,
-  },
+  [ProblemCode.SlotUnavailable]: SLOT_TAKEN_NOTICE,
   [ProblemCode.RateLimited]: {
     severity: NoticeSeverity.Warn,
     text: 'Too many changes from this device for now.',
@@ -132,26 +143,21 @@ const MANAGE_ACTION_NOTICES: Record<string, Notice> = {
   },
 };
 
-const CANCEL_FAILED_NOTICE: Notice = {
+export const CANCEL_FAILED_NOTICE: Notice = {
   severity: NoticeSeverity.Error,
   text: 'We couldn’t cancel your appointment. It’s still booked.',
   canRetry: true,
 };
 
-const RESCHEDULE_FAILED_NOTICE: Notice = {
+export const RESCHEDULE_FAILED_NOTICE: Notice = {
   severity: NoticeSeverity.Error,
   text: 'We couldn’t move your appointment. It’s still at its old time.',
   canRetry: true,
 };
 
-/** A failed cancel: a reason it can't be cancelled, or any other failure with a retry. */
-export function toCancelNotice(error: unknown): Notice {
-  return MANAGE_ACTION_NOTICES[getProblemCode(error) ?? ''] ?? CANCEL_FAILED_NOTICE;
-}
-
-/** A failed reschedule: a reason it can't move (a taken time included), or any other failure with a retry. */
-export function toRescheduleNotice(error: unknown): Notice {
-  return MANAGE_ACTION_NOTICES[getProblemCode(error) ?? ''] ?? RESCHEDULE_FAILED_NOTICE;
+/** A failed cancel or move: a reason retrying won't fix, or `failedNotice`, which offers a retry. */
+export function toManageActionNotice(error: unknown, failedNotice: Notice): Notice {
+  return MANAGE_ACTION_NOTICES[getProblemCode(error) ?? ''] ?? failedNotice;
 }
 
 /** Loading a booking from its manage link: not found, or any other failure with a retry. */

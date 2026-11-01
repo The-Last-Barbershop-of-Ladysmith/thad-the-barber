@@ -26,16 +26,14 @@ import { finalize } from 'rxjs';
 import { Backdrop } from '../../../../shared/components/backdrop/backdrop';
 import { NoticeMessage } from '../../../../shared/components/notice-message/notice-message';
 import { Notice } from '../../../../shared/models/notice.model';
-import { ProblemCode } from '../../../../shared/models/problem-code.model';
-import { getProblemCode } from '../../../../shared/utils/problem.utils';
 import { AppState } from '../../../../store/app.state';
 import { BookingSettings } from '../../../shop/models/booking-settings.model';
 import { shopFeature } from '../../../shop/state/shop.feature';
-import { ReschedulePicker } from '../../components/reschedule-picker/reschedule-picker';
 import { BookingConfirmation } from '../../dtos/booking-confirmation.dto';
 import { ManagedBooking } from '../../dtos/managed-booking.dto';
 import { CalendarEvent } from '../../models/calendar-event.model';
 import { ManagePageState } from '../../models/manage-page-state.model';
+import { ReschedulePageState } from '../../models/reschedule-page-state.model';
 import { BookingService } from '../../services/booking.service';
 import * as BookingActions from '../../state/booking.actions';
 import { bookingFeature } from '../../state/booking.feature';
@@ -43,8 +41,10 @@ import {
   BOOKING_CANCELLED_NOTICE,
   BOOKING_NOT_FOUND_NOTICE,
   BOOKING_PASSED_NOTICE,
+  CANCEL_FAILED_NOTICE,
   JUST_BOOKED_NOTICE,
-  toCancelNotice,
+  hasBookingChanged,
+  toManageActionNotice,
   toManageLoadNotice,
 } from '../../utils/booking-notice.utils';
 import { toLongDateTime } from '../../utils/booking-time.utils';
@@ -55,8 +55,8 @@ import { readManageToken, toManageLink, toManagePath } from '../../utils/manage-
  * One booking, opened from its manage link (`/book/manage/{id}#t=…`), from this device's list, or by the booking page
  * right after booking. The token comes from the link's fragment, which then leaves the address bar for the router's
  * navigation state, or from the bookings saved on this device (BR-22); it's sent only in the `X-Manage-Token` header
- * (BR-08). Right after booking, this is its confirmation, with the link to keep first; opened later, the appointment's
- * actions come first: Add to calendar, Reschedule and Cancel, until it starts (BR-07). Every time shows on the shop's
+ * (BR-08). Right after booking, this is its confirmation, with the link to keep first; opened later, Add to calendar
+ * comes first. Either way it can be rescheduled or cancelled until it starts (BR-07). Every time shows on the shop's
  * clock.
  */
 @Component({
@@ -70,7 +70,6 @@ import { readManageToken, toManageLink, toManagePath } from '../../utils/manage-
     SkeletonModule,
     Backdrop,
     NoticeMessage,
-    ReschedulePicker,
   ],
   providers: [ConfirmationService],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -110,7 +109,6 @@ export class ManageBooking implements OnInit {
   protected readonly isLoading: WritableSignal<boolean> = signal(false);
   protected readonly loadNotice: WritableSignal<Notice | null> = signal(null);
   protected readonly managedBooking: WritableSignal<ManagedBooking | null> = signal(null);
-  protected readonly isRescheduling: WritableSignal<boolean> = signal(false);
   protected readonly isCancelling: WritableSignal<boolean> = signal(false);
   /** A cancel that didn't go through, with a retry when retrying can help. */
   protected readonly cancelNotice: WritableSignal<Notice | null> = signal(null);
@@ -218,7 +216,7 @@ export class ManageBooking implements OnInit {
   /** The dialog's Cancel appointment, and a failed cancel's retry. */
   protected cancel(): void {
     const manageToken: string | null = this.manageToken();
-    if (!manageToken || this.isCancelling()) {
+    if (!manageToken) {
       return;
     }
     this.isCancelling.set(true);
@@ -243,24 +241,15 @@ export class ManageBooking implements OnInit {
       });
   }
 
-  protected startRescheduling(): void {
-    this.cancelNotice.set(null);
-    this.isRescheduling.set(true);
-  }
-
-  protected stopRescheduling(): void {
-    this.isRescheduling.set(false);
-  }
-
-  /** The picker moved it: the page shows the new time, and this device's list moves it too. */
-  protected onRescheduled(managedBooking: ManagedBooking): void {
-    this.isRescheduling.set(false);
-    this.store.dispatch(BookingActions.SavedConfirmationMove({
-      bookingId: managedBooking.id,
-      startAt: managedBooking.startAt,
-    }));
-    this.messageService.add({ severity: 'success', summary: 'Appointment moved' });
-    this.show(managedBooking);
+  /** Opens the booking page to move it, handing over the token and current time in the navigation state. */
+  protected reschedule(): void {
+    const managedBooking: ManagedBooking | null = this.managedBooking();
+    const manageToken: string | null = this.manageToken();
+    if (!managedBooking || !manageToken) {
+      return;
+    }
+    const reschedulePageState: ReschedulePageState = { manageToken, startAt: managedBooking.startAt };
+    void this.router.navigateByUrl(`${toManagePath(managedBooking.id)}/reschedule`, { state: reschedulePageState });
   }
 
   /** A toast confirms the copy; when the browser refuses, the link stays in its field to select by hand. */
@@ -300,14 +289,13 @@ export class ManageBooking implements OnInit {
     download.remove();
   }
 
-  /** Started or cancelled meanwhile: the notice says so, and the booking reloads to show it as it is now. */
+  /** A booking that changed meanwhile reloads, so its own state says why; any other failure keeps it, with a retry. */
   private onCancelFailed(error: unknown): void {
-    this.cancelNotice.set(toCancelNotice(error));
-    const code: string | null = getProblemCode(error);
-    const hasChanged: boolean = code === ProblemCode.BookingStarted || code === ProblemCode.BookingCancelled;
-    if (hasChanged) {
+    if (hasBookingChanged(error)) {
       this.load();
+      return;
     }
+    this.cancelNotice.set(toManageActionNotice(error, CANCEL_FAILED_NOTICE));
   }
 
   private show(managedBooking: ManagedBooking): void {

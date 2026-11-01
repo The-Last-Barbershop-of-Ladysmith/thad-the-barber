@@ -3,13 +3,13 @@ import { Notice } from '../../../shared/models/notice.model';
 import { ProblemCode } from '../../../shared/models/problem-code.model';
 import { NoticeSeverity } from '../../../shared/models/notice-severity.model';
 import {
-  BOOKING_CANCELLED_NOTICE,
   BOOKING_NOT_FOUND_NOTICE,
-  BOOKING_PASSED_NOTICE,
+  CANCEL_FAILED_NOTICE,
+  RESCHEDULE_FAILED_NOTICE,
+  hasBookingChanged,
   toBookingNotice,
-  toCancelNotice,
+  toManageActionNotice,
   toManageLoadNotice,
-  toRescheduleNotice,
 } from './booking-notice.utils';
 
 const RAW_DETAIL: string = 'Made-up server detail that must never reach the page';
@@ -138,27 +138,31 @@ describe(
 );
 
 describe(
-  'toCancelNotice and toRescheduleNotice',
+  'hasBookingChanged and toManageActionNotice',
   (): void => {
     it(
-      'say why a booking can no longer change, with no retry',
+      'tell a booking that started, was cancelled or is gone apart from a failed request',
       (): void => {
-        for (const toNotice of [toCancelNotice, toRescheduleNotice]) {
-          expect(toNotice(problem(409, ProblemCode.BookingStarted))).toEqual(BOOKING_PASSED_NOTICE);
-          expect(toNotice(problem(409, ProblemCode.BookingCancelled))).toEqual(BOOKING_CANCELLED_NOTICE);
-          expect(toNotice(problem(404, ProblemCode.BookingNotFound))).toEqual(BOOKING_NOT_FOUND_NOTICE);
-          expect(toNotice(problem(429, ProblemCode.RateLimited)).canRetry).toBe(false);
-        }
-        expect(toRescheduleNotice(problem(409, ProblemCode.SlotUnavailable))).toEqual({
-          severity: NoticeSeverity.Warn,
-          text: expect.any(String) as string,
-          canRetry: false,
-        });
+        expect(hasBookingChanged(problem(409, ProblemCode.BookingStarted))).toBe(true);
+        expect(hasBookingChanged(problem(409, ProblemCode.BookingCancelled))).toBe(true);
+        expect(hasBookingChanged(problem(404, ProblemCode.BookingNotFound))).toBe(true);
+        expect(hasBookingChanged(problem(409, ProblemCode.SlotUnavailable))).toBe(false);
+        expect(hasBookingChanged(new Error(RAW_DETAIL))).toBe(false);
       },
     );
 
     it(
-      'offer a retry for any other failure, never the raw error',
+      'say why retrying won\'t help for a taken time or too many changes',
+      (): void => {
+        const slotTaken: HttpErrorResponse = problem(409, ProblemCode.SlotUnavailable);
+
+        expect(toManageActionNotice(slotTaken, CANCEL_FAILED_NOTICE).canRetry).toBe(false);
+        expect(toManageActionNotice(problem(429, ProblemCode.RateLimited), CANCEL_FAILED_NOTICE).canRetry).toBe(false);
+      },
+    );
+
+    it(
+      'fall back to the failed notice, with a retry, for anything else, never the raw error',
       (): void => {
         const failures: unknown[] = [
           problem(503, 'square_unavailable'),
@@ -167,12 +171,11 @@ describe(
         ];
 
         for (const failure of failures) {
-          for (const notice of [toCancelNotice(failure), toRescheduleNotice(failure)]) {
-            expect(notice.severity).toBe(NoticeSeverity.Error);
-            expect(notice.canRetry).toBe(true);
-            expect(notice.text).not.toContain(RAW_DETAIL);
-          }
+          expect(toManageActionNotice(failure, CANCEL_FAILED_NOTICE)).toEqual(CANCEL_FAILED_NOTICE);
+          expect(toManageActionNotice(failure, RESCHEDULE_FAILED_NOTICE)).toEqual(RESCHEDULE_FAILED_NOTICE);
         }
+        expect(CANCEL_FAILED_NOTICE.canRetry).toBe(true);
+        expect(RESCHEDULE_FAILED_NOTICE.canRetry).toBe(true);
       },
     );
   },

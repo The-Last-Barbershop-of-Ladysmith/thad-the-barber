@@ -89,42 +89,31 @@
               <i pButtonIcon class="pi pi-calendar-plus" aria-hidden="true"></i>
               <span pButtonLabel>Add to calendar</span>
             </button>
-            @if (!isJustBooked) {
-              <button
-                pButton
-                type="button"
-                severity="secondary"
-                [outlined]="true"
-                data-testid="reschedule"
-                [disabled]="isRescheduling() || isCancelling()"
-                (click)="startRescheduling()"
-              >
-                <i pButtonIcon class="pi pi-calendar-clock" aria-hidden="true"></i>
-                <span pButtonLabel>Reschedule</span>
-              </button>
-              <button
-                pButton
-                type="button"
-                severity="danger"
-                [outlined]="true"
-                data-testid="cancel-booking"
-                [disabled]="isRescheduling() || isCancelling()"
-                [loading]="isCancelling()"
-                (click)="confirmCancel()"
-              >
-                <i pButtonIcon class="pi pi-times" aria-hidden="true"></i>
-                <span pButtonLabel>Cancel appointment</span>
-              </button>
-            }
+            <button
+              pButton
+              type="button"
+              severity="secondary"
+              [outlined]="true"
+              data-testid="reschedule"
+              [disabled]="isCancelling()"
+              (click)="reschedule()"
+            >
+              <i pButtonIcon class="pi pi-calendar-clock" aria-hidden="true"></i>
+              <span pButtonLabel>Reschedule</span>
+            </button>
+            <button
+              pButton
+              type="button"
+              severity="danger"
+              [outlined]="true"
+              data-testid="cancel-booking"
+              [disabled]="isCancelling()"
+              (click)="confirmCancel()"
+            >
+              <i pButtonIcon class="pi pi-times" aria-hidden="true"></i>
+              <span pButtonLabel>Cancel appointment</span>
+            </button>
           </div>
-          @if (isRescheduling()) {
-            <app-reschedule-picker
-              [bookingId]="booking.id"
-              [manageToken]="manageToken() ?? ''"
-              (rescheduled)="onRescheduled($event)"
-              (closed)="stopRescheduling()"
-            />
-          }
         }
       </div>
     </p-card>

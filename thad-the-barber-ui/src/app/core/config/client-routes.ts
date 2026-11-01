@@ -8,4 +8,5 @@ export const CLIENT_ROUTES: string[] = [
   'book',
   'book/manage',
   'book/manage/:id',
+  'book/manage/:id/reschedule',
 ];

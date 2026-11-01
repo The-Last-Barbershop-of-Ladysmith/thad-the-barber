@@ -9,7 +9,7 @@ import { shopReducer } from '../../features/shop/state/shop.reducer';
 import { BookingConfirmation } from '../../features/booking/dtos/booking-confirmation.dto';
 import * as BookingActions from '../../features/booking/state/booking.actions';
 import { bookingReducer } from '../../features/booking/state/booking.reducer';
-import { BookingState } from '../../features/booking/state/booking.state';
+import { BookingState, initialBookingState } from '../../features/booking/state/booking.state';
 import * as HomeActions from '../../features/home/state/home.actions';
 import { homeReducer } from '../../features/home/state/home.reducer';
 import { RequestStatus } from '../../shared/models/request.models';
@@ -56,7 +56,7 @@ describe(
           undefined,
           BookingActions.SetAvailabilityView({ availabilityView: toMonthView('2026-10') }),
         );
-        reducer(viewing, BookingActions.BookingConfirm({ bookingConfirmation }));
+        reducer(viewing, BookingActions.BookingRequestSuccess({ bookingConfirmation }));
 
         expect(saved('ttb-booking')).toEqual({ savedConfirmations: [bookingConfirmation] });
         expect(localStorage.getItem('ttb-layout')).toBeNull();
@@ -71,9 +71,7 @@ describe(
         seedBookings([nextMonth, tomorrow]);
 
         expect(restoredBooking()).toEqual({
-          availabilityView: null,
-          availableDays: [],
-          loadStatus: RequestStatus.Idle,
+          ...initialBookingState,
           savedConfirmations: [tomorrow, nextMonth],
         });
       },

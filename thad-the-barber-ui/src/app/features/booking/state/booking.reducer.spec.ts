@@ -2,6 +2,9 @@ import { testConfirmation } from '../../../../testing/test-booking';
 import { RequestStatus } from '../../../shared/models/request.models';
 import { AvailableDay } from '../dtos/available-day.dto';
 import { BookingConfirmation } from '../dtos/booking-confirmation.dto';
+import { Action } from '@ngrx/store';
+import { Notice } from '../../../shared/models/notice.model';
+import { NoticeSeverity } from '../../../shared/models/notice-severity.model';
 import * as BookingActions from './booking.actions';
 import { bookingReducer } from './booking.reducer';
 import { BookingState, initialBookingState } from './booking.state';
@@ -19,7 +22,28 @@ const october: BookingState = {
   availableDays,
   loadStatus: RequestStatus.Error,
   savedConfirmations: [saturday],
+  submitStatus: RequestStatus.Idle,
+  submitNotice: null,
+  idempotencyKey: null,
 };
+
+const failedNotice: Notice = {
+  severity: NoticeSeverity.Error,
+  text: 'Made-up failure.',
+  canRetry: true,
+};
+
+function moveTo(bookingId: string, startAt: string): Action {
+  return BookingActions.RescheduleRequestSuccess({
+    managedBooking: {
+      id: bookingId,
+      startAt,
+      isCancelled: false,
+      canChange: true,
+    },
+    manageToken: 'made-up-token',
+  });
+}
 
 describe(
   'booking reducer',
@@ -30,10 +54,10 @@ describe(
         const state: BookingState = bookingReducer(october, BookingActions.SetAvailabilityView({ availabilityView: toMonthView('2026-11') }));
 
         expect(state).toEqual({
+          ...october,
           availabilityView: toMonthView('2026-11'),
           availableDays: [],
           loadStatus: RequestStatus.Pending,
-          savedConfirmations: [saturday],
         });
       },
     );
@@ -45,11 +69,11 @@ describe(
         const sunday: BookingConfirmation = testConfirmation('2026-10-04T15:00:00Z', 'made-up-sunday');
         const withSunday: BookingState = bookingReducer(
           october,
-          BookingActions.BookingConfirm({ bookingConfirmation: sunday }),
+          BookingActions.BookingRequestSuccess({ bookingConfirmation: sunday }),
         );
         const state: BookingState = bookingReducer(
           withSunday,
-          BookingActions.BookingConfirm({ bookingConfirmation: friday }),
+          BookingActions.BookingRequestSuccess({ bookingConfirmation: friday }),
         );
 
         expect(state.savedConfirmations).toEqual([
@@ -66,7 +90,7 @@ describe(
         const moved: BookingConfirmation = { ...saturday, startAt: '2026-10-03T21:00:00Z' };
         const state: BookingState = bookingReducer(
           october,
-          BookingActions.BookingConfirm({ bookingConfirmation: moved }),
+          BookingActions.BookingRequestSuccess({ bookingConfirmation: moved }),
         );
 
         expect(state.savedConfirmations).toEqual([moved]);
@@ -110,11 +134,11 @@ describe(
         const both: BookingState = { ...october, savedConfirmations: [saturday, sunday] };
         const moved: BookingState = bookingReducer(
           both,
-          BookingActions.SavedConfirmationMove({ bookingId: saturday.id, startAt: '2026-10-05T16:00:00Z' }),
+          moveTo(saturday.id, '2026-10-05T16:00:00Z'),
         );
         const untouched: BookingState = bookingReducer(
           october,
-          BookingActions.SavedConfirmationMove({ bookingId: 'made-up-opened-link', startAt: '2026-10-05T16:00:00Z' }),
+          moveTo('made-up-opened-link', '2026-10-05T16:00:00Z'),
         );
 
         expect(moved.savedConfirmations).toEqual([sunday, { ...saturday, startAt: '2026-10-05T16:00:00Z' }]);
@@ -162,6 +186,74 @@ describe(
 
         expect(stale.loadStatus).toBe(RequestStatus.Pending);
         expect(current.loadStatus).toBe(RequestStatus.Error);
+      },
+    );
+
+    it(
+      'keeps the key while the same booking is retried, and drops it and the notice when anything changes',
+      (): void => {
+        const failed: BookingState = [
+          BookingActions.BookingRequest({
+            bookingRequest: {
+              startAt: '2026-10-03T20:00:00Z',
+              name: 'Test Customer',
+              phone: '+15550100199',
+              idempotencyKey: 'made-up-key',
+            },
+          }),
+          BookingActions.BookingRequestFailure({ notice: failedNotice }),
+        ].reduce(bookingReducer, october);
+        const changed: BookingState =
+          bookingReducer(failed, BookingActions.BookingDraftChange({ isNoticeKept: false }));
+        const pickDropped: BookingState =
+          bookingReducer(failed, BookingActions.BookingDraftChange({ isNoticeKept: true }));
+
+        expect(failed).toEqual(expect.objectContaining({
+          submitStatus: RequestStatus.Error,
+          submitNotice: failedNotice,
+          idempotencyKey: 'made-up-key',
+        }));
+        expect(changed).toEqual(expect.objectContaining({ submitNotice: null, idempotencyKey: null }));
+        expect(pickDropped).toEqual(expect.objectContaining({ submitNotice: failedNotice, idempotencyKey: null }));
+      },
+    );
+
+    it(
+      'starts the booking over when the page opens, keeping the saved bookings',
+      (): void => {
+        const sent: BookingState = {
+          ...october,
+          submitStatus: RequestStatus.Success,
+          submitNotice: failedNotice,
+          idempotencyKey: 'made-up-key',
+        };
+
+        expect(bookingReducer(sent, BookingActions.BookingPageOpen())).toEqual(october);
+      },
+    );
+
+    it(
+      'confirms a booking whose page did not open, ready for another',
+      (): void => {
+        const shownHere: BookingState = bookingReducer(
+          { ...october, submitStatus: RequestStatus.Success },
+          BookingActions.BookingShownHere({ bookingId: 'made-up-booking' }),
+        );
+
+        expect(shownHere.submitStatus).toBe(RequestStatus.Idle);
+        expect(shownHere.submitNotice?.link?.path).toBe('/book/manage/made-up-booking');
+      },
+    );
+
+    it(
+      'counts a move that went back to its booking as done',
+      (): void => {
+        const returned: BookingState = bookingReducer(
+          october,
+          BookingActions.RescheduleReturn({ bookingId: saturday.id, manageToken: 'made-up-token' }),
+        );
+
+        expect(returned.submitStatus).toBe(RequestStatus.Success);
       },
     );
   },
