@@ -2,7 +2,15 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Notice } from '../../../shared/models/notice.model';
 import { ProblemCode } from '../../../shared/models/problem-code.model';
 import { NoticeSeverity } from '../../../shared/models/notice-severity.model';
-import { BOOKING_NOT_FOUND_NOTICE, toBookingNotice, toManageLoadNotice } from './booking-notice.utils';
+import {
+  BOOKING_CANCELLED_NOTICE,
+  BOOKING_NOT_FOUND_NOTICE,
+  BOOKING_PASSED_NOTICE,
+  toBookingNotice,
+  toCancelNotice,
+  toManageLoadNotice,
+  toRescheduleNotice,
+} from './booking-notice.utils';
 
 const RAW_DETAIL: string = 'Made-up server detail that must never reach the page';
 
@@ -123,6 +131,47 @@ describe(
             canRetry: true,
           });
           expect(notice.text).not.toContain(RAW_DETAIL);
+        }
+      },
+    );
+  },
+);
+
+describe(
+  'toCancelNotice and toRescheduleNotice',
+  (): void => {
+    it(
+      'say why a booking can no longer change, with no retry',
+      (): void => {
+        for (const toNotice of [toCancelNotice, toRescheduleNotice]) {
+          expect(toNotice(problem(409, ProblemCode.BookingStarted))).toEqual(BOOKING_PASSED_NOTICE);
+          expect(toNotice(problem(409, ProblemCode.BookingCancelled))).toEqual(BOOKING_CANCELLED_NOTICE);
+          expect(toNotice(problem(404, ProblemCode.BookingNotFound))).toEqual(BOOKING_NOT_FOUND_NOTICE);
+          expect(toNotice(problem(429, ProblemCode.RateLimited)).canRetry).toBe(false);
+        }
+        expect(toRescheduleNotice(problem(409, ProblemCode.SlotUnavailable))).toEqual({
+          severity: NoticeSeverity.Warn,
+          text: expect.any(String) as string,
+          canRetry: false,
+        });
+      },
+    );
+
+    it(
+      'offer a retry for any other failure, never the raw error',
+      (): void => {
+        const failures: unknown[] = [
+          problem(503, 'square_unavailable'),
+          new HttpErrorResponse({ status: 0 }),
+          new Error(RAW_DETAIL),
+        ];
+
+        for (const failure of failures) {
+          for (const notice of [toCancelNotice(failure), toRescheduleNotice(failure)]) {
+            expect(notice.severity).toBe(NoticeSeverity.Error);
+            expect(notice.canRetry).toBe(true);
+            expect(notice.text).not.toContain(RAW_DETAIL);
+          }
         }
       },
     );

@@ -38,6 +38,23 @@ export const bookingReducer: ActionReducer<BookingState> = createReducer(
     }),
   ),
   on(
+    BookingActions.SavedConfirmationRemove,
+    (state: BookingState, { bookingId }: { bookingId: string; }): BookingState => ({
+      ...state,
+      savedConfirmations: state.savedConfirmations.filter((savedConfirmation: BookingConfirmation): boolean =>
+        savedConfirmation.id !== bookingId),
+    }),
+  ),
+  on(
+    BookingActions.SavedConfirmationMove,
+    (state: BookingState, { bookingId, startAt }: { bookingId: string; startAt: string; }): BookingState => ({
+      ...state,
+      savedConfirmations: toSortedConfirmations(state.savedConfirmations
+        .map((savedConfirmation: BookingConfirmation): BookingConfirmation =>
+          (savedConfirmation.id === bookingId ? { ...savedConfirmation, startAt } : savedConfirmation))),
+    }),
+  ),
+  on(
     BookingActions.AvailabilityRequestSuccess,
     (
       state: BookingState,

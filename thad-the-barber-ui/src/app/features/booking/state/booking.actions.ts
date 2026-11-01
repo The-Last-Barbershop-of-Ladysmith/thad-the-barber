@@ -7,6 +7,8 @@ export enum BookingActionTypes {
   SetAvailabilityView = '[Booking Page] Set Availability View',
   BookingConfirm = '[Booking Page] Booking Confirmed',
   SavedConfirmationsAdopt = '[Booking Tabs] Saved Confirmations Adopted',
+  SavedConfirmationRemove = '[Manage Booking Page] Saved Confirmation Removed',
+  SavedConfirmationMove = '[Manage Booking Page] Saved Confirmation Moved',
   AvailabilityRequestSuccess = '[Booking API] Availability Loaded',
   AvailabilityRequestFailure = '[Booking API] Availability Load Failed',
 }
@@ -30,6 +32,20 @@ export const BookingConfirm = createAction(
 export const SavedConfirmationsAdopt = createAction(
   BookingActionTypes.SavedConfirmationsAdopt,
   props<{ savedConfirmations: BookingConfirmation[]; }>(),
+);
+
+/** A cancelled booking leaves this device's list, if it's there; opened links aren't saved. */
+// eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
+export const SavedConfirmationRemove = createAction(
+  BookingActionTypes.SavedConfirmationRemove,
+  props<{ bookingId: string; }>(),
+);
+
+/** A rescheduled booking moves in this device's list, if it's there; opened links aren't saved. */
+// eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
+export const SavedConfirmationMove = createAction(
+  BookingActionTypes.SavedConfirmationMove,
+  props<{ bookingId: string; startAt: string; }>(),
 );
 
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.

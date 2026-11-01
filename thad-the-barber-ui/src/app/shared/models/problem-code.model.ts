@@ -6,4 +6,6 @@ export enum ProblemCode {
   RateLimited = 'rate_limited',
   InvalidCustomerDetails = 'invalid_customer_details',
   BookingNotFound = 'booking_not_found',
+  BookingStarted = 'booking_started',
+  BookingCancelled = 'booking_cancelled',
 }

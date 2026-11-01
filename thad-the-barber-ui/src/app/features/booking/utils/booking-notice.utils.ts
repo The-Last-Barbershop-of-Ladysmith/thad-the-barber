@@ -115,6 +115,45 @@ export const BOOKING_PASSED_NOTICE: Notice = {
   canRetry: false,
 };
 
+/** Reasons a cancel or reschedule can't go through that retrying won't fix; the page reloads the booking for them. */
+const MANAGE_ACTION_NOTICES: Record<string, Notice> = {
+  [ProblemCode.BookingStarted]: BOOKING_PASSED_NOTICE,
+  [ProblemCode.BookingCancelled]: BOOKING_CANCELLED_NOTICE,
+  [ProblemCode.BookingNotFound]: BOOKING_NOT_FOUND_NOTICE,
+  [ProblemCode.SlotUnavailable]: {
+    severity: NoticeSeverity.Warn,
+    text: 'That time was just taken, pick another.',
+    canRetry: false,
+  },
+  [ProblemCode.RateLimited]: {
+    severity: NoticeSeverity.Warn,
+    text: 'Too many changes from this device for now.',
+    canRetry: false,
+  },
+};
+
+const CANCEL_FAILED_NOTICE: Notice = {
+  severity: NoticeSeverity.Error,
+  text: 'We couldn’t cancel your appointment. It’s still booked.',
+  canRetry: true,
+};
+
+const RESCHEDULE_FAILED_NOTICE: Notice = {
+  severity: NoticeSeverity.Error,
+  text: 'We couldn’t move your appointment. It’s still at its old time.',
+  canRetry: true,
+};
+
+/** A failed cancel: a reason it can't be cancelled, or any other failure with a retry. */
+export function toCancelNotice(error: unknown): Notice {
+  return MANAGE_ACTION_NOTICES[getProblemCode(error) ?? ''] ?? CANCEL_FAILED_NOTICE;
+}
+
+/** A failed reschedule: a reason it can't move (a taken time included), or any other failure with a retry. */
+export function toRescheduleNotice(error: unknown): Notice {
+  return MANAGE_ACTION_NOTICES[getProblemCode(error) ?? ''] ?? RESCHEDULE_FAILED_NOTICE;
+}
+
 /** Loading a booking from its manage link: not found, or any other failure with a retry. */
 export function toManageLoadNotice(error: unknown): Notice {
   const isNotFound: boolean = getProblemCode(error) === ProblemCode.BookingNotFound;

@@ -5,6 +5,7 @@ import { environment } from '../../../../environments/environment';
 import { BookingConfirmation } from '../dtos/booking-confirmation.dto';
 import { BookingRequest } from '../dtos/booking-request.dto';
 import { ManagedBooking } from '../dtos/managed-booking.dto';
+import { RescheduleRequest } from '../dtos/reschedule-request.dto';
 
 export const BOOKINGS_URL: string = `${environment.apiBaseUrl}/bookings`;
 
@@ -21,8 +22,34 @@ export class BookingService {
 
   getBooking(id: string, manageToken: string): Observable<ManagedBooking> {
     return this.http.get<ManagedBooking>(
-      `${BOOKINGS_URL}/${encodeURIComponent(id)}`,
+      toBookingUrl(id),
       { headers: { [MANAGE_TOKEN_HEADER]: manageToken } },
     );
   }
+
+  /** Cancelling a booking that's already cancelled returns it as it is, so a retry is safe. */
+  cancelBooking(id: string, manageToken: string): Observable<ManagedBooking> {
+    return this.http.post<ManagedBooking>(
+      `${toBookingUrl(id)}/cancel`,
+      null,
+      { headers: { [MANAGE_TOKEN_HEADER]: manageToken } },
+    );
+  }
+
+  /** Moving a booking to the time it already has returns it as it is, so a retry is safe. */
+  rescheduleBooking(
+    id: string,
+    manageToken: string,
+    request: RescheduleRequest,
+  ): Observable<ManagedBooking> {
+    return this.http.post<ManagedBooking>(
+      `${toBookingUrl(id)}/reschedule`,
+      request,
+      { headers: { [MANAGE_TOKEN_HEADER]: manageToken } },
+    );
+  }
+}
+
+function toBookingUrl(id: string): string {
+  return `${BOOKINGS_URL}/${encodeURIComponent(id)}`;
 }

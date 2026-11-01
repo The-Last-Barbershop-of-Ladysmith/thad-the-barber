@@ -87,6 +87,42 @@ describe(
     );
 
     it(
+      "drops a cancelled booking from this device's list, and leaves the list alone when it isn't there",
+      (): void => {
+        const removed: BookingState = bookingReducer(
+          october,
+          BookingActions.SavedConfirmationRemove({ bookingId: saturday.id }),
+        );
+        const untouched: BookingState = bookingReducer(
+          october,
+          BookingActions.SavedConfirmationRemove({ bookingId: 'made-up-opened-link' }),
+        );
+
+        expect(removed.savedConfirmations).toEqual([]);
+        expect(untouched.savedConfirmations).toEqual([saturday]);
+      },
+    );
+
+    it(
+      "moves a rescheduled booking in this device's list, soonest first, and never adds one that isn't there",
+      (): void => {
+        const sunday: BookingConfirmation = testConfirmation('2026-10-04T15:00:00Z', 'made-up-sunday');
+        const both: BookingState = { ...october, savedConfirmations: [saturday, sunday] };
+        const moved: BookingState = bookingReducer(
+          both,
+          BookingActions.SavedConfirmationMove({ bookingId: saturday.id, startAt: '2026-10-05T16:00:00Z' }),
+        );
+        const untouched: BookingState = bookingReducer(
+          october,
+          BookingActions.SavedConfirmationMove({ bookingId: 'made-up-opened-link', startAt: '2026-10-05T16:00:00Z' }),
+        );
+
+        expect(moved.savedConfirmations).toEqual([sunday, { ...saturday, startAt: '2026-10-05T16:00:00Z' }]);
+        expect(untouched.savedConfirmations).toEqual([saturday]);
+      },
+    );
+
+    it(
       'keeps availability only for the month in view',
       (): void => {
         const viewing: BookingState = { ...initialBookingState, availabilityView: toMonthView('2026-11') };
