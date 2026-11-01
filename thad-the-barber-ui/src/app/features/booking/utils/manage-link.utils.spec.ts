@@ -1,4 +1,4 @@
-import { readManageToken, toManageLink, toManagePath } from './manage-link.utils';
+import { readManageToken, toManageLink, toManagePath, toReschedulePath } from './manage-link.utils';
 
 describe(
   'manage link',
@@ -9,6 +9,7 @@ describe(
         const link: string = toManageLink('https://site.example', { id: 'made-up-booking', manageToken: 'Made-up_Token-1' });
 
         expect(toManagePath('made-up-booking')).toBe('/book/manage/made-up-booking');
+        expect(toReschedulePath('made up')).toBe('/book/manage/made%20up/reschedule');
         expect(link).toBe('https://site.example/book/manage/made-up-booking#t=Made-up_Token-1');
       },
     );

@@ -3,7 +3,7 @@ import { StepProgress } from '../models/step-progress.model';
 import { StepSummaryLabels } from '../models/step-summary-labels.model';
 import { StepView } from '../models/step-view.model';
 
-export const STEP_TITLES: Record<BookingStep, string> = {
+const STEP_TITLES: Record<BookingStep, string> = {
   [BookingStep.Date]: 'Date',
   [BookingStep.Time]: 'Time',
   [BookingStep.Details]: 'Your details',

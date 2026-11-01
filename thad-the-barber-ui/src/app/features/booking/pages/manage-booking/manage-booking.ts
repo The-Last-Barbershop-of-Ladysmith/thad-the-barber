@@ -49,7 +49,7 @@ import {
 } from '../../utils/booking-notice.utils';
 import { toLongDateTime } from '../../utils/booking-time.utils';
 import { toCalendarEvent, toIcsFile } from '../../utils/ics.utils';
-import { readManageToken, toManageLink, toManagePath } from '../../utils/manage-link.utils';
+import { readManageToken, toManageLink, toManagePath, toReschedulePath } from '../../utils/manage-link.utils';
 
 /**
  * One booking, opened from its manage link (`/book/manage/{id}#t=…`), from this device's list, or by the booking page
@@ -249,7 +249,7 @@ export class ManageBooking implements OnInit {
       return;
     }
     const reschedulePageState: ReschedulePageState = { manageToken, startAt: managedBooking.startAt };
-    void this.router.navigateByUrl(`${toManagePath(managedBooking.id)}/reschedule`, { state: reschedulePageState });
+    void this.router.navigateByUrl(toReschedulePath(managedBooking.id), { state: reschedulePageState });
   }
 
   /** A toast confirms the copy; when the browser refuses, the link stays in its field to select by hand. */

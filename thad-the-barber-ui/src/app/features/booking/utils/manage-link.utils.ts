@@ -8,6 +8,11 @@ export function toManagePath(id: string): string {
   return `/book/manage/${encodeURIComponent(id)}`;
 }
 
+/** `/book/manage/{id}/reschedule`: the booking page, moving that booking. */
+export function toReschedulePath(id: string): string {
+  return `${toManagePath(id)}/reschedule`;
+}
+
 /** `t=…`: the fragment carrying the manage token. Browsers never send a fragment to the server (BR-08). */
 function toManageFragment(manageToken: string): string {
   return new URLSearchParams({ [TOKEN_KEY]: manageToken }).toString();

@@ -96,8 +96,10 @@ export class Booking implements LeaveConfirmable {
     (this.isRescheduling() ? RESCHEDULE_STEPS : BOOKING_STEPS));
   /** Read while this page's navigation runs; the router restores it on a reload. */
   private readonly reschedulePageState: ReschedulePageState = inject(Router).currentNavigation()?.extras.state ?? {};
+  private readonly savedConfirmations: Signal<BookingConfirmation[]> =
+    this.store.selectSignal(bookingFeature.selectSavedConfirmations);
   private readonly savedConfirmation: Signal<BookingConfirmation | undefined> = computed(
-    (): BookingConfirmation | undefined => this.store.selectSignal(bookingFeature.selectSavedConfirmations)()
+    (): BookingConfirmation | undefined => this.savedConfirmations()
       .find((confirmation: BookingConfirmation): boolean => confirmation.id === this.id()),
   );
   private readonly manageToken: Signal<string | null> = computed((): string | null =>
@@ -117,6 +119,7 @@ export class Booking implements LeaveConfirmable {
     this.store.selectSignal(shopFeature.selectBookingSettings);
   private readonly availabilityView: Signal<AvailabilityView | null> =
     this.store.selectSignal(bookingFeature.selectAvailabilityView);
+  private readonly loadStatus: Signal<RequestStatus> = this.store.selectSignal(bookingFeature.selectLoadStatus);
   protected readonly isBotCheckFailed: Signal<boolean> = inject(SessionService).isBotCheckFailed;
   protected readonly botCheckFailedNotice: Notice = BOT_CHECK_FAILED_NOTICE;
   protected readonly bookingNotFoundNotice: Notice = BOOKING_NOT_FOUND_NOTICE;
@@ -148,6 +151,7 @@ export class Booking implements LeaveConfirmable {
   );
   protected readonly isSubmitting: Signal<boolean> = this.store.selectSignal(bookingFeature.selectIsSubmitting);
   private readonly isSubmitDone: Signal<boolean> = this.store.selectSignal(bookingFeature.selectIsSubmitDone);
+  private readonly idempotencyKey: Signal<string | null> = this.store.selectSignal(bookingFeature.selectIdempotencyKey);
   /** Set while the page drops a pick itself, so the notice saying why stays. */
   private isDroppingPick: boolean = false;
 
@@ -317,7 +321,7 @@ export class Booking implements LeaveConfirmable {
           startAt,
           name: name.trim(),
           phone: toE164(phone),
-          idempotencyKey: this.store.selectSignal(bookingFeature.selectIdempotencyKey)() ?? crypto.randomUUID(),
+          idempotencyKey: this.idempotencyKey() ?? crypto.randomUUID(),
         },
       }));
     }
@@ -391,7 +395,7 @@ export class Booking implements LeaveConfirmable {
   /** After a taken time reloads the days, the picked day may have none left; it's dropped and the date step opens. */
   private dropPickedDayWithoutTimes(availableDays: AvailableDay[]): void {
     const date: string | null = this.pickedDate();
-    const isLoaded: boolean = this.store.selectSignal(bookingFeature.selectLoadStatus)() === RequestStatus.Success;
+    const isLoaded: boolean = this.loadStatus() === RequestStatus.Success;
     if (!date || !isLoaded || availableDays.some((availableDay: AvailableDay): boolean => availableDay.date === date)) {
       return;
     }
