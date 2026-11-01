@@ -19,6 +19,16 @@ export function isBookingRequest(url: URL): boolean {
   return url.href === BOOKINGS_URL;
 }
 
+/** `POST /api/bookings/{id}/cancel`. */
+export function isCancelRequest(url: URL): boolean {
+  return /\/[^/]+\/cancel$/.test(url.pathname) && url.href.startsWith(`${BOOKINGS_URL}/`);
+}
+
+/** `POST /api/bookings/{id}/reschedule`. */
+export function isRescheduleRequest(url: URL): boolean {
+  return /\/[^/]+\/reschedule$/.test(url.pathname) && url.href.startsWith(`${BOOKINGS_URL}/`);
+}
+
 /** `/api/bookings/{id}`, one booking by its ID: not its `/cancel` or `/reschedule`, nor availability. */
 export function isManagedBookingRequest(url: URL): boolean {
   const address: string = `${url.origin}${url.pathname}`;

@@ -2,8 +2,8 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Store, provideStore } from '@ngrx/store';
-import { MessageService, ToastMessageOptions } from 'primeng/api';
+import { Action, ActionsSubject, Store, provideStore } from '@ngrx/store';
+import { Confirmation, ConfirmationService, MessageService, ToastMessageOptions } from 'primeng/api';
 import { Observable, Subject } from 'rxjs';
 import { Mock } from 'vitest';
 import { testConfirmationIn } from '../../../../../testing/test-booking';
@@ -44,11 +44,21 @@ describe(
     let responses: Subject<ManagedBooking>[];
     let navigateByUrl: Mock;
     let toasts: ToastMessageOptions[];
+    let cancelTokens: string[];
+    let cancelResponses: Subject<ManagedBooking>[];
+    let dispatched: Action[];
 
     function getBooking(_id: string, manageToken: string): Observable<ManagedBooking> {
       const response: Subject<ManagedBooking> = new Subject<ManagedBooking>();
       tokensSent.push(manageToken);
       responses.push(response);
+      return response;
+    }
+
+    function cancelBooking(_id: string, manageToken: string): Observable<ManagedBooking> {
+      const response: Subject<ManagedBooking> = new Subject<ManagedBooking>();
+      cancelTokens.push(manageToken);
+      cancelResponses.push(response);
       return response;
     }
 
@@ -63,7 +73,7 @@ describe(
             [shopFeature.name]: shopFeature.reducer,
             [bookingFeature.name]: bookingFeature.reducer,
           }),
-          { provide: BookingService, useValue: { getBooking } },
+          { provide: BookingService, useValue: { getBooking, cancelBooking } },
           { provide: ActivatedRoute, useValue: { snapshot: { fragment } } },
           {
             provide: Router,
@@ -90,6 +100,9 @@ describe(
       const store: Store<AppState> = TestBed.inject<Store<AppState>>(Store);
       store.dispatch(ShopActions.ShopInfoRequestSuccess({ shopInfo: TEST_SHOP }));
       store.dispatch(BookingActions.SavedConfirmationsAdopt({ savedConfirmations }));
+      TestBed.inject(ActionsSubject).subscribe((action: Action): void => {
+        dispatched.push(action);
+      });
       fixture = TestBed.createComponent(ManageBooking);
       fixture.componentRef.setInput('id', BOOKING_ID);
       fixture.detectChanges();
@@ -114,6 +127,9 @@ describe(
       responses = [];
       navigateByUrl = vi.fn().mockResolvedValue(true);
       toasts = [];
+      cancelTokens = [];
+      cancelResponses = [];
+      dispatched = [];
     });
 
     it(
@@ -345,6 +361,134 @@ describe(
         expect(icsFile).toContain('DTEND:20301005T203000Z');
         expect(icsFile).toContain(`SUMMARY:Appointment at ${TEST_SHOP.name}`);
         vi.restoreAllMocks();
+      },
+    );
+
+    /** Opens the page later (not just booked) on an upcoming booking, and catches the cancel dialog it asks. */
+    function openUpcoming(): () => Confirmation | null {
+      openPage();
+      respond(upcoming);
+      let asked: Confirmation | null = null;
+      fixture.debugElement.injector.get(ConfirmationService).requireConfirmation$
+        .subscribe((confirmation: Confirmation | null): void => {
+          asked = confirmation;
+        });
+      return (): Confirmation | null => asked;
+    }
+
+    function cancelled(): ManagedBooking {
+      return {
+        ...upcoming,
+        isCancelled: true,
+        canChange: false,
+      };
+    }
+
+    it(
+      'offers Reschedule and Cancel on an upcoming booking opened later, and not right after booking',
+      (): void => {
+        openPage();
+        respond(upcoming);
+
+        expect(byTestId('reschedule')).not.toBeNull();
+        expect(byTestId('cancel-booking')).not.toBeNull();
+
+        TestBed.resetTestingModule();
+        openPage({
+          fragment: null,
+          navigationState: { isJustBooked: true },
+          savedConfirmations: [savedTomorrow],
+        });
+
+        expect(byTestId('reschedule')).toBeNull();
+        expect(byTestId('cancel-booking')).toBeNull();
+      },
+    );
+
+    it(
+      'asks before cancelling, with Keep appointment as the default, and sends nothing when kept',
+      (): void => {
+        const asked: () => Confirmation | null = openUpcoming();
+
+        byTestId('cancel-booking')?.click();
+        asked()?.reject?.();
+
+        expect(asked()?.header).toBe('Cancel this appointment?');
+        expect(asked()?.defaultFocus).toBe('reject');
+        expect(cancelTokens).toEqual([]);
+      },
+    );
+
+    it(
+      'cancels with the token once confirmed: the page shows it cancelled, a toast says so, and the device drops it',
+      (): void => {
+        const asked: () => Confirmation | null = openUpcoming();
+
+        byTestId('cancel-booking')?.click();
+        asked()?.accept?.();
+        cancelResponses[0]?.next(cancelled());
+        cancelResponses[0]?.complete();
+        fixture.detectChanges();
+
+        expect(cancelTokens).toEqual(['made-up-link-token']);
+        expect(byTestId('booking-status')).not.toBeNull();
+        expect(byTestId('cancel-booking')).toBeNull();
+        expect(toasts).toEqual([{ severity: 'success', summary: 'Appointment cancelled' }]);
+        expect(dispatched).toContainEqual(BookingActions.SavedConfirmationRemove({ bookingId: BOOKING_ID }));
+      },
+    );
+
+    it(
+      'keeps the booking and offers a retry when the cancel fails, which sends it again',
+      (): void => {
+        const asked: () => Confirmation | null = openUpcoming();
+        byTestId('cancel-booking')?.click();
+        asked()?.accept?.();
+
+        cancelResponses[0]?.error(new HttpErrorResponse({ status: 500, error: { code: 'internal_error' } }));
+        fixture.detectChanges();
+
+        expect(byTestId('cancel-notice')).not.toBeNull();
+        expect(byTestId('booking-status')).toBeNull();
+        expect(toasts).toEqual([]);
+        byTestId('cancel-notice')?.querySelector<HTMLElement>('[data-testid="notice-retry"]')?.click();
+        expect(cancelTokens).toHaveLength(2);
+      },
+    );
+
+    it(
+      'reloads the booking when it started or was cancelled meanwhile, so the page shows it as it is',
+      (): void => {
+        const asked: () => Confirmation | null = openUpcoming();
+        byTestId('cancel-booking')?.click();
+        asked()?.accept?.();
+
+        cancelResponses[0]?.error(new HttpErrorResponse({ status: 409, error: { code: ProblemCode.BookingStarted } }));
+        respond({ ...upcoming, canChange: false });
+
+        expect(tokensSent).toHaveLength(2);
+        expect(byTestId('booking-status')).not.toBeNull();
+      },
+    );
+
+    it(
+      'shows the moved booking, says so in a toast and moves it in the device list',
+      (): void => {
+        openUpcoming();
+        byTestId('reschedule')?.click();
+        fixture.detectChanges();
+        const moved: ManagedBooking = { ...upcoming, startAt: testConfirmationIn(3, BOOKING_ID).startAt };
+
+        (fixture.componentInstance as unknown as { onRescheduled: (booking: ManagedBooking) => void; })
+          .onRescheduled(moved);
+        fixture.detectChanges();
+
+        expect(byTestId('reschedule-picker')).toBeNull();
+        expect(toasts).toEqual([{ severity: 'success', summary: 'Appointment moved' }]);
+        expect(dispatched).toContainEqual(BookingActions.SavedConfirmationMove({
+          bookingId: BOOKING_ID,
+          startAt: moved.startAt,
+        }));
       },
     );
   },

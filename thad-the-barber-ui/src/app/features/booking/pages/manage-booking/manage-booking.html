@@ -39,6 +39,13 @@
         @if (statusNotice(); as status) {
           <app-notice-message data-testid="booking-status" [notice]="status" />
         }
+        @if (cancelNotice(); as failedCancelNotice) {
+          <app-notice-message
+            data-testid="cancel-notice"
+            [notice]="failedCancelNotice"
+            (retry)="cancel()"
+          />
+        }
         @if (booking.canChange && manageLink(); as link) {
           @if (isLinkShown()) {
             <div class="stack gap-2">
@@ -82,7 +89,42 @@
               <i pButtonIcon class="pi pi-calendar-plus" aria-hidden="true"></i>
               <span pButtonLabel>Add to calendar</span>
             </button>
+            @if (!isJustBooked) {
+              <button
+                pButton
+                type="button"
+                severity="secondary"
+                [outlined]="true"
+                data-testid="reschedule"
+                [disabled]="isRescheduling() || isCancelling()"
+                (click)="startRescheduling()"
+              >
+                <i pButtonIcon class="pi pi-calendar-clock" aria-hidden="true"></i>
+                <span pButtonLabel>Reschedule</span>
+              </button>
+              <button
+                pButton
+                type="button"
+                severity="danger"
+                [outlined]="true"
+                data-testid="cancel-booking"
+                [disabled]="isRescheduling() || isCancelling()"
+                [loading]="isCancelling()"
+                (click)="confirmCancel()"
+              >
+                <i pButtonIcon class="pi pi-times" aria-hidden="true"></i>
+                <span pButtonLabel>Cancel appointment</span>
+              </button>
+            }
           </div>
+          @if (isRescheduling()) {
+            <app-reschedule-picker
+              [bookingId]="booking.id"
+              [manageToken]="manageToken() ?? ''"
+              (rescheduled)="onRescheduled($event)"
+              (closed)="stopRescheduling()"
+            />
+          }
         }
       </div>
     </p-card>
@@ -93,3 +135,5 @@
     <a class="nav-link" routerLink="/book">Book another appointment</a>
   </nav>
 </div>
+
+<p-confirmdialog key="cancel-booking" />
