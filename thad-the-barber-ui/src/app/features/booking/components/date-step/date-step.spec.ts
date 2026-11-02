@@ -180,7 +180,7 @@ describe(
     );
 
     it(
-      'offers the next 31 days and every later month the booking window reaches, and jumps with one load',
+      'offers every later month the booking window reaches, and jumps with one load',
       async (): Promise<void> => {
         const months: string[] = laterMonths();
         const lastMonth: string | undefined = months.at(-1);
@@ -189,7 +189,7 @@ describe(
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect(find('upcoming-view')).not.toBeNull();
+        expect(find('upcoming-view')).toBeNull();
         for (const month of months) {
           expect(find(`month-${month}`)).not.toBeNull();
         }
@@ -215,15 +215,30 @@ describe(
     );
 
     it(
-      'keeps the picks when the availabilityView already showing is picked again',
+      'goes back from a month to the next 31 days from today',
       (): void => {
-        load(OPEN_DAYS);
+        load(OPEN_DAYS, toMonthView(laterMonths()[0] ?? ''));
+
+        find('view-picker')?.click();
+        fixture.detectChanges();
+        find('upcoming-view')?.click();
+
+        expect(dispatched.at(-1)).toEqual(BookingActions.SetAvailabilityView({ availabilityView: testFirstBlock() }));
+      },
+    );
+
+    it(
+      'keeps the picks when the month already showing is picked again',
+      async (): Promise<void> => {
+        const month: string = laterMonths()[0] ?? '';
+        load(OPEN_DAYS, toMonthView(month));
         dateControl.setValue('2026-11-01');
         startAtControl.setValue('2026-11-01T20:00:00Z');
 
         find('view-picker')?.click();
         fixture.detectChanges();
-        find('upcoming-view')?.click();
+        await fixture.whenStable();
+        find(`month-${month}`)?.click();
 
         expect(dateControl.value).toBe('2026-11-01');
         expect(startAtControl.value).toBe('2026-11-01T20:00:00Z');

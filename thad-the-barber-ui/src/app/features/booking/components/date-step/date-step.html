@@ -14,9 +14,9 @@
       <i pButtonIcon class="pi pi-chevron-left"></i>
     </button>
     <button
+      pButton
       #monthPickerToggle
       id="view-picker-label"
-      pButton
       type="button"
       severity="secondary"
       [outlined]="true"
@@ -53,19 +53,19 @@
       tabindex="-1"
       (keydown.escape)="closeMonthPicker()"
     >
-      <p-selectbutton
-        ariaLabelledBy="view-picker-label"
-        [options]="upcomingOptions"
-        optionLabel="label"
-        optionValue="viewKey"
-        [allowEmpty]="false"
-        [ngModel]="viewKey()"
-        (onChange)="showViewKey($event.value)"
-      >
-        <ng-template #item let-upcomingOption>
-          <span data-testid="upcoming-view">{{ upcomingOption.label }}</span>
-        </ng-template>
-      </p-selectbutton>
+      @if (!isTodaysBlock()) {
+        <button
+          pButton
+          type="button"
+          severity="secondary"
+          [outlined]="true"
+          class="view-control"
+          data-testid="upcoming-view"
+          (click)="showUpcoming()"
+        >
+          <span pButtonLabel>{{ upcomingLabel }}</span>
+        </button>
+      }
       @for (monthOptionGroup of monthOptionGroups(); track monthOptionGroup.year) {
         <div class="stack gap-2">
           <span class="field-label" [id]="'month-year-' + monthOptionGroup.year">{{
@@ -77,8 +77,8 @@
             optionLabel="longLabel"
             optionValue="month"
             [allowEmpty]="false"
-            [ngModel]="viewKey()"
-            (onChange)="showViewKey($event.value)"
+            [ngModel]="viewMonth()"
+            (onChange)="showMonth($event.value)"
           >
             <ng-template #item let-monthOption>
               <span [attr.data-testid]="'month-' + monthOption.month">{{
