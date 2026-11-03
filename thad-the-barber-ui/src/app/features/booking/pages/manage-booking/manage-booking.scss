@@ -1,15 +1,84 @@
+// The appointment's time is the page heading; its actions sit below it on phones and beside it from lg.
 .manage-page {
-  .appointment-time {
-    margin: 0;
-    font-size: 1.375rem;
-    font-weight: 700;
-    color: var(--p-text-color);
-  }
-
-  .manage-actions {
+  .manage-layout {
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem 1.5rem;
-    align-items: center;
+    flex-direction: column;
+    gap: 2rem;
+
+    .appointment-summary {
+      flex: 1;
+      min-width: 0;
+
+      .booked-status {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--p-brand-success);
+
+        .booked-dot {
+          width: 0.5rem;
+          height: 0.5rem;
+          border-radius: 50%;
+          background: currentColor;
+        }
+      }
+
+      // Focused on load for screen readers; it isn't a control, so no ring.
+      .appointment-heading {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+
+        &:focus {
+          outline: none;
+        }
+
+        .appointment-time {
+          font-size: clamp(3rem, 9vw, 6.5rem);
+          color: var(--p-primary-color);
+        }
+      }
+
+      .appointment-details {
+        margin: 0;
+        font-size: 1.0625rem;
+        line-height: 1.6;
+        color: var(--p-surface-200);
+      }
+    }
+
+    .manage-actions {
+      .quiet-actions {
+        display: flex;
+        flex-direction: column;
+        margin-top: 0.5rem;
+        padding-top: 0.5rem;
+        border-top: 1px solid color-mix(in srgb, var(--p-surface-50) 10%, transparent);
+
+        .quiet-action {
+          justify-content: space-between;
+          width: 100%;
+          text-transform: none;
+          letter-spacing: 0;
+          font-weight: 600;
+        }
+      }
+
+      .change-hint {
+        margin: 0;
+        font-size: 0.8125rem;
+        color: var(--p-surface-400);
+      }
+    }
+
+    @media (min-width: 64rem) {
+      flex-direction: row;
+      align-items: center;
+      gap: 3rem;
+
+      .manage-actions {
+        flex: 0 0 24rem;
+      }
+    }
   }
 }

@@ -44,15 +44,20 @@ import {
   toManageActionNotice,
   toManageLoadNotice,
 } from '../../utils/booking-notice.utils';
-import { toLongDateTime } from '../../utils/booking-time.utils';
+import { toLongDate, toTimeLabel } from '../../utils/booking-time.utils';
 import { toCalendarEvent, toIcsFile } from '../../utils/ics.utils';
 import { readManageToken, toManageLink, toManagePath, toReschedulePath } from '../../utils/manage-link.utils';
+
+interface AppointmentStart {
+  day: string;
+  time: string;
+}
 
 /**
  * One booking, opened from its manage link (`/book/manage/{id}#t=…`) or by the booking page right after booking. The
  * token comes from the link's fragment, which then leaves the address bar for the router's navigation state; it's sent
- * only in the `X-Manage-Token` header (BR-08). Right after booking, the link to keep comes first; opened later, Add to
- * calendar does. It can be rescheduled or cancelled until it starts (BR-07), every time on the shop's clock.
+ * only in the `X-Manage-Token` header (BR-08). Right after booking, the link to keep shows above the actions. It can be
+ * rescheduled or cancelled until it starts (BR-07), every time on the shop's clock.
  */
 @Component({
   selector: 'app-manage-booking',
@@ -83,16 +88,16 @@ export class ManageBooking implements OnInit {
   private readonly injector: Injector = inject(Injector);
 
   private readonly timeZone: Signal<string | null> = this.store.selectSignal(shopFeature.selectTimeZone);
-  private readonly shopName: Signal<string> = this.store.selectSignal(shopFeature.selectShopName);
-  private readonly addressLine: Signal<string | null> = this.store.selectSignal(shopFeature.selectAddressLine);
-  private readonly bookingSettings: Signal<BookingSettings | null> =
+  protected readonly shopName: Signal<string> = this.store.selectSignal(shopFeature.selectShopName);
+  protected readonly addressLine: Signal<string | null> = this.store.selectSignal(shopFeature.selectAddressLine);
+  protected readonly directionsUrl: Signal<string | null> = this.store.selectSignal(shopFeature.selectDirectionsUrl);
+  protected readonly bookingSettings: Signal<BookingSettings | null> =
     this.store.selectSignal(shopFeature.selectBookingSettings);
 
   /** Read while this page's navigation runs; the router restores it on a reload. */
   private readonly pageState: ManagePageState = this.router.currentNavigation()?.extras.state ?? {};
   protected readonly manageToken: WritableSignal<string | null> = signal(null);
 
-  /** Right after booking, the link to keep comes first; opened later, the appointment's actions do. */
   protected readonly isJustBooked: boolean = this.pageState.isJustBooked === true;
   protected readonly justBookedNotice: Notice = JUST_BOOKED_NOTICE;
   /** The link field: shown right after booking, and whenever copying fails, so the link can be selected by hand. */
@@ -102,10 +107,16 @@ export class ManageBooking implements OnInit {
   protected readonly isCancelling: WritableSignal<boolean> = signal(false);
   protected readonly cancelNotice: WritableSignal<Notice | null> = signal(null);
 
-  protected readonly appointmentTime: Signal<string | null> = computed((): string | null => {
+  protected readonly appointmentStart: Signal<AppointmentStart | null> = computed((): AppointmentStart | null => {
     const managedBooking: ManagedBooking | null = this.managedBooking();
     const timeZone: string | null = this.timeZone();
-    return managedBooking && timeZone ? toLongDateTime(timeZone, managedBooking.startAt) : null;
+    if (!managedBooking || !timeZone) {
+      return null;
+    }
+    return {
+      day: toLongDate(timeZone, managedBooking.startAt),
+      time: toTimeLabel(timeZone, managedBooking.startAt),
+    };
   });
 
   /** Cancelled, or started or passed: either way it can't change (BR-07). */
@@ -173,10 +184,14 @@ export class ManageBooking implements OnInit {
   }
 
   protected confirmCancel(): void {
+    const appointmentStart: AppointmentStart | null = this.appointmentStart();
+    const appointmentLabel: string = appointmentStart
+      ? `${appointmentStart.day} at ${appointmentStart.time}`
+      : 'Your appointment';
     this.confirmationService.confirm({
       key: 'cancel-booking',
       header: 'Cancel this appointment?',
-      message: `${this.appointmentTime() ?? 'Your appointment'}. You can book again any time.`,
+      message: `${appointmentLabel}. You can book again any time.`,
       rejectButtonProps: { label: 'Keep appointment' },
       acceptButtonProps: {
         label: 'Cancel appointment',
