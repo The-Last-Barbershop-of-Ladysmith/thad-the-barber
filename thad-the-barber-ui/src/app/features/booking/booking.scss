@@ -15,6 +15,19 @@
       padding-bottom: 2rem;
     }
 
+    // PrimeNG draws separators only for a step list, so the headers in a row get their own line to the next step.
+    p-step-item:not(:last-child) p-step::after {
+      content: '';
+      flex: 1 1 0;
+      min-width: 1.5rem;
+      height: var(--p-stepper-separator-size);
+      background: var(--p-stepper-separator-background);
+    }
+
+    p-step-item:has(~ .p-stepitem-active) p-step::after {
+      background: var(--p-stepper-separator-active-background);
+    }
+
     // Shown at once, not animated, since every panel shares one cell and a closing one would overlap the next.
     p-step-panel {
       grid-row: 2;
