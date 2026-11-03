@@ -1,0 +1,14 @@
+// Above the fixed header, along the top of the screen.
+.page-loading {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 30;
+  border-radius: 0;
+  animation: page-loading-in 0.2s 150ms both;
+}
+
+@keyframes page-loading-in {
+  from {
+    opacity: 0;
+  }
+}
