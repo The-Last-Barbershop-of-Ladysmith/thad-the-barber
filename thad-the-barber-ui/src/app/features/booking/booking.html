@@ -49,7 +49,14 @@
     @if (submitNotice(); as failureNotice) {
       <app-notice-message [notice]="failureNotice" (retry)="confirm()" />
     }
-    <form [formGroup]="bookingForm" (ngSubmit)="confirm()">
+    <form class="relative" [formGroup]="bookingForm" (ngSubmit)="confirm()">
+      @if (isSubmitting()) {
+        <p-progressbar
+          class="edge-progress"
+          mode="indeterminate"
+          [attr.aria-label]="isRescheduling() ? 'Moving' : 'Booking'"
+        />
+      }
       <p-card>
         <p-stepper class="booking-steps" [(value)]="openStep">
           <p-step-item [value]="bookingStep.Day">

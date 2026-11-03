@@ -12,13 +12,6 @@
 
     .calendar-frame {
       position: relative;
-
-      // Over the calendar's top edge, so the month doesn't shift when it appears.
-      .calendar-loading {
-        position: absolute;
-        top: 0;
-        inset-inline: 1rem;
-      }
     }
   }
 

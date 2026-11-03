@@ -86,6 +86,14 @@
   color: var(--p-text-muted-color);
 }
 
+/* A p-progressbar along the top edge of the card or calendar it's in; the parent is `relative` */
+@utility edge-progress {
+  position: absolute;
+  top: 0;
+  inset-inline: 1rem;
+  z-index: 1;
+}
+
 /* Body paragraph inside panels */
 @utility body-copy {
   margin: 0;

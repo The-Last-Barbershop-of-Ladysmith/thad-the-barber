@@ -18,6 +18,7 @@ import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { SpinnerIcon } from 'primeng/icons/spinner';
+import { ProgressBarModule } from 'primeng/progressbar';
 import { StepperModule } from 'primeng/stepper';
 import { distinctUntilChanged, map } from 'rxjs';
 import { SessionService } from '../../core/services/session.service';
@@ -52,6 +53,7 @@ import { toManagePath } from './utils/manage-link.utils';
     ButtonModule,
     CardModule,
     ConfirmDialogModule,
+    ProgressBarModule,
     SpinnerIcon,
     StepperModule,
     Backdrop,

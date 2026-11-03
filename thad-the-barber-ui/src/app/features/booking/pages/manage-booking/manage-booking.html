@@ -62,7 +62,10 @@
 
     @if (managedBooking(); as booking) {
       @if (booking.canChange && manageLink(); as link) {
-        <aside class="manage-actions" aria-label="Change this appointment">
+        <aside class="manage-actions relative" aria-label="Change this appointment">
+          @if (isCancelling()) {
+            <p-progressbar class="edge-progress" mode="indeterminate" aria-label="Cancelling" />
+          }
           <p-card [dt]="{ body: { padding: '1.75rem' } }">
             <div class="stack gap-3">
               @if (isLinkShown()) {

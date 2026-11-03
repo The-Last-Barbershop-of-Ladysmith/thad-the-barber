@@ -21,6 +21,7 @@ import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { InputTextModule } from 'primeng/inputtext';
+import { ProgressBarModule } from 'primeng/progressbar';
 import { SkeletonModule } from 'primeng/skeleton';
 import { finalize } from 'rxjs';
 import { Backdrop } from '../../../../shared/components/backdrop/backdrop';
@@ -67,6 +68,7 @@ interface AppointmentStart {
     CardModule,
     ConfirmDialogModule,
     InputTextModule,
+    ProgressBarModule,
     SkeletonModule,
     Backdrop,
     NoticeMessage,
