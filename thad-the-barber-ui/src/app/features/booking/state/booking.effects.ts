@@ -50,85 +50,6 @@ import { bookingFeature } from './booking.feature';
 /** What a failed send passes on: the notice to show, or none for a failed bot check. */
 type FailureActionCreator = (failure: { notice: Notice | null; }) => Action;
 
-/**
- * Opens the next 31 days for /book and a booking's reschedule page. It waits for the shop, so "today" and the
- * booking window are the shop's, not the browser's.
- */
-export const openUpcomingDays: FunctionalEffect = createEffect(
-  (
-    actions$: Actions = inject<Actions>(Actions),
-    store: Store<AppState> = inject<Store<AppState>>(Store),
-  ): Observable<Action> =>
-    actions$.pipe(
-      ofType(BookingActions.UpcomingDaysOpen),
-      switchMap((): Observable<DateRange> =>
-        combineLatest([
-          store.select(shopFeature.selectBookingSettings),
-          store.select(shopFeature.selectTimeZone),
-        ]).pipe(
-          map(([bookingSettings, timeZone]: [BookingSettings | null, string | null]): DateRange | null =>
-            toBookingWindow(bookingSettings, timeZone)),
-          filter((bookingWindow: DateRange | null): bookingWindow is DateRange => bookingWindow !== null),
-          take(1),
-        )),
-      map((bookingWindow: DateRange): Action => BookingActions.SetAvailabilityView({
-        availabilityView: toUpcomingView(bookingWindow.min, bookingWindow),
-      })),
-    ),
-  { functional: true },
-);
-
-/**
- * A 31-day view starts on the day it was opened; left open past midnight, it would start on a day that's gone. While
- * the booking page is open, coming back to the tab moves a view that starts before the shop's today to today's block.
- */
-export const openTodayOnReturn: FunctionalEffect = createEffect(
-  (
-    actions$: Actions = inject<Actions>(Actions),
-    store: Store<AppState> = inject<Store<AppState>>(Store),
-  ): Observable<Action> =>
-    actions$.pipe(
-      ofType(BookingActions.BookingPageOpen),
-      filter((): boolean => typeof document !== 'undefined'),
-      switchMap((): Observable<Event> => fromEvent(document, 'visibilitychange').pipe(
-        filter((): boolean => document.visibilityState === 'visible'),
-        takeUntil(actions$.pipe(ofType(BookingActions.BookingPageClose))),
-      )),
-      switchMap((): Observable<[AvailabilityView | null, DateRange | null]> => combineLatest([
-        store.select(bookingFeature.selectAvailabilityView),
-        combineLatest([
-          store.select(shopFeature.selectBookingSettings),
-          store.select(shopFeature.selectTimeZone),
-        ]).pipe(map(([bookingSettings, timeZone]: [BookingSettings | null, string | null]): DateRange | null =>
-          toBookingWindow(bookingSettings, timeZone))),
-      ]).pipe(take(1))),
-      filter(([availabilityView, bookingWindow]: [AvailabilityView | null, DateRange | null]): boolean =>
-        availabilityView?.kind === AvailabilityViewKind.Upcoming
-        && bookingWindow !== null
-        && availabilityView.firstDay < toIsoDate(bookingWindow.min)),
-      map((): Action => BookingActions.UpcomingDaysOpen()),
-    ),
-  { functional: true },
-);
-
-/** Asks again for the days in view, after a taken time or a failed load. */
-export const reloadAvailability: FunctionalEffect = createEffect(
-  (
-    actions$: Actions = inject<Actions>(Actions),
-    store: Store<AppState> = inject<Store<AppState>>(Store),
-  ): Observable<Action> =>
-    actions$.pipe(
-      ofType(BookingActions.AvailabilityReload),
-      switchMap((): Observable<AvailabilityView | null> =>
-        store.select(bookingFeature.selectAvailabilityView).pipe(take(1))),
-      filter((availabilityView: AvailabilityView | null): availabilityView is AvailabilityView =>
-        availabilityView !== null),
-      map((availabilityView: AvailabilityView): Action => BookingActions.SetAvailabilityView({ availabilityView })),
-    ),
-  { functional: true },
-);
-
-/** Asks for the view's days, which it already holds as shop-calendar days. */
 export const loadAvailability: FunctionalEffect = createEffect(
   (
     actions$: Actions = inject<Actions>(Actions),
@@ -142,31 +63,6 @@ export const loadAvailability: FunctionalEffect = createEffect(
             BookingActions.AvailabilityRequestSuccess({ availabilityView, availableDays })),
           catchError((): Observable<Action> =>
             of(BookingActions.AvailabilityRequestFailure({ availabilityView }))),
-        )),
-    ),
-  { functional: true },
-);
-
-/** Sends the booking; one at a time, since the page locks its form while one is sent, and only while it's open. */
-export const requestBooking: FunctionalEffect = createEffect(
-  (
-    actions$: Actions = inject<Actions>(Actions),
-    bookingService: BookingService = inject(BookingService),
-    sessionService: SessionService = inject(SessionService),
-  ): Observable<Action> =>
-    actions$.pipe(
-      ofType(BookingActions.BookingRequest),
-      exhaustMap(({ bookingRequest }: { bookingRequest: BookingRequest; }): Observable<Action> =>
-        bookingService.createBooking(bookingRequest).pipe(
-          takeUntil(actions$.pipe(ofType(BookingActions.BookingPageClose))),
-          map((bookingConfirmation: BookingConfirmation): Action =>
-            BookingActions.BookingRequestSuccess({ bookingConfirmation })),
-          catchError((error: unknown): Observable<Action> => from(toFailureActions(
-            error,
-            toBookingNotice(error),
-            sessionService,
-            BookingActions.BookingRequestFailure,
-          ))),
         )),
     ),
   { functional: true },
@@ -195,10 +91,89 @@ export const openBookedPage: FunctionalEffect = createEffect(
   { functional: true },
 );
 
+// A 31-day view left open past midnight would start on a day that's gone.
+export const openTodayOnReturn: FunctionalEffect = createEffect(
+  (
+    actions$: Actions = inject<Actions>(Actions),
+    store: Store<AppState> = inject<Store<AppState>>(Store),
+  ): Observable<Action> =>
+    actions$.pipe(
+      ofType(BookingActions.BookingPageOpen),
+      filter((): boolean => typeof document !== 'undefined'),
+      switchMap((): Observable<Event> => fromEvent(document, 'visibilitychange').pipe(
+        filter((): boolean => document.visibilityState === 'visible'),
+        takeUntil(actions$.pipe(ofType(BookingActions.BookingPageClose))),
+      )),
+      switchMap((): Observable<[AvailabilityView | null, DateRange | null]> => combineLatest([
+        store.select(bookingFeature.selectAvailabilityView),
+        bookingWindow$(store),
+      ]).pipe(take(1))),
+      filter((
+        viewAndWindow: [AvailabilityView | null, DateRange | null],
+      ): viewAndWindow is [AvailabilityView, DateRange] => {
+        const [availabilityView, bookingWindow]: [AvailabilityView | null, DateRange | null] = viewAndWindow;
+        return availabilityView?.kind === AvailabilityViewKind.Upcoming
+          && bookingWindow !== null
+          && availabilityView.firstDay < toIsoDate(bookingWindow.min);
+      }),
+      map(([, bookingWindow]: [AvailabilityView, DateRange]): Action => BookingActions.SetAvailabilityView({
+        availabilityView: toUpcomingView(bookingWindow.min, bookingWindow),
+      })),
+    ),
+  { functional: true },
+);
+
+// Waits for the shop, so "today" and the booking window are on its clock, not the browser's.
+export const openUpcomingDays: FunctionalEffect = createEffect(
+  (
+    actions$: Actions = inject<Actions>(Actions),
+    store: Store<AppState> = inject<Store<AppState>>(Store),
+  ): Observable<Action> =>
+    actions$.pipe(
+      ofType(BookingActions.BookingPageOpen),
+      switchMap((): Observable<DateRange> => bookingWindow$(store).pipe(
+        filter((bookingWindow: DateRange | null): bookingWindow is DateRange => bookingWindow !== null),
+        take(1),
+      )),
+      map((bookingWindow: DateRange): Action => BookingActions.SetAvailabilityView({
+        availabilityView: toUpcomingView(bookingWindow.min, bookingWindow),
+      })),
+    ),
+  { functional: true },
+);
+
+/** Sends the booking; one at a time, since the page locks its form while one is sent, and only while it's open. */
+export const requestBooking: FunctionalEffect = createEffect(
+  (
+    actions$: Actions = inject<Actions>(Actions),
+    store: Store<AppState> = inject<Store<AppState>>(Store),
+    bookingService: BookingService = inject(BookingService),
+    sessionService: SessionService = inject(SessionService),
+  ): Observable<Action> =>
+    actions$.pipe(
+      ofType(BookingActions.BookingRequest),
+      exhaustMap(({ bookingRequest }: { bookingRequest: BookingRequest; }): Observable<Action> =>
+        bookingService.createBooking(bookingRequest).pipe(
+          takeUntil(actions$.pipe(ofType(BookingActions.BookingPageClose))),
+          map((bookingConfirmation: BookingConfirmation): Action =>
+            BookingActions.BookingRequestSuccess({ bookingConfirmation })),
+          catchError((error: unknown): Observable<Action> => toFailureActions(
+            error,
+            toBookingNotice(error),
+            store,
+            sessionService,
+            BookingActions.BookingRequestFailure,
+          )),
+        )),
+    ),
+  { functional: true },
+);
+
 /** Moves the booking with its token; a booking that changed meanwhile goes back to its page, which shows why. */
 export const requestReschedule: FunctionalEffect = createEffect(
   (
     actions$: Actions = inject<Actions>(Actions),
+    store: Store<AppState> = inject<Store<AppState>>(Store),
     bookingService: BookingService = inject(BookingService),
     sessionService: SessionService = inject(SessionService),
   ): Observable<Action> =>
@@ -225,16 +200,39 @@ export const requestReschedule: FunctionalEffect = createEffect(
             if (hasBookingChanged(error)) {
               return of(BookingActions.RescheduleReturn({ bookingId, manageToken }));
             }
-            return from(toFailureActions(
+            return toFailureActions(
               error,
               toManageActionNotice(error, RESCHEDULE_FAILED_NOTICE),
+              store,
               sessionService,
               BookingActions.RescheduleRequestFailure,
-            ));
+            );
           }),
         )),
     ),
   { functional: true },
+);
+
+/** Goes back to a booking that changed meanwhile; its page shows why. */
+export const returnToChangedBooking: FunctionalEffect = createEffect(
+  (
+    actions$: Actions = inject<Actions>(Actions),
+    router: Router = inject(Router),
+  ): Observable<unknown> =>
+    actions$.pipe(
+      ofType(BookingActions.RescheduleReturn),
+      tap(({ bookingId, manageToken }: { bookingId: string; manageToken: string; }): void => {
+        openBookingPage(
+          router,
+          bookingId,
+          manageToken,
+        );
+      }),
+    ),
+  {
+    functional: true,
+    dispatch: false,
+  },
 );
 
 /** Says the booking moved and goes back to its page. */
@@ -261,27 +259,14 @@ export const returnToMovedBooking: FunctionalEffect = createEffect(
   },
 );
 
-/** Goes back to a booking that changed meanwhile; its page shows why. */
-export const returnToChangedBooking: FunctionalEffect = createEffect(
-  (
-    actions$: Actions = inject<Actions>(Actions),
-    router: Router = inject(Router),
-  ): Observable<unknown> =>
-    actions$.pipe(
-      ofType(BookingActions.RescheduleReturn),
-      tap(({ bookingId, manageToken }: { bookingId: string; manageToken: string; }): void => {
-        openBookingPage(
-          router,
-          bookingId,
-          manageToken,
-        );
-      }),
-    ),
-  {
-    functional: true,
-    dispatch: false,
-  },
-);
+// Not a memoized selector: the window starts today, and a selector would keep yesterday's past midnight.
+function bookingWindow$(store: Store<AppState>): Observable<DateRange | null> {
+  return combineLatest([
+    store.select(shopFeature.selectBookingSettings),
+    store.select(shopFeature.selectTimeZone),
+  ]).pipe(map(([bookingSettings, timeZone]: [BookingSettings | null, string | null]): DateRange | null =>
+    toBookingWindow(bookingSettings, timeZone)));
+}
 
 /** Replaces the reschedule page, so Back doesn't return to a finished move. */
 function openBookingPage(
@@ -307,18 +292,22 @@ function openBookingPage(
 function toFailureActions(
   error: unknown,
   notice: Notice,
+  store: Store<AppState>,
   sessionService: SessionService,
   toFailure: FailureActionCreator,
-): Action[] {
+): Observable<Action> {
   if (sessionService.isBotCheckFailed()) {
-    return [toFailure({ notice: null })];
+    return of(toFailure({ notice: null }));
   }
-  if (getProblemCode(error) === ProblemCode.SlotUnavailable) {
-    return [
+  if (getProblemCode(error) !== ProblemCode.SlotUnavailable) {
+    return of(toFailure({ notice }));
+  }
+  return store.select(bookingFeature.selectAvailabilityView).pipe(
+    take(1),
+    switchMap((availabilityView: AvailabilityView | null): Observable<Action> => from([
       BookingActions.BookingTimeTaken(),
-      BookingActions.AvailabilityReload(),
+      ...availabilityView ? [BookingActions.SetAvailabilityView({ availabilityView })] : [],
       toFailure({ notice }),
-    ];
-  }
-  return [toFailure({ notice })];
+    ])),
+  );
 }

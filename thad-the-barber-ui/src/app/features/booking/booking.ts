@@ -34,6 +34,7 @@ import { StepFlow } from './components/step-flow/step-flow';
 import { TimeStep } from './components/time-step/time-step';
 import { AvailableDay } from './dtos/available-day.dto';
 import { BookingConfirmation } from './dtos/booking-confirmation.dto';
+import { AvailabilityView } from './models/availability-view.model';
 import { BookingForm } from './models/booking-form.model';
 import { BookingFormValue } from './models/booking-form-value.model';
 import { BookingStep } from './models/booking-step.model';
@@ -121,6 +122,8 @@ export class Booking implements LeaveConfirmable {
   // The shop, the days in view and the notices.
   private readonly timeZone: Signal<string | null> = this.store.selectSignal(shopFeature.selectTimeZone);
   private readonly loadStatus: Signal<RequestStatus> = this.store.selectSignal(bookingFeature.selectLoadStatus);
+  private readonly availabilityView: Signal<AvailabilityView | null> =
+    this.store.selectSignal(bookingFeature.selectAvailabilityView);
   protected readonly isBotCheckFailed: Signal<boolean> = inject(SessionService).isBotCheckFailed;
   protected readonly botCheckFailedNotice: Notice = BOT_CHECK_FAILED_NOTICE;
   protected readonly bookingNotFoundNotice: Notice = BOOKING_NOT_FOUND_NOTICE;
@@ -239,8 +242,6 @@ export class Booking implements LeaveConfirmable {
     inject(DestroyRef).onDestroy((): void => {
       this.store.dispatch(BookingActions.BookingPageClose());
     });
-    // The page, not the date step, opens the first days: the date step goes away whenever its card collapses.
-    this.store.dispatch(BookingActions.UpcomingDaysOpen());
     this.askBeforeUnloadWhileUnconfirmed();
     this.lockFormWhileSubmitting();
     this.followSendOutcomes();
@@ -298,7 +299,10 @@ export class Booking implements LeaveConfirmable {
   }
 
   protected reloadDays(): void {
-    this.store.dispatch(BookingActions.AvailabilityReload());
+    const availabilityView: AvailabilityView | null = this.availabilityView();
+    if (availabilityView) {
+      this.store.dispatch(BookingActions.SetAvailabilityView({ availabilityView }));
+    }
   }
 
   /** The form's submit, and a failed booking's (or move's) retry. */

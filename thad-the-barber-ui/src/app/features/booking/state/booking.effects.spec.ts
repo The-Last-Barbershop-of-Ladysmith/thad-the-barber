@@ -29,7 +29,6 @@ import {
   loadAvailability,
   openBookedPage,
   openUpcomingDays,
-  reloadAvailability,
   requestBooking,
   requestReschedule,
   returnToChangedBooking,
@@ -44,12 +43,20 @@ describe(
   'loadAvailability',
   (): void => {
     let requestedRanges: DayRange[];
+    let actions$: Subject<Action>;
+    let store: Store<AppState>;
+
+    function dispatch(action: Action): void {
+      store.dispatch(action);
+      actions$.next(action);
+    }
 
     function viewWith(getAvailableDays: () => Observable<AvailableDay[]>): Action[] {
       requestedRanges = [];
-      const actions$: Subject<Action> = new Subject<Action>();
+      actions$ = new Subject<Action>();
       TestBed.configureTestingModule({
         providers: [
+          provideStore({ [bookingFeature.name]: bookingFeature.reducer }),
           { provide: Actions, useValue: new Actions(actions$) },
           {
             provide: AvailabilityService,
@@ -62,20 +69,38 @@ describe(
           },
         ],
       });
+      store = TestBed.inject<Store<AppState>>(Store);
       const emitted: Action[] = [];
       TestBed.runInInjectionContext((): Observable<Action> => loadAvailability() as Observable<Action>)
         .subscribe((action: Action): void => {
           emitted.push(action);
         });
-      actions$.next(BookingActions.SetAvailabilityView({ availabilityView: february }));
       return emitted;
     }
 
     it(
+      'reloads the days when the same view is set again',
+      (): void => {
+        viewWith((): Observable<AvailableDay[]> => of(availableDays));
+        dispatch(BookingActions.SetAvailabilityView({ availabilityView: february }));
+        dispatch(BookingActions.SetAvailabilityView({ availabilityView: february }));
+
+        expect(requestedRanges).toEqual([february, february]);
+      },
+    );
+
+    it(
       "asks for the view's own days and stores what comes back",
       (): void => {
-        expect(viewWith((): Observable<AvailableDay[]> => of(availableDays)))
-          .toEqual([BookingActions.AvailabilityRequestSuccess({ availabilityView: february, availableDays })]);
+        const emitted: Action[] = viewWith((): Observable<AvailableDay[]> => of(availableDays));
+        dispatch(BookingActions.SetAvailabilityView({ availabilityView: february }));
+
+        expect(emitted).toEqual([
+          BookingActions.AvailabilityRequestSuccess({
+            availabilityView: february,
+            availableDays,
+          }),
+        ]);
         expect(requestedRanges).toEqual([february]);
         expect(february).toEqual(expect.objectContaining({ firstDay: '2026-02-01', lastDay: '2026-02-28' }));
       },
@@ -86,14 +111,17 @@ describe(
       (): void => {
         const failing: () => Observable<AvailableDay[]> = (): Observable<AvailableDay[]> =>
           throwError((): HttpErrorResponse => new HttpErrorResponse({ status: 503 }));
-        expect(viewWith(failing)).toEqual([BookingActions.AvailabilityRequestFailure({ availabilityView: february })]);
+        const emitted: Action[] = viewWith(failing);
+        dispatch(BookingActions.SetAvailabilityView({ availabilityView: february }));
+
+        expect(emitted).toEqual([BookingActions.AvailabilityRequestFailure({ availabilityView: february })]);
       },
     );
   },
 );
 
 describe(
-  'openUpcomingDays and reloadAvailability',
+  'openUpcomingDays',
   (): void => {
     let actions$: Subject<Action>;
     let store: Store<AppState>;
@@ -112,36 +140,21 @@ describe(
         ],
       });
       store = TestBed.inject<Store<AppState>>(Store);
-      for (const effect of [openUpcomingDays, reloadAvailability]) {
-        TestBed.runInInjectionContext((): Observable<Action> => effect() as Observable<Action>)
-          .subscribe((action: Action): void => {
-            emitted.push(action);
-          });
-      }
+      TestBed.runInInjectionContext((): Observable<Action> => openUpcomingDays() as Observable<Action>)
+        .subscribe((action: Action): void => {
+          emitted.push(action);
+        });
     });
 
     it(
-      "opens today's 31-day block once the shop is known, on its clock",
+      "opens today's 31-day block when the page opens, once the shop is known, on its clock",
       (): void => {
-        actions$.next(BookingActions.UpcomingDaysOpen());
+        actions$.next(BookingActions.BookingPageOpen());
         expect(emitted).toEqual([]);
 
         store.dispatch(ShopActions.ShopInfoRequestSuccess({ shopInfo: TEST_SHOP }));
 
         expect(emitted).toEqual([BookingActions.SetAvailabilityView({ availabilityView: testFirstBlock() })]);
-      },
-    );
-
-    it(
-      'reloads the days in view, and nothing before the first load',
-      (): void => {
-        actions$.next(BookingActions.AvailabilityReload());
-        expect(emitted).toEqual([]);
-
-        store.dispatch(BookingActions.SetAvailabilityView({ availabilityView: february }));
-        actions$.next(BookingActions.AvailabilityReload());
-
-        expect(emitted).toEqual([BookingActions.SetAvailabilityView({ availabilityView: february })]);
       },
     );
   },
@@ -187,6 +200,7 @@ describe(
       TestBed.configureTestingModule({
         providers: [
           provideRouter([]),
+          provideStore({ [bookingFeature.name]: bookingFeature.reducer }),
           { provide: Actions, useValue: new Actions(actions$) },
           {
             provide: BookingService,
@@ -207,6 +221,8 @@ describe(
         ],
       });
       navigateByUrl = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+      TestBed.inject<Store<AppState>>(Store)
+        .dispatch(BookingActions.SetAvailabilityView({ availabilityView: february }));
       for (const effect of [
         requestBooking,
         openBookedPage,
@@ -258,9 +274,10 @@ describe(
 
         expect(emitted.map((action: Action): string => action.type)).toEqual([
           BookingActions.BookingTimeTaken.type,
-          BookingActions.AvailabilityReload.type,
+          BookingActions.SetAvailabilityView.type,
           BookingActions.BookingRequestFailure.type,
         ]);
+        expect(emitted[1]).toEqual(BookingActions.SetAvailabilityView({ availabilityView: february }));
         expect(emitted.at(-1)).toEqual(BookingActions.BookingRequestFailure({
           notice: toBookingNotice(
             new HttpErrorResponse({ status: 409, error: { code: ProblemCode.SlotUnavailable } }),
@@ -345,7 +362,7 @@ describe(
 
         expect(emitted.map((action: Action): string => action.type)).toEqual([
           BookingActions.BookingTimeTaken.type,
-          BookingActions.AvailabilityReload.type,
+          BookingActions.SetAvailabilityView.type,
           BookingActions.RescheduleRequestFailure.type,
         ]);
         expect((emitted.at(-1) as ReturnType<typeof BookingActions.RescheduleRequestFailure>).notice?.canRetry)

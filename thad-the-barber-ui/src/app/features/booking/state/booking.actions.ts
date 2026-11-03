@@ -8,8 +8,6 @@ import { Notice } from '../../../shared/models/notice.model';
 
 export enum BookingActionTypes {
   SetAvailabilityView = '[Booking Page] Set Availability View',
-  UpcomingDaysOpen = '[Booking Page] Upcoming Days Opened',
-  AvailabilityReload = '[Booking Page] Availability Reloaded',
   BookingPageOpen = '[Booking Page] Opened',
   BookingPageClose = '[Booking Page] Closed',
   BookingDraftChange = '[Booking Page] Draft Changed',
@@ -28,19 +26,7 @@ export enum BookingActionTypes {
   RescheduleReturn = '[Booking API] Reschedule Returned To Booking',
 }
 
-/** Opens the next 31 days once the shop is known, on its clock (`openUpcomingDays`). */
-// eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
-export const UpcomingDaysOpen = createAction(
-  BookingActionTypes.UpcomingDaysOpen,
-);
-
-/** Asks again for the days in view (`reloadAvailability`); before the first load there's nothing to reload. */
-// eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
-export const AvailabilityReload = createAction(
-  BookingActionTypes.AvailabilityReload,
-);
-
-/** Dispatched again for the same view, it reloads it. */
+/** Dispatched again with the view on screen, it reloads its days. */
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
 export const SetAvailabilityView = createAction(
   BookingActionTypes.SetAvailabilityView,

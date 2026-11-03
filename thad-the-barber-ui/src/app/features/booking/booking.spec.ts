@@ -24,7 +24,7 @@ import { BookingForm } from './models/booking-form.model';
 import { BookingStep } from './models/booking-step.model';
 import { StepView } from './models/step-view.model';
 import * as BookingActions from './state/booking.actions';
-import { openTodayOnReturn, openUpcomingDays, reloadAvailability } from './state/booking.effects';
+import { openTodayOnReturn, openUpcomingDays } from './state/booking.effects';
 import { bookingFeature } from './state/booking.feature';
 
 /** The page's protected members the spec drives, read by name so the class stays unchanged. */
@@ -70,10 +70,9 @@ describe(
             [shopFeature.name]: shopFeature.reducer,
             [bookingFeature.name]: bookingFeature.reducer,
           }),
-          // The page opens and reloads its days through these; sending is left to the effects' own spec.
+          // The page opens its days through these; sending is left to the effects' own spec.
           provideEffects({
             openUpcomingDays,
-            reloadAvailability,
             openTodayOnReturn,
           }),
           provideRouter([]),
