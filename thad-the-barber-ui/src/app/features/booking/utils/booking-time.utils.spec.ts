@@ -2,7 +2,7 @@ import { TEST_SHOP } from '../../../../testing/test-shop';
 import { toIsoDate } from '../../../shared/utils/date.utils';
 import { AvailableDay } from '../dtos/available-day.dto';
 import { DateRange } from '../models/date-range.model';
-import { toBookingWindow, toMonthRange, toLongDateTime, toTimeSlots } from './booking-time.utils';
+import { toBookingWindow, toLongDate, toLongDateTime, toMonthRange, toTimeSlots } from './booking-time.utils';
 
 const HONOLULU: string = TEST_SHOP.timeZone;
 
@@ -80,6 +80,18 @@ describe(
           '2026-10-03',
           null,
         )).toEqual([]);
+      },
+    );
+  },
+);
+
+describe(
+  'toLongDate',
+  (): void => {
+    it(
+      "shows the shop's date, not UTC's",
+      (): void => {
+        expect(toLongDate(HONOLULU, '2026-10-04T05:30:00Z')).toBe('Saturday, October 3');
       },
     );
   },

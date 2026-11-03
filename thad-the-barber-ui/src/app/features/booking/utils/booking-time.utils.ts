@@ -60,8 +60,12 @@ export function toTimeLabel(timeZone: string, startAt: string): string {
   return formatMinutes(weekTimeIn(timeZone, new Date(startAt)).minutes);
 }
 
+/** "2026-10-03T20:30:00Z" → "Saturday, October 3" on the shop's clock. */
+export function toLongDate(timeZone: string, startAt: string): string {
+  return formatLongDate(fromIsoDate(toIsoDateIn(timeZone, new Date(startAt))));
+}
+
 /** "2026-10-03T20:30:00Z" → "Saturday, October 3 at 10:30 AM" on the shop's clock. */
 export function toLongDateTime(timeZone: string, startAt: string): string {
-  const date: string = formatLongDate(fromIsoDate(toIsoDateIn(timeZone, new Date(startAt))));
-  return `${date} at ${toTimeLabel(timeZone, startAt)}`;
+  return `${toLongDate(timeZone, startAt)} at ${toTimeLabel(timeZone, startAt)}`;
 }
