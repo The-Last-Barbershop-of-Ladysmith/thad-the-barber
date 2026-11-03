@@ -238,7 +238,6 @@ export class Booking implements LeaveConfirmable {
 
   constructor() {
     this.store.dispatch(BookingActions.BookingPageOpen());
-    // A send still in flight stops with the page, so its response can't take the customer away from where they went.
     inject(DestroyRef).onDestroy((): void => {
       this.store.dispatch(BookingActions.BookingPageClose());
     });

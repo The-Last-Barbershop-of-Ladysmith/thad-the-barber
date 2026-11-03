@@ -142,7 +142,7 @@ export const openUpcomingDays: FunctionalEffect = createEffect(
   { functional: true },
 );
 
-/** Sends the booking; one at a time, since the page locks its form while one is sent, and only while it's open. */
+/** Sends the booking; one at a time, since the page locks its form while one is sent. */
 export const requestBooking: FunctionalEffect = createEffect(
   (
     actions$: Actions = inject<Actions>(Actions),
@@ -154,7 +154,6 @@ export const requestBooking: FunctionalEffect = createEffect(
       ofType(BookingActions.BookingRequest),
       exhaustMap(({ bookingRequest }: { bookingRequest: BookingRequest; }): Observable<Action> =>
         bookingService.createBooking(bookingRequest).pipe(
-          takeUntil(actions$.pipe(ofType(BookingActions.BookingPageClose))),
           map((bookingConfirmation: BookingConfirmation): Action =>
             BookingActions.BookingRequestSuccess({ bookingConfirmation })),
           catchError((error: unknown): Observable<Action> => toFailureActions(
@@ -193,7 +192,6 @@ export const requestReschedule: FunctionalEffect = createEffect(
           manageToken,
           { startAt },
         ).pipe(
-          takeUntil(actions$.pipe(ofType(BookingActions.BookingPageClose))),
           map((managedBooking: ManagedBooking): Action =>
             BookingActions.RescheduleRequestSuccess({ managedBooking, manageToken })),
           catchError((error: unknown): Observable<Action> => {

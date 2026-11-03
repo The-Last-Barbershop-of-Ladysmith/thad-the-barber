@@ -286,15 +286,13 @@ describe(
     );
 
     it(
-      'drops a booking still being sent once the page closes, so its response goes nowhere',
+      'finishes a booking still being sent when the page closes, since the server makes it anyway',
       (): void => {
         actions$.next(BookingActions.BookingRequest({ bookingRequest }));
         actions$.next(BookingActions.BookingPageClose());
         response.next(confirmation);
-        actions$.next(BookingActions.BookingRequest({ bookingRequest }));
 
-        expect(emitted).toEqual([]);
-        expect(response.observed).toBe(true);
+        expect(emitted).toEqual([BookingActions.BookingRequestSuccess({ bookingConfirmation: confirmation })]);
       },
     );
 
