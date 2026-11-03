@@ -9,7 +9,6 @@ import { Notice } from '../../../shared/models/notice.model';
 export enum BookingActionTypes {
   SetAvailabilityView = '[Booking Page] Set Availability View',
   BookingPageOpen = '[Booking Page] Opened',
-  BookingPageClose = '[Booking Page] Closed',
   BookingDraftChange = '[Booking Page] Draft Changed',
   BookingRequest = '[Booking Page] Booking Requested',
   RescheduleRequest = '[Booking Page] Reschedule Requested',
@@ -20,10 +19,8 @@ export enum BookingActionTypes {
   BookingRequestSuccess = '[Booking API] Booking Made',
   BookingRequestFailure = '[Booking API] Booking Failed',
   BookingTimeTaken = '[Booking API] Booking Time Taken',
-  BookingShownHere = '[Booking API] Booking Shown Here',
   RescheduleRequestSuccess = '[Booking API] Booking Moved',
   RescheduleRequestFailure = '[Booking API] Reschedule Failed',
-  RescheduleReturn = '[Booking API] Reschedule Returned To Booking',
 }
 
 /** Dispatched again with the view on screen, it reloads its days. */
@@ -33,16 +30,10 @@ export const SetAvailabilityView = createAction(
   props<{ availabilityView: AvailabilityView; }>(),
 );
 
-/** Starts the booking or move over: no notice, no retry key, nothing sent. */
+/** Starts the booking or move over: no notice, no retry key, nothing sent, and loads the first days. */
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
 export const BookingPageOpen = createAction(
   BookingActionTypes.BookingPageOpen,
-);
-
-/** Stops a booking or move still being sent: its response would land on a page the customer left. */
-// eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
-export const BookingPageClose = createAction(
-  BookingActionTypes.BookingPageClose,
 );
 
 /**
@@ -90,13 +81,12 @@ export const SavedConfirmationRemove = createAction(
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
 export const AvailabilityRequestSuccess = createAction(
   BookingActionTypes.AvailabilityRequestSuccess,
-  props<{ availabilityView: AvailabilityView; availableDays: AvailableDay[]; }>(),
+  props<{ availableDays: AvailableDay[]; }>(),
 );
 
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
 export const AvailabilityRequestFailure = createAction(
   BookingActionTypes.AvailabilityRequestFailure,
-  props<{ availabilityView: AvailabilityView; }>(),
 );
 
 /** Adds the booking to this device's list, kept until it starts (BR-22), and opens its page (`openBookedPage`). */
@@ -119,13 +109,6 @@ export const BookingTimeTaken = createAction(
   BookingActionTypes.BookingTimeTaken,
 );
 
-/** The booking's own page didn't open, so the booking page confirms it and starts over for another. */
-// eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
-export const BookingShownHere = createAction(
-  BookingActionTypes.BookingShownHere,
-  props<{ bookingId: string; }>(),
-);
-
 /** Moves the booking in this device's list, if it's there, and goes back to its page (`returnToMovedBooking`). */
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
 export const RescheduleRequestSuccess = createAction(
@@ -140,9 +123,3 @@ export const RescheduleRequestFailure = createAction(
   props<{ notice: Notice | null; }>(),
 );
 
-/** The booking started, was cancelled or is gone meanwhile: back to its page, which shows why. */
-// eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
-export const RescheduleReturn = createAction(
-  BookingActionTypes.RescheduleReturn,
-  props<{ bookingId: string; manageToken: string; }>(),
-);

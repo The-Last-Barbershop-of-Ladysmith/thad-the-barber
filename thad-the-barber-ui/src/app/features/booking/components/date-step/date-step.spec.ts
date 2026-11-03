@@ -56,7 +56,7 @@ describe(
 
     function load(availableDays: AvailableDay[], availabilityView: AvailabilityView = testFirstBlock()): void {
       store.dispatch(BookingActions.SetAvailabilityView({ availabilityView }));
-      store.dispatch(BookingActions.AvailabilityRequestSuccess({ availabilityView, availableDays }));
+      store.dispatch(BookingActions.AvailabilityRequestSuccess({ availableDays }));
       fixture.detectChanges();
     }
 

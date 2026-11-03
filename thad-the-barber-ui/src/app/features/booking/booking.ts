@@ -1,7 +1,6 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  DestroyRef,
   Injector,
   Signal,
   WritableSignal,
@@ -238,9 +237,6 @@ export class Booking implements LeaveConfirmable {
 
   constructor() {
     this.store.dispatch(BookingActions.BookingPageOpen());
-    inject(DestroyRef).onDestroy((): void => {
-      this.store.dispatch(BookingActions.BookingPageClose());
-    });
     this.askBeforeUnloadWhileUnconfirmed();
     this.lockFormWhileSubmitting();
     this.followSendOutcomes();
@@ -346,13 +342,9 @@ export class Booking implements LeaveConfirmable {
     });
   }
 
-  /**
-   * A taken time is dropped and the time step opens (the days reload and the notice follows, from the effect). A
-   * booking whose page didn't open is confirmed here, starting over at the date for another booking.
-   */
+  /** The days reload and the notice follows, from the effect. */
   private followSendOutcomes(): void {
-    const actions$: Actions = inject<Actions>(Actions);
-    actions$
+    inject<Actions>(Actions)
       .pipe(
         ofType(BookingActions.BookingTimeTaken),
         takeUntilDestroyed(),
@@ -360,15 +352,6 @@ export class Booking implements LeaveConfirmable {
       .subscribe((): void => {
         this.dropPicks({ startAt: null });
         this.showStep(BookingStep.Time);
-      });
-    actions$
-      .pipe(
-        ofType(BookingActions.BookingShownHere),
-        takeUntilDestroyed(),
-      )
-      .subscribe((): void => {
-        this.dropPicks({ date: null, startAt: null });
-        this.openStep.set(BookingStep.Date);
       });
   }
 

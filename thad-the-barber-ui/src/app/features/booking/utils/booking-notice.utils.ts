@@ -2,7 +2,6 @@ import { ProblemCode } from '../../../shared/models/problem-code.model';
 import { getProblemCode } from '../../../shared/utils/problem.utils';
 import { Notice } from '../../../shared/models/notice.model';
 import { NoticeSeverity } from '../../../shared/models/notice-severity.model';
-import { toManagePath } from './manage-link.utils';
 
 /**
  * The booking page's reminder of bookings kept on this device (BR-22). No times, since there may be several; the link
@@ -73,17 +72,6 @@ export function toBookingNotice(error: unknown): Notice {
   return BOOKING_NOTICES[getProblemCode(error) ?? ''] ?? BOOKING_FAILED_NOTICE;
 }
 
-/** The booking went through but its own page didn't open (a failed download after a deploy, say). */
-export function toBookedHereNotice(bookingId: string): Notice {
-  return {
-    severity: NoticeSeverity.Success,
-    title: 'You’re booked.',
-    text: 'Your booking is saved on this device.',
-    link: { label: 'See your booking', path: toManagePath(bookingId) },
-    canRetry: false,
-  };
-}
-
 /** Shown on the manage page right after booking, above the link to keep. */
 export const JUST_BOOKED_NOTICE: Notice = {
   severity: NoticeSeverity.Success,
@@ -133,9 +121,18 @@ export function hasBookingChanged(error: unknown): boolean {
   return BOOKING_CHANGED_CODES.includes(getProblemCode(error) ?? '');
 }
 
+const BOOKING_CHANGED_NOTICE: Notice = {
+  severity: NoticeSeverity.Info,
+  text: 'This appointment can’t be changed any more. It has started, been cancelled or been removed.',
+  canRetry: false,
+};
+
 /** A cancel or move refused for a reason retrying won't fix. */
 const MANAGE_ACTION_NOTICES: Record<string, Notice> = {
   [ProblemCode.SlotUnavailable]: SLOT_TAKEN_NOTICE,
+  [ProblemCode.BookingStarted]: BOOKING_CHANGED_NOTICE,
+  [ProblemCode.BookingCancelled]: BOOKING_CHANGED_NOTICE,
+  [ProblemCode.BookingNotFound]: BOOKING_CHANGED_NOTICE,
   [ProblemCode.RateLimited]: {
     severity: NoticeSeverity.Warn,
     text: 'Too many changes from this device for now.',

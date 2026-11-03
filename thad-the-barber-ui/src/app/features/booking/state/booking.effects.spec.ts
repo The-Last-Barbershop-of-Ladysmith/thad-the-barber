@@ -22,7 +22,7 @@ import { AvailabilityView } from '../models/availability-view.model';
 import { DayRange } from '../models/day-range.model';
 import { AvailabilityService } from '../services/availability.service';
 import { BookingService } from '../services/booking.service';
-import { toBookingNotice } from '../utils/booking-notice.utils';
+import { RESCHEDULE_FAILED_NOTICE, toBookingNotice, toManageActionNotice } from '../utils/booking-notice.utils';
 import * as BookingActions from './booking.actions';
 import {
   loadAvailability,
@@ -30,7 +30,6 @@ import {
   openUpcomingDays,
   requestBooking,
   requestReschedule,
-  returnToChangedBooking,
   returnToMovedBooking,
 } from './booking.effects';
 import { bookingFeature } from './booking.feature';
@@ -94,12 +93,7 @@ describe(
         const emitted: Action[] = viewWith((): Observable<AvailableDay[]> => of(availableDays));
         dispatch(BookingActions.SetAvailabilityView({ availabilityView: february }));
 
-        expect(emitted).toEqual([
-          BookingActions.AvailabilityRequestSuccess({
-            availabilityView: february,
-            availableDays,
-          }),
-        ]);
+        expect(emitted).toEqual([BookingActions.AvailabilityRequestSuccess({ availableDays })]);
         expect(requestedRanges).toEqual([february]);
         expect(february).toEqual(expect.objectContaining({ firstDay: '2026-02-01', lastDay: '2026-02-28' }));
       },
@@ -113,7 +107,7 @@ describe(
         const emitted: Action[] = viewWith(failing);
         dispatch(BookingActions.SetAvailabilityView({ availabilityView: february }));
 
-        expect(emitted).toEqual([BookingActions.AvailabilityRequestFailure({ availabilityView: february })]);
+        expect(emitted).toEqual([BookingActions.AvailabilityRequestFailure()]);
       },
     );
   },
@@ -232,14 +226,11 @@ describe(
             emitted.push(action);
           });
       }
-      // These dispatch nothing; they only navigate and say so.
-      for (const effect of [returnToMovedBooking, returnToChangedBooking]) {
-        TestBed.runInInjectionContext((): Observable<unknown> => effect()).subscribe();
-      }
+      TestBed.runInInjectionContext((): Observable<unknown> => returnToMovedBooking()).subscribe();
     });
 
     it(
-      'passes on the made booking and opens its page as just booked, leaving the token on the device',
+      'passes on the made booking and opens its page as just booked',
       (): void => {
         actions$.next(BookingActions.BookingRequest({ bookingRequest }));
         response.next(confirmation);
@@ -250,18 +241,6 @@ describe(
           '/book/manage/made-up-booking',
           { state: { isJustBooked: true } },
         );
-      },
-    );
-
-    it(
-      "confirms the booking on the booking page when its own page doesn't open",
-      async (): Promise<void> => {
-        navigateByUrl.mockRejectedValue(new Error('Made-up failed chunk download'));
-        actions$.next(BookingActions.BookingRequestSuccess({ bookingConfirmation: confirmation }));
-
-        await vi.waitFor((): void => {
-          expect(emitted).toEqual([BookingActions.BookingShownHere({ bookingId: confirmation.id })]);
-        });
       },
     );
 
@@ -282,17 +261,6 @@ describe(
             new HttpErrorResponse({ status: 409, error: { code: ProblemCode.SlotUnavailable } }),
           ),
         }));
-      },
-    );
-
-    it(
-      'finishes a booking still being sent when the page closes, since the server makes it anyway',
-      (): void => {
-        actions$.next(BookingActions.BookingRequest({ bookingRequest }));
-        actions$.next(BookingActions.BookingPageClose());
-        response.next(confirmation);
-
-        expect(emitted).toEqual([BookingActions.BookingRequestSuccess({ bookingConfirmation: confirmation })]);
       },
     );
 
@@ -331,7 +299,7 @@ describe(
     );
 
     it(
-      'goes back to a booking that started or was cancelled meanwhile, with no toast',
+      'says a booking that started or was cancelled meanwhile can no longer move, staying on the page',
       (): void => {
         actions$.next(BookingActions.RescheduleRequest({
           bookingId: moved.id,
@@ -339,11 +307,17 @@ describe(
           startAt: moved.startAt,
         }));
         failWith(409, ProblemCode.BookingStarted);
-        actions$.next(BookingActions.RescheduleReturn({ bookingId: moved.id, manageToken: 'made-up-token' }));
 
-        expect(emitted).toEqual([BookingActions.RescheduleReturn({ bookingId: moved.id, manageToken: 'made-up-token' })]);
-        expect(toasts).toEqual([]);
-        expect(navigateByUrl).toHaveBeenCalledTimes(1);
+        expect(emitted).toEqual([
+          BookingActions.RescheduleRequestFailure({
+            notice: toManageActionNotice(
+              new HttpErrorResponse({ status: 409, error: { code: ProblemCode.BookingStarted } }),
+              RESCHEDULE_FAILED_NOTICE,
+            ),
+          }),
+        ]);
+        expect((emitted[0] as ReturnType<typeof BookingActions.RescheduleRequestFailure>).notice?.canRetry).toBe(false);
+        expect(navigateByUrl).not.toHaveBeenCalled();
       },
     );
 

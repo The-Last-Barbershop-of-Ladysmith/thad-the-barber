@@ -147,45 +147,17 @@ describe(
     );
 
     it(
-      'keeps availability only for the month in view',
+      'stores the loaded days, or marks the load failed',
       (): void => {
-        const viewing: BookingState = { ...initialBookingState, availabilityView: testMonthView('2026-11') };
+        const pending: BookingState = { ...initialBookingState, loadStatus: RequestStatus.Pending };
 
-        const stale: BookingState = bookingReducer(
-          viewing,
-          BookingActions.AvailabilityRequestSuccess({ availabilityView: testMonthView('2026-10'), availableDays }),
-        );
-        const current: BookingState = bookingReducer(
-          { ...viewing, availabilityView: testMonthView('2026-10') },
-          BookingActions.AvailabilityRequestSuccess({ availabilityView: testMonthView('2026-10'), availableDays }),
-        );
-
-        expect(stale.availableDays).toEqual([]);
-        expect(current.availableDays).toEqual(availableDays);
-        expect(current.loadStatus).toBe(RequestStatus.Success);
-      },
-    );
-
-    it(
-      'keeps a failed load only for the month in view',
-      (): void => {
-        const viewing: BookingState = {
-          ...initialBookingState,
-          availabilityView: testMonthView('2026-10'),
-          loadStatus: RequestStatus.Pending,
-        };
-
-        const stale: BookingState = bookingReducer(
-          viewing,
-          BookingActions.AvailabilityRequestFailure({ availabilityView: testMonthView('2026-09') }),
-        );
-        const current: BookingState = bookingReducer(
-          viewing,
-          BookingActions.AvailabilityRequestFailure({ availabilityView: testMonthView('2026-10') }),
-        );
-
-        expect(stale.loadStatus).toBe(RequestStatus.Pending);
-        expect(current.loadStatus).toBe(RequestStatus.Error);
+        expect(bookingReducer(pending, BookingActions.AvailabilityRequestSuccess({ availableDays }))).toEqual({
+          ...pending,
+          availableDays,
+          loadStatus: RequestStatus.Success,
+        });
+        expect(bookingReducer(pending, BookingActions.AvailabilityRequestFailure()).loadStatus)
+          .toBe(RequestStatus.Error);
       },
     );
 
@@ -229,31 +201,6 @@ describe(
         };
 
         expect(bookingReducer(sent, BookingActions.BookingPageOpen())).toEqual(october);
-      },
-    );
-
-    it(
-      'confirms a booking whose page did not open, ready for another',
-      (): void => {
-        const shownHere: BookingState = bookingReducer(
-          { ...october, submitStatus: RequestStatus.Success },
-          BookingActions.BookingShownHere({ bookingId: 'made-up-booking' }),
-        );
-
-        expect(shownHere.submitStatus).toBe(RequestStatus.Idle);
-        expect(shownHere.submitNotice?.link?.path).toBe('/book/manage/made-up-booking');
-      },
-    );
-
-    it(
-      'counts a move that went back to its booking as done',
-      (): void => {
-        const returned: BookingState = bookingReducer(
-          october,
-          BookingActions.RescheduleReturn({ bookingId: saturday.id, manageToken: 'made-up-token' }),
-        );
-
-        expect(returned.submitStatus).toBe(RequestStatus.Success);
       },
     );
   },

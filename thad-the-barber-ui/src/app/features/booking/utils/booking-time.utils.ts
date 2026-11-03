@@ -39,12 +39,6 @@ export function toUpcomingView(firstDay: Date, bookingWindow: DateRange): Availa
   };
 }
 
-export function isSameView(availabilityView: AvailabilityView | null, otherView: AvailabilityView | null): boolean {
-  return availabilityView?.kind === otherView?.kind
-    && availabilityView?.firstDay === otherView?.firstDay
-    && availabilityView?.lastDay === otherView?.lastDay;
-}
-
 /** Every month ("2026-11") after the booking window's first, through the one its last day falls in. */
 export function toLaterMonths(bookingWindow: DateRange): string[] {
   const months: string[] = [];

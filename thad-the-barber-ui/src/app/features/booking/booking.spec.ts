@@ -19,12 +19,11 @@ import * as ShopActions from '../shop/state/shop.actions';
 import { shopFeature } from '../shop/state/shop.feature';
 import { Booking } from './booking';
 import { BookingConfirmation } from './dtos/booking-confirmation.dto';
-import { AvailabilityView } from './models/availability-view.model';
 import { BookingForm } from './models/booking-form.model';
 import { BookingStep } from './models/booking-step.model';
 import { StepView } from './models/step-view.model';
 import * as BookingActions from './state/booking.actions';
-import { openTodayOnReturn, openUpcomingDays } from './state/booking.effects';
+import { openUpcomingDays } from './state/booking.effects';
 import { bookingFeature } from './state/booking.feature';
 
 /** The page's protected members the spec drives, read by name so the class stays unchanged. */
@@ -70,11 +69,8 @@ describe(
             [shopFeature.name]: shopFeature.reducer,
             [bookingFeature.name]: bookingFeature.reducer,
           }),
-          // The page opens its days through these; sending is left to the effects' own spec.
-          provideEffects({
-            openUpcomingDays,
-            openTodayOnReturn,
-          }),
+          // The page opens its days through this; sending is left to the effects' own spec.
+          provideEffects({ openUpcomingDays }),
           provideRouter([]),
           { provide: SessionService, useValue: { isBotCheckFailed } },
           { provide: ActivatedRoute, useValue: { paramMap: routeParams } },
@@ -133,7 +129,7 @@ describe(
     it(
       'starts the booking over each time it opens, and loads the next 31 days once the shop is known',
       (): void => {
-        store.dispatch(BookingActions.BookingShownHere({ bookingId: 'made-up-earlier-visit' }));
+        store.dispatch(BookingActions.BookingRequestFailure({ notice: takenTimeNotice }));
         openPage();
 
         expect(store.selectSignal(bookingFeature.selectSubmitNotice)()).toBeNull();
@@ -223,7 +219,6 @@ describe(
         fillInAndConfirm(FIRST_TIME);
         store.dispatch(BookingActions.BookingRequestFailure({ notice: takenTimeNotice }));
         store.dispatch(BookingActions.AvailabilityRequestSuccess({
-          availabilityView: testFirstBlock(),
           availableDays: [{ date: '2099-01-01', times: ['2099-01-01T20:00:00Z'] }],
         }));
 
@@ -255,23 +250,6 @@ describe(
         expect(sentBookings()).toEqual([]);
         expect(byTestId('bot-check-failed')?.querySelector('[data-testid="notice-booking-site"]')?.getAttribute('href'))
           .toBe(TEST_SHOP.squareBookingSiteUrl);
-      },
-    );
-
-    it(
-      "confirms the booking here, ready for another, when the booking's own page doesn't open",
-      (): void => {
-        openPage();
-        fillInAndConfirm(FIRST_TIME);
-        succeed();
-        store.dispatch(BookingActions.BookingShownHere({ bookingId: 'made-up' }));
-        fixture.detectChanges();
-
-        expect(store.selectSignal(bookingFeature.selectSubmitNotice)()?.link?.path).toBe('/book/manage/made-up');
-        expect(page.bookingForm.controls.date.value).toBeNull();
-        expect(page.openStep()).toBe(BookingStep.Date);
-        fillInAndConfirm(SECOND_TIME);
-        expect(sentBookings()).toHaveLength(2);
       },
     );
 
@@ -371,29 +349,6 @@ describe(
         }));
 
         expect(byTestId('upcoming-booking')).not.toBeNull();
-      },
-    );
-
-    it(
-      'stops a booking still being sent when the page closes',
-      (): void => {
-        openPage();
-        fixture.destroy();
-
-        expect(dispatched).toContainEqual(BookingActions.BookingPageClose());
-      },
-    );
-
-    it(
-      "moves a 31-day view left open past midnight to today's block when the customer comes back",
-      (): void => {
-        openPage();
-        const today: AvailabilityView = testFirstBlock();
-        store.dispatch(BookingActions.SetAvailabilityView({ availabilityView: { ...today, firstDay: '2000-01-01' } }));
-
-        document.dispatchEvent(new Event('visibilitychange'));
-
-        expect(store.selectSignal(bookingFeature.selectAvailabilityView)()).toEqual(today);
       },
     );
 

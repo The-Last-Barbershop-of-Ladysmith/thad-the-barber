@@ -6,8 +6,6 @@ import { BookingConfirmation } from '../dtos/booking-confirmation.dto';
 import { BookingRequest } from '../dtos/booking-request.dto';
 import { ManagedBooking } from '../dtos/managed-booking.dto';
 import { Notice } from '../../../shared/models/notice.model';
-import { toBookedHereNotice } from '../utils/booking-notice.utils';
-import { isSameView } from '../utils/booking-time.utils';
 import { toSortedConfirmations } from '../utils/saved-confirmation.utils';
 import * as BookingActions from './booking.actions';
 import { BookingState, initialBookingState } from './booking.state';
@@ -67,18 +65,6 @@ export const bookingReducer: ActionReducer<BookingState> = createReducer(
     }),
   ),
   on(
-    BookingActions.BookingShownHere,
-    (state: BookingState, { bookingId }: { bookingId: string; }): BookingState => ({
-      ...state,
-      submitStatus: RequestStatus.Idle,
-      submitNotice: toBookedHereNotice(bookingId),
-    }),
-  ),
-  on(
-    BookingActions.RescheduleReturn,
-    (state: BookingState): BookingState => ({ ...state, submitStatus: RequestStatus.Success }),
-  ),
-  on(
     BookingActions.BookingRequestSuccess,
     (state: BookingState, { bookingConfirmation }: { bookingConfirmation: BookingConfirmation; }): BookingState => ({
       ...state,
@@ -120,29 +106,14 @@ export const bookingReducer: ActionReducer<BookingState> = createReducer(
   ),
   on(
     BookingActions.AvailabilityRequestSuccess,
-    (
-      state: BookingState,
-      { availabilityView, availableDays }: { availabilityView: AvailabilityView; availableDays: AvailableDay[]; },
-    ): BookingState => {
-      const isViewInPlace: boolean = isSameView(availabilityView, state.availabilityView);
-      if (!isViewInPlace) {
-        return state;
-      }
-      return {
-        ...state,
-        availableDays,
-        loadStatus: RequestStatus.Success,
-      };
-    },
+    (state: BookingState, { availableDays }: { availableDays: AvailableDay[]; }): BookingState => ({
+      ...state,
+      availableDays,
+      loadStatus: RequestStatus.Success,
+    }),
   ),
   on(
     BookingActions.AvailabilityRequestFailure,
-    (state: BookingState, { availabilityView }: { availabilityView: AvailabilityView; }): BookingState => {
-      const isViewInPlace: boolean = isSameView(availabilityView, state.availabilityView);
-      if (!isViewInPlace) {
-        return state;
-      }
-      return { ...state, loadStatus: RequestStatus.Error };
-    },
+    (state: BookingState): BookingState => ({ ...state, loadStatus: RequestStatus.Error }),
   ),
 );
