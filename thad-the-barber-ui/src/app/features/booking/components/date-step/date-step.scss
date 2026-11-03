@@ -13,14 +13,11 @@
     .calendar-frame {
       position: relative;
 
+      // Over the calendar's top edge, so the month doesn't shift when it appears.
       .calendar-loading {
         position: absolute;
-        inset: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: var(--p-border-radius-xl);
-        background: color-mix(in srgb, var(--p-content-background) 70%, transparent);
+        top: 0;
+        inset-inline: 1rem;
       }
     }
   }

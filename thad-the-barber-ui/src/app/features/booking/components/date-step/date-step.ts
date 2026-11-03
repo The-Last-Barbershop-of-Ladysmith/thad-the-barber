@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, InputSignal, Signal, computed, inje
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { DatePickerModule } from 'primeng/datepicker';
-import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { ProgressBarModule } from 'primeng/progressbar';
 import { DatePickerDateMeta, DatePickerMonthChangeEvent } from 'primeng/types/datepicker';
 import { FILLING_UP_BELOW } from '../../../../core/config/booking-dates';
 import { NoticeMessage } from '../../../../shared/components/notice-message/notice-message';
@@ -25,7 +25,7 @@ import { toBookingWindow, toMonthRange } from '../../utils/booking-time.utils';
   imports: [
     ReactiveFormsModule,
     DatePickerModule,
-    ProgressSpinnerModule,
+    ProgressBarModule,
     NoticeMessage,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
