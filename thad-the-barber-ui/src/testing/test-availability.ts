@@ -1,3 +1,5 @@
+import { toIsoDate } from '../app/shared/utils/date.utils';
+import { AvailabilityViewKind } from '../app/features/booking/models/availability-view-kind.model';
 import { AvailabilityView } from '../app/features/booking/models/availability-view.model';
 import { DateRange } from '../app/features/booking/models/date-range.model';
 import { toBookingWindow, toUpcomingView } from '../app/features/booking/utils/booking-time.utils';
@@ -16,4 +18,18 @@ export function testBookingWindow(): DateRange {
 export function testFirstBlock(): AvailabilityView {
   const bookingWindow: DateRange = testBookingWindow();
   return toUpcomingView(bookingWindow.min, bookingWindow);
+}
+
+/** A whole calendar month ("2026-11"), its 1st through its last day. */
+export function testMonthView(month: string): AvailabilityView {
+  const [year, monthNumber]: number[] = month.split('-').map(Number);
+  return {
+    kind: AvailabilityViewKind.Month,
+    firstDay: `${month}-01`,
+    lastDay: toIsoDate(new Date(
+      year ?? 0,
+      monthNumber ?? 0,
+      0,
+    )),
+  };
 }

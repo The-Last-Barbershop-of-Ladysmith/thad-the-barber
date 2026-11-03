@@ -2,11 +2,9 @@ import { MAX_DAYS_PER_AVAILABILITY_REQUEST } from '../../../core/config/booking-
 import { BookingSettings } from '../../shop/models/booking-settings.model';
 import {
   addDays,
-  addMonths,
   formatLongDate,
   formatMinutes,
   fromIsoDate,
-  fromMonthKey,
   toIsoDate,
   toIsoDateIn,
   toMonthKey,
@@ -41,16 +39,6 @@ export function toUpcomingView(firstDay: Date, bookingWindow: DateRange): Availa
   };
 }
 
-/** A whole calendar month ("2026-11"), its 1st through its last day. */
-export function toMonthView(month: string): AvailabilityView {
-  const firstDay: Date = fromMonthKey(month);
-  return {
-    kind: AvailabilityViewKind.Month,
-    firstDay: toIsoDate(firstDay),
-    lastDay: toIsoDate(addDays(addMonths(firstDay, 1), -1)),
-  };
-}
-
 export function isSameView(availabilityView: AvailabilityView | null, otherView: AvailabilityView | null): boolean {
   return availabilityView?.kind === otherView?.kind
     && availabilityView?.firstDay === otherView?.firstDay
@@ -60,12 +48,14 @@ export function isSameView(availabilityView: AvailabilityView | null, otherView:
 /** Every month ("2026-11") after the booking window's first, through the one its last day falls in. */
 export function toLaterMonths(bookingWindow: DateRange): string[] {
   const months: string[] = [];
-  for (
-    let month: Date = addMonths(bookingWindow.min, 1);
-    month <= bookingWindow.max;
-    month = addMonths(month, 1)
-  ) {
+  const month: Date = new Date(
+    bookingWindow.min.getFullYear(),
+    bookingWindow.min.getMonth() + 1,
+    1,
+  );
+  while (month <= bookingWindow.max) {
     months.push(toMonthKey(month));
+    month.setMonth(month.getMonth() + 1);
   }
   return months;
 }

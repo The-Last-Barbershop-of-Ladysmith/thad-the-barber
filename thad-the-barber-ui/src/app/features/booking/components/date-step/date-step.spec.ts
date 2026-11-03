@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl } from '@angular/forms';
 import { Action, ActionsSubject, Store, provideStore } from '@ngrx/store';
-import { testBookingWindow, testFirstBlock } from '../../../../../testing/test-availability';
+import { testBookingWindow, testFirstBlock, testMonthView } from '../../../../../testing/test-availability';
 import { ShopInfo } from '../../../shop/models/shop-info.model';
 import { TEST_SHOP } from '../../../../../testing/test-shop';
 import { AppState } from '../../../../store/app.state';
@@ -12,7 +12,7 @@ import { DateRange } from '../../models/date-range.model';
 import { AvailabilityView } from '../../models/availability-view.model';
 import * as BookingActions from '../../state/booking.actions';
 import { bookingFeature } from '../../state/booking.feature';
-import { toBookingWindow, toLaterMonths, toMonthView, toUpcomingView } from '../../utils/booking-time.utils';
+import { toBookingWindow, toLaterMonths, toUpcomingView } from '../../utils/booking-time.utils';
 import { DateStep } from './date-step';
 import { addDays } from '../../../../shared/utils/date.utils';
 
@@ -166,7 +166,7 @@ describe(
         };
         store.dispatch(ShopActions.ShopInfoRequestSuccess({ shopInfo: longWindowShop }));
         const [firstMonth, secondMonth]: string[] = laterMonths(longWindowShop);
-        const firstMonthView: AvailabilityView = toMonthView(firstMonth ?? '');
+        const firstMonthView: AvailabilityView = testMonthView(firstMonth ?? '');
         store.dispatch(BookingActions.SetAvailabilityView({ availabilityView: firstMonthView }));
         load(OPEN_DAYS, firstMonthView);
 
@@ -174,7 +174,7 @@ describe(
         find('next-view')?.click();
 
         expect(dispatched.at(-1)).toEqual(BookingActions.SetAvailabilityView({
-          availabilityView: toMonthView(secondMonth ?? ''),
+          availabilityView: testMonthView(secondMonth ?? ''),
         }));
       },
     );
@@ -196,7 +196,7 @@ describe(
         find(`month-${lastMonth}`)?.click();
 
         expect(dispatched.at(-1)).toEqual(BookingActions.SetAvailabilityView({
-          availabilityView: toMonthView(lastMonth ?? ''),
+          availabilityView: testMonthView(lastMonth ?? ''),
         }));
       },
     );
@@ -217,7 +217,7 @@ describe(
     it(
       'goes back from a month to the next 31 days from today',
       (): void => {
-        load(OPEN_DAYS, toMonthView(laterMonths()[0] ?? ''));
+        load(OPEN_DAYS, testMonthView(laterMonths()[0] ?? ''));
 
         find('view-picker')?.click();
         fixture.detectChanges();
@@ -231,7 +231,7 @@ describe(
       'keeps the picks when the month already showing is picked again',
       async (): Promise<void> => {
         const month: string = laterMonths()[0] ?? '';
-        load(OPEN_DAYS, toMonthView(month));
+        load(OPEN_DAYS, testMonthView(month));
         dateControl.setValue('2026-11-01');
         startAtControl.setValue('2026-11-01T20:00:00Z');
 

@@ -7,7 +7,7 @@ import { Action, Store, provideStore } from '@ngrx/store';
 import { MessageService, ToastMessageOptions } from 'primeng/api';
 import { Observable, Subject, of, throwError } from 'rxjs';
 import { Mock } from 'vitest';
-import { testFirstBlock } from '../../../../testing/test-availability';
+import { testFirstBlock, testMonthView } from '../../../../testing/test-availability';
 import { TEST_SHOP } from '../../../../testing/test-shop';
 import { SessionService } from '../../../core/services/session.service';
 import { ProblemCode } from '../../../shared/models/problem-code.model';
@@ -23,7 +23,6 @@ import { DayRange } from '../models/day-range.model';
 import { AvailabilityService } from '../services/availability.service';
 import { BookingService } from '../services/booking.service';
 import { toBookingNotice } from '../utils/booking-notice.utils';
-import { toMonthView } from '../utils/booking-time.utils';
 import * as BookingActions from './booking.actions';
 import {
   loadAvailability,
@@ -37,7 +36,7 @@ import {
 import { bookingFeature } from './booking.feature';
 
 const availableDays: AvailableDay[] = [{ date: '2026-02-03', times: ['2026-02-03T20:00:00Z'] }];
-const february: AvailabilityView = toMonthView('2026-02');
+const february: AvailabilityView = testMonthView('2026-02');
 
 describe(
   'loadAvailability',

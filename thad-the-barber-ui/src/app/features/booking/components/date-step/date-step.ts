@@ -20,7 +20,6 @@ import { RequestStatus } from '../../../../shared/models/request.models';
 import { FILLING_UP_BELOW, MAX_DAYS_PER_AVAILABILITY_REQUEST } from '../../../../core/config/booking-dates';
 import {
   addDays,
-  addMonths,
   formatFullDate,
   formatMonthDay,
   formatMonthYear,
@@ -41,7 +40,7 @@ import { DateRange } from '../../models/date-range.model';
 import * as BookingActions from '../../state/booking.actions';
 import { bookingFeature } from '../../state/booking.feature';
 import { NO_OPEN_DAYS_NOTICE } from '../../utils/booking-notice.utils';
-import { toBookingWindow, toLaterMonths, toMonthView, toUpcomingView } from '../../utils/booking-time.utils';
+import { toBookingWindow, toLaterMonths, toUpcomingView } from '../../utils/booking-time.utils';
 import { NoticeMessage } from '../../../../shared/components/notice-message/notice-message';
 
 interface DateOption {
@@ -184,7 +183,16 @@ export class DateStep {
   }
 
   protected showMonth(month: string): void {
-    this.showView(toMonthView(month));
+    const firstDay: Date = fromMonthKey(month);
+    this.showView({
+      kind: AvailabilityViewKind.Month,
+      firstDay: toIsoDate(firstDay),
+      lastDay: toIsoDate(new Date(
+        firstDay.getFullYear(),
+        firstDay.getMonth() + 1,
+        0,
+      )),
+    });
   }
 
   protected showUpcoming(): void {
@@ -204,7 +212,11 @@ export class DateStep {
     if (availabilityView.kind === AvailabilityViewKind.Upcoming) {
       this.showView(toUpcomingView(addDays(firstDay, offset * MAX_DAYS_PER_AVAILABILITY_REQUEST), bookingWindow));
     } else {
-      this.showView(toMonthView(toMonthKey(addMonths(firstDay, offset))));
+      this.showMonth(toMonthKey(new Date(
+        firstDay.getFullYear(),
+        firstDay.getMonth() + offset,
+        1,
+      )));
     }
   }
 

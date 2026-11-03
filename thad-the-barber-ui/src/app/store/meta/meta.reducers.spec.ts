@@ -1,3 +1,4 @@
+import { testMonthView } from '../../../testing/test-availability';
 import { ActionReducer, INIT, combineReducers } from '@ngrx/store';
 import { encodeSavedBookings, testConfirmationIn } from '../../../testing/test-booking';
 import { TEST_SHOP } from '../../../testing/test-shop';
@@ -14,7 +15,6 @@ import * as HomeActions from '../../features/home/state/home.actions';
 import { homeReducer } from '../../features/home/state/home.reducer';
 import { RequestStatus } from '../../shared/models/request.models';
 import { localStorageSyncReducer } from './meta.reducers';
-import { toMonthView } from '../../features/booking/utils/booking-time.utils';
 
 function seedBookings(savedConfirmations: BookingConfirmation[]): void {
   localStorage.setItem('ttb-booking', encodeSavedBookings(savedConfirmations));
@@ -54,7 +54,7 @@ describe(
         const reducer: ActionReducer<AppState> = createSyncedReducer();
         const viewing: AppState = reducer(
           undefined,
-          BookingActions.SetAvailabilityView({ availabilityView: toMonthView('2026-10') }),
+          BookingActions.SetAvailabilityView({ availabilityView: testMonthView('2026-10') }),
         );
         reducer(viewing, BookingActions.BookingRequestSuccess({ bookingConfirmation }));
 

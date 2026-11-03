@@ -5,15 +5,25 @@ import { DateRange } from '../models/date-range.model';
 import {
   isSameView,
   toBookingWindow,
-  toMonthView,
   toUpcomingView,
   toLaterMonths,
   toLongDateTime,
   toTimeSlots,
 } from './booking-time.utils';
 import { AvailabilityViewKind } from '../models/availability-view-kind.model';
+import { AvailabilityView } from '../models/availability-view.model';
 
 const HONOLULU: string = TEST_SHOP.timeZone;
+const NOVEMBER: AvailabilityView = {
+  kind: AvailabilityViewKind.Month,
+  firstDay: '2026-11-01',
+  lastDay: '2026-11-30',
+};
+const DECEMBER: AvailabilityView = {
+  kind: AvailabilityViewKind.Month,
+  firstDay: '2026-12-01',
+  lastDay: '2026-12-31',
+};
 
 describe(
   'toBookingWindow',
@@ -68,24 +78,12 @@ describe(
     );
 
     it(
-      'makes a month availabilityView from its 1st through its last day, leap day included',
-      (): void => {
-        expect(toMonthView('2026-11')).toEqual({
-          kind: AvailabilityViewKind.Month,
-          firstDay: '2026-11-01',
-          lastDay: '2026-11-30',
-        });
-        expect(toMonthView('2028-02').lastDay).toBe('2028-02-29');
-      },
-    );
-
-    it(
       'tells views apart by kind and days',
       (): void => {
-        expect(isSameView(toMonthView('2026-11'), toMonthView('2026-11'))).toBe(true);
-        expect(isSameView(toMonthView('2026-11'), toMonthView('2026-12'))).toBe(false);
-        expect(isSameView(toUpcomingView(fromIsoDate('2026-11-01'), window), toMonthView('2026-11'))).toBe(false);
-        expect(isSameView(null, toMonthView('2026-11'))).toBe(false);
+        expect(isSameView(NOVEMBER, NOVEMBER)).toBe(true);
+        expect(isSameView(NOVEMBER, DECEMBER)).toBe(false);
+        expect(isSameView(toUpcomingView(fromIsoDate('2026-11-01'), window), NOVEMBER)).toBe(false);
+        expect(isSameView(null, NOVEMBER)).toBe(false);
       },
     );
   },
