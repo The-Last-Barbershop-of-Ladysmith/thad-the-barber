@@ -7,6 +7,7 @@ import { dialog } from './dialog';
 import { drawer } from './drawer';
 import { galleria } from './galleria';
 import { message } from './message';
+import { progressspinner } from './progressspinner';
 import { rating } from './rating';
 import { selectbutton, togglebutton } from './selectbutton';
 import { stepper } from './stepper';
@@ -22,6 +23,7 @@ export const components: ComponentsDesignTokens = {
   drawer,
   galleria,
   message,
+  progressspinner,
   rating,
   selectbutton,
   stepper,
