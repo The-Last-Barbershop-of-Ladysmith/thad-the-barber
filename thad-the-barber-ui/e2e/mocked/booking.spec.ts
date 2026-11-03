@@ -37,7 +37,7 @@ async function problem(
 }
 
 function openDays(page: Page): Locator {
-  return page.getByTestId('date-list').locator('[role="button"]');
+  return page.getByTestId('date-picker').locator('td:not(.p-datepicker-other-month) .p-datepicker-day:not(.p-disabled)');
 }
 
 /** The shop has loaded, so the page can show times and a kept booking. */

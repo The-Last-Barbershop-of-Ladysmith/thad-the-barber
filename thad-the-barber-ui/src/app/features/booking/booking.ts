@@ -32,7 +32,7 @@ import { DateStep } from './components/date-step/date-step';
 import { DetailsStep } from './components/details-step/details-step';
 import { TimeStep } from './components/time-step/time-step';
 import { AvailableDay } from './dtos/available-day.dto';
-import { AvailabilityView } from './models/availability-view.model';
+import { DayRange } from './models/day-range.model';
 import { BookingForm } from './models/booking-form.model';
 import { BookingFormValue } from './models/booking-form-value.model';
 import { BookingStep } from './models/booking-step.model';
@@ -86,8 +86,8 @@ export class Booking implements LeaveConfirmable {
   });
 
   private readonly timeZone: Signal<string | null> = this.store.selectSignal(shopFeature.selectTimeZone);
-  private readonly availabilityView: Signal<AvailabilityView | null> =
-    this.store.selectSignal(bookingFeature.selectAvailabilityView);
+  private readonly dayRange: Signal<DayRange | null> =
+    this.store.selectSignal(bookingFeature.selectDayRange);
   protected readonly isSubmitting: Signal<boolean> = this.store.selectSignal(bookingFeature.selectIsSubmitting);
   private readonly isSubmitDone: Signal<boolean> = this.store.selectSignal(bookingFeature.selectIsSubmitDone);
   protected readonly isBotCheckFailed: Signal<boolean> = inject(SessionService).isBotCheckFailed;
@@ -185,9 +185,9 @@ export class Booking implements LeaveConfirmable {
   }
 
   protected reloadDays(): void {
-    const availabilityView: AvailabilityView | null = this.availabilityView();
-    if (availabilityView) {
-      this.store.dispatch(BookingActions.SetAvailabilityView({ availabilityView }));
+    const dayRange: DayRange | null = this.dayRange();
+    if (dayRange) {
+      this.store.dispatch(BookingActions.AvailabilityRequest({ dayRange }));
     }
   }
 
@@ -295,6 +295,9 @@ export class Booking implements LeaveConfirmable {
 
   // Focus follows the step that opens, since the one it was in collapses.
   private showStep(step: BookingStep): void {
+    if (this.openStep() === step) {
+      return;
+    }
     this.openStep.set(step);
     afterNextRender(
       (): void => {

@@ -18,7 +18,7 @@ const availableDays: AvailableDay[] = [
 const saturday: BookingConfirmation = testConfirmation('2026-10-03T20:00:00Z', 'made-up-saturday');
 
 const october: BookingState = {
-  availabilityView: testMonthView('2026-10'),
+  dayRange: testMonthView('2026-10'),
   availableDays,
   loadStatus: RequestStatus.Error,
   submitStatus: RequestStatus.Idle,
@@ -49,11 +49,11 @@ describe(
     it(
       'empties the calendar and shows it loading while a month loads',
       (): void => {
-        const state: BookingState = bookingReducer(october, BookingActions.SetAvailabilityView({ availabilityView: testMonthView('2026-11') }));
+        const state: BookingState = bookingReducer(october, BookingActions.AvailabilityRequest({ dayRange: testMonthView('2026-11') }));
 
         expect(state).toEqual({
           ...october,
-          availabilityView: testMonthView('2026-11'),
+          dayRange: testMonthView('2026-11'),
           availableDays: [],
           loadStatus: RequestStatus.Pending,
         });

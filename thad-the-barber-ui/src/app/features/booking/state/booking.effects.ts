@@ -15,20 +15,20 @@ import { AvailableDay } from '../dtos/available-day.dto';
 import { BookingConfirmation } from '../dtos/booking-confirmation.dto';
 import { BookingRequest } from '../dtos/booking-request.dto';
 import { ManagedBooking } from '../dtos/managed-booking.dto';
-import { AvailabilityView } from '../models/availability-view.model';
+import { DayRange } from '../models/day-range.model';
 import { DateRange } from '../models/date-range.model';
 import { ManagePageState } from '../models/manage-page-state.model';
 import { AvailabilityService } from '../services/availability.service';
 import { BookingService } from '../services/booking.service';
 import { RESCHEDULE_FAILED_NOTICE, toBookingNotice, toManageActionNotice } from '../utils/booking-notice.utils';
-import { toBookingWindow, toUpcomingView } from '../utils/booking-time.utils';
+import { toBookingWindow, toMonthRange } from '../utils/booking-time.utils';
 import { toManagePath } from '../utils/manage-link.utils';
 import * as BookingActions from './booking.actions';
 
 type FailureActionCreator = (failure: { notice: Notice | null; takenStartAt: string | null; }) => Action;
 
 // Waits for the shop, so "today" and the booking window are on its clock, not the browser's.
-export const openUpcomingDays: FunctionalEffect = createEffect(
+export const openFirstMonth: FunctionalEffect = createEffect(
   (
     actions$: Actions = inject<Actions>(Actions),
     store: Store<AppState> = inject<Store<AppState>>(Store),
@@ -44,8 +44,8 @@ export const openUpcomingDays: FunctionalEffect = createEffect(
         filter((bookingWindow: DateRange | null): bookingWindow is DateRange => bookingWindow !== null),
         take(1),
       )),
-      map((bookingWindow: DateRange): Action => BookingActions.SetAvailabilityView({
-        availabilityView: toUpcomingView(bookingWindow.min, bookingWindow),
+      map((bookingWindow: DateRange): Action => BookingActions.AvailabilityRequest({
+        dayRange: toMonthRange(bookingWindow.min.getFullYear(), bookingWindow.min.getMonth() + 1),
       })),
     ),
   { functional: true },
@@ -57,9 +57,9 @@ export const loadAvailability: FunctionalEffect = createEffect(
     availabilityService: AvailabilityService = inject(AvailabilityService),
   ): Observable<Action> =>
     actions$.pipe(
-      ofType(BookingActions.SetAvailabilityView),
-      switchMap(({ availabilityView }: { availabilityView: AvailabilityView; }): Observable<Action> =>
-        availabilityService.getAvailableDays(availabilityView).pipe(
+      ofType(BookingActions.AvailabilityRequest),
+      switchMap(({ dayRange }: { dayRange: DayRange; }): Observable<Action> =>
+        availabilityService.getAvailableDays(dayRange).pipe(
           map((availableDays: AvailableDay[]): Action => BookingActions.AvailabilityRequestSuccess({ availableDays })),
           catchError((): Observable<Action> => of(BookingActions.AvailabilityRequestFailure())),
         )),

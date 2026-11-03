@@ -1,31 +1,49 @@
+import { Signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl } from '@angular/forms';
 import { Action, ActionsSubject, Store, provideStore } from '@ngrx/store';
-import { testBookingWindow, testFirstBlock, testMonthView } from '../../../../../testing/test-availability';
-import { ShopInfo } from '../../../shop/models/shop-info.model';
+import { DatePickerDateMeta, DatePickerMonthChangeEvent } from 'primeng/types/datepicker';
+import { testFirstMonth, testMonthView } from '../../../../../testing/test-availability';
 import { TEST_SHOP } from '../../../../../testing/test-shop';
+import { toIsoDate, toIsoDateIn } from '../../../../shared/utils/date.utils';
 import { AppState } from '../../../../store/app.state';
 import * as ShopActions from '../../../shop/state/shop.actions';
 import { shopFeature } from '../../../shop/state/shop.feature';
 import { AvailableDay } from '../../dtos/available-day.dto';
-import { DateRange } from '../../models/date-range.model';
-import { AvailabilityView } from '../../models/availability-view.model';
+import { DayRange } from '../../models/day-range.model';
 import * as BookingActions from '../../state/booking.actions';
 import { bookingFeature } from '../../state/booking.feature';
-import { toBookingWindow, toLaterMonths, toUpcomingView } from '../../utils/booking-time.utils';
 import { DateStep } from './date-step';
-import { addDays } from '../../../../shared/utils/date.utils';
 
-/** Made-up open days, out of order on purpose, as the slice could hold them after a merge. */
+/** The component's protected members the spec drives, read by name so the class stays unchanged. */
+interface DateStepPage {
+  closedDates: Signal<Date[]>;
+  isFillingUp: (dateMeta: DatePickerDateMeta) => boolean;
+  showMonth: (event: DatePickerMonthChangeEvent) => void;
+}
+
+const NOVEMBER: DayRange = testMonthView('2026-11');
+
+/** One day with plenty of times and one filling up (fewer than 5). */
 const OPEN_DAYS: AvailableDay[] = [
-  { date: '2026-11-21', times: ['2026-11-21T20:00:00Z'] },
-  { date: '2026-11-01', times: ['2026-11-01T20:00:00Z'] },
+  {
+    date: '2026-11-07',
+    times: [
+      '2026-11-07T20:00:00Z',
+      '2026-11-07T20:30:00Z',
+      '2026-11-07T21:00:00Z',
+      '2026-11-07T21:30:00Z',
+      '2026-11-07T22:00:00Z',
+    ],
+  },
+  { date: '2026-11-08', times: ['2026-11-08T20:00:00Z'] },
 ];
 
 describe(
   'DateStep',
   (): void => {
     let fixture: ComponentFixture<DateStep>;
+    let page: DateStepPage;
     let store: Store<AppState>;
     let dateControl: FormControl<string | null>;
     let dispatched: Action[];
@@ -49,206 +67,105 @@ describe(
       fixture = TestBed.createComponent(DateStep);
       fixture.componentRef.setInput('dateControl', dateControl);
       fixture.detectChanges();
+      page = fixture.componentInstance as unknown as DateStepPage;
     });
 
-    function load(availableDays: AvailableDay[], availabilityView: AvailabilityView = testFirstBlock()): void {
-      store.dispatch(BookingActions.SetAvailabilityView({ availabilityView }));
+    function show(dayRange: DayRange): void {
+      store.dispatch(BookingActions.AvailabilityRequest({ dayRange }));
+      fixture.detectChanges();
+    }
+
+    function load(availableDays: AvailableDay[]): void {
       store.dispatch(BookingActions.AvailabilityRequestSuccess({ availableDays }));
       fixture.detectChanges();
     }
 
-    function find(testId: string): HTMLElement | null {
-      return document.querySelector<HTMLElement>(`[data-testid="${testId}"]`);
+    function byTestId(testId: string): HTMLElement | null {
+      return (fixture.nativeElement as HTMLElement).querySelector<HTMLElement>(`[data-testid="${testId}"]`);
     }
 
-    function dayButtons(): HTMLElement[] {
-      return [...(fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('[data-testid="date-list"] .p-togglebutton')];
-    }
-
-    function laterMonths(shopInfo: ShopInfo = TEST_SHOP): string[] {
-      const bookingWindow: DateRange | null = toBookingWindow(shopInfo.bookingSettings, shopInfo.timeZone);
-      return bookingWindow ? toLaterMonths(bookingWindow) : [];
+    function closedDays(): string[] {
+      return page.closedDates().map((closedDate: Date): string => toIsoDate(closedDate));
     }
 
     it(
-      'shows the next 31 days first, with previous disabled',
+      'closes every day of the month in view while it loads, then all but the open days',
       (): void => {
-        expect(find('view-picker')?.textContent).toContain('Next 31 days');
-        expect(find('previous-view')?.hasAttribute('disabled')).toBe(true);
-      },
-    );
+        show(NOVEMBER);
+        expect(closedDays()).toHaveLength(30);
+        expect(byTestId('dates-loading')).not.toBeNull();
 
-    it(
-      'lists the open days written in full, and picking one sets the date',
-      (): void => {
         load(OPEN_DAYS);
 
-        expect(dayButtons().map((button: HTMLElement): string | undefined =>
-          button.querySelector('.date-label')?.textContent.trim())).toEqual([
-          'Saturday, November 21st 2026',
-          'Sunday, November 1st 2026',
-        ]);
-        expect(dayButtons()[0]?.querySelector('[data-testid="filling-up"]')?.textContent).toContain('Only 1 left');
-        expect(find('view-caption')?.textContent).toContain('2 open days');
-
-        dayButtons()[1]?.click();
-        fixture.detectChanges();
-
-        expect(dateControl.value).toBe('2026-11-01');
+        expect(closedDays()).toHaveLength(28);
+        expect(closedDays()).not.toContain('2026-11-07');
+        expect(closedDays()).not.toContain('2026-11-08');
+        expect(byTestId('dates-loading')).toBeNull();
       },
     );
 
     it(
-      'marks a day with fewer than 5 open times as filling up, in its accessible name too (BR-15)',
+      'marks only an open day with fewer than 5 times as filling up',
       (): void => {
-        const timesFor: (count: number, date: string) => string[] = (count: number, date: string): string[] =>
-          Array.from({ length: count }, (_: unknown, index: number): string => `${date}T2${index}:00:00Z`);
-        load([
-          { date: '2026-11-01', times: timesFor(1, '2026-11-01') },
-          { date: '2026-11-02', times: timesFor(4, '2026-11-02') },
-          { date: '2026-11-03', times: timesFor(5, '2026-11-03') },
-          { date: '2026-11-04', times: timesFor(6, '2026-11-04') },
-        ]);
+        show(NOVEMBER);
+        load(OPEN_DAYS);
 
-        expect(dayButtons().map((button: HTMLElement): string | undefined =>
-          button.querySelector('[data-testid="filling-up"]')?.textContent.trim())).toEqual([
-          'Only 1 left',
-          'Only 4 left',
-          undefined,
-          undefined,
-        ]);
-        expect(dayButtons()[1]?.getAttribute('aria-label')).toBe('Monday, November 2nd 2026, only 4 left');
-        expect(dayButtons()[2]?.getAttribute('aria-label')).toBe('Tuesday, November 3rd 2026, 5 open');
+        expect(page.isFillingUp({
+          year: 2026,
+          month: 10,
+          day: 8,
+        })).toBe(true);
+        expect(page.isFillingUp({
+          year: 2026,
+          month: 10,
+          day: 7,
+        })).toBe(false);
+        expect(page.isFillingUp({
+          year: 2026,
+          month: 10,
+          day: 9,
+        })).toBe(false);
       },
     );
 
     it(
-      'shows the no-open-days notice instead of an empty list',
+      'loads a month when the calendar moves to it',
       (): void => {
+        page.showMonth({ year: 2026, month: 12 });
+        page.showMonth({});
+
+        expect(dispatched).toContainEqual(BookingActions.AvailabilityRequest({ dayRange: testMonthView('2026-12') }));
+        expect(dispatched).toHaveLength(2);
+      },
+    );
+
+    it(
+      'picks an open day as a shop-calendar ISO day',
+      (): void => {
+        const today: string = toIsoDateIn(TEST_SHOP.timeZone, new Date());
+        show(testFirstMonth());
+        load([{ date: today, times: [`${today}T20:00:00Z`] }]);
+
+        const openDay: HTMLElement | undefined = [
+          ...(fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>(
+            'td:not(.p-datepicker-other-month) .p-datepicker-day:not(.p-disabled)',
+          ),
+        ][0];
+        openDay?.click();
+
+        expect(dateControl.value).toBe(today);
+      },
+    );
+
+    it(
+      'says when the month in view has no open days',
+      (): void => {
+        show(NOVEMBER);
+        expect(byTestId('booking-notice')).toBeNull();
+
         load([]);
 
-        expect(dayButtons()).toHaveLength(0);
-        expect(find('booking-notice')?.textContent).toContain('No open times');
-      },
-    );
-
-    it(
-      'pages the next 31 days in 31-day blocks, with previous back to today and next stopping at the window',
-      (): void => {
-        const bookingWindow: DateRange = testBookingWindow();
-        const nextBlock: AvailabilityView = toUpcomingView(addDays(bookingWindow.min, 31), bookingWindow);
-        load(OPEN_DAYS);
-        store.dispatch(BookingActions.SetAvailabilityView({ availabilityView: testFirstBlock() }));
-        load(OPEN_DAYS);
-
-        find('next-view')?.click();
-        load(OPEN_DAYS, nextBlock);
-
-        // The test shop books 45 days ahead, so the second block is the last.
-        expect(dispatched).toContainEqual(BookingActions.SetAvailabilityView({ availabilityView: nextBlock }));
-        expect(find('next-view')?.hasAttribute('disabled')).toBe(true);
-        expect(find('view-picker')?.textContent).not.toContain('Next 31 days');
-        find('previous-view')?.click();
-        expect(dispatched.at(-1)).toEqual(BookingActions.SetAvailabilityView({ availabilityView: testFirstBlock() }));
-      },
-    );
-
-    it(
-      'steps only through months once a month is picked, with previous off on the first',
-      (): void => {
-        // 90 days always reach two later months; the test shop's 45 don't on the 1st of a month.
-        const longWindowShop: ShopInfo = {
-          ...TEST_SHOP,
-          bookingSettings: { ...TEST_SHOP.bookingSettings, maxAdvanceDays: 90 },
-        };
-        store.dispatch(ShopActions.ShopInfoRequestSuccess({ shopInfo: longWindowShop }));
-        const [firstMonth, secondMonth]: string[] = laterMonths(longWindowShop);
-        const firstMonthView: AvailabilityView = testMonthView(firstMonth ?? '');
-        store.dispatch(BookingActions.SetAvailabilityView({ availabilityView: firstMonthView }));
-        load(OPEN_DAYS, firstMonthView);
-
-        expect(find('previous-view')?.hasAttribute('disabled')).toBe(true);
-        find('next-view')?.click();
-
-        expect(dispatched.at(-1)).toEqual(BookingActions.SetAvailabilityView({
-          availabilityView: testMonthView(secondMonth ?? ''),
-        }));
-      },
-    );
-
-    it(
-      'offers every later month the booking window reaches, and jumps with one load',
-      async (): Promise<void> => {
-        const months: string[] = laterMonths();
-        const lastMonth: string | undefined = months.at(-1);
-
-        find('view-picker')?.click();
-        fixture.detectChanges();
-        await fixture.whenStable();
-
-        expect(find('upcoming-view')).toBeNull();
-        for (const month of months) {
-          expect(find(`month-${month}`)).not.toBeNull();
-        }
-        find(`month-${lastMonth}`)?.click();
-
-        expect(dispatched.at(-1)).toEqual(BookingActions.SetAvailabilityView({
-          availabilityView: testMonthView(lastMonth ?? ''),
-        }));
-      },
-    );
-
-    it(
-      'clears the picked day when another view opens, since its days differ',
-      (): void => {
-        load(OPEN_DAYS);
-        dateControl.setValue('2026-11-01');
-
-        find('next-view')?.click();
-
-        expect(dateControl.value).toBeNull();
-      },
-    );
-
-    it(
-      'goes back from a month to the next 31 days from today',
-      (): void => {
-        load(OPEN_DAYS, testMonthView(laterMonths()[0] ?? ''));
-
-        find('view-picker')?.click();
-        fixture.detectChanges();
-        find('upcoming-view')?.click();
-
-        expect(dispatched.at(-1)).toEqual(BookingActions.SetAvailabilityView({ availabilityView: testFirstBlock() }));
-      },
-    );
-
-    it(
-      'keeps the picked day when the month already showing is picked again',
-      async (): Promise<void> => {
-        const month: string = laterMonths()[0] ?? '';
-        load(OPEN_DAYS, testMonthView(month));
-        dateControl.setValue('2026-11-01');
-
-        find('view-picker')?.click();
-        fixture.detectChanges();
-        await fixture.whenStable();
-        find(`month-${month}`)?.click();
-
-        expect(dateControl.value).toBe('2026-11-01');
-      },
-    );
-
-    it(
-      'counts one open day in the singular, and no count while the days load',
-      (): void => {
-        load([{ date: '2026-11-01', times: ['2026-11-01T20:00:00Z'] }]);
-        expect(find('view-caption')?.textContent).toContain('· 1 open day');
-        expect(find('view-caption')?.textContent).not.toContain('days');
-
-        store.dispatch(BookingActions.SetAvailabilityView({ availabilityView: testFirstBlock() }));
-        fixture.detectChanges();
-        expect(find('view-caption')?.textContent).not.toContain('open');
+        expect(byTestId('booking-notice')).not.toBeNull();
       },
     );
   },

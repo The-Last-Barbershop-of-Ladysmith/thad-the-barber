@@ -166,7 +166,10 @@ test.describe(
 
         await page.getByTestId('reschedule').click();
         await expect(page).toHaveURL(/\/book\/manage\/made-up-booking\/reschedule$/);
-        await page.getByTestId('date-list').locator('[role="button"]').first().click();
+        await page.getByTestId('date-picker')
+          .locator('td:not(.p-datepicker-other-month) .p-datepicker-day:not(.p-disabled)')
+          .first()
+          .click();
         await page.getByTestId('time-list').locator('[role="button"]').first().click();
         await expect(page.locator('#booking-name')).toHaveCount(0);
         await expectNoA11yViolations(page);

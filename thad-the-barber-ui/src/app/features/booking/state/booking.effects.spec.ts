@@ -7,7 +7,7 @@ import { Action, Store, provideStore } from '@ngrx/store';
 import { MessageService, ToastMessageOptions } from 'primeng/api';
 import { Observable, Subject, of, throwError } from 'rxjs';
 import { Mock } from 'vitest';
-import { testFirstBlock, testMonthView } from '../../../../testing/test-availability';
+import { testFirstMonth, testMonthView } from '../../../../testing/test-availability';
 import { TEST_SHOP } from '../../../../testing/test-shop';
 import { SessionService } from '../../../core/services/session.service';
 import { ProblemCode } from '../../../shared/models/problem-code.model';
@@ -18,7 +18,6 @@ import { AvailableDay } from '../dtos/available-day.dto';
 import { BookingConfirmation } from '../dtos/booking-confirmation.dto';
 import { BookingRequest } from '../dtos/booking-request.dto';
 import { ManagedBooking } from '../dtos/managed-booking.dto';
-import { AvailabilityView } from '../models/availability-view.model';
 import { DayRange } from '../models/day-range.model';
 import { AvailabilityService } from '../services/availability.service';
 import { BookingService } from '../services/booking.service';
@@ -27,7 +26,7 @@ import * as BookingActions from './booking.actions';
 import {
   loadAvailability,
   openBookedPage,
-  openUpcomingDays,
+  openFirstMonth,
   requestBooking,
   requestReschedule,
   returnToMovedBooking,
@@ -35,7 +34,7 @@ import {
 import { bookingFeature } from './booking.feature';
 
 const availableDays: AvailableDay[] = [{ date: '2026-02-03', times: ['2026-02-03T20:00:00Z'] }];
-const february: AvailabilityView = testMonthView('2026-02');
+const february: DayRange = testMonthView('2026-02');
 
 describe(
   'loadAvailability',
@@ -80,8 +79,8 @@ describe(
       'reloads the days when the same view is set again',
       (): void => {
         viewWith((): Observable<AvailableDay[]> => of(availableDays));
-        dispatch(BookingActions.SetAvailabilityView({ availabilityView: february }));
-        dispatch(BookingActions.SetAvailabilityView({ availabilityView: february }));
+        dispatch(BookingActions.AvailabilityRequest({ dayRange: february }));
+        dispatch(BookingActions.AvailabilityRequest({ dayRange: february }));
 
         expect(requestedRanges).toEqual([february, february]);
       },
@@ -91,7 +90,7 @@ describe(
       "asks for the view's own days and stores what comes back",
       (): void => {
         const emitted: Action[] = viewWith((): Observable<AvailableDay[]> => of(availableDays));
-        dispatch(BookingActions.SetAvailabilityView({ availabilityView: february }));
+        dispatch(BookingActions.AvailabilityRequest({ dayRange: february }));
 
         expect(emitted).toEqual([BookingActions.AvailabilityRequestSuccess({ availableDays })]);
         expect(requestedRanges).toEqual([february]);
@@ -105,7 +104,7 @@ describe(
         const failing: () => Observable<AvailableDay[]> = (): Observable<AvailableDay[]> =>
           throwError((): HttpErrorResponse => new HttpErrorResponse({ status: 503 }));
         const emitted: Action[] = viewWith(failing);
-        dispatch(BookingActions.SetAvailabilityView({ availabilityView: february }));
+        dispatch(BookingActions.AvailabilityRequest({ dayRange: february }));
 
         expect(emitted).toEqual([BookingActions.AvailabilityRequestFailure()]);
       },
@@ -114,7 +113,7 @@ describe(
 );
 
 describe(
-  'openUpcomingDays',
+  'openFirstMonth',
   (): void => {
     let actions$: Subject<Action>;
     let store: Store<AppState>;
@@ -133,7 +132,7 @@ describe(
         ],
       });
       store = TestBed.inject<Store<AppState>>(Store);
-      TestBed.runInInjectionContext((): Observable<Action> => openUpcomingDays() as Observable<Action>)
+      TestBed.runInInjectionContext((): Observable<Action> => openFirstMonth() as Observable<Action>)
         .subscribe((action: Action): void => {
           emitted.push(action);
         });
@@ -147,7 +146,7 @@ describe(
 
         store.dispatch(ShopActions.ShopInfoRequestSuccess({ shopInfo: TEST_SHOP }));
 
-        expect(emitted).toEqual([BookingActions.SetAvailabilityView({ availabilityView: testFirstBlock() })]);
+        expect(emitted).toEqual([BookingActions.AvailabilityRequest({ dayRange: testFirstMonth() })]);
       },
     );
   },

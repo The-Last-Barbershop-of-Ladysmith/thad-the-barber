@@ -1,13 +1,13 @@
 import { createAction, props } from '@ngrx/store';
 import { AvailableDay } from '../dtos/available-day.dto';
-import { AvailabilityView } from '../models/availability-view.model';
+import { DayRange } from '../models/day-range.model';
 import { BookingConfirmation } from '../dtos/booking-confirmation.dto';
 import { BookingRequest as BookingRequestDto } from '../dtos/booking-request.dto';
 import { ManagedBooking } from '../dtos/managed-booking.dto';
 import { Notice } from '../../../shared/models/notice.model';
 
 export enum BookingActionTypes {
-  SetAvailabilityView = '[Booking Page] Set Availability View',
+  AvailabilityRequest = '[Booking Page] Availability Requested',
   BookingPageOpen = '[Booking Page] Opened',
   BookingRequest = '[Booking Page] Booking Requested',
   RescheduleRequest = '[Booking Page] Reschedule Requested',
@@ -19,11 +19,11 @@ export enum BookingActionTypes {
   RescheduleRequestFailure = '[Booking API] Reschedule Failed',
 }
 
-/** Dispatched again with the view on screen, it reloads its days. */
+/** Dispatched again with the same days, it reloads them. */
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
-export const SetAvailabilityView = createAction(
-  BookingActionTypes.SetAvailabilityView,
-  props<{ availabilityView: AvailabilityView; }>(),
+export const AvailabilityRequest = createAction(
+  BookingActionTypes.AvailabilityRequest,
+  props<{ dayRange: DayRange; }>(),
 );
 
 /** Starts the booking or move over: no notice, nothing sent, and loads the first days. */

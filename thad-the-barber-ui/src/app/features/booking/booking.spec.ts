@@ -5,7 +5,7 @@ import { ActivatedRoute, Navigation, ParamMap, Router, convertToParamMap, provid
 import { provideEffects } from '@ngrx/effects';
 import { Action, ActionsSubject, Store, provideStore } from '@ngrx/store';
 import { BehaviorSubject } from 'rxjs';
-import { testFirstBlock } from '../../../testing/test-availability';
+import { testFirstMonth } from '../../../testing/test-availability';
 import { testConfirmationIn } from '../../../testing/test-booking';
 import { TEST_SHOP } from '../../../testing/test-shop';
 import { SessionService } from '../../core/services/session.service';
@@ -23,7 +23,7 @@ import { BookingForm } from './models/booking-form.model';
 import { BookingStep } from './models/booking-step.model';
 import { ReschedulePageState } from './models/reschedule-page-state.model';
 import * as BookingActions from './state/booking.actions';
-import { openUpcomingDays } from './state/booking.effects';
+import { openFirstMonth } from './state/booking.effects';
 import { bookingFeature } from './state/booking.feature';
 
 /** The page's protected members the spec drives, read by name so the class stays unchanged. */
@@ -69,7 +69,7 @@ describe(
             [bookingFeature.name]: bookingFeature.reducer,
           }),
           // The page opens its days through this; sending is left to the effects' own spec.
-          provideEffects({ openUpcomingDays }),
+          provideEffects({ openFirstMonth }),
           provideRouter([]),
           { provide: SessionService, useValue: { isBotCheckFailed } },
           { provide: ActivatedRoute, useValue: { paramMap: routeParams } },
@@ -141,7 +141,7 @@ describe(
         fixture = TestBed.createComponent(Booking);
 
         expect(store.selectSignal(bookingFeature.selectSubmitNotice)()).toBeNull();
-        expect(store.selectSignal(bookingFeature.selectAvailabilityView)()).toEqual(testFirstBlock());
+        expect(store.selectSignal(bookingFeature.selectDayRange)()).toEqual(testFirstMonth());
         expect(store.selectSignal(bookingFeature.selectLoadStatus)()).toBe(RequestStatus.Pending);
       },
     );
