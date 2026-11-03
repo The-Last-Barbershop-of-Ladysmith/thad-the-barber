@@ -14,12 +14,24 @@ export const dialog: DialogDesignTokens = {
       backdrop-filter: blur(var(--p-brand-glass-blur));
       -webkit-backdrop-filter: blur(var(--p-brand-glass-blur));
     }
-    /* Stacked: two uppercase, wide-tracked labels don't fit side by side, even on desktop. */
+    /* Stacked on phones: two uppercase, wide-tracked labels don't fit side by side; from lg the dialog widens for a row. */
     .p-dialog-footer {
       flex-direction: column;
     }
     .p-dialog-footer .p-button {
       width: 100%;
+    }
+    @media (min-width: 64rem) {
+      .p-dialog {
+        width: 38rem;
+      }
+      .p-dialog-footer {
+        flex-direction: row;
+        justify-content: space-between;
+      }
+      .p-dialog-footer .p-button {
+        width: auto;
+      }
     }
   `,
 };
