@@ -1,4 +1,4 @@
-import { UPCOMING_DAY_COUNT } from '../../../core/config/booking-dates';
+import { MAX_DAYS_PER_AVAILABILITY_REQUEST } from '../../../core/config/booking-dates';
 import { BookingSettings } from '../../shop/models/booking-settings.model';
 import {
   addDays,
@@ -31,13 +31,13 @@ export function toBookingWindow(
   return { min, max: addDays(min, bookingSettings.maxAdvanceDays) };
 }
 
-/** `UPCOMING_DAY_COUNT` days from `firstDay`, cut to the booking window's last day. */
+/** `MAX_DAYS_PER_AVAILABILITY_REQUEST` days from `firstDay`, cut to the booking window's last day. */
 export function toUpcomingView(firstDay: Date, bookingWindow: DateRange): AvailabilityView {
-  const blockEnd: Date = addDays(firstDay, UPCOMING_DAY_COUNT - 1);
+  const maxRequestDate: Date = addDays(firstDay, MAX_DAYS_PER_AVAILABILITY_REQUEST - 1);
   return {
     kind: AvailabilityViewKind.Upcoming,
     firstDay: toIsoDate(firstDay),
-    lastDay: toIsoDate(bookingWindow.max < blockEnd ? bookingWindow.max : blockEnd),
+    lastDay: toIsoDate(bookingWindow.max < maxRequestDate ? bookingWindow.max : maxRequestDate),
   };
 }
 

@@ -17,7 +17,7 @@ import { ButtonModule } from 'primeng/button';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { SkeletonModule } from 'primeng/skeleton';
 import { RequestStatus } from '../../../../shared/models/request.models';
-import { FILLING_UP_BELOW, UPCOMING_DAY_COUNT } from '../../../../core/config/booking-dates';
+import { FILLING_UP_BELOW, MAX_DAYS_PER_AVAILABILITY_REQUEST } from '../../../../core/config/booking-dates';
 import {
   addDays,
   addMonths,
@@ -81,7 +81,7 @@ export class DateStep {
   readonly dateControl: InputSignal<FormControl<string | null>> = input.required<FormControl<string | null>>();
   readonly startAtControl: InputSignal<FormControl<string | null>> = input.required<FormControl<string | null>>();
 
-  protected readonly upcomingLabel: string = `Next ${UPCOMING_DAY_COUNT} days`;
+  protected readonly upcomingLabel: string = `Next ${MAX_DAYS_PER_AVAILABILITY_REQUEST} days`;
   protected readonly noOpenDaysNotice: Notice = NO_OPEN_DAYS_NOTICE;
   protected readonly skeletonRows: number[] = Array<number>(10).fill(0);
 
@@ -202,7 +202,7 @@ export class DateStep {
     }
     const firstDay: Date = fromIsoDate(availabilityView.firstDay);
     if (availabilityView.kind === AvailabilityViewKind.Upcoming) {
-      this.showView(toUpcomingView(addDays(firstDay, offset * UPCOMING_DAY_COUNT), bookingWindow));
+      this.showView(toUpcomingView(addDays(firstDay, offset * MAX_DAYS_PER_AVAILABILITY_REQUEST), bookingWindow));
     } else {
       this.showView(toMonthView(toMonthKey(addMonths(firstDay, offset))));
     }
