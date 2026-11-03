@@ -1,3 +1,32 @@
+.booking-steps {
+  // From lg the step headers sit in a row and the open step's panel spans the width beneath them; phones keep
+  // PrimeNG's vertical stepper. One template, so the steps and their panels never exist twice.
+  @media (min-width: 64rem) {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: 1rem;
+
+    p-step-item {
+      display: contents;
+    }
+
+    p-step {
+      grid-row: 1;
+      padding-bottom: 2rem;
+    }
+
+    // Shown at once, not animated, since every panel shares one cell and a closing one would overlap the next.
+    p-step-panel {
+      grid-row: 2;
+      grid-column: 1 / -1;
+
+      &:not(.p-steppanel-active) {
+        display: none;
+      }
+    }
+  }
+}
+
 .step-title {
   font-weight: 700;
 }

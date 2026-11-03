@@ -24,7 +24,7 @@
     } @else {
       <span class="eyebrow">Book an appointment</span>
       <h1 class="section-title">Schedule your cut</h1>
-      <p class="m-0 text-muted-color">
+      <p class="mt-4 text-muted-color">
         Already booked?
         <a
           class="nav-link"
@@ -51,7 +51,7 @@
     }
     <form [formGroup]="bookingForm" (ngSubmit)="confirm()">
       <p-card>
-        <p-stepper [(value)]="openStep">
+        <p-stepper class="booking-steps" [(value)]="openStep">
           <p-step-item [value]="bookingStep.Day">
             <p-step>
               <span class="step-title">Pick A Day</span>
