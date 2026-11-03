@@ -254,7 +254,7 @@ export class Booking implements LeaveConfirmable {
     });
   }
 
-  // A taken time comes off the open times, and a view change empties them.
+  // A taken time comes off the open times; the pick goes with it.
   private clearPicksNoLongerOpen(): void {
     this.store
       .select(bookingFeature.selectAvailableDays)
