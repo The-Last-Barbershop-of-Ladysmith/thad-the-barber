@@ -21,7 +21,6 @@ const october: BookingState = {
   availabilityView: testMonthView('2026-10'),
   availableDays,
   loadStatus: RequestStatus.Error,
-  savedConfirmations: [saturday],
   submitStatus: RequestStatus.Idle,
   submitNotice: null,
 };
@@ -48,7 +47,7 @@ describe(
   'booking reducer',
   (): void => {
     it(
-      'empties the calendar and shows it loading while a month loads, keeping the saved bookings',
+      'empties the calendar and shows it loading while a month loads',
       (): void => {
         const state: BookingState = bookingReducer(october, BookingActions.SetAvailabilityView({ availabilityView: testMonthView('2026-11') }));
 
@@ -62,86 +61,16 @@ describe(
     );
 
     it(
-      'adds each booking to the saved ones, soonest first',
+      'counts a booking or a move that went through as done',
       (): void => {
-        const friday: BookingConfirmation = testConfirmation('2026-10-02T14:00:00Z', 'made-up-friday');
-        const sunday: BookingConfirmation = testConfirmation('2026-10-04T15:00:00Z', 'made-up-sunday');
-        const withSunday: BookingState = bookingReducer(
+        const booked: BookingState = bookingReducer(
           october,
-          BookingActions.BookingRequestSuccess({ bookingConfirmation: sunday }),
-        );
-        const state: BookingState = bookingReducer(
-          withSunday,
-          BookingActions.BookingRequestSuccess({ bookingConfirmation: friday }),
+          BookingActions.BookingRequestSuccess({ bookingConfirmation: saturday }),
         );
 
-        expect(state.savedConfirmations).toEqual([
-          friday,
-          saturday,
-          sunday,
-        ]);
-      },
-    );
-
-    it(
-      'replaces a saved booking confirmed again, instead of listing it twice',
-      (): void => {
-        const moved: BookingConfirmation = { ...saturday, startAt: '2026-10-03T21:00:00Z' };
-        const state: BookingState = bookingReducer(
-          october,
-          BookingActions.BookingRequestSuccess({ bookingConfirmation: moved }),
-        );
-
-        expect(state.savedConfirmations).toEqual([moved]);
-      },
-    );
-
-    it(
-      "replaces the saved bookings with another tab's",
-      (): void => {
-        const fromOtherTab: BookingConfirmation[] = [testConfirmation('2026-10-05T16:00:00Z', 'made-up-other-tab')];
-        const state: BookingState = bookingReducer(
-          october,
-          BookingActions.SavedConfirmationsAdopt({ savedConfirmations: fromOtherTab }),
-        );
-
-        expect(state.savedConfirmations).toEqual(fromOtherTab);
-      },
-    );
-
-    it(
-      "drops a cancelled booking from this device's list, and leaves the list alone when it isn't there",
-      (): void => {
-        const removed: BookingState = bookingReducer(
-          october,
-          BookingActions.SavedConfirmationRemove({ bookingId: saturday.id }),
-        );
-        const untouched: BookingState = bookingReducer(
-          october,
-          BookingActions.SavedConfirmationRemove({ bookingId: 'made-up-opened-link' }),
-        );
-
-        expect(removed.savedConfirmations).toEqual([]);
-        expect(untouched.savedConfirmations).toEqual([saturday]);
-      },
-    );
-
-    it(
-      "moves a rescheduled booking in this device's list, soonest first, and never adds one that isn't there",
-      (): void => {
-        const sunday: BookingConfirmation = testConfirmation('2026-10-04T15:00:00Z', 'made-up-sunday');
-        const both: BookingState = { ...october, savedConfirmations: [saturday, sunday] };
-        const moved: BookingState = bookingReducer(
-          both,
-          moveTo(saturday.id, '2026-10-05T16:00:00Z'),
-        );
-        const untouched: BookingState = bookingReducer(
-          october,
-          moveTo('made-up-opened-link', '2026-10-05T16:00:00Z'),
-        );
-
-        expect(moved.savedConfirmations).toEqual([sunday, { ...saturday, startAt: '2026-10-05T16:00:00Z' }]);
-        expect(untouched.savedConfirmations).toEqual([saturday]);
+        expect(booked.submitStatus).toBe(RequestStatus.Success);
+        expect(bookingReducer(october, moveTo(saturday.id, '2026-10-05T16:00:00Z')).submitStatus)
+          .toBe(RequestStatus.Success);
       },
     );
 
@@ -180,7 +109,7 @@ describe(
     );
 
     it(
-      'starts the booking over when the page opens, keeping the saved bookings',
+      'starts the booking over when the page opens',
       (): void => {
         const sent: BookingState = {
           ...october,

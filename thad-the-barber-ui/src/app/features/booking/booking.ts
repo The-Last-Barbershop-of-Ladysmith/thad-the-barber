@@ -32,7 +32,6 @@ import { DateStep } from './components/date-step/date-step';
 import { DetailsStep } from './components/details-step/details-step';
 import { TimeStep } from './components/time-step/time-step';
 import { AvailableDay } from './dtos/available-day.dto';
-import { BookingConfirmation } from './dtos/booking-confirmation.dto';
 import { AvailabilityView } from './models/availability-view.model';
 import { BookingForm } from './models/booking-form.model';
 import { BookingFormValue } from './models/booking-form-value.model';
@@ -78,16 +77,10 @@ export class Booking implements LeaveConfirmable {
   );
   readonly isRescheduling: Signal<boolean> = computed((): boolean => this.bookingId() !== null);
   private readonly reschedulePageState: WritableSignal<ReschedulePageState> = signal({});
-  private readonly savedConfirmations: Signal<BookingConfirmation[]> =
-    this.store.selectSignal(bookingFeature.selectSavedConfirmations);
-  private readonly savedConfirmation: Signal<BookingConfirmation | undefined> = computed(
-    (): BookingConfirmation | undefined => this.savedConfirmations()
-      .find((confirmation: BookingConfirmation): boolean => confirmation.id === this.bookingId()),
-  );
   protected readonly manageToken: Signal<string | null> = computed((): string | null =>
-    this.reschedulePageState().manageToken ?? this.savedConfirmation()?.manageToken ?? null);
+    this.reschedulePageState().manageToken ?? null);
   protected readonly currentTimeLabel: Signal<string | null> = computed((): string | null => {
-    const startAt: string | undefined = this.reschedulePageState().startAt ?? this.savedConfirmation()?.startAt;
+    const { startAt }: ReschedulePageState = this.reschedulePageState();
     const timeZone: string | null = this.timeZone();
     return startAt && timeZone ? toLongDateTime(timeZone, startAt) : null;
   });
@@ -103,8 +96,7 @@ export class Booking implements LeaveConfirmable {
   protected readonly bookingNotFoundNotice: Notice = BOOKING_NOT_FOUND_NOTICE;
   protected readonly availabilityNotice: Signal<Notice | null> = this.store.selectSignal(bookingFeature.selectNotice);
   protected readonly submitNotice: Signal<Notice | null> = this.store.selectSignal(bookingFeature.selectSubmitNotice);
-  protected readonly upcomingBookingNotice: Signal<Notice | null> =
-    this.store.selectSignal(bookingFeature.selectUpcomingBookingNotice);
+  protected readonly squareBookingUrl: Signal<string> = this.store.selectSignal(shopFeature.selectBookingUrl);
 
   protected readonly bookingForm: BookingForm = new FormGroup({
     name: new FormControl('', {

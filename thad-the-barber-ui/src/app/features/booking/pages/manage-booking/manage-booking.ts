@@ -29,14 +29,11 @@ import { Notice } from '../../../../shared/models/notice.model';
 import { AppState } from '../../../../store/app.state';
 import { BookingSettings } from '../../../shop/models/booking-settings.model';
 import { shopFeature } from '../../../shop/state/shop.feature';
-import { BookingConfirmation } from '../../dtos/booking-confirmation.dto';
 import { ManagedBooking } from '../../dtos/managed-booking.dto';
 import { CalendarEvent } from '../../models/calendar-event.model';
 import { ManagePageState } from '../../models/manage-page-state.model';
 import { ReschedulePageState } from '../../models/reschedule-page-state.model';
 import { BookingService } from '../../services/booking.service';
-import * as BookingActions from '../../state/booking.actions';
-import { bookingFeature } from '../../state/booking.feature';
 import {
   BOOKING_CANCELLED_NOTICE,
   BOOKING_NOT_FOUND_NOTICE,
@@ -52,12 +49,10 @@ import { toCalendarEvent, toIcsFile } from '../../utils/ics.utils';
 import { readManageToken, toManageLink, toManagePath, toReschedulePath } from '../../utils/manage-link.utils';
 
 /**
- * One booking, opened from its manage link (`/book/manage/{id}#t=…`), from this device's list, or by the booking page
- * right after booking. The token comes from the link's fragment, which then leaves the address bar for the router's
- * navigation state, or from the bookings saved on this device (BR-22); it's sent only in the `X-Manage-Token` header
- * (BR-08). Right after booking, this is its confirmation, with the link to keep first; opened later, Add to calendar
- * comes first. Either way it can be rescheduled or cancelled until it starts (BR-07). Every time shows on the shop's
- * clock.
+ * One booking, opened from its manage link (`/book/manage/{id}#t=…`) or by the booking page right after booking. The
+ * token comes from the link's fragment, which then leaves the address bar for the router's navigation state; it's sent
+ * only in the `X-Manage-Token` header (BR-08). Right after booking, the link to keep comes first; opened later, Add to
+ * calendar does. It can be rescheduled or cancelled until it starts (BR-07), every time on the shop's clock.
  */
 @Component({
   selector: 'app-manage-booking',
@@ -93,8 +88,6 @@ export class ManageBooking implements OnInit {
   private readonly addressLine: Signal<string | null> = this.store.selectSignal(shopFeature.selectAddressLine);
   private readonly bookingSettings: Signal<BookingSettings | null> =
     this.store.selectSignal(shopFeature.selectBookingSettings);
-  private readonly savedConfirmations: Signal<BookingConfirmation[]> =
-    this.store.selectSignal(bookingFeature.selectSavedConfirmations);
 
   /** Read while this page's navigation runs; the router restores it on a reload. */
   private readonly pageState: ManagePageState = this.router.currentNavigation()?.extras.state ?? {};
@@ -152,20 +145,7 @@ export class ManageBooking implements OnInit {
   });
 
   ngOnInit(): void {
-    const savedConfirmation: BookingConfirmation | undefined = this.savedConfirmations()
-      .find((confirmation: BookingConfirmation): boolean => confirmation.id === this.id());
-    this.manageToken.set(this.findManageToken(savedConfirmation));
-    // Right after booking, the device already holds its time, so the confirmation shows at once. The router restores
-    // the just-booked state on a reload or Back too, when the booking may have changed since, so it's still loaded.
-    const isUpcoming: boolean = savedConfirmation !== undefined && Date.parse(savedConfirmation.startAt) > Date.now();
-    if (this.isJustBooked && savedConfirmation && isUpcoming) {
-      this.show({
-        id: savedConfirmation.id,
-        startAt: savedConfirmation.startAt,
-        isCancelled: false,
-        canChange: true,
-      });
-    }
+    this.manageToken.set(this.findManageToken());
     this.load();
   }
 
@@ -223,7 +203,6 @@ export class ManageBooking implements OnInit {
     this.bookingService
       .cancelBooking(this.id(), manageToken)
       .pipe(
-        // Not tied to the page: a cancel the server made still leaves this device's list if the customer moved on.
         finalize((): void => {
           this.isCancelling.set(false);
         }),
@@ -231,7 +210,6 @@ export class ManageBooking implements OnInit {
       .subscribe({
         next: (managedBooking: ManagedBooking): void => {
           this.managedBooking.set(managedBooking);
-          this.store.dispatch(BookingActions.SavedConfirmationRemove({ bookingId: managedBooking.id }));
           this.messageService.add({ severity: 'success', summary: 'Appointment cancelled' });
         },
         error: (error: unknown): void => {
@@ -309,10 +287,9 @@ export class ManageBooking implements OnInit {
 
   /**
    * The link's `#t=…`, which then leaves the address bar (it would otherwise show in screenshots and shared tabs) for
-   * the navigation state, so a reload still has it; else the one in the navigation state; else the one saved on this
-   * device.
+   * the navigation state, so a reload still has it; else the one in the navigation state.
    */
-  private findManageToken(savedConfirmation: BookingConfirmation | undefined): string | null {
+  private findManageToken(): string | null {
     const fragmentToken: string | null = readManageToken(this.route.snapshot.fragment);
     if (fragmentToken) {
       const managePageState: ManagePageState = { ...this.pageState, manageToken: fragmentToken };
@@ -325,6 +302,6 @@ export class ManageBooking implements OnInit {
       );
       return fragmentToken;
     }
-    return this.pageState.manageToken ?? savedConfirmation?.manageToken ?? null;
+    return this.pageState.manageToken ?? null;
   }
 }

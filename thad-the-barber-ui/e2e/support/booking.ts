@@ -1,8 +1,6 @@
-import { Page, Route } from '@playwright/test';
-import { BookingConfirmation } from '../../src/app/features/booking/dtos/booking-confirmation.dto';
+import { Route } from '@playwright/test';
 import { AvailableDay } from '../../src/app/features/booking/dtos/available-day.dto';
 import { ManagedBooking } from '../../src/app/features/booking/dtos/managed-booking.dto';
-import { encodeSavedBookings } from '../../src/testing/test-booking';
 import { TEST_SHOP } from '../../src/testing/test-shop';
 import { servedEnvironment } from './served-environment';
 
@@ -49,13 +47,6 @@ export function toManagedBooking(route: Route, changes: Partial<ManagedBooking> 
     canChange: true,
     ...changes,
   };
-}
-
-/** Saves bookings to the device as the app does, before the page's scripts run. */
-export async function saveBookings(page: Page, savedConfirmations: BookingConfirmation[]): Promise<void> {
-  await page.addInitScript((value: string): void => {
-    localStorage.setItem('ttb-booking', value);
-  }, encodeSavedBookings(savedConfirmations));
 }
 
 /**

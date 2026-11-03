@@ -99,7 +99,10 @@ export const openBookedPage: FunctionalEffect = createEffect(
     actions$.pipe(
       ofType(BookingActions.BookingRequestSuccess),
       tap(({ bookingConfirmation }: { bookingConfirmation: BookingConfirmation; }): void => {
-        const managePageState: ManagePageState = { isJustBooked: true };
+        const managePageState: ManagePageState = {
+          isJustBooked: true,
+          manageToken: bookingConfirmation.manageToken,
+        };
         void router.navigateByUrl(toManagePath(bookingConfirmation.id), { state: managePageState });
       }),
     ),

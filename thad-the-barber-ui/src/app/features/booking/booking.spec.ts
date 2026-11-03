@@ -1,7 +1,7 @@
 import { NO_ERRORS_SCHEMA, Signal, WritableSignal, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute, ParamMap, Router, convertToParamMap, provideRouter } from '@angular/router';
+import { ActivatedRoute, Navigation, ParamMap, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { provideEffects } from '@ngrx/effects';
 import { Action, ActionsSubject, Store, provideStore } from '@ngrx/store';
 import { BehaviorSubject } from 'rxjs';
@@ -21,6 +21,7 @@ import { Booking } from './booking';
 import { BookingConfirmation } from './dtos/booking-confirmation.dto';
 import { BookingForm } from './models/booking-form.model';
 import { BookingStep } from './models/booking-step.model';
+import { ReschedulePageState } from './models/reschedule-page-state.model';
 import * as BookingActions from './state/booking.actions';
 import { openUpcomingDays } from './state/booking.effects';
 import { bookingFeature } from './state/booking.feature';
@@ -82,10 +83,10 @@ describe(
       store = TestBed.inject<Store<AppState>>(Store);
     });
 
-    /** Opens the page as after a reload, with `savedConfirmations` on this device; with `bookingId`, to move it. */
-    function openPage(savedConfirmations: BookingConfirmation[] = [], bookingId?: string): void {
+    /** Opens the page; with `bookingId`, to move it, handed `reschedulePageState` as the manage page does. */
+    function openPage(bookingId?: string, reschedulePageState: ReschedulePageState = {}): void {
       store.dispatch(ShopActions.ShopInfoRequestSuccess({ shopInfo: TEST_SHOP }));
-      store.dispatch(BookingActions.SavedConfirmationsAdopt({ savedConfirmations }));
+      handOver(reschedulePageState);
       routeParams.next(convertToParamMap(bookingId ? { id: bookingId } : {}));
       fixture = TestBed.createComponent(Booking);
       fixture.detectChanges();
@@ -97,6 +98,11 @@ describe(
       TestBed.inject(ActionsSubject).subscribe((action: Action): void => {
         dispatched.push(action);
       });
+    }
+
+    function handOver(reschedulePageState: ReschedulePageState): void {
+      vi.spyOn(TestBed.inject(Router), 'currentNavigation')
+        .mockReturnValue({ extras: { state: reschedulePageState } } as unknown as Navigation);
     }
 
     /** Picks today, then `startAt`, one after the other as the customer does. */
@@ -297,22 +303,11 @@ describe(
     );
 
     it(
-      'says there is an upcoming booking, with no time, and links to the list of them',
+      "links anyone already booked to Square's booking site",
       (): void => {
-        openPage([testConfirmationIn(1, 'made-up-tomorrow')]);
+        openPage();
 
-        expect(byTestId('upcoming-booking')?.querySelector('[data-testid="notice-link"]')?.getAttribute('href'))
-          .toBe('/book/manage');
-        expect(byTestId('upcoming-booking')?.textContent).not.toMatch(/\d:\d\d/);
-      },
-    );
-
-    it(
-      'says nothing when no booking is kept or every kept one has started',
-      (): void => {
-        openPage([testConfirmationIn(-1, 'made-up-yesterday')]);
-
-        expect(byTestId('upcoming-booking')).toBeNull();
+        expect(byTestId('manage-bookings-link')?.getAttribute('href')).toBe(TEST_SHOP.squareBookingSiteUrl);
       },
     );
 
@@ -320,23 +315,24 @@ describe(
       'moving a booking (/book/manage/{id}/reschedule)',
       (): void => {
         const booked: BookingConfirmation = testConfirmationIn(3, 'made-up-booking');
+        const bookedPageState: ReschedulePageState = { manageToken: booked.manageToken, startAt: booked.startAt };
 
         it(
-          'needs no details and shows no upcoming-booking notice, so it can confirm once a time is picked',
+          'needs no details and has no link to Square, so it can confirm once a time is picked',
           (): void => {
-            openPage([booked], booked.id);
+            openPage(booked.id, bookedPageState);
             pick(SECOND_TIME);
 
             expect(page.isRescheduling()).toBe(true);
-            expect(byTestId('upcoming-booking')).toBeNull();
+            expect(byTestId('manage-bookings-link')).toBeNull();
             expect(page.canConfirm()).toBe(true);
           },
         );
 
         it(
-          'moves it with its saved token, and never sends a new booking',
+          'moves it with the token the manage page handed over, and never sends a new booking',
           (): void => {
-            openPage([booked], booked.id);
+            openPage(booked.id, bookedPageState);
             pick(SECOND_TIME);
             page.confirm();
 
@@ -352,7 +348,7 @@ describe(
         it(
           'goes back to the booking with its token',
           (): void => {
-            openPage([booked], booked.id);
+            openPage(booked.id, bookedPageState);
             const navigateByUrl: ReturnType<typeof vi.spyOn> =
               vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
 
@@ -369,9 +365,10 @@ describe(
           'starts over for another booking when the router reuses the page, using that booking’s own token',
           (): void => {
             const otherBooked: BookingConfirmation = testConfirmationIn(4, 'made-up-other-booking');
-            openPage([booked, otherBooked], booked.id);
+            openPage(booked.id, bookedPageState);
             pick(SECOND_TIME);
 
+            handOver({ manageToken: otherBooked.manageToken, startAt: otherBooked.startAt });
             routeParams.next(convertToParamMap({ id: otherBooked.id }));
             expect(page.bookingForm.controls.date.value).toBeNull();
             expect(page.openStep()).toBe(BookingStep.Day);
@@ -392,7 +389,7 @@ describe(
         it(
           "says the booking can't be found, with no form, without its token",
           (): void => {
-            openPage([], 'made-up-unknown-booking');
+            openPage('made-up-unknown-booking');
 
             expect(byTestId('reschedule-not-found')).not.toBeNull();
             expect((fixture.nativeElement as HTMLElement).querySelector('form')).toBeNull();

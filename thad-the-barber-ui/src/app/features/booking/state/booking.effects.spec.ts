@@ -227,7 +227,7 @@ describe(
     });
 
     it(
-      'passes on the made booking and opens its page as just booked',
+      'passes on the made booking and opens its page as just booked, handing over its token',
       (): void => {
         actions$.next(BookingActions.BookingRequest({ bookingRequest }));
         response.next(confirmation);
@@ -236,7 +236,7 @@ describe(
         actions$.next(BookingActions.BookingRequestSuccess({ bookingConfirmation: confirmation }));
         expect(navigateByUrl).toHaveBeenCalledWith(
           '/book/manage/made-up-booking',
-          { state: { isJustBooked: true } },
+          { state: { isJustBooked: true, manageToken: confirmation.manageToken } },
         );
       },
     );

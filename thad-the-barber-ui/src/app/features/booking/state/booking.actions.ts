@@ -11,8 +11,6 @@ export enum BookingActionTypes {
   BookingPageOpen = '[Booking Page] Opened',
   BookingRequest = '[Booking Page] Booking Requested',
   RescheduleRequest = '[Booking Page] Reschedule Requested',
-  SavedConfirmationsAdopt = '[Booking Tabs] Saved Confirmations Adopted',
-  SavedConfirmationRemove = '[Manage Booking Page] Saved Confirmation Removed',
   AvailabilityRequestSuccess = '[Booking API] Availability Loaded',
   AvailabilityRequestFailure = '[Booking API] Availability Load Failed',
   BookingRequestSuccess = '[Booking API] Booking Made',
@@ -51,20 +49,6 @@ export const RescheduleRequest = createAction(
   }>(),
 );
 
-/** Replaces this tab's list with the one another tab saved. */
-// eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
-export const SavedConfirmationsAdopt = createAction(
-  BookingActionTypes.SavedConfirmationsAdopt,
-  props<{ savedConfirmations: BookingConfirmation[]; }>(),
-);
-
-/** A cancelled booking leaves this device's list, if it's there; opened links aren't saved. */
-// eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
-export const SavedConfirmationRemove = createAction(
-  BookingActionTypes.SavedConfirmationRemove,
-  props<{ bookingId: string; }>(),
-);
-
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
 export const AvailabilityRequestSuccess = createAction(
   BookingActionTypes.AvailabilityRequestSuccess,
@@ -76,7 +60,6 @@ export const AvailabilityRequestFailure = createAction(
   BookingActionTypes.AvailabilityRequestFailure,
 );
 
-/** Adds the booking to this device's list, kept until it starts (BR-22), and opens its page (`openBookedPage`). */
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
 export const BookingRequestSuccess = createAction(
   BookingActionTypes.BookingRequestSuccess,
@@ -90,7 +73,6 @@ export const BookingRequestFailure = createAction(
   props<{ notice: Notice | null; takenStartAt: string | null; }>(),
 );
 
-/** Moves the booking in this device's list, if it's there, and goes back to its page (`returnToMovedBooking`). */
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
 export const RescheduleRequestSuccess = createAction(
   BookingActionTypes.RescheduleRequestSuccess,

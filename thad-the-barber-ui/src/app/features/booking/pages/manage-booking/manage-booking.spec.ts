@@ -2,30 +2,28 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Action, ActionsSubject, Store, provideStore } from '@ngrx/store';
+import { Store, provideStore } from '@ngrx/store';
 import { Confirmation, ConfirmationService, MessageService, ToastMessageOptions } from 'primeng/api';
 import { Observable, Subject } from 'rxjs';
 import { Mock } from 'vitest';
-import { testConfirmationIn } from '../../../../../testing/test-booking';
 import { TEST_SHOP } from '../../../../../testing/test-shop';
 import { NoticeMessage } from '../../../../shared/components/notice-message/notice-message';
 import { ProblemCode } from '../../../../shared/models/problem-code.model';
 import { AppState } from '../../../../store/app.state';
 import * as ShopActions from '../../../shop/state/shop.actions';
 import { shopFeature } from '../../../shop/state/shop.feature';
-import { BookingConfirmation } from '../../dtos/booking-confirmation.dto';
 import { ManagedBooking } from '../../dtos/managed-booking.dto';
+import { ManagePageState } from '../../models/manage-page-state.model';
 import { BookingService } from '../../services/booking.service';
-import * as BookingActions from '../../state/booking.actions';
-import { bookingFeature } from '../../state/booking.feature';
 import { ManageBooking } from './manage-booking';
 
 const BOOKING_ID: string = 'made-up-booking';
-const savedTomorrow: BookingConfirmation = testConfirmationIn(1, BOOKING_ID);
+const TOMORROW: string = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+const justBooked: ManagePageState = { isJustBooked: true, manageToken: 'made-up-booked-token' };
 
 const upcoming: ManagedBooking = {
   id: BOOKING_ID,
-  startAt: savedTomorrow.startAt,
+  startAt: TOMORROW,
   isCancelled: false,
   canChange: true,
 };
@@ -39,7 +37,6 @@ const cancelled: ManagedBooking = {
 interface PageSetup {
   fragment?: string | null;
   navigationState?: object | null;
-  savedConfirmations?: BookingConfirmation[];
 }
 
 describe(
@@ -52,7 +49,6 @@ describe(
     let toasts: ToastMessageOptions[];
     let cancelTokens: string[];
     let cancelResponses: Subject<ManagedBooking>[];
-    let dispatched: Action[];
 
     function getBooking(_id: string, manageToken: string): Observable<ManagedBooking> {
       const response: Subject<ManagedBooking> = new Subject<ManagedBooking>();
@@ -71,7 +67,6 @@ describe(
     async function openPage({
       fragment = 't=made-up-link-token',
       navigationState = null,
-      savedConfirmations = [],
     }: PageSetup = {}): Promise<void> {
       TestBed.configureTestingModule({
         providers: [
@@ -79,7 +74,6 @@ describe(
           ConfirmationService,
           provideStore({
             [shopFeature.name]: shopFeature.reducer,
-            [bookingFeature.name]: bookingFeature.reducer,
           }),
           { provide: BookingService, useValue: { getBooking, cancelBooking } },
           { provide: ActivatedRoute, useValue: { snapshot: { fragment } } },
@@ -109,10 +103,6 @@ describe(
       await TestBed.compileComponents();
       const store: Store<AppState> = TestBed.inject<Store<AppState>>(Store);
       store.dispatch(ShopActions.ShopInfoRequestSuccess({ shopInfo: TEST_SHOP }));
-      store.dispatch(BookingActions.SavedConfirmationsAdopt({ savedConfirmations }));
-      TestBed.inject(ActionsSubject).subscribe((action: Action): void => {
-        dispatched.push(action);
-      });
       fixture = TestBed.createComponent(ManageBooking);
       fixture.componentRef.setInput('id', BOOKING_ID);
       fixture.detectChanges();
@@ -139,7 +129,6 @@ describe(
       toasts = [];
       cancelTokens = [];
       cancelResponses = [];
-      dispatched = [];
     });
 
     it(
@@ -170,15 +159,6 @@ describe(
     );
 
     it(
-      'uses the token saved on this device when opened from the list',
-      async (): Promise<void> => {
-        await openPage({ fragment: null, savedConfirmations: [savedTomorrow] });
-
-        expect(tokensSent).toEqual([savedTomorrow.manageToken]);
-      },
-    );
-
-    it(
       "shows the booking as not found, without asking the API, when there's no token",
       async (): Promise<void> => {
         await openPage({ fragment: null });
@@ -190,20 +170,16 @@ describe(
     );
 
     it(
-      'right after booking, shows it from the device at once, with the link to keep first, and still loads it',
+      'right after booking, loads it with the handed-over token and shows the link to keep first',
       async (): Promise<void> => {
-        await openPage({
-          fragment: null,
-          navigationState: { isJustBooked: true },
-          savedConfirmations: [savedTomorrow],
-        });
+        await openPage({ fragment: null, navigationState: justBooked });
+        respond(upcoming);
 
-        expect(tokensSent).toEqual([savedTomorrow.manageToken]);
-        expect(byTestId('manage-loading')).toBeNull();
+        expect(tokensSent).toEqual(['made-up-booked-token']);
         expect(byTestId('booking-confirmation')).not.toBeNull();
         expect(byTestId('appointment-time')?.textContent).toBeTruthy();
         expect((byTestId('manage-link') as HTMLInputElement | null)?.value)
-          .toBe(`${window.location.origin}/book/manage/made-up-booking#t=${savedTomorrow.manageToken}`);
+          .toBe(`${window.location.origin}/book/manage/made-up-booking#t=made-up-booked-token`);
         expect(byTestId('copy-link')).not.toBeNull();
         expect(byTestId('add-to-calendar')).not.toBeNull();
         expect(byTestId('booking-status')).toBeNull();
@@ -211,34 +187,13 @@ describe(
     );
 
     it(
-      'replaces the saved booking with what the API says, since a reload or Back restores the just-booked state',
+      'shows what the API says when a reload or Back restores the just-booked state',
       async (): Promise<void> => {
-        await openPage({
-          fragment: null,
-          navigationState: { isJustBooked: true },
-          savedConfirmations: [savedTomorrow],
-        });
-        respond({
-          ...upcoming,
-          isCancelled: true,
-          canChange: false,
-        });
+        await openPage({ fragment: null, navigationState: justBooked });
+        respond(cancelled);
 
         expect(byTestId('booking-status')).not.toBeNull();
         expect(byTestId('booking-confirmation')).toBeNull();
-      },
-    );
-
-    it(
-      'asks the API when the booking it was opened as just booked has since started',
-      async (): Promise<void> => {
-        await openPage({
-          fragment: null,
-          navigationState: { isJustBooked: true },
-          savedConfirmations: [testConfirmationIn(-1, BOOKING_ID)],
-        });
-
-        expect(tokensSent).toEqual([testConfirmationIn(-1, BOOKING_ID).manageToken]);
       },
     );
 
@@ -396,11 +351,8 @@ describe(
         expect(byTestId('cancel-booking')).not.toBeNull();
 
         TestBed.resetTestingModule();
-        await openPage({
-          fragment: null,
-          navigationState: { isJustBooked: true },
-          savedConfirmations: [savedTomorrow],
-        });
+        await openPage({ fragment: null, navigationState: justBooked });
+        respond(upcoming);
 
         expect(byTestId('reschedule')).not.toBeNull();
         expect(byTestId('cancel-booking')).not.toBeNull();
@@ -422,7 +374,7 @@ describe(
     );
 
     it(
-      'cancels with the token once confirmed: the page shows it cancelled, a toast says so, and the device drops it',
+      'cancels with the token once confirmed: the page shows it cancelled and a toast says so',
       async (): Promise<void> => {
         const asked: () => Confirmation | null = await openUpcoming();
 
@@ -436,7 +388,6 @@ describe(
         expect(byTestId('booking-status')).not.toBeNull();
         expect(byTestId('cancel-booking')).toBeNull();
         expect(toasts).toEqual([{ severity: 'success', summary: 'Appointment cancelled' }]);
-        expect(dispatched).toContainEqual(BookingActions.SavedConfirmationRemove({ bookingId: BOOKING_ID }));
       },
     );
 

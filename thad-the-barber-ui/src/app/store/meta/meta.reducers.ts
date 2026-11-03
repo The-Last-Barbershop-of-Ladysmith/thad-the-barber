@@ -1,17 +1,8 @@
 import { ActionReducer, MetaReducer } from '@ngrx/store';
 import { Keys, localStorageSync } from 'ngrx-store-localstorage';
-import { bookingFeatureKey } from '../../features/booking/state/booking.feature';
-import { toKeptConfirmations } from '../../features/booking/utils/saved-confirmation.utils';
 import { homeFeatureKey } from '../../features/home/state/home.feature';
 import { decodeBase64, encodeBase64 } from '../../shared/utils/base64.utils';
 import { shopFeatureKey } from '../../features/shop/state/shop.feature';
-
-/** Prefix for each slice's localStorage entry: `ttb-home`, `ttb-shop`, `ttb-booking`. */
-const STORAGE_PREFIX: string = 'ttb';
-
-export function toStorageKey(sliceKey: string): string {
-  return `${STORAGE_PREFIX}-${sliceKey}`;
-}
 
 /**
  * Slices persisted to localStorage, base64-encoded, each with the fields it keeps. Home clears its own with its `State
@@ -35,16 +26,6 @@ const keys: Keys = [
       filter: ['shopInfo'],
     },
   },
-  // Only the bookings made on this device, without name or phone, each dropped on load once it has started (BR-22);
-  // availability must be fresh.
-  {
-    [bookingFeatureKey]: {
-      encrypt: encodeBase64,
-      decrypt: decodeBase64,
-      filter: ['savedConfirmations'],
-      deserialize: toKeptConfirmations,
-    },
-  },
 ];
 
 /**
@@ -57,7 +38,7 @@ export function localStorageSyncReducer<State>(reducer: ActionReducer<State>): A
     rehydrate: true,
     restoreDates: false,
     checkStorageAvailability: true,
-    storageKeySerializer: toStorageKey,
+    storageKeySerializer: (sliceKey: string): string => `ttb-${sliceKey}`,
   })(reducer);
 }
 

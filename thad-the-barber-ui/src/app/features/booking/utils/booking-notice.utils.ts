@@ -3,17 +3,6 @@ import { getProblemCode } from '../../../shared/utils/problem.utils';
 import { Notice } from '../../../shared/models/notice.model';
 import { NoticeSeverity } from '../../../shared/models/notice-severity.model';
 
-/**
- * The booking page's reminder of bookings kept on this device (BR-22). No times, since there may be several; the link
- * lists them. Whether a text confirmation goes out waits on #89, so the page doesn't promise one.
- */
-export const UPCOMING_BOOKING_NOTICE: Notice = {
-  severity: NoticeSeverity.Success,
-  text: 'You have an upcoming booking.',
-  link: { label: 'See your bookings', path: '/book/manage' },
-  canRetry: false,
-};
-
 export const AVAILABILITY_FAILED_NOTICE: Notice = {
   severity: NoticeSeverity.Error,
   text: 'We couldn’t load the open times.',
