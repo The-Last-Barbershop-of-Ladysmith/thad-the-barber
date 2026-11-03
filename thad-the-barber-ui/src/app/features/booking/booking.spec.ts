@@ -1,7 +1,7 @@
 import { NO_ERRORS_SCHEMA, Signal, WritableSignal, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute, ParamMap, convertToParamMap, provideRouter } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { provideEffects } from '@ngrx/effects';
 import { Action, ActionsSubject, Store, provideStore } from '@ngrx/store';
 import { BehaviorSubject } from 'rxjs';
@@ -20,8 +20,6 @@ import { shopFeature } from '../shop/state/shop.feature';
 import { Booking } from './booking';
 import { BookingConfirmation } from './dtos/booking-confirmation.dto';
 import { BookingForm } from './models/booking-form.model';
-import { BookingStep } from './models/booking-step.model';
-import { StepView } from './models/step-view.model';
 import * as BookingActions from './state/booking.actions';
 import { openUpcomingDays } from './state/booking.effects';
 import { bookingFeature } from './state/booking.feature';
@@ -30,10 +28,8 @@ import { bookingFeature } from './state/booking.feature';
 interface BookingPage {
   bookingForm: BookingForm;
   confirm: () => void;
-  openStep: () => BookingStep;
-  showStep: (step: BookingStep) => void;
-  changeFromReview: (step: BookingStep) => void;
-  stepViews: () => StepView[];
+  returnToBooking: () => void;
+  canConfirm: Signal<boolean>;
   hasUnconfirmedPick: Signal<boolean>;
   isRescheduling: Signal<boolean>;
 }
@@ -44,10 +40,10 @@ const TODAY: string = toIsoDateIn(TEST_SHOP.timeZone, new Date());
 const FIRST_TIME: string = `${TODAY}T20:00:00Z`;
 const SECOND_TIME: string = `${TODAY}T20:30:00Z`;
 
-const takenTimeNotice: Notice = {
-  severity: NoticeSeverity.Warn,
-  text: 'Made-up taken time.',
-  canRetry: false,
+const failedNotice: Notice = {
+  severity: NoticeSeverity.Error,
+  text: 'Made-up failure.',
+  canRetry: true,
 };
 
 describe(
@@ -76,7 +72,7 @@ describe(
           { provide: ActivatedRoute, useValue: { paramMap: routeParams } },
         ],
       });
-      // Only the page's own messages render; the steps and the layout have their own specs.
+      // Only the page's own markup renders; the day, time and details components have their own specs.
       TestBed.overrideComponent(
         Booking,
         { set: { imports: [ReactiveFormsModule, NoticeMessage], schemas: [NO_ERRORS_SCHEMA] } },
@@ -92,6 +88,9 @@ describe(
       fixture = TestBed.createComponent(Booking);
       fixture.detectChanges();
       page = fixture.componentInstance as unknown as BookingPage;
+      store.dispatch(BookingActions.AvailabilityRequestSuccess({
+        availableDays: [{ date: TODAY, times: [FIRST_TIME, SECOND_TIME] }],
+      }));
       dispatched = [];
       TestBed.inject(ActionsSubject).subscribe((action: Action): void => {
         dispatched.push(action);
@@ -129,8 +128,9 @@ describe(
     it(
       'starts the booking over each time it opens, and loads the next 31 days once the shop is known',
       (): void => {
-        store.dispatch(BookingActions.BookingRequestFailure({ notice: takenTimeNotice }));
-        openPage();
+        store.dispatch(BookingActions.BookingRequestFailure({ notice: failedNotice, takenStartAt: null }));
+        store.dispatch(ShopActions.ShopInfoRequestSuccess({ shopInfo: TEST_SHOP }));
+        fixture = TestBed.createComponent(Booking);
 
         expect(store.selectSignal(bookingFeature.selectSubmitNotice)()).toBeNull();
         expect(store.selectSignal(bookingFeature.selectAvailabilityView)()).toEqual(testFirstBlock());
@@ -157,13 +157,28 @@ describe(
     );
 
     it(
+      'can confirm once a day, a time, a name and a phone are in',
+      (): void => {
+        openPage();
+        expect(page.canConfirm()).toBe(false);
+
+        pick(FIRST_TIME);
+        expect(page.canConfirm()).toBe(false);
+        page.bookingForm.controls.name.setValue('Test Customer');
+        page.bookingForm.controls.phone.setValue('(555) 010-0199');
+
+        expect(page.canConfirm()).toBe(true);
+      },
+    );
+
+    it(
       'sends the booking with an E.164 phone, retries it with the same key, and a changed time gets a new one',
       (): void => {
         openPage();
         fillInAndConfirm(FIRST_TIME);
-        store.dispatch(BookingActions.BookingRequestFailure({ notice: takenTimeNotice }));
+        store.dispatch(BookingActions.BookingRequestFailure({ notice: failedNotice, takenStartAt: null }));
         page.confirm();
-        store.dispatch(BookingActions.BookingRequestFailure({ notice: takenTimeNotice }));
+        store.dispatch(BookingActions.BookingRequestFailure({ notice: failedNotice, takenStartAt: null }));
         page.bookingForm.controls.startAt.setValue(SECOND_TIME);
         page.confirm();
 
@@ -199,44 +214,55 @@ describe(
     );
 
     it(
-      'drops a taken time and opens the time step, keeping the notice that follows',
+      'drops a taken time once it comes off the open times, keeping the day and the notice',
       (): void => {
         openPage();
         fillInAndConfirm(FIRST_TIME);
-        store.dispatch(BookingActions.BookingTimeTaken());
-        store.dispatch(BookingActions.BookingRequestFailure({ notice: takenTimeNotice }));
+        store.dispatch(BookingActions.BookingRequestFailure({ notice: failedNotice, takenStartAt: FIRST_TIME }));
 
+        expect(page.bookingForm.controls.date.value).toBe(TODAY);
         expect(page.bookingForm.controls.startAt.value).toBeNull();
-        expect(page.openStep()).toBe(BookingStep.Time);
-        expect(store.selectSignal(bookingFeature.selectSubmitNotice)()).toEqual(takenTimeNotice);
+        expect(store.selectSignal(bookingFeature.selectSubmitNotice)()).toEqual(failedNotice);
       },
     );
 
     it(
-      'drops the picked day and opens the date step when reloaded days leave it with none, keeping the notice',
+      'drops the picked day once it has no open times left',
       (): void => {
         openPage();
-        fillInAndConfirm(FIRST_TIME);
-        store.dispatch(BookingActions.BookingRequestFailure({ notice: takenTimeNotice }));
+        pick(FIRST_TIME);
         store.dispatch(BookingActions.AvailabilityRequestSuccess({
           availableDays: [{ date: '2099-01-01', times: ['2099-01-01T20:00:00Z'] }],
         }));
 
         expect(page.bookingForm.controls.date.value).toBeNull();
-        expect(page.openStep()).toBe(BookingStep.Date);
-        expect(store.selectSignal(bookingFeature.selectSubmitNotice)()).toEqual(takenTimeNotice);
+        expect(page.bookingForm.controls.startAt.value).toBeNull();
       },
     );
 
     it(
-      'clears a failure notice once the customer changes anything',
+      "clears the last day's time when another day is picked, and keeps it when the same day is picked again",
       (): void => {
         openPage();
-        fillInAndConfirm(FIRST_TIME);
-        store.dispatch(BookingActions.BookingRequestFailure({ notice: takenTimeNotice }));
-        page.bookingForm.controls.name.setValue('Other Customer');
+        pick(FIRST_TIME);
 
-        expect(store.selectSignal(bookingFeature.selectSubmitNotice)()).toBeNull();
+        page.bookingForm.controls.date.setValue(TODAY);
+        expect(page.bookingForm.controls.startAt.value).toBe(FIRST_TIME);
+        page.bookingForm.controls.date.setValue('2099-01-01');
+        expect(page.bookingForm.controls.startAt.value).toBeNull();
+      },
+    );
+
+    it(
+      'moves focus to the times once a day is picked',
+      async (): Promise<void> => {
+        openPage();
+
+        page.bookingForm.controls.date.setValue(TODAY);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(document.activeElement?.id).toBe('time-heading');
       },
     );
 
@@ -250,60 +276,6 @@ describe(
         expect(sentBookings()).toEqual([]);
         expect(byTestId('bot-check-failed')?.querySelector('[data-testid="notice-booking-site"]')?.getAttribute('href'))
           .toBe(TEST_SHOP.squareBookingSiteUrl);
-      },
-    );
-
-    it(
-      'opens the time step once a day is picked, then the details once a time is',
-      (): void => {
-        openPage();
-
-        page.bookingForm.controls.date.setValue(TODAY);
-        expect(page.openStep()).toBe(BookingStep.Time);
-        page.bookingForm.controls.startAt.setValue(FIRST_TIME);
-        expect(page.openStep()).toBe(BookingStep.Details);
-      },
-    );
-
-    it(
-      "won't open a step before the ones above it are done",
-      (): void => {
-        openPage();
-
-        page.showStep(BookingStep.Review);
-        expect(page.openStep()).toBe(BookingStep.Date);
-        pick(FIRST_TIME);
-        page.showStep(BookingStep.Review);
-        expect(page.openStep()).toBe(BookingStep.Details);
-      },
-    );
-
-    it(
-      'comes back to review after a time is changed from it',
-      (): void => {
-        openPage();
-        page.bookingForm.controls.name.setValue('Test Customer');
-        page.bookingForm.controls.phone.setValue('(555) 010-0199');
-        pick(FIRST_TIME);
-        page.showStep(BookingStep.Review);
-
-        page.changeFromReview(BookingStep.Time);
-        expect(page.openStep()).toBe(BookingStep.Time);
-        page.bookingForm.controls.startAt.setValue(SECOND_TIME);
-        expect(page.openStep()).toBe(BookingStep.Review);
-      },
-    );
-
-    it(
-      "clears the last day's time when another day is picked",
-      (): void => {
-        openPage();
-        pick(FIRST_TIME);
-
-        page.bookingForm.controls.date.setValue('2099-01-01');
-
-        expect(page.bookingForm.controls.startAt.value).toBeNull();
-        expect(page.openStep()).toBe(BookingStep.Time);
       },
     );
 
@@ -340,37 +312,21 @@ describe(
       },
     );
 
-    it(
-      'shows a booking saved in another tab while the page is open',
-      (): void => {
-        openPage();
-        store.dispatch(BookingActions.SavedConfirmationsAdopt({
-          savedConfirmations: [testConfirmationIn(1, 'made-up-other-tab')],
-        }));
-
-        expect(byTestId('upcoming-booking')).not.toBeNull();
-      },
-    );
-
     describe(
       'moving a booking (/book/manage/{id}/reschedule)',
       (): void => {
         const booked: BookingConfirmation = testConfirmationIn(3, 'made-up-booking');
 
         it(
-          'asks for a date and time, then review, with no details step and no upcoming-booking notice',
+          'asks for no details and shows no upcoming-booking notice, and can confirm once a time is picked',
           (): void => {
             openPage([booked], booked.id);
             pick(SECOND_TIME);
 
             expect(page.isRescheduling()).toBe(true);
-            expect(page.stepViews().map((stepView: StepView): BookingStep => stepView.step)).toEqual([
-              BookingStep.Date,
-              BookingStep.Time,
-              BookingStep.Review,
-            ]);
-            expect(page.openStep()).toBe(BookingStep.Review);
+            expect((fixture.nativeElement as HTMLElement).querySelector('#details-heading')).toBeNull();
             expect(byTestId('upcoming-booking')).toBeNull();
+            expect(page.canConfirm()).toBe(true);
           },
         );
 
@@ -391,6 +347,22 @@ describe(
         );
 
         it(
+          'goes back to the booking with its token',
+          (): void => {
+            openPage([booked], booked.id);
+            const navigateByUrl: ReturnType<typeof vi.spyOn> =
+              vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+
+            page.returnToBooking();
+
+            expect(navigateByUrl).toHaveBeenCalledWith(
+              '/book/manage/made-up-booking',
+              { state: { manageToken: booked.manageToken } },
+            );
+          },
+        );
+
+        it(
           'starts over for another booking when the router reuses the page, using that booking’s own token',
           (): void => {
             const otherBooked: BookingConfirmation = testConfirmationIn(4, 'made-up-other-booking');
@@ -399,7 +371,9 @@ describe(
 
             routeParams.next(convertToParamMap({ id: otherBooked.id }));
             expect(page.bookingForm.controls.date.value).toBeNull();
-            expect(page.openStep()).toBe(BookingStep.Date);
+            store.dispatch(BookingActions.AvailabilityRequestSuccess({
+              availableDays: [{ date: TODAY, times: [FIRST_TIME, SECOND_TIME] }],
+            }));
             pick(SECOND_TIME);
             page.confirm();
 

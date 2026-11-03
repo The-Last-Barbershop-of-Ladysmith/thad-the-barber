@@ -193,7 +193,6 @@ describe(
       TestBed.configureTestingModule({
         providers: [
           provideRouter([]),
-          provideStore({ [bookingFeature.name]: bookingFeature.reducer }),
           { provide: Actions, useValue: new Actions(actions$) },
           {
             provide: BookingService,
@@ -214,8 +213,6 @@ describe(
         ],
       });
       navigateByUrl = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
-      TestBed.inject<Store<AppState>>(Store)
-        .dispatch(BookingActions.SetAvailabilityView({ availabilityView: february }));
       for (const effect of [
         requestBooking,
         openBookedPage,
@@ -245,22 +242,19 @@ describe(
     );
 
     it(
-      'drops a taken time, reloads the days, then says why',
+      'says why a taken time failed and passes it on to come off the open times',
       (): void => {
         actions$.next(BookingActions.BookingRequest({ bookingRequest }));
         failWith(409, ProblemCode.SlotUnavailable);
 
-        expect(emitted.map((action: Action): string => action.type)).toEqual([
-          BookingActions.BookingTimeTaken.type,
-          BookingActions.SetAvailabilityView.type,
-          BookingActions.BookingRequestFailure.type,
+        expect(emitted).toEqual([
+          BookingActions.BookingRequestFailure({
+            notice: toBookingNotice(
+              new HttpErrorResponse({ status: 409, error: { code: ProblemCode.SlotUnavailable } }),
+            ),
+            takenStartAt: bookingRequest.startAt,
+          }),
         ]);
-        expect(emitted[1]).toEqual(BookingActions.SetAvailabilityView({ availabilityView: february }));
-        expect(emitted.at(-1)).toEqual(BookingActions.BookingRequestFailure({
-          notice: toBookingNotice(
-            new HttpErrorResponse({ status: 409, error: { code: ProblemCode.SlotUnavailable } }),
-          ),
-        }));
       },
     );
 
@@ -271,7 +265,7 @@ describe(
         isBotCheckFailed.set(true);
         failWith(403, ProblemCode.BotCheckFailed);
 
-        expect(emitted).toEqual([BookingActions.BookingRequestFailure({ notice: null })]);
+        expect(emitted).toEqual([BookingActions.BookingRequestFailure({ notice: null, takenStartAt: null })]);
       },
     );
 
@@ -314,6 +308,7 @@ describe(
               new HttpErrorResponse({ status: 409, error: { code: ProblemCode.BookingStarted } }),
               RESCHEDULE_FAILED_NOTICE,
             ),
+            takenStartAt: null,
           }),
         ]);
         expect((emitted[0] as ReturnType<typeof BookingActions.RescheduleRequestFailure>).notice?.canRetry).toBe(false);
@@ -322,7 +317,7 @@ describe(
     );
 
     it(
-      'drops a taken time for a move as when booking, with a notice that offers no retry',
+      'passes on a taken time for a move as when booking, with a notice that offers no retry',
       (): void => {
         actions$.next(BookingActions.RescheduleRequest({
           bookingId: moved.id,
@@ -331,13 +326,10 @@ describe(
         }));
         failWith(409, ProblemCode.SlotUnavailable);
 
-        expect(emitted.map((action: Action): string => action.type)).toEqual([
-          BookingActions.BookingTimeTaken.type,
-          BookingActions.SetAvailabilityView.type,
-          BookingActions.RescheduleRequestFailure.type,
-        ]);
-        expect((emitted.at(-1) as ReturnType<typeof BookingActions.RescheduleRequestFailure>).notice?.canRetry)
-          .toBe(false);
+        const failure: ReturnType<typeof BookingActions.RescheduleRequestFailure> =
+          emitted[0] as ReturnType<typeof BookingActions.RescheduleRequestFailure>;
+        expect(failure.takenStartAt).toBe(moved.startAt);
+        expect(failure.notice?.canRetry).toBe(false);
       },
     );
   },

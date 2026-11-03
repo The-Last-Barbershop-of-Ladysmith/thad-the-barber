@@ -1,0 +1,41 @@
+.booking-form {
+  display: grid;
+  align-items: start;
+  gap: 1rem;
+
+  .booking-heading {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    text-transform: uppercase;
+
+    // Focused only by the page, after a day is picked, to bring the times into view.
+    &:focus {
+      outline: none;
+    }
+  }
+
+  // The label names the picked day and time, too long for one line on phones.
+  .confirm-booking {
+    white-space: normal;
+  }
+
+  .recaptcha-terms {
+    font-size: 0.75rem;
+    line-height: 1.4;
+    color: var(--p-surface-200);
+
+    a {
+      color: inherit;
+      text-decoration: underline;
+      text-underline-offset: 0.15em;
+    }
+  }
+}
+
+.back-to-booking {
+  align-self: flex-start;
+  padding-inline: 0;
+}

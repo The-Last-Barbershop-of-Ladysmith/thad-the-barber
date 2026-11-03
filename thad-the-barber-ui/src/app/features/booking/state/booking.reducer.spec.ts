@@ -24,7 +24,6 @@ const october: BookingState = {
   savedConfirmations: [saturday],
   submitStatus: RequestStatus.Idle,
   submitNotice: null,
-  idempotencyKey: null,
 };
 
 const failedNotice: Notice = {
@@ -162,31 +161,21 @@ describe(
     );
 
     it(
-      'keeps the key while the same booking is retried, and drops it and the notice when anything changes',
+      'shows why the booking failed, and takes a taken time off the open times, dropping a day left with none',
       (): void => {
-        const failed: BookingState = [
-          BookingActions.BookingRequest({
-            bookingRequest: {
-              startAt: '2026-10-03T20:00:00Z',
-              name: 'Test Customer',
-              phone: '+15550100199',
-              idempotencyKey: 'made-up-key',
-            },
-          }),
-          BookingActions.BookingRequestFailure({ notice: failedNotice }),
-        ].reduce(bookingReducer, october);
-        const changed: BookingState =
-          bookingReducer(failed, BookingActions.BookingDraftChange({ isNoticeKept: false }));
-        const pickDropped: BookingState =
-          bookingReducer(failed, BookingActions.BookingDraftChange({ isNoticeKept: true }));
+        const failed: BookingState = bookingReducer(
+          october,
+          BookingActions.BookingRequestFailure({ notice: failedNotice, takenStartAt: '2026-10-04T23:30:00Z' }),
+        );
 
-        expect(failed).toEqual(expect.objectContaining({
-          submitStatus: RequestStatus.Error,
-          submitNotice: failedNotice,
-          idempotencyKey: 'made-up-key',
-        }));
-        expect(changed).toEqual(expect.objectContaining({ submitNotice: null, idempotencyKey: null }));
-        expect(pickDropped).toEqual(expect.objectContaining({ submitNotice: failedNotice, idempotencyKey: null }));
+        expect(failed.submitStatus).toBe(RequestStatus.Error);
+        expect(failed.submitNotice).toEqual(failedNotice);
+        expect(failed.availableDays.map((availableDay: AvailableDay): string => availableDay.date))
+          .not.toContain('2026-10-04');
+        expect(bookingReducer(
+          october,
+          BookingActions.RescheduleRequestFailure({ notice: failedNotice, takenStartAt: null }),
+        ).availableDays).toEqual(availableDays);
       },
     );
 
@@ -197,7 +186,6 @@ describe(
           ...october,
           submitStatus: RequestStatus.Success,
           submitNotice: failedNotice,
-          idempotencyKey: 'made-up-key',
         };
 
         expect(bookingReducer(sent, BookingActions.BookingPageOpen())).toEqual(october);

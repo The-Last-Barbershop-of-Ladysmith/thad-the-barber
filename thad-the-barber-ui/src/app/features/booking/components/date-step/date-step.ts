@@ -78,7 +78,6 @@ interface MonthOptionGroup {
 })
 export class DateStep {
   readonly dateControl: InputSignal<FormControl<string | null>> = input.required<FormControl<string | null>>();
-  readonly startAtControl: InputSignal<FormControl<string | null>> = input.required<FormControl<string | null>>();
 
   protected readonly upcomingLabel: string = `Next ${MAX_DAYS_PER_AVAILABILITY_REQUEST} days`;
   protected readonly noOpenDaysNotice: Notice = NO_OPEN_DAYS_NOTICE;
@@ -220,12 +219,9 @@ export class DateStep {
     }
   }
 
-  // Another view's days don't include the picked day, so the time step would show a day with no times.
   private showView(availabilityView: AvailabilityView): void {
     this.isMonthPickerOpen.set(false);
-    // One form update for both: the time's change carries the day's.
-    this.dateControl().reset(null, { emitEvent: false });
-    this.startAtControl().reset();
+    this.dateControl().reset();
     this.store.dispatch(BookingActions.SetAvailabilityView({ availabilityView }));
   }
 

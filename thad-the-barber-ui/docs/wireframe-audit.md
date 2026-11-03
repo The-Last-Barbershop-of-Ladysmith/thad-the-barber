@@ -188,7 +188,7 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 | `subscribe` / `setPhone` / `phoneErr` | `SmsSignup` component + `HomeActions.SmsSignupRequest` → `subscribeToSms` effect → `SmsSignupService` | Mocked 400ms |
 | `slots()`, `available()`, `hash()`, `daysAhead`, `slotMinutes` (`book.html`) | `AvailabilityService` → `GET /api/bookings/availability` (#41); window from `shopFeature.selectBookingSettings` | Real Square availability; the mock pattern and `BOOKING_RULES` are gone |
 | Month nav, `canPrev` / `canNext` | `DateStep` view picker and arrows → `BookingActions.SetAvailabilityView` → `loadAvailability` effect (`?from=&to=`) | The view is the next 31 days or a month, limited to Square's booking window (#205) |
-| Day / time pick, `done`, `tried`, `missing[]` | The page's booking form + `utils/booking-steps.utils.ts` (open step, done and locked steps) | `missing[]` became the disabled Review/Confirm buttons (#207–#209) |
+| Day / time pick, `done`, `tried`, `missing[]` | The page's booking form (`canConfirm`) | `missing[]` became the disabled confirm button |
 | `confirm` | `Booking.confirm()` → `BookingService` → `POST /api/bookings` (#41); the page keeps the retry key, confirmation and notice | Error codes become inline `NoticeMessage`s (`toBookingNotice`) |
 | `ann`, `touchStart` / `touchEnd`, `goAnn` | Built into `p-carousel` | Removed |
 | `lb`, `stepLb`, `onKey` | Built into `p-galleria` | Removed |

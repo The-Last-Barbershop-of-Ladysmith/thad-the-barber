@@ -3,7 +3,6 @@ import { RequestStatus } from '../../../shared/models/request.models';
 import { AvailableDay } from '../dtos/available-day.dto';
 import { AvailabilityView } from '../models/availability-view.model';
 import { BookingConfirmation } from '../dtos/booking-confirmation.dto';
-import { BookingRequest } from '../dtos/booking-request.dto';
 import { ManagedBooking } from '../dtos/managed-booking.dto';
 import { Notice } from '../../../shared/models/notice.model';
 import { toSortedConfirmations } from '../utils/saved-confirmation.utils';
@@ -27,27 +26,10 @@ export const bookingReducer: ActionReducer<BookingState> = createReducer(
       ...state,
       submitStatus: RequestStatus.Idle,
       submitNotice: null,
-      idempotencyKey: null,
-    }),
-  ),
-  on(
-    BookingActions.BookingDraftChange,
-    (state: BookingState, { isNoticeKept }: { isNoticeKept: boolean; }): BookingState => ({
-      ...state,
-      submitNotice: isNoticeKept ? state.submitNotice : null,
-      idempotencyKey: null,
     }),
   ),
   on(
     BookingActions.BookingRequest,
-    (state: BookingState, { bookingRequest }: { bookingRequest: BookingRequest; }): BookingState => ({
-      ...state,
-      submitStatus: RequestStatus.Pending,
-      submitNotice: null,
-      idempotencyKey: bookingRequest.idempotencyKey,
-    }),
-  ),
-  on(
     BookingActions.RescheduleRequest,
     (state: BookingState): BookingState => ({
       ...state,
@@ -58,10 +40,19 @@ export const bookingReducer: ActionReducer<BookingState> = createReducer(
   on(
     BookingActions.BookingRequestFailure,
     BookingActions.RescheduleRequestFailure,
-    (state: BookingState, { notice }: { notice: Notice | null; }): BookingState => ({
+    (
+      state: BookingState,
+      { notice, takenStartAt }: { notice: Notice | null; takenStartAt: string | null; },
+    ): BookingState => ({
       ...state,
       submitStatus: RequestStatus.Error,
       submitNotice: notice,
+      availableDays: state.availableDays
+        .map((availableDay: AvailableDay): AvailableDay => ({
+          ...availableDay,
+          times: availableDay.times.filter((startAt: string): boolean => startAt !== takenStartAt),
+        }))
+        .filter((availableDay: AvailableDay): boolean => availableDay.times.length > 0),
     }),
   ),
   on(
@@ -69,7 +60,6 @@ export const bookingReducer: ActionReducer<BookingState> = createReducer(
     (state: BookingState, { bookingConfirmation }: { bookingConfirmation: BookingConfirmation; }): BookingState => ({
       ...state,
       submitStatus: RequestStatus.Success,
-      idempotencyKey: null,
       savedConfirmations: toSortedConfirmations([
         ...state.savedConfirmations.filter((savedConfirmation: BookingConfirmation): boolean =>
           savedConfirmation.id !== bookingConfirmation.id),

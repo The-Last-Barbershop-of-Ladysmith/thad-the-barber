@@ -28,7 +28,6 @@ describe(
     let fixture: ComponentFixture<DateStep>;
     let store: Store<AppState>;
     let dateControl: FormControl<string | null>;
-    let startAtControl: FormControl<string | null>;
     let dispatched: Action[];
 
     beforeEach((): void => {
@@ -47,10 +46,8 @@ describe(
         dispatched.push(action);
       });
       dateControl = new FormControl<string | null>(null);
-      startAtControl = new FormControl<string | null>('2026-11-01T20:00:00Z');
       fixture = TestBed.createComponent(DateStep);
       fixture.componentRef.setInput('dateControl', dateControl);
-      fixture.componentRef.setInput('startAtControl', startAtControl);
       fixture.detectChanges();
     });
 
@@ -202,7 +199,7 @@ describe(
     );
 
     it(
-      'clears the picked day and time when another availabilityView opens, since its days differ',
+      'clears the picked day when another view opens, since its days differ',
       (): void => {
         load(OPEN_DAYS);
         dateControl.setValue('2026-11-01');
@@ -210,7 +207,6 @@ describe(
         find('next-view')?.click();
 
         expect(dateControl.value).toBeNull();
-        expect(startAtControl.value).toBeNull();
       },
     );
 
@@ -228,12 +224,11 @@ describe(
     );
 
     it(
-      'keeps the picks when the month already showing is picked again',
+      'keeps the picked day when the month already showing is picked again',
       async (): Promise<void> => {
         const month: string = laterMonths()[0] ?? '';
         load(OPEN_DAYS, testMonthView(month));
         dateControl.setValue('2026-11-01');
-        startAtControl.setValue('2026-11-01T20:00:00Z');
 
         find('view-picker')?.click();
         fixture.detectChanges();
@@ -241,7 +236,6 @@ describe(
         find(`month-${month}`)?.click();
 
         expect(dateControl.value).toBe('2026-11-01');
-        expect(startAtControl.value).toBe('2026-11-01T20:00:00Z');
       },
     );
 

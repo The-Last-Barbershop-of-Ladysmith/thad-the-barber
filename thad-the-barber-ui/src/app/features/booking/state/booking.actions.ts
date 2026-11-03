@@ -9,7 +9,6 @@ import { Notice } from '../../../shared/models/notice.model';
 export enum BookingActionTypes {
   SetAvailabilityView = '[Booking Page] Set Availability View',
   BookingPageOpen = '[Booking Page] Opened',
-  BookingDraftChange = '[Booking Page] Draft Changed',
   BookingRequest = '[Booking Page] Booking Requested',
   RescheduleRequest = '[Booking Page] Reschedule Requested',
   SavedConfirmationsAdopt = '[Booking Tabs] Saved Confirmations Adopted',
@@ -18,7 +17,6 @@ export enum BookingActionTypes {
   AvailabilityRequestFailure = '[Booking API] Availability Load Failed',
   BookingRequestSuccess = '[Booking API] Booking Made',
   BookingRequestFailure = '[Booking API] Booking Failed',
-  BookingTimeTaken = '[Booking API] Booking Time Taken',
   RescheduleRequestSuccess = '[Booking API] Booking Moved',
   RescheduleRequestFailure = '[Booking API] Reschedule Failed',
 }
@@ -30,23 +28,12 @@ export const SetAvailabilityView = createAction(
   props<{ availabilityView: AvailabilityView; }>(),
 );
 
-/** Starts the booking or move over: no notice, no retry key, nothing sent, and loads the first days. */
+/** Starts the booking or move over: no notice, nothing sent, and loads the first days. */
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
 export const BookingPageOpen = createAction(
   BookingActionTypes.BookingPageOpen,
 );
 
-/**
- * Any field changed, so the next confirm is a new booking with a new key. The page keeps the notice when it drops a
- * pick itself (a taken time, a day left without times), since the notice says why.
- */
-// eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
-export const BookingDraftChange = createAction(
-  BookingActionTypes.BookingDraftChange,
-  props<{ isNoticeKept: boolean; }>(),
-);
-
-/** Sends the booking (`requestBooking`); a retry of the same attempt resends its `idempotencyKey`. */
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
 export const BookingRequest = createAction(
   BookingActionTypes.BookingRequest,
@@ -96,17 +83,11 @@ export const BookingRequestSuccess = createAction(
   props<{ bookingConfirmation: BookingConfirmation; }>(),
 );
 
-/** `notice` is null for a failed bot check, which has its own message. */
+/** `notice` is null for a failed bot check, which has its own message; `takenStartAt` comes off the open times. */
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
 export const BookingRequestFailure = createAction(
   BookingActionTypes.BookingRequestFailure,
-  props<{ notice: Notice | null; }>(),
-);
-
-/** The picked time was taken meanwhile: the page drops it and opens the time step, before the failure's notice. */
-// eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
-export const BookingTimeTaken = createAction(
-  BookingActionTypes.BookingTimeTaken,
+  props<{ notice: Notice | null; takenStartAt: string | null; }>(),
 );
 
 /** Moves the booking in this device's list, if it's there, and goes back to its page (`returnToMovedBooking`). */
@@ -116,10 +97,10 @@ export const RescheduleRequestSuccess = createAction(
   props<{ managedBooking: ManagedBooking; manageToken: string; }>(),
 );
 
-/** `notice` is null for a failed bot check, which has its own message. */
+/** `notice` is null for a failed bot check, which has its own message; `takenStartAt` comes off the open times. */
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
 export const RescheduleRequestFailure = createAction(
   BookingActionTypes.RescheduleRequestFailure,
-  props<{ notice: Notice | null; }>(),
+  props<{ notice: Notice | null; takenStartAt: string | null; }>(),
 );
 

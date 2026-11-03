@@ -182,7 +182,7 @@ test.describe(
     );
 
     test(
-      'moves the booking on the booking page (date, time, review), then returns to it with a toast',
+      'moves the booking on the booking page (day and time, no details), then returns to it with a toast',
       async ({ page }: { page: Page; }): Promise<void> => {
         const moves: Request[] = [];
         await page.route(isBookingActionRequest('reschedule'), async (route: Route): Promise<void> => {
@@ -196,7 +196,7 @@ test.describe(
         await expect(page).toHaveURL(/\/book\/manage\/made-up-booking\/reschedule$/);
         await page.getByTestId('date-list').locator('[role="button"]').first().click();
         await page.getByTestId('time-list').locator('[role="button"]').first().click();
-        await expect(page.getByTestId('change-name')).toHaveCount(0);
+        await expect(page.locator('#booking-name')).toHaveCount(0);
         await expectNoA11yViolations(page);
         await page.getByTestId('confirm-booking').click();
 

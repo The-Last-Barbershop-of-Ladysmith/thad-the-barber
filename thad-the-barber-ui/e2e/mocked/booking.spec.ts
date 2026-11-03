@@ -56,10 +56,7 @@ async function waitForShop(page: Page): Promise<void> {
   await expect(page.locator(`a[href="tel:${TEST_SHOP.phone}"]`).first()).toBeAttached();
 }
 
-/**
- * Picks the first open day and time and fills in the made-up customer; each pick opens the next step. Then opens the
- * review step from the phone's sticky bar or the desktop's Continue (both `open-review`).
- */
+/** Picks the first open day and time and fills in the made-up customer. */
 async function fillInBooking(page: Page): Promise<void> {
   await openDays(page).first().click();
   await page.getByTestId('time-list').locator('[role="button"]').first().click();
@@ -70,10 +67,8 @@ async function fillInBooking(page: Page): Promise<void> {
     await phone.fill(CUSTOMER_PHONE);
     await expect(phone).toHaveValue('(540) 555-0123', { timeout: 1_000 });
   }).toPass();
-  await page.getByTestId('open-review').click();
 }
 
-/** Fills in the booking and confirms it from the review step. */
 async function book(page: Page): Promise<void> {
   await fillInBooking(page);
   await page.getByTestId('confirm-booking').click();
@@ -200,7 +195,7 @@ test.describe(
     );
 
     test(
-      'warns that the time was taken and reloads the open times',
+      'warns that the time was taken and takes it off the open times, without reloading them',
       async ({ page }: { page: Page; }): Promise<void> => {
         let availabilityLoads: number = 0;
         await page.route(isAvailabilityRequest, async (route: Route): Promise<void> => {
@@ -214,12 +209,16 @@ test.describe(
         ));
 
         await page.goto('/book');
-        await book(page);
+        await fillInBooking(page);
+        const openTimes: Locator = page.getByTestId('time-list').locator('[role="button"]');
+        const openTimeCount: number = await openTimes.count();
+        await page.getByTestId('confirm-booking').click();
 
         const notice: Locator = page.getByTestId('booking-notice');
         await expect(notice).toHaveClass(/p-message-warn/);
         await expect(notice.getByTestId('notice-booking-site')).toHaveAttribute('href', TEST_SHOP.squareBookingSiteUrl ?? '');
-        await expect.poll((): number => availabilityLoads).toBe(2);
+        await expect(openTimes).toHaveCount(openTimeCount - 1);
+        expect(availabilityLoads).toBe(1);
         await expectNoA11yViolations(page);
       },
     );
@@ -259,8 +258,7 @@ test.describe(
         const botCheck: Locator = page.getByTestId('bot-check-failed');
         await expect(botCheck.getByTestId('notice-booking-site')).toHaveAttribute('href', TEST_SHOP.squareBookingSiteUrl ?? '');
         await expect(botCheck.getByTestId('notice-call')).toHaveAttribute('href', `tel:${TEST_SHOP.phone}`);
-        // Without a session token no days load, so the review step and its confirm button are never reached.
-        await expect(page.getByTestId('confirm-booking')).toHaveCount(0);
+        await expect(page.getByTestId('confirm-booking')).toBeDisabled();
         await expectNoA11yViolations(page);
       },
     );

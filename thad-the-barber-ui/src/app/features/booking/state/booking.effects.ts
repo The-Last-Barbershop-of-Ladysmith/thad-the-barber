@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { Actions, FunctionalEffect, createEffect, ofType } from '@ngrx/effects';
 import { Action, Store } from '@ngrx/store';
 import { MessageService } from 'primeng/api';
-import { Observable, catchError, combineLatest, exhaustMap, filter, from, map, of, switchMap, take, tap } from 'rxjs';
+import { Observable, catchError, combineLatest, exhaustMap, filter, map, of, switchMap, take, tap } from 'rxjs';
 import { SessionService } from '../../../core/services/session.service';
 import { Notice } from '../../../shared/models/notice.model';
 import { ProblemCode } from '../../../shared/models/problem-code.model';
@@ -24,9 +24,8 @@ import { RESCHEDULE_FAILED_NOTICE, toBookingNotice, toManageActionNotice } from 
 import { toBookingWindow, toUpcomingView } from '../utils/booking-time.utils';
 import { toManagePath } from '../utils/manage-link.utils';
 import * as BookingActions from './booking.actions';
-import { bookingFeature } from './booking.feature';
 
-type FailureActionCreator = (failure: { notice: Notice | null; }) => Action;
+type FailureActionCreator = (failure: { notice: Notice | null; takenStartAt: string | null; }) => Action;
 
 // Waits for the shop, so "today" and the booking window are on its clock, not the browser's.
 export const openUpcomingDays: FunctionalEffect = createEffect(
@@ -71,7 +70,6 @@ export const loadAvailability: FunctionalEffect = createEffect(
 export const requestBooking: FunctionalEffect = createEffect(
   (
     actions$: Actions = inject<Actions>(Actions),
-    store: Store<AppState> = inject<Store<AppState>>(Store),
     bookingService: BookingService = inject(BookingService),
     sessionService: SessionService = inject(SessionService),
   ): Observable<Action> =>
@@ -81,13 +79,13 @@ export const requestBooking: FunctionalEffect = createEffect(
         bookingService.createBooking(bookingRequest).pipe(
           map((bookingConfirmation: BookingConfirmation): Action =>
             BookingActions.BookingRequestSuccess({ bookingConfirmation })),
-          catchError((error: unknown): Observable<Action> => toFailureActions(
+          catchError((error: unknown): Observable<Action> => of(toFailure(
             error,
             toBookingNotice(error),
-            store,
+            bookingRequest.startAt,
             sessionService,
             BookingActions.BookingRequestFailure,
-          )),
+          ))),
         )),
     ),
   { functional: true },
@@ -114,7 +112,6 @@ export const openBookedPage: FunctionalEffect = createEffect(
 export const requestReschedule: FunctionalEffect = createEffect(
   (
     actions$: Actions = inject<Actions>(Actions),
-    store: Store<AppState> = inject<Store<AppState>>(Store),
     bookingService: BookingService = inject(BookingService),
     sessionService: SessionService = inject(SessionService),
   ): Observable<Action> =>
@@ -136,13 +133,13 @@ export const requestReschedule: FunctionalEffect = createEffect(
         ).pipe(
           map((managedBooking: ManagedBooking): Action =>
             BookingActions.RescheduleRequestSuccess({ managedBooking, manageToken })),
-          catchError((error: unknown): Observable<Action> => toFailureActions(
+          catchError((error: unknown): Observable<Action> => of(toFailure(
             error,
             toManageActionNotice(error, RESCHEDULE_FAILED_NOTICE),
-            store,
+            startAt,
             sessionService,
             BookingActions.RescheduleRequestFailure,
-          )),
+          ))),
         )),
     ),
   { functional: true },
@@ -175,30 +172,17 @@ export const returnToMovedBooking: FunctionalEffect = createEffect(
   },
 );
 
-/**
- * A taken time is gone for good: the page drops it and opens the time step, the days reload to show what's still open,
- * then the failure's notice shows, last, so the page dropping the time doesn't clear it. A failed bot check already
- * has its own message, so its failure has none.
- */
-function toFailureActions(
+// A failed bot check already shows its own message, so its failure carries no notice.
+function toFailure(
   error: unknown,
   notice: Notice,
-  store: Store<AppState>,
+  startAt: string,
   sessionService: SessionService,
-  toFailure: FailureActionCreator,
-): Observable<Action> {
+  createFailure: FailureActionCreator,
+): Action {
   if (sessionService.isBotCheckFailed()) {
-    return of(toFailure({ notice: null }));
+    return createFailure({ notice: null, takenStartAt: null });
   }
-  if (getProblemCode(error) !== ProblemCode.SlotUnavailable) {
-    return of(toFailure({ notice }));
-  }
-  return store.select(bookingFeature.selectAvailabilityView).pipe(
-    take(1),
-    switchMap((availabilityView: AvailabilityView | null): Observable<Action> => from([
-      BookingActions.BookingTimeTaken(),
-      ...availabilityView ? [BookingActions.SetAvailabilityView({ availabilityView })] : [],
-      toFailure({ notice }),
-    ])),
-  );
+  const isTimeTaken: boolean = getProblemCode(error) === ProblemCode.SlotUnavailable;
+  return createFailure({ notice, takenStartAt: isTimeTaken ? startAt : null });
 }
