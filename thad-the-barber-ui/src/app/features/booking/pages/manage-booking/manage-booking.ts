@@ -71,7 +71,6 @@ import { readManageToken, toManageLink, toManagePath, toReschedulePath } from '.
   styleUrl: './manage-booking.scss',
 })
 export class ManageBooking implements OnInit {
-  /** The booking ID from the route. */
   readonly id: InputSignal<string> = input.required<string>();
 
   private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
@@ -98,11 +97,9 @@ export class ManageBooking implements OnInit {
   protected readonly justBookedNotice: Notice = JUST_BOOKED_NOTICE;
   /** The link field: shown right after booking, and whenever copying fails, so the link can be selected by hand. */
   protected readonly isLinkShown: WritableSignal<boolean> = signal(this.isJustBooked);
-  protected readonly isLoading: WritableSignal<boolean> = signal(false);
   protected readonly loadNotice: WritableSignal<Notice | null> = signal(null);
   protected readonly managedBooking: WritableSignal<ManagedBooking | null> = signal(null);
   protected readonly isCancelling: WritableSignal<boolean> = signal(false);
-  /** A cancel that didn't go through, with a retry when retrying can help. */
   protected readonly cancelNotice: WritableSignal<Notice | null> = signal(null);
 
   protected readonly appointmentTime: Signal<string | null> = computed((): string | null => {
@@ -155,24 +152,26 @@ export class ManageBooking implements OnInit {
       this.loadNotice.set(BOOKING_NOT_FOUND_NOTICE);
       return;
     }
-    this.isLoading.set(true);
     this.loadNotice.set(null);
     this.bookingService
       .getBooking(this.id(), manageToken)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (managedBooking: ManagedBooking): void => {
-          this.isLoading.set(false);
-          this.show(managedBooking);
+          this.managedBooking.set(managedBooking);
+          afterNextRender(
+            (): void => {
+              document.getElementById('manage-heading')?.focus();
+            },
+            { injector: this.injector },
+          );
         },
         error: (error: unknown): void => {
-          this.isLoading.set(false);
           this.loadNotice.set(toManageLoadNotice(error));
         },
       });
   }
 
-  /** Asks first ("Keep appointment" is the default, and Escape keeps it too), then cancels. */
   protected confirmCancel(): void {
     this.confirmationService.confirm({
       key: 'cancel-booking',
@@ -192,7 +191,6 @@ export class ManageBooking implements OnInit {
     });
   }
 
-  /** The dialog's Cancel appointment, and a failed cancel's retry. */
   protected cancel(): void {
     const manageToken: string | null = this.manageToken();
     if (!manageToken) {
@@ -213,12 +211,15 @@ export class ManageBooking implements OnInit {
           this.messageService.add({ severity: 'success', summary: 'Appointment cancelled' });
         },
         error: (error: unknown): void => {
-          this.onCancelFailed(error);
+          if (hasBookingChanged(error)) {
+            this.load();
+            return;
+          }
+          this.cancelNotice.set(toManageActionNotice(error, CANCEL_FAILED_NOTICE));
         },
       });
   }
 
-  /** Opens the booking page to move it, handing over the token and current time in the navigation state. */
   protected reschedule(): void {
     const managedBooking: ManagedBooking | null = this.managedBooking();
     const manageToken: string | null = this.manageToken();
@@ -264,25 +265,6 @@ export class ManageBooking implements OnInit {
     document.body.append(download);
     download.click();
     download.remove();
-  }
-
-  /** A booking that changed meanwhile reloads, so its own state says why; any other failure keeps it, with a retry. */
-  private onCancelFailed(error: unknown): void {
-    if (hasBookingChanged(error)) {
-      this.load();
-      return;
-    }
-    this.cancelNotice.set(toManageActionNotice(error, CANCEL_FAILED_NOTICE));
-  }
-
-  private show(managedBooking: ManagedBooking): void {
-    this.managedBooking.set(managedBooking);
-    afterNextRender(
-      (): void => {
-        document.getElementById('manage-heading')?.focus();
-      },
-      { injector: this.injector },
-    );
   }
 
   /**

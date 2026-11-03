@@ -10,7 +10,7 @@
     <app-notice-message [notice]="failureNotice" (retry)="load()" />
   }
 
-  @if (isLoading() && !managedBooking()) {
+  @if (!managedBooking() && !loadNotice()) {
     <p-card [dt]="{ body: { padding: '1.75rem' } }">
       <div
         class="stack gap-5"
