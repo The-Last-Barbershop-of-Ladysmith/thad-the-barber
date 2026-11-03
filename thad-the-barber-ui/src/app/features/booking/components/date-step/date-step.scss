@@ -33,6 +33,22 @@
     .availability-legend {
       flex-direction: column;
       padding-top: 1rem;
+      font-size: 1rem;
+
+      .legend-entry {
+        gap: 0.625rem;
+      }
+
+      .legend-swatch {
+        width: 1.125rem;
+        height: 1.125rem;
+      }
+
+      .filling-up-dot {
+        width: 0.5rem;
+        height: 0.5rem;
+        margin-inline: 0.3125rem;
+      }
     }
   }
 }
