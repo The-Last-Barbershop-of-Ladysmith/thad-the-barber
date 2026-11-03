@@ -30,12 +30,14 @@
         </p-datepicker>
       }
       @if (isLoading()) {
-        <p-progressbar
-          class="edge-progress"
+        <div
+          class="calendar-loading"
           data-testid="dates-loading"
-          mode="indeterminate"
+          role="status"
           aria-label="Loading open days"
-        />
+        >
+          <p-progress-spinner class="size-10" strokeWidth="6" />
+        </div>
       }
     </div>
 

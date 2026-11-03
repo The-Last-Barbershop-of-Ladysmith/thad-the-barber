@@ -86,7 +86,7 @@
   color: var(--p-text-muted-color);
 }
 
-/* A p-progressbar along the top edge of the card or calendar it's in; the parent is `relative` */
+/* A p-progressbar along the top edge of the card it's in; the parent is `relative` */
 @utility edge-progress {
   position: absolute;
   top: 0;
