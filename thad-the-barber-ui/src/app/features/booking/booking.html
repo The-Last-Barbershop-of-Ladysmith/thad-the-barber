@@ -37,72 +37,96 @@
   @if (isRescheduling() && !manageToken()) {
     <app-notice-message data-testid="reschedule-not-found" [notice]="bookingNotFoundNotice" />
   } @else {
-    <form
-      class="booking-form grid-cols-1 lg:grid-cols-2"
-      [formGroup]="bookingForm"
-      (ngSubmit)="confirm()"
-    >
+    @if (submitNotice(); as failureNotice) {
+      <app-notice-message [notice]="failureNotice" (retry)="confirm()" />
+    }
+    <form [formGroup]="bookingForm" (ngSubmit)="confirm()">
       <p-card>
-        <section class="stack gap-4" aria-labelledby="date-heading">
-          <h2 id="date-heading" class="booking-heading">Day</h2>
-          @if (availabilityNotice(); as loadFailureNotice) {
-            <app-notice-message [notice]="loadFailureNotice" (retry)="reloadDays()" />
-          }
-          <app-date-step [dateControl]="bookingForm.controls.date" />
-        </section>
+        <p-stepper [(value)]="openStep">
+          <p-step-item [value]="bookingStep.Day">
+            <p-step>
+              <span class="step-title">Pick A Day</span>
+              @if (pickedDayLabel(); as pickedDay) {
+                <span class="step-pick"><span class="step-pick-label">Picked Day:</span>
+                  {{ pickedDay }}</span>
+              }
+            </p-step>
+            <p-step-panel>
+              <ng-template #content>
+                <div class="step-content">
+                  @if (availabilityNotice(); as loadFailureNotice) {
+                    <app-notice-message [notice]="loadFailureNotice" (retry)="reloadDays()" />
+                  }
+                  <app-date-step [dateControl]="bookingForm.controls.date" />
+                </div>
+              </ng-template>
+            </p-step-panel>
+          </p-step-item>
+
+          <p-step-item [value]="bookingStep.Time">
+            <p-step [disabled]="!bookingFormValue().date">
+              <span class="step-title">Select A Time</span>
+              @if (pickedTimeLabel(); as pickedTime) {
+                <span class="step-pick"><i class="pi pi-dot"></i> {{ pickedTime }}</span>
+              }
+            </p-step>
+            <p-step-panel>
+              <ng-template #content>
+                <div class="step-content">
+                  <app-time-step
+                    [startAtControl]="bookingForm.controls.startAt"
+                    [selectedDate]="bookingFormValue().date"
+                  />
+                </div>
+              </ng-template>
+            </p-step-panel>
+          </p-step-item>
+
+          <p-step-item [value]="bookingStep.Confirm">
+            <p-step [disabled]="!bookingFormValue().startAt">
+              <span class="step-title">{{
+                isRescheduling() ? 'Confirm' : 'Details & confirm'
+              }}</span>
+            </p-step>
+            <p-step-panel>
+              <ng-template #content>
+                <div class="step-content">
+                  @if (!isRescheduling()) {
+                    <app-details-step
+                      [nameControl]="bookingForm.controls.name"
+                      [phoneControl]="bookingForm.controls.phone"
+                    />
+                  }
+                  <button
+                    pButton
+                    type="submit"
+                    class="confirm-booking"
+                    data-testid="confirm-booking"
+                    [fluid]="true"
+                    [disabled]="!canConfirm()"
+                  >
+                    @if (isSubmitting()) {
+                      <svg data-p-icon="spinner" class="animate-spin"></svg>
+                    }
+                    <span pButtonLabel>{{ confirmLabel() }}</span>
+                  </button>
+                  <small class="recaptcha-terms">
+                    This site is protected by reCAPTCHA and the Google
+                    <a href="https://policies.google.com/privacy" target="_blank" rel="noopener"
+                      >Privacy Policy</a
+                    >
+                    and
+                    <a href="https://policies.google.com/terms" target="_blank" rel="noopener"
+                      >Terms of Service</a
+                    >
+                    apply.
+                  </small>
+                </div>
+              </ng-template>
+            </p-step-panel>
+          </p-step-item>
+        </p-stepper>
       </p-card>
-
-      <div class="stack gap-4 lg:sticky lg:top-24">
-        <p-card>
-          <section class="stack gap-4" aria-labelledby="time-heading">
-            <h2 id="time-heading" class="booking-heading" tabindex="-1">Time</h2>
-            <app-time-step
-              [startAtControl]="bookingForm.controls.startAt"
-              [selectedDate]="bookingFormValue().date"
-            />
-          </section>
-        </p-card>
-
-        @if (!isRescheduling()) {
-          <p-card>
-            <section class="stack gap-4" aria-labelledby="details-heading">
-              <h2 id="details-heading" class="booking-heading">Your details</h2>
-              <app-details-step
-                [nameControl]="bookingForm.controls.name"
-                [phoneControl]="bookingForm.controls.phone"
-              />
-            </section>
-          </p-card>
-        }
-
-        @if (submitNotice(); as failureNotice) {
-          <app-notice-message [notice]="failureNotice" (retry)="confirm()" />
-        }
-        <button
-          pButton
-          type="submit"
-          class="confirm-booking"
-          data-testid="confirm-booking"
-          [fluid]="true"
-          [disabled]="!canConfirm()"
-        >
-          @if (isSubmitting()) {
-            <svg data-p-icon="spinner" class="animate-spin"></svg>
-          }
-          <span pButtonLabel>{{ confirmLabel() }}</span>
-        </button>
-        <small class="recaptcha-terms">
-          This site is protected by reCAPTCHA and the Google
-          <a href="https://policies.google.com/privacy" target="_blank" rel="noopener"
-            >Privacy Policy</a
-          >
-          and
-          <a href="https://policies.google.com/terms" target="_blank" rel="noopener"
-            >Terms of Service</a
-          >
-          apply.
-        </small>
-      </div>
     </form>
   }
 </div>

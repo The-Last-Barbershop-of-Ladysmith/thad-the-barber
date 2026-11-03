@@ -18,11 +18,13 @@ import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { SpinnerIcon } from 'primeng/icons/spinner';
+import { StepperModule } from 'primeng/stepper';
 import { distinctUntilChanged, map } from 'rxjs';
 import { SessionService } from '../../core/services/session.service';
 import { Backdrop } from '../../shared/components/backdrop/backdrop';
 import { NoticeMessage } from '../../shared/components/notice-message/notice-message';
 import { Notice } from '../../shared/models/notice.model';
+import { formatLongDate, fromIsoDate } from '../../shared/utils/date.utils';
 import { toE164 } from '../../shared/utils/phone.utils';
 import { AppState } from '../../store/app.state';
 import { shopFeature } from '../shop/state/shop.feature';
@@ -34,13 +36,14 @@ import { BookingConfirmation } from './dtos/booking-confirmation.dto';
 import { AvailabilityView } from './models/availability-view.model';
 import { BookingForm } from './models/booking-form.model';
 import { BookingFormValue } from './models/booking-form-value.model';
+import { BookingStep } from './models/booking-step.model';
 import { LeaveConfirmable } from './models/leave-confirmable.model';
 import { ManagePageState } from './models/manage-page-state.model';
 import { ReschedulePageState } from './models/reschedule-page-state.model';
 import * as BookingActions from './state/booking.actions';
 import { bookingFeature } from './state/booking.feature';
 import { BOOKING_NOT_FOUND_NOTICE, BOT_CHECK_FAILED_NOTICE } from './utils/booking-notice.utils';
-import { toLongDateTime } from './utils/booking-time.utils';
+import { toLongDateTime, toTimeLabel } from './utils/booking-time.utils';
 import { toManagePath } from './utils/manage-link.utils';
 
 @Component({
@@ -51,6 +54,7 @@ import { toManagePath } from './utils/manage-link.utils';
     CardModule,
     ConfirmDialogModule,
     SpinnerIcon,
+    StepperModule,
     Backdrop,
     NoticeMessage,
     DateStep,
@@ -121,6 +125,20 @@ export class Booking implements LeaveConfirmable {
   // Kept while the same booking is retried, so one whose response was lost isn't made twice.
   private idempotencyKey: string | null = null;
 
+  protected readonly bookingStep: typeof BookingStep = BookingStep;
+  protected readonly openStep: WritableSignal<BookingStep> = signal(BookingStep.Day);
+
+  protected readonly pickedDayLabel: Signal<string | null> = computed((): string | null => {
+    const { date }: BookingFormValue = this.bookingFormValue();
+    return date ? formatLongDate(fromIsoDate(date)) : null;
+  });
+
+  protected readonly pickedTimeLabel: Signal<string | null> = computed((): string | null => {
+    const { startAt }: BookingFormValue = this.bookingFormValue();
+    const timeZone: string | null = this.timeZone();
+    return startAt && timeZone ? toTimeLabel(timeZone, startAt) : null;
+  });
+
   protected readonly canConfirm: Signal<boolean> = computed((): boolean => {
     const { date, startAt }: BookingFormValue = this.bookingFormValue();
     // `invalid`, not `valid`: the form is disabled while sending, and disabled controls are never valid.
@@ -162,12 +180,14 @@ export class Booking implements LeaveConfirmable {
       .subscribe((date: string | null): void => {
         this.bookingForm.controls.startAt.reset();
         if (date) {
-          afterNextRender(
-            (): void => {
-              document.getElementById('time-heading')?.focus();
-            },
-            { injector: this.injector },
-          );
+          this.showStep(BookingStep.Time);
+        }
+      });
+    this.bookingForm.controls.startAt.valueChanges
+      .pipe(takeUntilDestroyed())
+      .subscribe((startAt: string | null): void => {
+        if (startAt) {
+          this.showStep(BookingStep.Confirm);
         }
       });
   }
@@ -226,6 +246,7 @@ export class Booking implements LeaveConfirmable {
       .subscribe((): void => {
         this.reschedulePageState.set(this.router.currentNavigation()?.extras.state ?? {});
         this.bookingForm.reset();
+        this.openStep.set(BookingStep.Day);
         this.store.dispatch(BookingActions.BookingPageOpen());
       });
   }
@@ -252,8 +273,10 @@ export class Booking implements LeaveConfirmable {
           .find((availableDay: AvailableDay): boolean => availableDay.date === date);
         if (date && !pickedDay) {
           this.bookingForm.controls.date.reset();
+          this.showStep(BookingStep.Day);
         } else if (startAt && !pickedDay?.times.includes(startAt)) {
           this.bookingForm.controls.startAt.reset();
+          this.showStep(BookingStep.Time);
         }
       });
   }
@@ -276,5 +299,16 @@ export class Booking implements LeaveConfirmable {
         window.removeEventListener('beforeunload', onBeforeUnload);
       });
     });
+  }
+
+  // Focus follows the step that opens, since the one it was in collapses.
+  private showStep(step: BookingStep): void {
+    this.openStep.set(step);
+    afterNextRender(
+      (): void => {
+        document.querySelector<HTMLElement>('.p-step-active .p-step-header')?.focus();
+      },
+      { injector: this.injector },
+    );
   }
 }

@@ -60,6 +60,10 @@ async function waitForShop(page: Page): Promise<void> {
 async function fillInBooking(page: Page): Promise<void> {
   await openDays(page).first().click();
   await page.getByTestId('time-list').locator('[role="button"]').first().click();
+  await fillInDetails(page);
+}
+
+async function fillInDetails(page: Page): Promise<void> {
   await page.locator('#booking-name').fill('Jordan Customer');
   const phone: Locator = page.locator('#booking-phone');
   // InputMask redraws its buffer on a timer after focus, which can wipe a value filled too soon.
@@ -209,9 +213,12 @@ test.describe(
         ));
 
         await page.goto('/book');
-        await fillInBooking(page);
+        await openDays(page).first().click();
         const openTimes: Locator = page.getByTestId('time-list').locator('[role="button"]');
+        await openTimes.first().waitFor();
         const openTimeCount: number = await openTimes.count();
+        await openTimes.first().click();
+        await fillInDetails(page);
         await page.getByTestId('confirm-booking').click();
 
         const notice: Locator = page.getByTestId('booking-notice');
@@ -258,7 +265,7 @@ test.describe(
         const botCheck: Locator = page.getByTestId('bot-check-failed');
         await expect(botCheck.getByTestId('notice-booking-site')).toHaveAttribute('href', TEST_SHOP.squareBookingSiteUrl ?? '');
         await expect(botCheck.getByTestId('notice-call')).toHaveAttribute('href', `tel:${TEST_SHOP.phone}`);
-        await expect(page.getByTestId('confirm-booking')).toBeDisabled();
+        await expect(page.getByTestId('confirm-booking')).toHaveCount(0);
         await expectNoA11yViolations(page);
       },
     );

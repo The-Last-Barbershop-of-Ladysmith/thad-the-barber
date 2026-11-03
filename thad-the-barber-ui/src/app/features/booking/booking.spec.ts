@@ -20,6 +20,7 @@ import { shopFeature } from '../shop/state/shop.feature';
 import { Booking } from './booking';
 import { BookingConfirmation } from './dtos/booking-confirmation.dto';
 import { BookingForm } from './models/booking-form.model';
+import { BookingStep } from './models/booking-step.model';
 import * as BookingActions from './state/booking.actions';
 import { openUpcomingDays } from './state/booking.effects';
 import { bookingFeature } from './state/booking.feature';
@@ -30,6 +31,7 @@ interface BookingPage {
   confirm: () => void;
   returnToBooking: () => void;
   canConfirm: Signal<boolean>;
+  openStep: Signal<BookingStep>;
   hasUnconfirmedPick: Signal<boolean>;
   isRescheduling: Signal<boolean>;
 }
@@ -222,6 +224,7 @@ describe(
 
         expect(page.bookingForm.controls.date.value).toBe(TODAY);
         expect(page.bookingForm.controls.startAt.value).toBeNull();
+        expect(page.openStep()).toBe(BookingStep.Time);
         expect(store.selectSignal(bookingFeature.selectSubmitNotice)()).toEqual(failedNotice);
       },
     );
@@ -237,6 +240,7 @@ describe(
 
         expect(page.bookingForm.controls.date.value).toBeNull();
         expect(page.bookingForm.controls.startAt.value).toBeNull();
+        expect(page.openStep()).toBe(BookingStep.Day);
       },
     );
 
@@ -254,15 +258,15 @@ describe(
     );
 
     it(
-      'moves focus to the times once a day is picked',
-      async (): Promise<void> => {
+      'opens the time step once a day is picked, then the confirm step once a time is',
+      (): void => {
         openPage();
+        expect(page.openStep()).toBe(BookingStep.Day);
 
         page.bookingForm.controls.date.setValue(TODAY);
-        fixture.detectChanges();
-        await fixture.whenStable();
-
-        expect(document.activeElement?.id).toBe('time-heading');
+        expect(page.openStep()).toBe(BookingStep.Time);
+        page.bookingForm.controls.startAt.setValue(FIRST_TIME);
+        expect(page.openStep()).toBe(BookingStep.Confirm);
       },
     );
 
@@ -318,13 +322,12 @@ describe(
         const booked: BookingConfirmation = testConfirmationIn(3, 'made-up-booking');
 
         it(
-          'asks for no details and shows no upcoming-booking notice, and can confirm once a time is picked',
+          'needs no details and shows no upcoming-booking notice, so it can confirm once a time is picked',
           (): void => {
             openPage([booked], booked.id);
             pick(SECOND_TIME);
 
             expect(page.isRescheduling()).toBe(true);
-            expect((fixture.nativeElement as HTMLElement).querySelector('#details-heading')).toBeNull();
             expect(byTestId('upcoming-booking')).toBeNull();
             expect(page.canConfirm()).toBe(true);
           },
@@ -371,6 +374,7 @@ describe(
 
             routeParams.next(convertToParamMap({ id: otherBooked.id }));
             expect(page.bookingForm.controls.date.value).toBeNull();
+            expect(page.openStep()).toBe(BookingStep.Day);
             store.dispatch(BookingActions.AvailabilityRequestSuccess({
               availableDays: [{ date: TODAY, times: [FIRST_TIME, SECOND_TIME] }],
             }));

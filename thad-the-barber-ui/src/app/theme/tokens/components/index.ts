@@ -8,6 +8,7 @@ import { galleria } from './galleria';
 import { message } from './message';
 import { rating } from './rating';
 import { selectbutton, togglebutton } from './selectbutton';
+import { stepper } from './stepper';
 import { toast } from './toast';
 
 /** Component-level token overrides, one file per PrimeNG component. */
@@ -21,6 +22,7 @@ export const components: ComponentsDesignTokens = {
   message,
   rating,
   selectbutton,
+  stepper,
   togglebutton,
   toast,
 };

@@ -1,4 +1,5 @@
 <section class="stack gap-3">
+  <span id="open-days-label" class="sr-only">Open days</span>
   <div class="view-controls">
     <button
       pButton
@@ -111,7 +112,7 @@
   } @else {
     <p-selectbutton
       class="option-list"
-      ariaLabelledBy="date-heading"
+      ariaLabelledBy="open-days-label"
       data-testid="date-list"
       [formControl]="dateControl()"
       [options]="dateOptions()"

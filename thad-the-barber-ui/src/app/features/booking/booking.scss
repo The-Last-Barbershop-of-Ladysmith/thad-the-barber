@@ -1,21 +1,17 @@
-.booking-form {
-  display: grid;
-  align-items: start;
+.step-title {
+  font-weight: 700;
+}
+
+.step-pick {
+  margin-left: 0.5rem;
+  color: var(--p-text-muted-color);
+}
+
+.step-content {
+  display: flex;
+  flex-direction: column;
   gap: 1rem;
-
-  .booking-heading {
-    margin: 0;
-    font-size: 1.25rem;
-    font-weight: 800;
-    line-height: 1.1;
-    letter-spacing: -0.01em;
-    text-transform: uppercase;
-
-    // Focused only by the page, after a day is picked, to bring the times into view.
-    &:focus {
-      outline: none;
-    }
-  }
+  padding-block: 0.5rem 1rem;
 
   // The label names the picked day and time, too long for one line on phones.
   .confirm-booking {
