@@ -17,7 +17,7 @@ import { DateRange } from '../../models/date-range.model';
 import { DayRange } from '../../models/day-range.model';
 import * as BookingActions from '../../state/booking.actions';
 import { bookingFeature } from '../../state/booking.feature';
-import { NO_OPEN_DAYS_NOTICE } from '../../utils/booking-notice.utils';
+import { NO_OPEN_DAYS_NOTICE } from '../../config/booking-notices';
 import { toBookingWindow, toMonthRange } from '../../utils/booking-time.utils';
 
 @Component({

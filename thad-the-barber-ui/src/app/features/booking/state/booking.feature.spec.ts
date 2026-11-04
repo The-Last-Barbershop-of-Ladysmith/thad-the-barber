@@ -1,5 +1,5 @@
 import { RequestStatus } from '../../../shared/models/request.models';
-import { AVAILABILITY_FAILED_NOTICE } from '../utils/booking-notice.utils';
+import { AVAILABILITY_FAILED_NOTICE } from '../config/booking-notices';
 import { bookingFeature } from './booking.feature';
 import { BookingState, initialBookingState } from './booking.state';
 

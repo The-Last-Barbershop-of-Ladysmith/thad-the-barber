@@ -2,7 +2,7 @@ import { MemoizedSelector, createFeature, createSelector } from '@ngrx/store';
 import { FeatureSelectors } from '../../../shared/models/ngrx.models';
 import { RequestStatus } from '../../../shared/models/request.models';
 import { Notice } from '../../../shared/models/notice.model';
-import { AVAILABILITY_FAILED_NOTICE } from '../utils/booking-notice.utils';
+import { AVAILABILITY_FAILED_NOTICE } from '../config/booking-notices';
 import { bookingReducer } from './booking.reducer';
 import { BookingState } from './booking.state';
 

@@ -27,6 +27,8 @@ import { finalize } from 'rxjs';
 import { Backdrop } from '../../../../shared/components/backdrop/backdrop';
 import { NoticeMessage } from '../../../../shared/components/notice-message/notice-message';
 import { Notice } from '../../../../shared/models/notice.model';
+import { ProblemCode } from '../../../../shared/models/problem-code.model';
+import { getProblemCode, toProblemNotice } from '../../../../shared/utils/problem.utils';
 import { AppState } from '../../../../store/app.state';
 import { BookingSettings } from '../../../shop/models/booking-settings.model';
 import { shopFeature } from '../../../shop/state/shop.feature';
@@ -37,14 +39,14 @@ import { ReschedulePageState } from '../../models/reschedule-page-state.model';
 import { BookingService } from '../../services/booking.service';
 import {
   BOOKING_CANCELLED_NOTICE,
+  BOOKING_CHANGED_CODES,
+  BOOKING_LOAD_FAILED_NOTICE,
   BOOKING_NOT_FOUND_NOTICE,
   BOOKING_PASSED_NOTICE,
   CANCEL_FAILED_NOTICE,
+  CHANGE_PROBLEM_NOTICES,
   JUST_BOOKED_NOTICE,
-  hasBookingChanged,
-  toManageActionNotice,
-  toManageLoadNotice,
-} from '../../utils/booking-notice.utils';
+} from '../../config/booking-notices';
 import { toLongDate, toTimeLabel } from '../../utils/booking-time.utils';
 import { toCalendarEvent, toIcsFile } from '../../utils/ics.utils';
 import { readManageToken, toManageLink, toManagePath, toReschedulePath } from '../../utils/manage-link.utils';
@@ -180,7 +182,8 @@ export class ManageBooking implements OnInit {
           );
         },
         error: (error: unknown): void => {
-          this.loadNotice.set(toManageLoadNotice(error));
+          const isNotFound: boolean = getProblemCode(error) === ProblemCode.BookingNotFound;
+          this.loadNotice.set(isNotFound ? BOOKING_NOT_FOUND_NOTICE : BOOKING_LOAD_FAILED_NOTICE);
         },
       });
   }
@@ -228,11 +231,15 @@ export class ManageBooking implements OnInit {
           this.messageService.add({ severity: 'success', summary: 'Appointment cancelled' });
         },
         error: (error: unknown): void => {
-          if (hasBookingChanged(error)) {
+          if (BOOKING_CHANGED_CODES.includes(getProblemCode(error) ?? '')) {
             this.load();
             return;
           }
-          this.cancelNotice.set(toManageActionNotice(error, CANCEL_FAILED_NOTICE));
+          this.cancelNotice.set(toProblemNotice(
+            error,
+            CHANGE_PROBLEM_NOTICES,
+            CANCEL_FAILED_NOTICE,
+          ));
         },
       });
   }

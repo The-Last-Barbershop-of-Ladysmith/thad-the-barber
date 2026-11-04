@@ -21,7 +21,7 @@ import { ManagedBooking } from '../dtos/managed-booking.dto';
 import { DayRange } from '../models/day-range.model';
 import { AvailabilityService } from '../services/availability.service';
 import { BookingService } from '../services/booking.service';
-import { RESCHEDULE_FAILED_NOTICE, toBookingNotice, toManageActionNotice } from '../utils/booking-notice.utils';
+import { BOOKING_CHANGED_NOTICE, SLOT_TAKEN_NOTICE } from '../config/booking-notices';
 import * as BookingActions from './booking.actions';
 import {
   loadAvailability,
@@ -248,9 +248,7 @@ describe(
 
         expect(emitted).toEqual([
           BookingActions.BookingRequestFailure({
-            notice: toBookingNotice(
-              new HttpErrorResponse({ status: 409, error: { code: ProblemCode.SlotUnavailable } }),
-            ),
+            notice: SLOT_TAKEN_NOTICE,
             takenStartAt: bookingRequest.startAt,
           }),
         ]);
@@ -303,10 +301,7 @@ describe(
 
         expect(emitted).toEqual([
           BookingActions.RescheduleRequestFailure({
-            notice: toManageActionNotice(
-              new HttpErrorResponse({ status: 409, error: { code: ProblemCode.BookingStarted } }),
-              RESCHEDULE_FAILED_NOTICE,
-            ),
+            notice: BOOKING_CHANGED_NOTICE,
             takenStartAt: null,
           }),
         ]);

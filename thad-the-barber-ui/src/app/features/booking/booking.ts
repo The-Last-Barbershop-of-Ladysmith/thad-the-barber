@@ -42,7 +42,7 @@ import { ManagePageState } from './models/manage-page-state.model';
 import { ReschedulePageState } from './models/reschedule-page-state.model';
 import * as BookingActions from './state/booking.actions';
 import { bookingFeature } from './state/booking.feature';
-import { BOOKING_NOT_FOUND_NOTICE, BOT_CHECK_FAILED_NOTICE } from './utils/booking-notice.utils';
+import { BOOKING_NOT_FOUND_NOTICE, BOT_CHECK_FAILED_NOTICE } from './config/booking-notices';
 import { toLongDateTime, toTimeLabel } from './utils/booking-time.utils';
 import { toManagePath } from './utils/manage-link.utils';
 

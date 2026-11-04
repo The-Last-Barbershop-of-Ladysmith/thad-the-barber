@@ -7,7 +7,7 @@ import { Observable, catchError, combineLatest, exhaustMap, filter, map, of, swi
 import { SessionService } from '../../../core/services/session.service';
 import { Notice } from '../../../shared/models/notice.model';
 import { ProblemCode } from '../../../shared/models/problem-code.model';
-import { getProblemCode } from '../../../shared/utils/problem.utils';
+import { getProblemCode, toProblemNotice } from '../../../shared/utils/problem.utils';
 import { AppState } from '../../../store/app.state';
 import { BookingSettings } from '../../shop/models/booking-settings.model';
 import { shopFeature } from '../../shop/state/shop.feature';
@@ -20,7 +20,12 @@ import { DateRange } from '../models/date-range.model';
 import { ManagePageState } from '../models/manage-page-state.model';
 import { AvailabilityService } from '../services/availability.service';
 import { BookingService } from '../services/booking.service';
-import { RESCHEDULE_FAILED_NOTICE, toBookingNotice, toManageActionNotice } from '../utils/booking-notice.utils';
+import {
+  BOOKING_FAILED_NOTICE,
+  BOOKING_PROBLEM_NOTICES,
+  CHANGE_PROBLEM_NOTICES,
+  RESCHEDULE_FAILED_NOTICE,
+} from '../config/booking-notices';
 import { toBookingWindow, toMonthRange } from '../utils/booking-time.utils';
 import { toManagePath } from '../utils/manage-link.utils';
 import * as BookingActions from './booking.actions';
@@ -81,7 +86,11 @@ export const requestBooking: FunctionalEffect = createEffect(
             BookingActions.BookingRequestSuccess({ bookingConfirmation })),
           catchError((error: unknown): Observable<Action> => of(toFailure(
             error,
-            toBookingNotice(error),
+            toProblemNotice(
+              error,
+              BOOKING_PROBLEM_NOTICES,
+              BOOKING_FAILED_NOTICE,
+            ),
             bookingRequest.startAt,
             sessionService,
             BookingActions.BookingRequestFailure,
@@ -138,7 +147,11 @@ export const requestReschedule: FunctionalEffect = createEffect(
             BookingActions.RescheduleRequestSuccess({ managedBooking, manageToken })),
           catchError((error: unknown): Observable<Action> => of(toFailure(
             error,
-            toManageActionNotice(error, RESCHEDULE_FAILED_NOTICE),
+            toProblemNotice(
+              error,
+              CHANGE_PROBLEM_NOTICES,
+              RESCHEDULE_FAILED_NOTICE,
+            ),
             startAt,
             sessionService,
             BookingActions.RescheduleRequestFailure,
