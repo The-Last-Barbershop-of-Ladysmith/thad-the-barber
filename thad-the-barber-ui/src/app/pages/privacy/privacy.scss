@@ -1,0 +1,19 @@
+.policy {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding: 1.5rem;
+
+  h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--p-text-color);
+  }
+}
+
+@media (min-width: 768px) {
+  .policy {
+    padding: 2.5rem;
+  }
+}

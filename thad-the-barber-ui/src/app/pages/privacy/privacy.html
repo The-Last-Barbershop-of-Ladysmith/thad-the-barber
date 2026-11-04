@@ -1,0 +1,102 @@
+<app-backdrop mode="still" [still]="5" />
+
+<div class="page" data-testid="privacy">
+  <header class="stack gap-2">
+    <span class="eyebrow">Privacy</span>
+    <h1 class="section-title">Privacy policy</h1>
+    <p class="m-0 text-muted-color">Last updated November 4, 2026</p>
+  </header>
+
+  <article class="policy glass">
+    <section class="body-copy rich-text">
+      <h2>What we collect</h2>
+      <p>
+        When you book with {{ shopName() }} on this site, we ask for your name, your phone number
+        and the time you pick. That's all: there's no account, no email address and no payment.
+      </p>
+    </section>
+
+    <section class="body-copy rich-text">
+      <h2>Why we collect it</h2>
+      <p>
+        Your name and phone book the appointment, so the shop knows who's coming and can reach you
+        about it. We don't sell them, and we don't use them for marketing.
+      </p>
+    </section>
+
+    <section class="body-copy rich-text">
+      <h2>Where it's kept</h2>
+      <p>
+        Bookings go straight into Square, the shop's booking system. This site keeps no copy of its
+        own. If you've booked before, your booking is linked to the customer record Square already
+        has for your phone number. Square's
+        <a href="https://squareup.com/us/en/legal/general/privacy" target="_blank" rel="noopener"
+          >privacy notice</a
+        >
+        covers how Square handles it.
+      </p>
+    </section>
+
+    <section class="body-copy rich-text">
+      <h2>How long it's kept</h2>
+      <p>
+        Your details stay in the shop's Square customer list until the shop removes them. To have
+        your details corrected or deleted, call or text the shop.
+      </p>
+    </section>
+
+    <section class="body-copy rich-text">
+      <h2>The bot check</h2>
+      <p>
+        Before a booking goes through, Google reCAPTCHA checks that you're a person, not a bot. It
+        uses Google cookies and sends information about your device and how you use the page to
+        Google. The Google
+        <a href="https://policies.google.com/privacy" target="_blank" rel="noopener"
+          >Privacy Policy</a
+        >
+        and
+        <a href="https://policies.google.com/terms" target="_blank" rel="noopener"
+          >Terms of Service</a
+        >
+        apply.
+      </p>
+    </section>
+
+    <section class="body-copy rich-text">
+      <h2>The map</h2>
+      <p>
+        The map on the home page comes from Google Maps, which may set Google cookies when it loads.
+      </p>
+    </section>
+
+    <section class="body-copy rich-text">
+      <h2>Site statistics</h2>
+      <p>
+        To find errors and slow pages, the site records which pages are visited, how fast they load
+        and the errors it hits, with Microsoft Azure Application Insights. It uses no cookies and
+        never records names or phone numbers.
+      </p>
+    </section>
+
+    <section class="body-copy rich-text">
+      <h2>Your browser</h2>
+      <p>
+        The site saves the shop's details, such as its hours and address, in your browser so pages
+        load faster. It saves nothing about you or your bookings.
+      </p>
+      <p>
+        After you book, you get a link to manage your appointment. Anyone with that link can
+        reschedule or cancel it, so keep it to yourself.
+      </p>
+    </section>
+
+    <section class="body-copy rich-text">
+      <h2>Questions</h2>
+      <p>
+        Call or text {{ shopName() }} at
+        <a [href]="phone().tel" data-testid="privacy-phone">{{ phone().display }}</a
+        >. If this policy changes, we'll update this page and the date above it.
+      </p>
+    </section>
+  </article>
+</div>
