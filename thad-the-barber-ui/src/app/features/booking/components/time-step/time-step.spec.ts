@@ -94,5 +94,12 @@ describe(
         ]);
       },
     );
+
+    it(
+      'lists no times for a day outside the month in view',
+      (): void => {
+        expect(render('2026-12-01').querySelectorAll('[data-testid="time-list"] [role="button"]')).toHaveLength(0);
+      },
+    );
   },
 );

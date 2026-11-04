@@ -8,10 +8,8 @@ import {
   toIsoDateIn,
   weekTimeIn,
 } from '../../../shared/utils/date.utils';
-import { AvailableDay } from '../dtos/available-day.dto';
 import { DayRange } from '../models/day-range.model';
 import { DateRange } from '../models/date-range.model';
-import { TimeSlot } from '../models/time-slot.model';
 
 /** From today on the shop's clock to the furthest day Square lets customers book. */
 export function toBookingWindow(
@@ -40,19 +38,6 @@ export function toMonthRange(year: number, month: number): DayRange {
       0,
     )),
   };
-}
-
-/** The picked day's open times, from the days in view, labelled on the shop's clock. */
-export function toTimeSlots(
-  availableDays: AvailableDay[],
-  date: string | null,
-  timeZone: string | null,
-): TimeSlot[] {
-  if (!timeZone) {
-    return [];
-  }
-  const times: string[] = availableDays.find((day: AvailableDay): boolean => day.date === date)?.times ?? [];
-  return times.map((startAt: string): TimeSlot => ({ startAt, label: toTimeLabel(timeZone, startAt) }));
 }
 
 /** "2026-10-03T20:30:00Z" → "10:30 AM" on the shop's clock. */

@@ -1,8 +1,7 @@
 import { TEST_SHOP } from '../../../../testing/test-shop';
 import { toIsoDate } from '../../../shared/utils/date.utils';
-import { AvailableDay } from '../dtos/available-day.dto';
 import { DateRange } from '../models/date-range.model';
-import { toBookingWindow, toLongDate, toLongDateTime, toMonthRange, toTimeSlots } from './booking-time.utils';
+import { toBookingWindow, toLongDate, toLongDateTime, toMonthRange } from './booking-time.utils';
 
 const HONOLULU: string = TEST_SHOP.timeZone;
 
@@ -43,43 +42,6 @@ describe(
         expect(toMonthRange(2026, 11)).toEqual({ firstDay: '2026-11-01', lastDay: '2026-11-30' });
         expect(toMonthRange(2028, 2).lastDay).toBe('2028-02-29');
         expect(toMonthRange(2026, 12).lastDay).toBe('2026-12-31');
-      },
-    );
-  },
-);
-
-describe(
-  'toTimeSlots',
-  (): void => {
-    const availableDays: AvailableDay[] = [{ date: '2026-10-03', times: ['2026-10-03T20:00:00Z', '2026-10-04T05:30:00Z'] }];
-
-    it(
-      "labels the picked day's times on the shop's clock",
-      (): void => {
-        expect(toTimeSlots(
-          availableDays,
-          '2026-10-03',
-          HONOLULU,
-        )).toEqual([
-          { startAt: '2026-10-03T20:00:00Z', label: '10:00 AM' },
-          { startAt: '2026-10-04T05:30:00Z', label: '7:30 PM' },
-        ]);
-      },
-    );
-
-    it(
-      'has none for a day outside the month in dayRange, or before the shop has loaded',
-      (): void => {
-        expect(toTimeSlots(
-          availableDays,
-          '2026-11-03',
-          HONOLULU,
-        )).toEqual([]);
-        expect(toTimeSlots(
-          availableDays,
-          '2026-10-03',
-          null,
-        )).toEqual([]);
       },
     );
   },
