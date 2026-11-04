@@ -55,12 +55,6 @@ interface AppointmentStart {
   time: string;
 }
 
-/**
- * One booking, opened from its manage link (`/book/manage/{id}#t=…`) or by the booking page right after booking. The
- * token comes from the link's fragment, which then leaves the address bar for the router's navigation state; it's sent
- * only in the `X-Manage-Token` header (BR-08). Right after booking, the link to keep shows above the actions. It can be
- * rescheduled or cancelled until it starts (BR-07), every time on the shop's clock.
- */
 @Component({
   selector: 'app-manage-booking',
   imports: [
@@ -122,7 +116,6 @@ export class ManageBooking implements OnInit {
     };
   });
 
-  /** Cancelled, or started or passed: either way it can't change (BR-07). */
   protected readonly statusNotice: Signal<Notice | null> = computed((): Notice | null => {
     const managedBooking: ManagedBooking | null = this.managedBooking();
     if (!managedBooking || managedBooking.canChange) {

@@ -38,7 +38,6 @@ export const BookingRequest = createAction(
   props<{ bookingRequest: BookingRequestDto; }>(),
 );
 
-/** Moves the booking to `startAt` with its token (`requestReschedule`). */
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
 export const RescheduleRequest = createAction(
   BookingActionTypes.RescheduleRequest,

@@ -1,6 +1,5 @@
 import { ManagedBooking } from '../dtos/managed-booking.dto';
 
-/** The shop facts an appointment's calendar event shows. */
 interface CalendarShop {
   name: string;
   addressLine: string | null;

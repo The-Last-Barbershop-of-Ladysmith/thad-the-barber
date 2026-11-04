@@ -12,7 +12,6 @@ import { TimeSlot } from '../../models/time-slot.model';
 import { bookingFeature } from '../../state/booking.feature';
 import { toTimeLabel } from '../../utils/booking-time.utils';
 
-/** Step 2: open times for the chosen day, as a wrapping PrimeNG SelectButton grid. */
 @Component({
   selector: 'app-time-step',
   imports: [
@@ -42,7 +41,6 @@ export class TimeStep {
     return times.map((startAt: string): TimeSlot => ({ startAt, label: toTimeLabel(timeZone, startAt) }));
   });
 
-  /** "Filling up: only 3 times left this day." while the picked day has fewer than `FILLING_UP_BELOW` (BR-15). */
   protected readonly fillingUpNote: Signal<string | null> = computed((): string | null => {
     const openCount: number = this.timeSlots().length;
     if (openCount === 0 || openCount >= FILLING_UP_BELOW) {

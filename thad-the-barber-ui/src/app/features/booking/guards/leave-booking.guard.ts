@@ -3,7 +3,6 @@ import { CanDeactivateFn } from '@angular/router';
 import { ConfirmationService } from 'primeng/api';
 import { LeaveConfirmable } from '../models/leave-confirmable.model';
 
-/** What the "Leave without …?" dialog says, booking or moving. */
 interface LeaveQuestion {
   header: string;
   message: string;
@@ -22,11 +21,7 @@ const LEAVE_RESCHEDULING: LeaveQuestion = {
   stayLabel: 'Keep rescheduling',
 };
 
-/**
- * With a picked day not yet booked or moved (#210), asks before leaving in the page's `p-confirmdialog`
- * (`key="leave-booking"`); staying is the default, and Escape stays too. Otherwise lets the customer go.
- * `ConfirmationService` comes from the booking routes, so the guard and the page's dialog share it.
- */
+/** Asks in the page's `p-confirmdialog` (#210); staying is the default, and Escape stays too. */
 export const leaveBookingGuard: CanDeactivateFn<LeaveConfirmable> =
   (page: LeaveConfirmable): boolean | Promise<boolean> => {
     if (!page.hasUnconfirmedPick()) {
