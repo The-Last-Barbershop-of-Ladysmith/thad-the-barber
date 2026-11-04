@@ -33,7 +33,6 @@ import { AppState } from '../../../../store/app.state';
 import { BookingSettings } from '../../../shop/models/booking-settings.model';
 import { shopFeature } from '../../../shop/state/shop.feature';
 import { ManagedBooking } from '../../dtos/managed-booking.dto';
-import { CalendarEvent } from '../../models/calendar-event.model';
 import { ManagePageState } from '../../models/manage-page-state.model';
 import { ReschedulePageState } from '../../models/reschedule-page-state.model';
 import { BookingService } from '../../services/booking.service';
@@ -48,7 +47,7 @@ import {
   JUST_BOOKED_NOTICE,
 } from '../../config/booking-notices';
 import { toLongDate, toTimeLabel } from '../../utils/booking-time.utils';
-import { toCalendarEvent, toIcsFile } from '../../utils/ics.utils';
+import { toIcsFile } from '../../utils/ics.utils';
 import { toManagePath } from '../../utils/manage-link.utils';
 
 interface AppointmentStart {
@@ -142,14 +141,14 @@ export class ManageBooking implements OnInit {
   });
 
   /** Waits for the shop, which holds the appointment's length and address. */
-  protected readonly calendarEvent: Signal<CalendarEvent | null> = computed((): CalendarEvent | null => {
+  protected readonly calendarFile: Signal<string | null> = computed((): string | null => {
     const managedBooking: ManagedBooking | null = this.managedBooking();
     const bookingSettings: BookingSettings | null = this.bookingSettings();
     const manageLink: string | null = this.manageLink();
     if (!managedBooking || !bookingSettings || !manageLink) {
       return null;
     }
-    return toCalendarEvent(
+    return toIcsFile(
       managedBooking,
       {
         name: this.shopName(),
@@ -283,12 +282,12 @@ export class ManageBooking implements OnInit {
 
   /** The file is a few hundred bytes, so it rides in a `data:` URL: nothing to create or release around the click. */
   protected addToCalendar(): void {
-    const calendarEvent: CalendarEvent | null = this.calendarEvent();
-    if (!calendarEvent) {
+    const calendarFile: string | null = this.calendarFile();
+    if (!calendarFile) {
       return;
     }
     const download: HTMLAnchorElement = document.createElement('a');
-    download.href = `data:text/calendar;charset=utf-8,${encodeURIComponent(toIcsFile(calendarEvent))}`;
+    download.href = `data:text/calendar;charset=utf-8,${encodeURIComponent(calendarFile)}`;
     download.download = 'appointment.ics';
     document.body.append(download);
     download.click();
