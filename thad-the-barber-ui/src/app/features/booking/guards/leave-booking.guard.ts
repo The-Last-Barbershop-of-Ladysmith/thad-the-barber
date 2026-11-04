@@ -21,9 +21,15 @@ const LEAVE_RESCHEDULING: LeaveQuestion = {
   stayLabel: 'Keep rescheduling',
 };
 
-/** Asks in the page's `p-confirmdialog` (#210); staying is the default, and Escape stays too. */
+/**
+ * Holds the customer on the page while a booking or move is sent, so its outcome always shows there; otherwise asks in
+ * the page's `p-confirmdialog` (#210), where staying is the default and Escape stays too.
+ */
 export const leaveBookingGuard: CanDeactivateFn<LeaveConfirmable> =
   (bookingPage: LeaveConfirmable): boolean | Promise<boolean> => {
+    if (bookingPage.isSubmitting()) {
+      return false;
+    }
     if (!bookingPage.hasUnconfirmedPick()) {
       return true;
     }
