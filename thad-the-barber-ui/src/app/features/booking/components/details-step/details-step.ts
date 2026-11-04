@@ -3,7 +3,6 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { InputMaskModule } from 'primeng/inputmask';
 import { InputTextModule } from 'primeng/inputtext';
 
-/** Step 3: customer name and mobile number. */
 @Component({
   selector: 'app-details-step',
   imports: [

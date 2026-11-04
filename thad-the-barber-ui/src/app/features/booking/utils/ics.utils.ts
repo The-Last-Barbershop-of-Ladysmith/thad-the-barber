@@ -1,28 +1,9 @@
 import { ManagedBooking } from '../dtos/managed-booking.dto';
-import { CalendarEvent } from '../models/calendar-event.model';
 
-/** The shop facts an appointment's calendar event shows. */
 interface CalendarShop {
   name: string;
   addressLine: string | null;
   slotMinutes: number;
-}
-
-/** The appointment as a calendar event: at the shop, for one slot, with the link to change or cancel it. */
-export function toCalendarEvent(
-  booking: Pick<ManagedBooking, 'id' | 'startAt'>,
-  shop: CalendarShop,
-  manageLink: string,
-): CalendarEvent {
-  return {
-    uid: `${booking.id}@thad-the-barber`,
-    startAt: booking.startAt,
-    durationMinutes: shop.slotMinutes,
-    title: `Appointment at ${shop.name}`,
-    location: shop.addressLine,
-    description: `Change or cancel: ${manageLink}`,
-    url: manageLink,
-  };
 }
 
 /** iCalendar lines end in CRLF (RFC 5545 §3.1). */
@@ -33,25 +14,30 @@ const MAX_LINE_OCTETS: number = 75;
 
 const encoder: TextEncoder = new TextEncoder();
 
-/** An .ics file holding one appointment, in UTC, for "Add to calendar". */
-export function toIcsFile(event: CalendarEvent, now: Date = new Date()): string {
-  const startAt: Date = new Date(event.startAt);
-  const endAt: Date = new Date(startAt.getTime() + event.durationMinutes * 60_000);
-  const locationLines: string[] = event.location ? [`LOCATION:${escapeText(event.location)}`] : [];
+/** An .ics file holding one appointment at the shop, for one slot, in UTC, with the link to change or cancel it. */
+export function toIcsFile(
+  booking: Pick<ManagedBooking, 'id' | 'startAt'>,
+  shop: CalendarShop,
+  manageLink: string,
+  now: Date = new Date(),
+): string {
+  const startAt: Date = new Date(booking.startAt);
+  const endAt: Date = new Date(startAt.getTime() + shop.slotMinutes * 60_000);
+  const locationLines: string[] = shop.addressLine ? [`LOCATION:${escapeText(shop.addressLine)}`] : [];
   const lines: string[] = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
     'PRODID:-//Thad The Barber//Booking//EN',
     'METHOD:PUBLISH',
     'BEGIN:VEVENT',
-    `UID:${event.uid}`,
+    `UID:${booking.id}@thad-the-barber`,
     `DTSTAMP:${toIcsDateTime(now)}`,
     `DTSTART:${toIcsDateTime(startAt)}`,
     `DTEND:${toIcsDateTime(endAt)}`,
-    `SUMMARY:${escapeText(event.title)}`,
+    `SUMMARY:${escapeText(`Appointment at ${shop.name}`)}`,
     ...locationLines,
-    `DESCRIPTION:${escapeText(event.description)}`,
-    `URL:${event.url}`,
+    `DESCRIPTION:${escapeText(`Change or cancel: ${manageLink}`)}`,
+    `URL:${manageLink}`,
     'END:VEVENT',
     'END:VCALENDAR',
   ];

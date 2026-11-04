@@ -20,8 +20,16 @@ describe(
       ) as boolean | Promise<boolean>);
     }
 
-    function pageWith(hasUnconfirmedPick: boolean, isRescheduling: boolean = false): LeaveConfirmable {
-      return { hasUnconfirmedPick: signal(hasUnconfirmedPick), isRescheduling: signal(isRescheduling) };
+    function pageWith(
+      hasUnconfirmedPick: boolean,
+      isRescheduling: boolean = false,
+      isSubmitting: boolean = false,
+    ): LeaveConfirmable {
+      return {
+        hasUnconfirmedPick: signal(hasUnconfirmedPick),
+        isRescheduling: signal(isRescheduling),
+        isSubmitting: signal(isSubmitting),
+      };
     }
 
     beforeEach((): void => {
@@ -36,6 +44,23 @@ describe(
       'lets the customer leave without asking while nothing is picked, or once it went through (#210)',
       (): void => {
         expect(leave(pageWith(false))).toBe(true);
+        expect(asked).toBeNull();
+      },
+    );
+
+    it(
+      'keeps the customer on the page, without asking, while a booking or move is sent',
+      (): void => {
+        expect(leave(pageWith(
+          true,
+          false,
+          true,
+        ))).toBe(false);
+        expect(leave(pageWith(
+          true,
+          true,
+          true,
+        ))).toBe(false);
         expect(asked).toBeNull();
       },
     );

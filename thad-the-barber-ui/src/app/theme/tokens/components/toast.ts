@@ -19,4 +19,17 @@ export const toast: ToastDesignTokens = {
   success: severity('success'),
   warn: severity('warn'),
   error: severity('error'),
+  css: `
+    /* PrimeNG pins the close button 0.25rem from the corner; inset it like the text, level with its first line. */
+    .p-toast-close-button {
+      top: var(--p-toast-content-padding);
+      right: var(--p-toast-content-padding);
+    }
+    .p-toast-message-content {
+      padding-inline-end: calc(var(--p-toast-content-padding) + var(--p-toast-close-button-width) + var(--p-toast-content-gap));
+    }
+    .p-toast-message-text {
+      text-wrap: pretty;
+    }
+  `,
 };

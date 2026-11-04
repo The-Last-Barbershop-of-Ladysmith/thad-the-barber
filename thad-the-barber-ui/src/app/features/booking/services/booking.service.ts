@@ -22,7 +22,7 @@ export class BookingService {
 
   getBooking(id: string, manageToken: string): Observable<ManagedBooking> {
     return this.http.get<ManagedBooking>(
-      toBookingUrl(id),
+      this.toBookingUrl(id),
       { headers: { [MANAGE_TOKEN_HEADER]: manageToken } },
     );
   }
@@ -30,7 +30,7 @@ export class BookingService {
   /** Cancelling a booking that's already cancelled returns it as it is, so a retry is safe. */
   cancelBooking(id: string, manageToken: string): Observable<ManagedBooking> {
     return this.http.post<ManagedBooking>(
-      `${toBookingUrl(id)}/cancel`,
+      `${this.toBookingUrl(id)}/cancel`,
       null,
       { headers: { [MANAGE_TOKEN_HEADER]: manageToken } },
     );
@@ -43,13 +43,13 @@ export class BookingService {
     request: RescheduleRequest,
   ): Observable<ManagedBooking> {
     return this.http.post<ManagedBooking>(
-      `${toBookingUrl(id)}/reschedule`,
+      `${this.toBookingUrl(id)}/reschedule`,
       request,
       { headers: { [MANAGE_TOKEN_HEADER]: manageToken } },
     );
   }
-}
 
-function toBookingUrl(id: string): string {
-  return `${BOOKINGS_URL}/${encodeURIComponent(id)}`;
+  private toBookingUrl(id: string): string {
+    return `${BOOKINGS_URL}/${encodeURIComponent(id)}`;
+  }
 }

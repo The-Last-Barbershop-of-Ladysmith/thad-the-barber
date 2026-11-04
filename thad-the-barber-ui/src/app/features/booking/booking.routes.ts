@@ -1,21 +1,23 @@
 import { Routes } from '@angular/router';
 import { provideEffects } from '@ngrx/effects';
+import { provideState } from '@ngrx/store';
 import { ConfirmationService } from 'primeng/api';
 import * as bookingEffects from './state/booking.effects';
 import { Booking } from './booking';
 import { leaveBookingGuard } from './guards/leave-booking.guard';
-import * as manageBooking from './pages/manage-booking/manage-booking';
-import * as manageBookings from './pages/manage-bookings/manage-bookings';
+import { bookingFeature } from './state/booking.feature';
+import { ManageBooking } from './pages/manage-booking/manage-booking';
 
-/**
- * The booking effects register once for /book and its manage pages; a booking's reschedule opens the booking page to
- * move it. The slice is a root reducer (`app.config.ts`).
- */
+// The booking slice and effects register once for /book and the manage pages; a reschedule opens the booking page.
 export const BOOKING_ROUTES: Routes = [
   {
     path: '',
     // The leave guard and the booking page's dialog share this ConfirmationService.
-    providers: [provideEffects(bookingEffects), ConfirmationService],
+    providers: [
+      provideState(bookingFeature),
+      provideEffects(bookingEffects),
+      ConfirmationService,
+    ],
     children: [
       {
         path: '',
@@ -23,14 +25,6 @@ export const BOOKING_ROUTES: Routes = [
         canDeactivate: [leaveBookingGuard],
         loadComponent: (): Promise<typeof Booking> =>
           import('./booking').then((m: { Booking: typeof Booking; }): typeof Booking => m.Booking),
-      },
-      {
-        path: 'manage',
-        title: 'Your bookings · Thad The Barber',
-        loadComponent: (): Promise<typeof manageBookings.ManageBookings> =>
-          import('./pages/manage-bookings/manage-bookings').then(
-            (m: typeof manageBookings): typeof manageBookings.ManageBookings => m.ManageBookings,
-          ),
       },
       {
         path: 'manage/:id/reschedule',
@@ -42,10 +36,9 @@ export const BOOKING_ROUTES: Routes = [
       {
         path: 'manage/:id',
         title: 'Your appointment · Thad The Barber',
-        loadComponent: (): Promise<typeof manageBooking.ManageBooking> =>
-          import('./pages/manage-booking/manage-booking').then(
-            (m: typeof manageBooking): typeof manageBooking.ManageBooking => m.ManageBooking,
-          ),
+        loadComponent: (): Promise<typeof ManageBooking> =>
+          import('./pages/manage-booking/manage-booking')
+            .then((m: { ManageBooking: typeof ManageBooking; }): typeof ManageBooking => m.ManageBooking),
       },
     ],
   },

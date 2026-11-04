@@ -1,3 +1,4 @@
+import { testMonthView } from '../../../../../testing/test-availability';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl } from '@angular/forms';
 import { Store, provideStore } from '@ngrx/store';
@@ -9,7 +10,6 @@ import { AvailableDay } from '../../dtos/available-day.dto';
 import * as BookingActions from '../../state/booking.actions';
 import { bookingFeature } from '../../state/booking.feature';
 import { TimeStep } from './time-step';
-import { toMonthView } from '../../utils/booking-time.utils';
 
 /** Made-up days on the test shop's Honolulu clock: 20:00 UTC is 10 AM there. */
 const DAYS: AvailableDay[] = [
@@ -47,8 +47,8 @@ describe(
       });
       const store: Store<AppState> = TestBed.inject<Store<AppState>>(Store);
       store.dispatch(ShopActions.ShopInfoRequestSuccess({ shopInfo: TEST_SHOP }));
-      store.dispatch(BookingActions.SetAvailabilityView({ availabilityView: toMonthView('2026-11') }));
-      store.dispatch(BookingActions.AvailabilityRequestSuccess({ availabilityView: toMonthView('2026-11'), availableDays: DAYS }));
+      store.dispatch(BookingActions.AvailabilityRequest({ dayRange: testMonthView('2026-11') }));
+      store.dispatch(BookingActions.AvailabilityRequestSuccess({ availableDays: DAYS }));
       const fixture: ComponentFixture<TimeStep> = TestBed.createComponent(TimeStep);
       fixture.componentRef.setInput('startAtControl', new FormControl<string | null>(null));
       fixture.componentRef.setInput('selectedDate', selectedDate);
@@ -92,6 +92,13 @@ describe(
           '10:30 AM',
           '11:00 AM',
         ]);
+      },
+    );
+
+    it(
+      'lists no times for a day outside the month in view',
+      (): void => {
+        expect(render('2026-12-01').querySelectorAll('[data-testid="time-list"] [role="button"]')).toHaveLength(0);
       },
     );
   },

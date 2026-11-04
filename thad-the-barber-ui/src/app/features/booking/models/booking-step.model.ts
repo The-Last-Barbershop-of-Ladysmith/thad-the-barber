@@ -1,7 +1,5 @@
-/** The booking flow's steps, in order (#207, #208). */
 export enum BookingStep {
-  Date = 'date',
-  Time = 'time',
-  Details = 'details',
-  Review = 'review',
+  Day = 1,
+  Time = 2,
+  Confirm = 3,
 }

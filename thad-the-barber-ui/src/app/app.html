@@ -1,3 +1,6 @@
+@if (isNavigating()) {
+  <p-progressbar class="page-loading" mode="indeterminate" aria-label="Loading page" />
+}
 <app-header />
 <main class="relative">
   <router-outlet />

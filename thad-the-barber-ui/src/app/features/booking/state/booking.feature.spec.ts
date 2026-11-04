@@ -1,7 +1,5 @@
 import { RequestStatus } from '../../../shared/models/request.models';
-import { testConfirmationIn } from '../../../../testing/test-booking';
-import { BookingConfirmation } from '../dtos/booking-confirmation.dto';
-import { AVAILABILITY_FAILED_NOTICE, UPCOMING_BOOKING_NOTICE } from '../utils/booking-notice.utils';
+import { AVAILABILITY_FAILED_NOTICE, NO_OPEN_DAYS_NOTICE } from '../config/booking-notices';
 import { bookingFeature } from './booking.feature';
 import { BookingState, initialBookingState } from './booking.state';
 
@@ -9,44 +7,37 @@ describe(
   'booking feature',
   (): void => {
     it(
-      'shows the availability notice, with a retry, only when the month failed to load',
+      'shows the failed notice, with a retry, when the month failed to load, and the empty one when it has no open days',
       (): void => {
         const failed: BookingState = { ...initialBookingState, loadStatus: RequestStatus.Error };
+        const empty: BookingState = { ...initialBookingState, loadStatus: RequestStatus.Success };
+        const open: BookingState = {
+          ...empty,
+          availableDays: [{ date: '2026-11-02', times: ['2026-11-02T20:00:00Z'] }],
+        };
 
         expect(bookingFeature.selectNotice({ booking: failed })).toEqual(AVAILABILITY_FAILED_NOTICE);
+        expect(bookingFeature.selectNotice({ booking: empty })).toEqual(NO_OPEN_DAYS_NOTICE);
+        expect(bookingFeature.selectNotice({ booking: open })).toBeNull();
         expect(bookingFeature.selectNotice({ booking: initialBookingState })).toBeNull();
       },
     );
 
     it(
-      'lists the upcoming bookings in the order the slice keeps them, with the notice that there is one',
+      'counts the open times of each open day',
       (): void => {
-        const tomorrow: BookingConfirmation = testConfirmationIn(1, 'made-up-tomorrow');
-        const nextWeek: BookingConfirmation = testConfirmationIn(7, 'made-up-next-week');
         const booking: BookingState = {
           ...initialBookingState,
-          savedConfirmations: [
-            testConfirmationIn(-1, 'made-up-yesterday'),
-            tomorrow,
-            nextWeek,
+          availableDays: [
+            { date: '2026-11-02', times: ['2026-11-02T20:00:00Z', '2026-11-02T20:30:00Z'] },
+            { date: '2026-11-03', times: ['2026-11-03T20:00:00Z'] },
           ],
         };
 
-        expect(bookingFeature.selectUpcomingConfirmations({ booking })).toEqual([tomorrow, nextWeek]);
-        expect(bookingFeature.selectUpcomingBookingNotice({ booking })).toEqual(UPCOMING_BOOKING_NOTICE);
-      },
-    );
-
-    it(
-      'has no notice when every saved booking has started',
-      (): void => {
-        const booking: BookingState = {
-          ...initialBookingState,
-          savedConfirmations: [testConfirmationIn(-1, 'made-up-yesterday')],
-        };
-
-        expect(bookingFeature.selectUpcomingConfirmations({ booking })).toEqual([]);
-        expect(bookingFeature.selectUpcomingBookingNotice({ booking })).toBeNull();
+        expect(bookingFeature.selectOpenTimeCounts({ booking })).toEqual(new Map([
+          ['2026-11-02', 2],
+          ['2026-11-03', 1],
+        ]));
       },
     );
   },

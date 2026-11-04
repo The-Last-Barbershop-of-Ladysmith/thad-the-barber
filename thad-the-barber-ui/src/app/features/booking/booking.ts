@@ -1,7 +1,6 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  DestroyRef,
   Injector,
   Signal,
   WritableSignal,
@@ -14,125 +13,100 @@ import {
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
-import { Actions, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
+import { ButtonModule } from 'primeng/button';
+import { StepPassThrough, StepperPassThrough } from 'primeng/types/stepper';
+import { CardModule } from 'primeng/card';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { map, skip } from 'rxjs';
+import { SpinnerIcon } from 'primeng/icons/spinner';
+import { ProgressBarModule } from 'primeng/progressbar';
+import { StepperModule } from 'primeng/stepper';
+import { distinctUntilChanged, map } from 'rxjs';
 import { SessionService } from '../../core/services/session.service';
 import { Backdrop } from '../../shared/components/backdrop/backdrop';
 import { NoticeMessage } from '../../shared/components/notice-message/notice-message';
 import { Notice } from '../../shared/models/notice.model';
 import { RequestStatus } from '../../shared/models/request.models';
-import { formatFullDate, formatShortDate, fromIsoDate } from '../../shared/utils/date.utils';
+import { formatLongDate, fromIsoDate } from '../../shared/utils/date.utils';
 import { toE164 } from '../../shared/utils/phone.utils';
 import { AppState } from '../../store/app.state';
 import { shopFeature } from '../shop/state/shop.feature';
 import { DateStep } from './components/date-step/date-step';
 import { DetailsStep } from './components/details-step/details-step';
-import { ReviewStep } from './components/review-step/review-step';
-import { StepFlow } from './components/step-flow/step-flow';
 import { TimeStep } from './components/time-step/time-step';
 import { AvailableDay } from './dtos/available-day.dto';
-import { BookingConfirmation } from './dtos/booking-confirmation.dto';
 import { BookingForm } from './models/booking-form.model';
-import { BookingFormValue } from './models/booking-form-value.model';
 import { BookingStep } from './models/booking-step.model';
 import { LeaveConfirmable } from './models/leave-confirmable.model';
+import { ManagePageState } from './models/manage-page-state.model';
 import { ReschedulePageState } from './models/reschedule-page-state.model';
-import { StepProgress } from './models/step-progress.model';
-import { StepView } from './models/step-view.model';
 import * as BookingActions from './state/booking.actions';
 import { bookingFeature } from './state/booking.feature';
-import { BOOKING_NOT_FOUND_NOTICE, BOT_CHECK_FAILED_NOTICE } from './utils/booking-notice.utils';
-import {
-  BOOKING_STEPS,
-  RESCHEDULE_STEPS,
-  canOpenStep,
-  toStepAfterPick,
-  toStepSummaries,
-  toStepViews,
-} from './utils/booking-steps.utils';
+import { BookingState } from './state/booking.state';
+import { BOOKING_NOT_FOUND_NOTICE, BOT_CHECK_FAILED_NOTICE } from './config/booking-notices';
 import { toLongDateTime, toTimeLabel } from './utils/booking-time.utils';
+import { toManagePath } from './utils/manage-link.utils';
 
-/**
- * Booking page: date → time → details → review, one step open at a time, laid out by `StepFlow` (#207–#209). The page
- * owns the form; each step gets the controls it edits. Sending goes through the booking slice (`BookingRequest`,
- * `RescheduleRequest`), whose effects open the booking's page; its status, notice and retry key start over each time
- * the page opens. Every date and time shows on the shop's clock (`timeZone`), so none shows until the shop has loaded.
- *
- * At `/book/manage/{id}/reschedule` it moves that booking instead: date → time → review, no details, with the token
- * and current time from the booking's page (or this device's saved booking), then back to the booking's page.
- */
+interface BookingFormValue {
+  name: string;
+  phone: string;
+  /** The picked day on the shop's calendar ("2026-10-27"). */
+  date: string | null;
+  /** One of the picked day's UTC start times. */
+  startAt: string | null;
+}
+
 @Component({
   selector: 'app-booking',
   imports: [
     ReactiveFormsModule,
+    ButtonModule,
+    CardModule,
     ConfirmDialogModule,
+    ProgressBarModule,
+    SpinnerIcon,
+    StepperModule,
     Backdrop,
     NoticeMessage,
-    StepFlow,
     DateStep,
     TimeStep,
     DetailsStep,
-    ReviewStep,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './booking.html',
+  styleUrl: './booking.scss',
 })
 export class Booking implements LeaveConfirmable {
   private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
+  private readonly router: Router = inject(Router);
+  private readonly route: ActivatedRoute = inject(ActivatedRoute);
   private readonly injector: Injector = inject(Injector);
 
-  // Rescheduling: the booking being moved, its token and current time.
-  /**
-   * The booking being moved, from `/book/manage/{id}/reschedule`'s path; none when booking. Read from the route, not
-   * an input, since input binding also binds query params, which would put `/book?id=…` into reschedule mode.
-   */
-  private readonly route: ActivatedRoute = inject(ActivatedRoute);
-  private readonly id: Signal<string | null> = toSignal(
+  // Moving a booking: read from the path, not an input, since input binding would also turn `/book?id=…` into a move.
+  private readonly bookingId: Signal<string | null> = toSignal(
     this.route.paramMap.pipe(map((paramMap: ParamMap): string | null => paramMap.get('id'))),
     { requireSync: true },
   );
-  readonly isRescheduling: Signal<boolean> = computed((): boolean => this.id() !== null);
-  private readonly steps: Signal<readonly BookingStep[]> = computed((): readonly BookingStep[] =>
-    (this.isRescheduling() ? RESCHEDULE_STEPS : BOOKING_STEPS));
-  /**
-   * The token and current time the booking's page handed over, read while the navigation to each booking runs (the
-   * router restores it on a reload).
-   */
+  readonly isRescheduling: Signal<boolean> = computed((): boolean => this.bookingId() !== null);
   private readonly reschedulePageState: WritableSignal<ReschedulePageState> = signal({});
-  private readonly savedConfirmations: Signal<BookingConfirmation[]> =
-    this.store.selectSignal(bookingFeature.selectSavedConfirmations);
-  private readonly savedConfirmation: Signal<BookingConfirmation | undefined> = computed(
-    (): BookingConfirmation | undefined => this.savedConfirmations()
-      .find((confirmation: BookingConfirmation): boolean => confirmation.id === this.id()),
-  );
-  private readonly manageToken: Signal<string | null> = computed((): string | null =>
-    this.reschedulePageState().manageToken ?? this.savedConfirmation()?.manageToken ?? null);
-  /** Moving needs the booking's token; without one the booking can't be found. */
-  protected readonly canReschedule: Signal<boolean> = computed((): boolean => this.manageToken() !== null);
-  /** "Saturday, November 8 at 10:00 AM", the time being moved. */
+  protected readonly manageToken: Signal<string | null> = computed((): string | null =>
+    this.reschedulePageState().manageToken ?? null);
   protected readonly currentTimeLabel: Signal<string | null> = computed((): string | null => {
-    const startAt: string | undefined = this.reschedulePageState().startAt ?? this.savedConfirmation()?.startAt;
+    const { startAt }: ReschedulePageState = this.reschedulePageState();
     const timeZone: string | null = this.timeZone();
     return startAt && timeZone ? toLongDateTime(timeZone, startAt) : null;
   });
 
-  // The shop, the days in view and the notices.
   private readonly timeZone: Signal<string | null> = this.store.selectSignal(shopFeature.selectTimeZone);
-  private readonly loadStatus: Signal<RequestStatus> = this.store.selectSignal(bookingFeature.selectLoadStatus);
+  readonly isSubmitting: Signal<boolean> = this.store.selectSignal(bookingFeature.selectIsSubmitting);
+  private readonly isSubmitDone: Signal<boolean> = this.store.selectSignal(bookingFeature.selectIsSubmitDone);
   protected readonly isBotCheckFailed: Signal<boolean> = inject(SessionService).isBotCheckFailed;
+
   protected readonly botCheckFailedNotice: Notice = BOT_CHECK_FAILED_NOTICE;
   protected readonly bookingNotFoundNotice: Notice = BOOKING_NOT_FOUND_NOTICE;
-  protected readonly availabilityNotice: Signal<Notice | null> = this.store.selectSignal(bookingFeature.selectNotice);
   protected readonly submitNotice: Signal<Notice | null> = this.store.selectSignal(bookingFeature.selectSubmitNotice);
-  /** "You have an upcoming booking", while this device keeps one (BR-22); not while moving one. */
-  private readonly savedBookingsNotice: Signal<Notice | null> =
-    this.store.selectSignal(bookingFeature.selectUpcomingBookingNotice);
-  protected readonly upcomingBookingNotice: Signal<Notice | null> = computed((): Notice | null =>
-    (this.isRescheduling() ? null : this.savedBookingsNotice()));
+  protected readonly squareBookingUrl: Signal<string> = this.store.selectSignal(shopFeature.selectBookingUrl);
 
-  // The form and the send.
   protected readonly bookingForm: BookingForm = new FormGroup({
     name: new FormControl('', {
       nonNullable: true,
@@ -145,194 +119,137 @@ export class Booking implements LeaveConfirmable {
     date: new FormControl<string | null>(null, [Validators.required]),
     startAt: new FormControl<string | null>(null, [Validators.required]),
   });
-  /** The form's value as a signal, so the steps re-render when it changes. */
   protected readonly bookingFormValue: Signal<BookingFormValue> = toSignal(
     this.bookingForm.valueChanges.pipe(map((): BookingFormValue => this.bookingForm.getRawValue())),
     { initialValue: this.bookingForm.getRawValue() },
   );
-  protected readonly isSubmitting: Signal<boolean> = this.store.selectSignal(bookingFeature.selectIsSubmitting);
-  private readonly isSubmitDone: Signal<boolean> = this.store.selectSignal(bookingFeature.selectIsSubmitDone);
-  private readonly idempotencyKey: Signal<string | null> = this.store.selectSignal(bookingFeature.selectIdempotencyKey);
-  /** Set while the page drops a pick itself, so the notice saying why stays. */
-  private isDroppingPick: boolean = false;
+  // Kept while the same booking is retried, so one whose response was lost isn't made twice.
+  private idempotencyKey: string | null = null;
 
-  // The steps.
   protected readonly bookingStep: typeof BookingStep = BookingStep;
-  protected readonly openStep: WritableSignal<BookingStep> = signal(BookingStep.Date);
-  /** Set by a review row's Change link: once that step is done again, the flow goes back to review. */
-  private isReturningToReview: boolean = false;
-  /** The picks the last form change saw, so the next one can tell which pick changed and open the step after it. */
-  private lastPicks: Pick<BookingFormValue, 'date' | 'startAt'> = { date: null, startAt: null };
+  // PrimeNG makes the stepper a tablist, which ARIA allows only around a row of tabs. Each step here opens its panel
+  // below its header, as an accordion does, so the stepper has no role and its headers are buttons.
+  protected readonly stepperPt: StepperPassThrough = { root: { role: 'presentation' } };
+  protected readonly stepPt: StepPassThrough = { header: { role: 'button' } };
+  protected readonly openStep: WritableSignal<BookingStep> = signal(BookingStep.Day);
 
-  /**
-   * Name and phone validity has no signal of its own; it only changes with the form's value, which is read here.
-   * `invalid`, not `valid`: the form is disabled while a booking is sent, and disabled controls aren't `valid`.
-   */
-  private readonly progress: Signal<StepProgress> = computed((): StepProgress => {
-    const { date, startAt }: BookingFormValue = this.bookingFormValue();
-    const areDetailsValid: boolean = !this.bookingForm.controls.name.invalid
-      && !this.bookingForm.controls.phone.invalid;
-    return {
-      hasDate: date !== null,
-      hasTime: startAt !== null,
-      // Moving a booking asks for no details: it already has them.
-      areDetailsValid: this.isRescheduling() || areDetailsValid,
-    };
-  });
-  protected readonly isFormValid: Signal<boolean> = computed((): boolean => {
-    const {
-      hasDate,
-      hasTime,
-      areDetailsValid,
-    }: StepProgress = this.progress();
-    return hasDate && hasTime && areDetailsValid;
+  protected readonly pickedDayLabel: Signal<string | null> = computed((): string | null => {
+    const { date }: BookingFormValue = this.bookingFormValue();
+    return date ? formatLongDate(fromIsoDate(date)) : null;
   });
 
-  /** The pick alone, so typing a name or phone doesn't reformat the day and time labels. */
-  private readonly pickedDate: Signal<string | null> = computed((): string | null => this.bookingFormValue().date);
-  private readonly pickedStartAt: Signal<string | null> = computed((): string | null =>
-    this.bookingFormValue().startAt);
-  protected readonly pickedDateLabel: Signal<string | null> = computed((): string | null => {
-    const date: string | null = this.pickedDate();
-    return date ? formatFullDate(fromIsoDate(date)) : null;
-  });
   protected readonly pickedTimeLabel: Signal<string | null> = computed((): string | null => {
-    const startAt: string | null = this.pickedStartAt();
+    const { startAt }: BookingFormValue = this.bookingFormValue();
     const timeZone: string | null = this.timeZone();
     return startAt && timeZone ? toTimeLabel(timeZone, startAt) : null;
   });
-  /** The sticky bar's day on phones. */
-  protected readonly pickedDayShortLabel: Signal<string> = computed((): string => {
-    const date: string | null = this.pickedDate();
-    return date ? formatShortDate(fromIsoDate(date)) : 'No day picked';
+
+  protected readonly canConfirm: Signal<boolean> = computed((): boolean => {
+    const { date, startAt }: BookingFormValue = this.bookingFormValue();
+    // `invalid`, not `valid`: the form is disabled while sending, and disabled controls are never valid.
+    const areDetailsValid: boolean = this.isRescheduling()
+      || (!this.bookingForm.controls.name.invalid && !this.bookingForm.controls.phone.invalid);
+    const canSend: boolean = !this.isSubmitting() && !this.isSubmitDone() && !this.isBotCheckFailed();
+    return date !== null && startAt !== null && areDetailsValid && canSend;
   });
 
-  protected readonly stepViews: Signal<StepView[]> = computed((): StepView[] => {
-    const progress: StepProgress = this.progress();
-    const { name, phone }: BookingFormValue = this.bookingFormValue();
-    const summaries: Record<BookingStep, string> = toStepSummaries(progress, {
-      date: this.pickedDateLabel(),
-      time: this.pickedTimeLabel(),
-      details: progress.areDetailsValid ? `${name.trim()} · ${phone}` : null,
-      review: this.isRescheduling() ? 'Check and move' : 'Check and book',
-    });
-    return toStepViews(
-      this.steps(),
-      progress,
-      summaries,
-      this.openStep(),
-    );
+  protected readonly confirmLabel: Signal<string> = computed((): string => {
+    const { startAt }: BookingFormValue = this.bookingFormValue();
+    const timeZone: string | null = this.timeZone();
+    const pickedTime: string | null = startAt && timeZone ? toLongDateTime(timeZone, startAt) : null;
+    if (this.isRescheduling()) {
+      return pickedTime ? `Move to ${pickedTime}` : 'Move appointment';
+    }
+    return pickedTime ? `Book ${pickedTime}` : 'Book appointment';
   });
-  protected readonly canReview: Signal<boolean> = computed((): boolean =>
-    this.stepViews().at(-1)?.isLocked === false);
 
-  /**
-   * A picked day that isn't booked (or moved) yet; leaving would lose it (#210). That includes one being sent: leaving
-   * then drops its response, so it would be neither shown nor kept.
-   */
+  // Includes a booking still being sent: leaving drops its response, so it would be neither shown nor kept (#210).
   readonly hasUnconfirmedPick: Signal<boolean> = computed((): boolean =>
-    this.pickedDate() !== null && !this.isSubmitDone());
+    this.bookingFormValue().date !== null && !this.isSubmitDone());
 
   constructor() {
-    this.store.dispatch(BookingActions.BookingPageOpen());
-    // A send still in flight stops with the page, so its response can't take the customer away from where they went.
-    inject(DestroyRef).onDestroy((): void => {
-      this.store.dispatch(BookingActions.BookingPageClose());
-    });
-    // The page, not the date step, opens the first days: the date step goes away whenever its card collapses.
-    this.store.dispatch(BookingActions.UpcomingDaysOpen());
-    this.askBeforeUnloadWhileUnconfirmed();
+    this.startOverForEachBooking();
     this.lockFormWhileSubmitting();
-    this.followSendOutcomes();
-    this.followMovedBooking(inject(Router));
-    this.store
-      .select(bookingFeature.selectAvailableDays)
-      .pipe(takeUntilDestroyed())
-      .subscribe((availableDays: AvailableDay[]): void => {
-        this.dropPickedDayWithoutTimes(availableDays);
-      });
-    // Subscribed after `bookingFormValue`, so the signals already hold the new value here.
+    this.askBeforeUnloadWhileUnconfirmed();
+    this.clearPicksNoLongerOpen();
     this.bookingForm.valueChanges
       .pipe(takeUntilDestroyed())
       .subscribe((): void => {
-        this.store.dispatch(BookingActions.BookingDraftChange({ isNoticeKept: this.isDroppingPick }));
-        this.openStepAfterNewPick();
+        this.idempotencyKey = null;
+      });
+    this.bookingForm.controls.date.valueChanges
+      .pipe(
+        distinctUntilChanged(),
+        takeUntilDestroyed(),
+      )
+      .subscribe((date: string | null): void => {
+        this.bookingForm.controls.startAt.reset();
+        if (date) {
+          this.showStep(BookingStep.Time);
+        }
+      });
+    this.bookingForm.controls.startAt.valueChanges
+      .pipe(takeUntilDestroyed())
+      .subscribe((startAt: string | null): void => {
+        if (startAt) {
+          this.showStep(BookingStep.Confirm);
+        }
       });
   }
 
-  /** Opens `step` if every step before it is done, and moves focus to its heading. */
-  protected showStep(step: BookingStep): void {
-    const canOpen: boolean = canOpenStep(
-      step,
-      this.progress(),
-      this.steps(),
-    );
-    if (!canOpen) {
-      return;
-    }
-    if (step === BookingStep.Review) {
-      this.isReturningToReview = false;
-    }
-    this.openStep.set(step);
-    afterNextRender(
-      (): void => {
-        document.getElementById(`step-heading-${step}`)?.focus();
-      },
-      { injector: this.injector },
-    );
-  }
-
-  /** A review row's Change link: the step opens, and finishing it comes back to review. */
-  protected changeFromReview(step: BookingStep): void {
-    this.isReturningToReview = true;
-    this.showStep(step);
-  }
-
-  /** Back (-1) and Continue (1). */
-  protected showAdjacentStep(offset: number): void {
-    const steps: readonly BookingStep[] = this.steps();
-    const adjacentStep: BookingStep | undefined = steps[steps.indexOf(this.openStep()) + offset];
-    if (adjacentStep) {
-      this.showStep(adjacentStep);
-    }
-  }
-
-  protected reloadDays(): void {
-    this.store.dispatch(BookingActions.AvailabilityReload());
-  }
-
-  /** The form's submit, and a failed booking's (or move's) retry. */
   protected confirm(): void {
     const {
       name,
       phone,
       startAt,
     }: BookingFormValue = this.bookingForm.getRawValue();
-    const canSend: boolean = !this.isSubmitting() && !this.isSubmitDone() && !this.isBotCheckFailed();
-    if (!this.isFormValid() || !startAt || !canSend) {
+    const bookingId: string | null = this.bookingId();
+    const manageToken: string | null = this.manageToken();
+    if (!startAt || !this.canConfirm()) {
       return;
     }
-    const id: string | null = this.id();
-    const manageToken: string | null = this.manageToken();
-    if (id && manageToken) {
+    if (bookingId && manageToken) {
       this.store.dispatch(BookingActions.RescheduleRequest({
-        bookingId: id,
+        bookingId,
         manageToken,
         startAt,
       }));
-    } else if (!id) {
+    } else if (!bookingId) {
+      this.idempotencyKey ??= crypto.randomUUID();
       this.store.dispatch(BookingActions.BookingRequest({
         bookingRequest: {
           startAt,
           name: name.trim(),
           phone: toE164(phone),
-          idempotencyKey: this.idempotencyKey() ?? crypto.randomUUID(),
+          idempotencyKey: this.idempotencyKey,
         },
       }));
     }
   }
 
-  /** Locked so the details can't change under a send in flight; without events, so the booking isn't reset. */
+  protected returnToBooking(): void {
+    const bookingId: string | null = this.bookingId();
+    const manageToken: string | null = this.manageToken();
+    if (!bookingId || !manageToken) {
+      return;
+    }
+    const managePageState: ManagePageState = { manageToken };
+    void this.router.navigateByUrl(toManagePath(bookingId), { state: managePageState });
+  }
+
+  // The router reuses this page when another booking's reschedule opens from here.
+  private startOverForEachBooking(): void {
+    this.route.paramMap
+      .pipe(takeUntilDestroyed())
+      .subscribe((): void => {
+        this.reschedulePageState.set(this.router.currentNavigation()?.extras.state ?? {});
+        this.bookingForm.reset();
+        this.openStep.set(BookingStep.Day);
+        this.store.dispatch(BookingActions.BookingPageOpen());
+      });
+  }
+
+  // Without events, so locking and unlocking doesn't count as the customer changing the booking.
   private lockFormWhileSubmitting(): void {
     effect((): void => {
       if (this.isSubmitting()) {
@@ -343,99 +260,37 @@ export class Booking implements LeaveConfirmable {
     });
   }
 
-  /**
-   * A taken time is dropped and the time step opens (the days reload and the notice follows, from the effect). A
-   * booking whose page didn't open is confirmed here, starting over at the date for another booking.
-   */
-  private followSendOutcomes(): void {
-    const actions$: Actions = inject<Actions>(Actions);
-    actions$
-      .pipe(
-        ofType(BookingActions.BookingTimeTaken),
-        takeUntilDestroyed(),
-      )
-      .subscribe((): void => {
-        this.dropPicks({ startAt: null });
-        this.showStep(BookingStep.Time);
-      });
-    actions$
-      .pipe(
-        ofType(BookingActions.BookingShownHere),
-        takeUntilDestroyed(),
-      )
-      .subscribe((): void => {
-        this.dropPicks({ date: null, startAt: null });
-        this.openStep.set(BookingStep.Date);
-      });
-  }
-
-  /**
-   * Keeps the handed-over state for the booking in the path. The router reuses this page when another booking's
-   * reschedule opens from here, so a new booking starts over: no picks, no notice, no send.
-   */
-  private followMovedBooking(router: Router): void {
-    this.route.paramMap
+  // A taken time comes off the open times; the pick goes with it. Only a loaded month holding the picked day can say
+  // it's gone, so paging to another month keeps the pick.
+  private clearPicksNoLongerOpen(): void {
+    this.store
+      .select(bookingFeature.selectBookingState)
       .pipe(takeUntilDestroyed())
-      .subscribe((): void => {
-        this.reschedulePageState.set(router.currentNavigation()?.extras.state ?? {});
+      .subscribe(({
+        loadStatus,
+        dayRange,
+        availableDays,
+      }: BookingState): void => {
+        const { date, startAt }: BookingFormValue = this.bookingForm.getRawValue();
+        const isPickInView: boolean = date !== null && dayRange !== null
+          && date >= dayRange.firstDay && date <= dayRange.lastDay;
+        if (loadStatus !== RequestStatus.Success || !isPickInView) {
+          return;
+        }
+        const pickedDay: AvailableDay | undefined = availableDays
+          .find((availableDay: AvailableDay): boolean => availableDay.date === date);
+        if (date && !pickedDay) {
+          this.bookingForm.controls.date.reset();
+          this.showStep(BookingStep.Day);
+        } else if (startAt && !pickedDay?.times.includes(startAt)) {
+          this.bookingForm.controls.startAt.reset();
+          this.showStep(BookingStep.Time);
+        }
       });
-    this.route.paramMap
-      .pipe(
-        skip(1),
-        takeUntilDestroyed(),
-      )
-      .subscribe((): void => {
-        this.store.dispatch(BookingActions.BookingPageOpen());
-        this.isReturningToReview = false;
-        this.bookingForm.reset();
-        this.openStep.set(BookingStep.Date);
-      });
   }
 
-  /** Drops picks the customer didn't change, keeping the notice that says why. */
-  private dropPicks(picks: Partial<Pick<BookingFormValue, 'date' | 'startAt'>>): void {
-    this.isDroppingPick = true;
-    this.bookingForm.patchValue(picks);
-    this.isDroppingPick = false;
-  }
-
-  /** Picking a day clears the last day's time and opens the time step; picking a time opens the next step. */
-  private openStepAfterNewPick(): void {
-    const { date, startAt }: BookingFormValue = this.bookingFormValue();
-    const isNewDay: boolean = date !== null && date !== this.lastPicks.date;
-    const isNewTime: boolean = startAt !== null && startAt !== this.lastPicks.startAt;
-    this.lastPicks = { date, startAt };
-    if (isNewDay && startAt !== null && !isNewTime) {
-      this.bookingForm.controls.startAt.reset();
-    }
-    const nextStep: BookingStep | null = toStepAfterPick(
-      isNewDay,
-      isNewTime,
-      this.isReturningToReview,
-      this.progress(),
-      this.steps(),
-    );
-    if (nextStep) {
-      this.showStep(nextStep);
-    }
-  }
-
-  /** After a taken time reloads the days, the picked day may have none left; it's dropped and the date step opens. */
-  private dropPickedDayWithoutTimes(availableDays: AvailableDay[]): void {
-    const date: string | null = this.pickedDate();
-    const isLoaded: boolean = this.loadStatus() === RequestStatus.Success;
-    if (!date || !isLoaded || availableDays.some((availableDay: AvailableDay): boolean => availableDay.date === date)) {
-      return;
-    }
-    this.dropPicks({ date: null, startAt: null });
-    this.openStep.set(BookingStep.Date);
-  }
-
-  /**
-   * Closing or reloading the tab with an unconfirmed pick gets the browser's own prompt; the browser picks its text.
-   * The listener is there only while there's a pick, since an always-on one keeps the page out of the back/forward
-   * cache.
-   */
+  // The browser asks before closing or reloading the tab. Only while there's a pick: an always-on listener keeps the
+  // page out of the back/forward cache.
   private askBeforeUnloadWhileUnconfirmed(): void {
     if (typeof window === 'undefined') {
       return;
@@ -452,5 +307,19 @@ export class Booking implements LeaveConfirmable {
         window.removeEventListener('beforeunload', onBeforeUnload);
       });
     });
+  }
+
+  // Focus follows the step that opens, since the one it was in collapses.
+  private showStep(step: BookingStep): void {
+    if (this.openStep() === step) {
+      return;
+    }
+    this.openStep.set(step);
+    afterNextRender(
+      (): void => {
+        document.querySelector<HTMLElement>('.p-step-active .p-step-header')?.focus();
+      },
+      { injector: this.injector },
+    );
   }
 }

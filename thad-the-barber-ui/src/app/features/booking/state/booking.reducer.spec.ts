@@ -1,3 +1,4 @@
+import { testMonthView } from '../../../../testing/test-availability';
 import { testConfirmation } from '../../../../testing/test-booking';
 import { RequestStatus } from '../../../shared/models/request.models';
 import { AvailableDay } from '../dtos/available-day.dto';
@@ -8,7 +9,6 @@ import { NoticeSeverity } from '../../../shared/models/notice-severity.model';
 import * as BookingActions from './booking.actions';
 import { bookingReducer } from './booking.reducer';
 import { BookingState, initialBookingState } from './booking.state';
-import { toMonthView } from '../utils/booking-time.utils';
 
 const availableDays: AvailableDay[] = [
   { date: '2026-10-03', times: ['2026-10-03T20:00:00Z', '2026-10-03T20:30:00Z'] },
@@ -18,13 +18,11 @@ const availableDays: AvailableDay[] = [
 const saturday: BookingConfirmation = testConfirmation('2026-10-03T20:00:00Z', 'made-up-saturday');
 
 const october: BookingState = {
-  availabilityView: toMonthView('2026-10'),
+  dayRange: testMonthView('2026-10'),
   availableDays,
   loadStatus: RequestStatus.Error,
-  savedConfirmations: [saturday],
   submitStatus: RequestStatus.Idle,
   submitNotice: null,
-  idempotencyKey: null,
 };
 
 const failedNotice: Notice = {
@@ -49,13 +47,13 @@ describe(
   'booking reducer',
   (): void => {
     it(
-      'empties the calendar and shows it loading while a month loads, keeping the saved bookings',
+      'empties the calendar and shows it loading while a month loads',
       (): void => {
-        const state: BookingState = bookingReducer(october, BookingActions.SetAvailabilityView({ availabilityView: toMonthView('2026-11') }));
+        const state: BookingState = bookingReducer(october, BookingActions.AvailabilityRequest({ dayRange: testMonthView('2026-11') }));
 
         expect(state).toEqual({
           ...october,
-          availabilityView: toMonthView('2026-11'),
+          dayRange: testMonthView('2026-11'),
           availableDays: [],
           loadStatus: RequestStatus.Pending,
         });
@@ -63,169 +61,60 @@ describe(
     );
 
     it(
-      'adds each booking to the saved ones, soonest first',
+      'counts a booking or a move that went through as done',
       (): void => {
-        const friday: BookingConfirmation = testConfirmation('2026-10-02T14:00:00Z', 'made-up-friday');
-        const sunday: BookingConfirmation = testConfirmation('2026-10-04T15:00:00Z', 'made-up-sunday');
-        const withSunday: BookingState = bookingReducer(
+        const booked: BookingState = bookingReducer(
           october,
-          BookingActions.BookingRequestSuccess({ bookingConfirmation: sunday }),
-        );
-        const state: BookingState = bookingReducer(
-          withSunday,
-          BookingActions.BookingRequestSuccess({ bookingConfirmation: friday }),
+          BookingActions.BookingRequestSuccess({ bookingConfirmation: saturday }),
         );
 
-        expect(state.savedConfirmations).toEqual([
-          friday,
-          saturday,
-          sunday,
-        ]);
+        expect(booked.submitStatus).toBe(RequestStatus.Success);
+        expect(bookingReducer(october, moveTo(saturday.id, '2026-10-05T16:00:00Z')).submitStatus)
+          .toBe(RequestStatus.Success);
       },
     );
 
     it(
-      'replaces a saved booking confirmed again, instead of listing it twice',
+      'stores the loaded days, or marks the load failed',
       (): void => {
-        const moved: BookingConfirmation = { ...saturday, startAt: '2026-10-03T21:00:00Z' };
-        const state: BookingState = bookingReducer(
+        const pending: BookingState = { ...initialBookingState, loadStatus: RequestStatus.Pending };
+
+        expect(bookingReducer(pending, BookingActions.AvailabilityRequestSuccess({ availableDays }))).toEqual({
+          ...pending,
+          availableDays,
+          loadStatus: RequestStatus.Success,
+        });
+        expect(bookingReducer(pending, BookingActions.AvailabilityRequestFailure()).loadStatus)
+          .toBe(RequestStatus.Error);
+      },
+    );
+
+    it(
+      'shows why the booking failed, and takes a taken time off the open times, dropping a day left with none',
+      (): void => {
+        const failed: BookingState = bookingReducer(
           october,
-          BookingActions.BookingRequestSuccess({ bookingConfirmation: moved }),
+          BookingActions.BookingRequestFailure({ notice: failedNotice, takenStartAt: '2026-10-04T23:30:00Z' }),
         );
 
-        expect(state.savedConfirmations).toEqual([moved]);
-      },
-    );
-
-    it(
-      "replaces the saved bookings with another tab's",
-      (): void => {
-        const fromOtherTab: BookingConfirmation[] = [testConfirmation('2026-10-05T16:00:00Z', 'made-up-other-tab')];
-        const state: BookingState = bookingReducer(
+        expect(failed.submitStatus).toBe(RequestStatus.Error);
+        expect(failed.submitNotice).toEqual(failedNotice);
+        expect(failed.availableDays.map((availableDay: AvailableDay): string => availableDay.date))
+          .not.toContain('2026-10-04');
+        expect(bookingReducer(
           october,
-          BookingActions.SavedConfirmationsAdopt({ savedConfirmations: fromOtherTab }),
-        );
-
-        expect(state.savedConfirmations).toEqual(fromOtherTab);
+          BookingActions.RescheduleRequestFailure({ notice: failedNotice, takenStartAt: null }),
+        ).availableDays).toEqual(availableDays);
       },
     );
 
     it(
-      "drops a cancelled booking from this device's list, and leaves the list alone when it isn't there",
-      (): void => {
-        const removed: BookingState = bookingReducer(
-          october,
-          BookingActions.SavedConfirmationRemove({ bookingId: saturday.id }),
-        );
-        const untouched: BookingState = bookingReducer(
-          october,
-          BookingActions.SavedConfirmationRemove({ bookingId: 'made-up-opened-link' }),
-        );
-
-        expect(removed.savedConfirmations).toEqual([]);
-        expect(untouched.savedConfirmations).toEqual([saturday]);
-      },
-    );
-
-    it(
-      "moves a rescheduled booking in this device's list, soonest first, and never adds one that isn't there",
-      (): void => {
-        const sunday: BookingConfirmation = testConfirmation('2026-10-04T15:00:00Z', 'made-up-sunday');
-        const both: BookingState = { ...october, savedConfirmations: [saturday, sunday] };
-        const moved: BookingState = bookingReducer(
-          both,
-          moveTo(saturday.id, '2026-10-05T16:00:00Z'),
-        );
-        const untouched: BookingState = bookingReducer(
-          october,
-          moveTo('made-up-opened-link', '2026-10-05T16:00:00Z'),
-        );
-
-        expect(moved.savedConfirmations).toEqual([sunday, { ...saturday, startAt: '2026-10-05T16:00:00Z' }]);
-        expect(untouched.savedConfirmations).toEqual([saturday]);
-      },
-    );
-
-    it(
-      'keeps availability only for the month in view',
-      (): void => {
-        const viewing: BookingState = { ...initialBookingState, availabilityView: toMonthView('2026-11') };
-
-        const stale: BookingState = bookingReducer(
-          viewing,
-          BookingActions.AvailabilityRequestSuccess({ availabilityView: toMonthView('2026-10'), availableDays }),
-        );
-        const current: BookingState = bookingReducer(
-          { ...viewing, availabilityView: toMonthView('2026-10') },
-          BookingActions.AvailabilityRequestSuccess({ availabilityView: toMonthView('2026-10'), availableDays }),
-        );
-
-        expect(stale.availableDays).toEqual([]);
-        expect(current.availableDays).toEqual(availableDays);
-        expect(current.loadStatus).toBe(RequestStatus.Success);
-      },
-    );
-
-    it(
-      'keeps a failed load only for the month in view',
-      (): void => {
-        const viewing: BookingState = {
-          ...initialBookingState,
-          availabilityView: toMonthView('2026-10'),
-          loadStatus: RequestStatus.Pending,
-        };
-
-        const stale: BookingState = bookingReducer(
-          viewing,
-          BookingActions.AvailabilityRequestFailure({ availabilityView: toMonthView('2026-09') }),
-        );
-        const current: BookingState = bookingReducer(
-          viewing,
-          BookingActions.AvailabilityRequestFailure({ availabilityView: toMonthView('2026-10') }),
-        );
-
-        expect(stale.loadStatus).toBe(RequestStatus.Pending);
-        expect(current.loadStatus).toBe(RequestStatus.Error);
-      },
-    );
-
-    it(
-      'keeps the key while the same booking is retried, and drops it and the notice when anything changes',
-      (): void => {
-        const failed: BookingState = [
-          BookingActions.BookingRequest({
-            bookingRequest: {
-              startAt: '2026-10-03T20:00:00Z',
-              name: 'Test Customer',
-              phone: '+15550100199',
-              idempotencyKey: 'made-up-key',
-            },
-          }),
-          BookingActions.BookingRequestFailure({ notice: failedNotice }),
-        ].reduce(bookingReducer, october);
-        const changed: BookingState =
-          bookingReducer(failed, BookingActions.BookingDraftChange({ isNoticeKept: false }));
-        const pickDropped: BookingState =
-          bookingReducer(failed, BookingActions.BookingDraftChange({ isNoticeKept: true }));
-
-        expect(failed).toEqual(expect.objectContaining({
-          submitStatus: RequestStatus.Error,
-          submitNotice: failedNotice,
-          idempotencyKey: 'made-up-key',
-        }));
-        expect(changed).toEqual(expect.objectContaining({ submitNotice: null, idempotencyKey: null }));
-        expect(pickDropped).toEqual(expect.objectContaining({ submitNotice: failedNotice, idempotencyKey: null }));
-      },
-    );
-
-    it(
-      'starts the booking over when the page opens, keeping the saved bookings',
+      'starts the booking over when the page opens',
       (): void => {
         const sent: BookingState = {
           ...october,
           submitStatus: RequestStatus.Success,
           submitNotice: failedNotice,
-          idempotencyKey: 'made-up-key',
         };
 
         expect(bookingReducer(sent, BookingActions.BookingPageOpen())).toEqual(october);
@@ -233,27 +122,11 @@ describe(
     );
 
     it(
-      'confirms a booking whose page did not open, ready for another',
+      'keeps a booking still being sent when the page opens again, so another send waits for it',
       (): void => {
-        const shownHere: BookingState = bookingReducer(
-          { ...october, submitStatus: RequestStatus.Success },
-          BookingActions.BookingShownHere({ bookingId: 'made-up-booking' }),
-        );
+        const sending: BookingState = { ...october, submitStatus: RequestStatus.Pending };
 
-        expect(shownHere.submitStatus).toBe(RequestStatus.Idle);
-        expect(shownHere.submitNotice?.link?.path).toBe('/book/manage/made-up-booking');
-      },
-    );
-
-    it(
-      'counts a move that went back to its booking as done',
-      (): void => {
-        const returned: BookingState = bookingReducer(
-          october,
-          BookingActions.RescheduleReturn({ bookingId: saturday.id, manageToken: 'made-up-token' }),
-        );
-
-        expect(returned.submitStatus).toBe(RequestStatus.Success);
+        expect(bookingReducer(sending, BookingActions.BookingPageOpen()).submitStatus).toBe(RequestStatus.Pending);
       },
     );
   },

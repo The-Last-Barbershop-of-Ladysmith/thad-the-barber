@@ -3,7 +3,6 @@ import { CanDeactivateFn } from '@angular/router';
 import { ConfirmationService } from 'primeng/api';
 import { LeaveConfirmable } from '../models/leave-confirmable.model';
 
-/** What the "Leave without …?" dialog says, booking or moving. */
 interface LeaveQuestion {
   header: string;
   message: string;
@@ -23,17 +22,19 @@ const LEAVE_RESCHEDULING: LeaveQuestion = {
 };
 
 /**
- * With a picked day not yet booked or moved (#210), asks before leaving in the page's `p-confirmdialog`
- * (`key="leave-booking"`); staying is the default, and Escape stays too. Otherwise lets the customer go.
- * `ConfirmationService` comes from the booking routes, so the guard and the page's dialog share it.
+ * Holds the customer on the page while a booking or move is sent, so its outcome always shows there; otherwise asks in
+ * the page's `p-confirmdialog` (#210), where staying is the default and Escape stays too.
  */
 export const leaveBookingGuard: CanDeactivateFn<LeaveConfirmable> =
-  (page: LeaveConfirmable): boolean | Promise<boolean> => {
-    if (!page.hasUnconfirmedPick()) {
+  (bookingPage: LeaveConfirmable): boolean | Promise<boolean> => {
+    if (bookingPage.isSubmitting()) {
+      return false;
+    }
+    if (!bookingPage.hasUnconfirmedPick()) {
       return true;
     }
     const confirmationService: ConfirmationService = inject(ConfirmationService);
-    const leaveQuestion: LeaveQuestion = page.isRescheduling() ? LEAVE_RESCHEDULING : LEAVE_BOOKING;
+    const leaveQuestion: LeaveQuestion = bookingPage.isRescheduling() ? LEAVE_RESCHEDULING : LEAVE_BOOKING;
     return new Promise<boolean>((resolve: (canLeave: boolean) => void): void => {
       confirmationService.confirm({
         key: 'leave-booking',

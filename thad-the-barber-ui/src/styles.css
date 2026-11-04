@@ -5,7 +5,7 @@
 @import "tailwindcss-primeui";
 @import "./app/theme/tailwind/theme.css";
 
-/* Google allows hiding the reCAPTCHA badge only where its notice shows instead (booking-summary). */
-body:has(.recaptcha-notice) .grecaptcha-badge {
+/* Google allows hiding the reCAPTCHA badge when its notice is in the user flow: the booking page's confirm step. */
+body:has(.booking-steps) .grecaptcha-badge {
   visibility: hidden;
 }

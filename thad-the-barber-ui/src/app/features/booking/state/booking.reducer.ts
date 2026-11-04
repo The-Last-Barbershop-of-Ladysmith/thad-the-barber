@@ -1,24 +1,18 @@
 import { ActionReducer, createReducer, on } from '@ngrx/store';
 import { RequestStatus } from '../../../shared/models/request.models';
 import { AvailableDay } from '../dtos/available-day.dto';
-import { AvailabilityView } from '../models/availability-view.model';
-import { BookingConfirmation } from '../dtos/booking-confirmation.dto';
-import { BookingRequest } from '../dtos/booking-request.dto';
-import { ManagedBooking } from '../dtos/managed-booking.dto';
+import { DayRange } from '../models/day-range.model';
 import { Notice } from '../../../shared/models/notice.model';
-import { toBookedHereNotice } from '../utils/booking-notice.utils';
-import { isSameView } from '../utils/booking-time.utils';
-import { toSortedConfirmations } from '../utils/saved-confirmation.utils';
 import * as BookingActions from './booking.actions';
 import { BookingState, initialBookingState } from './booking.state';
 
 export const bookingReducer: ActionReducer<BookingState> = createReducer(
   initialBookingState,
   on(
-    BookingActions.SetAvailabilityView,
-    (state: BookingState, { availabilityView }: { availabilityView: AvailabilityView; }): BookingState => ({
+    BookingActions.AvailabilityRequest,
+    (state: BookingState, { dayRange }: { dayRange: DayRange; }): BookingState => ({
       ...state,
-      availabilityView,
+      dayRange,
       availableDays: [],
       loadStatus: RequestStatus.Pending,
     }),
@@ -27,29 +21,14 @@ export const bookingReducer: ActionReducer<BookingState> = createReducer(
     BookingActions.BookingPageOpen,
     (state: BookingState): BookingState => ({
       ...state,
-      submitStatus: RequestStatus.Idle,
+      // A booking still being sent, from before the customer left and came back, finishes first: another send now
+      // would be dropped while it runs.
+      submitStatus: state.submitStatus === RequestStatus.Pending ? RequestStatus.Pending : RequestStatus.Idle,
       submitNotice: null,
-      idempotencyKey: null,
-    }),
-  ),
-  on(
-    BookingActions.BookingDraftChange,
-    (state: BookingState, { isNoticeKept }: { isNoticeKept: boolean; }): BookingState => ({
-      ...state,
-      submitNotice: isNoticeKept ? state.submitNotice : null,
-      idempotencyKey: null,
     }),
   ),
   on(
     BookingActions.BookingRequest,
-    (state: BookingState, { bookingRequest }: { bookingRequest: BookingRequest; }): BookingState => ({
-      ...state,
-      submitStatus: RequestStatus.Pending,
-      submitNotice: null,
-      idempotencyKey: bookingRequest.idempotencyKey,
-    }),
-  ),
-  on(
     BookingActions.RescheduleRequest,
     (state: BookingState): BookingState => ({
       ...state,
@@ -60,89 +39,36 @@ export const bookingReducer: ActionReducer<BookingState> = createReducer(
   on(
     BookingActions.BookingRequestFailure,
     BookingActions.RescheduleRequestFailure,
-    (state: BookingState, { notice }: { notice: Notice | null; }): BookingState => ({
+    (
+      state: BookingState,
+      { notice, takenStartAt }: { notice: Notice | null; takenStartAt: string | null; },
+    ): BookingState => ({
       ...state,
       submitStatus: RequestStatus.Error,
       submitNotice: notice,
+      availableDays: state.availableDays
+        .map((availableDay: AvailableDay): AvailableDay => ({
+          ...availableDay,
+          times: availableDay.times.filter((startAt: string): boolean => startAt !== takenStartAt),
+        }))
+        .filter((availableDay: AvailableDay): boolean => availableDay.times.length > 0),
     }),
-  ),
-  on(
-    BookingActions.BookingShownHere,
-    (state: BookingState, { bookingId }: { bookingId: string; }): BookingState => ({
-      ...state,
-      submitStatus: RequestStatus.Idle,
-      submitNotice: toBookedHereNotice(bookingId),
-    }),
-  ),
-  on(
-    BookingActions.RescheduleReturn,
-    (state: BookingState): BookingState => ({ ...state, submitStatus: RequestStatus.Success }),
   ),
   on(
     BookingActions.BookingRequestSuccess,
-    (state: BookingState, { bookingConfirmation }: { bookingConfirmation: BookingConfirmation; }): BookingState => ({
-      ...state,
-      submitStatus: RequestStatus.Success,
-      idempotencyKey: null,
-      savedConfirmations: toSortedConfirmations([
-        ...state.savedConfirmations.filter((savedConfirmation: BookingConfirmation): boolean =>
-          savedConfirmation.id !== bookingConfirmation.id),
-        bookingConfirmation,
-      ]),
-    }),
-  ),
-  on(
-    BookingActions.SavedConfirmationsAdopt,
-    (state: BookingState, { savedConfirmations }: { savedConfirmations: BookingConfirmation[]; }): BookingState => ({
-      ...state,
-      savedConfirmations: toSortedConfirmations(savedConfirmations),
-    }),
-  ),
-  on(
-    BookingActions.SavedConfirmationRemove,
-    (state: BookingState, { bookingId }: { bookingId: string; }): BookingState => ({
-      ...state,
-      savedConfirmations: state.savedConfirmations.filter((savedConfirmation: BookingConfirmation): boolean =>
-        savedConfirmation.id !== bookingId),
-    }),
-  ),
-  on(
     BookingActions.RescheduleRequestSuccess,
-    (state: BookingState, { managedBooking }: { managedBooking: ManagedBooking; }): BookingState => ({
-      ...state,
-      submitStatus: RequestStatus.Success,
-      savedConfirmations: toSortedConfirmations(state.savedConfirmations
-        .map((savedConfirmation: BookingConfirmation): BookingConfirmation =>
-          (savedConfirmation.id === managedBooking.id
-            ? { ...savedConfirmation, startAt: managedBooking.startAt }
-            : savedConfirmation))),
-    }),
+    (state: BookingState): BookingState => ({ ...state, submitStatus: RequestStatus.Success }),
   ),
   on(
     BookingActions.AvailabilityRequestSuccess,
-    (
-      state: BookingState,
-      { availabilityView, availableDays }: { availabilityView: AvailabilityView; availableDays: AvailableDay[]; },
-    ): BookingState => {
-      const isViewInPlace: boolean = isSameView(availabilityView, state.availabilityView);
-      if (!isViewInPlace) {
-        return state;
-      }
-      return {
-        ...state,
-        availableDays,
-        loadStatus: RequestStatus.Success,
-      };
-    },
+    (state: BookingState, { availableDays }: { availableDays: AvailableDay[]; }): BookingState => ({
+      ...state,
+      availableDays,
+      loadStatus: RequestStatus.Success,
+    }),
   ),
   on(
     BookingActions.AvailabilityRequestFailure,
-    (state: BookingState, { availabilityView }: { availabilityView: AvailabilityView; }): BookingState => {
-      const isViewInPlace: boolean = isSameView(availabilityView, state.availabilityView);
-      if (!isViewInPlace) {
-        return state;
-      }
-      return { ...state, loadStatus: RequestStatus.Error };
-    },
+    (state: BookingState): BookingState => ({ ...state, loadStatus: RequestStatus.Error }),
   ),
 );

@@ -1,81 +1,111 @@
-// Compact, normal-case controls, unlike the theme's uppercase call-to-action buttons.
-.view-control {
-  min-height: 2.75rem;
-  padding-block: 0;
-  font-size: 0.9375rem;
-  letter-spacing: normal;
-  text-transform: none;
-}
-
-.view-controls {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  width: 100%;
-
-  .view-arrow {
-    flex: none;
-    width: 2.75rem;
-    padding-inline: 0;
-
-    // Faded well past PrimeNG's disabled look, so a dead end reads at a glance.
-    &:disabled {
-      opacity: 0.25;
-      border-style: dashed;
-      cursor: not-allowed;
-    }
-  }
-
-  .view-picker-toggle {
-    flex: 1;
-    justify-content: space-between;
-
-    .view-picker-chevron {
-      color: var(--p-primary-color);
-    }
-  }
-}
-
-.month-picker {
+// Legend below the calendar on phones; beside it, stacked, from lg. The day tiles are square, so a full-width
+// calendar on a wide screen would tower over the page.
+.date-step {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  padding: 0.875rem 0.75rem;
-  border: 1px solid color-mix(in srgb, var(--p-primary-color) 30%, transparent);
-  border-radius: var(--p-border-radius-md);
-  background: var(--p-surface-900);
-}
+  max-width: 42rem;
 
-.date-label {
-  text-align: left;
-}
+  .calendar-column {
+    flex: 1;
+    min-width: 0;
 
-.open-count {
-  flex: none;
-  font-size: 0.8125rem;
-  color: var(--p-text-muted-color);
-}
+    .calendar-frame {
+      position: relative;
 
-// Mirrors the date list's grid, so the page doesn't jump when the days arrive.
-.date-list-skeleton {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 0.5rem;
+      .calendar-loading {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--p-border-radius-xl);
+        background: color-mix(in srgb, var(--p-content-background) 70%, transparent);
+      }
+    }
+  }
+
+  .availability-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    font-size: 0.75rem;
+    color: var(--p-surface-200);
+
+    .legend-entry {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+
+    .legend-swatch {
+      width: 0.75rem;
+      height: 0.75rem;
+      border-radius: var(--p-border-radius-sm);
+
+      &.is-available {
+        background: var(--p-brand-day-open-background);
+      }
+
+      // The closed tile is nearly transparent, so its small swatch gets an outline to show.
+      &.is-unavailable {
+        background: var(--p-brand-day-closed-background);
+        outline: 1px solid color-mix(in srgb, var(--p-surface-50) 15%, transparent);
+      }
+
+      &.is-selected {
+        background: var(--p-primary-color);
+      }
+    }
+  }
 
   @media (min-width: 64rem) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 1.5rem;
+
+    .availability-legend {
+      flex-direction: column;
+      padding-top: 1rem;
+      font-size: 1rem;
+
+      .legend-entry {
+        gap: 0.625rem;
+      }
+
+      .legend-swatch {
+        width: 1.125rem;
+        height: 1.125rem;
+      }
+
+      .filling-up-dot {
+        width: 0.5rem;
+        height: 0.5rem;
+        margin-inline: 0.3125rem;
+      }
+    }
   }
 }
 
-.filling-up-badge {
+.calendar-day {
+  position: relative;
   display: inline-flex;
-  flex: none;
   align-items: center;
-  gap: 0.375rem;
-  padding: 0.25rem 0.625rem;
-  border-radius: 999px;
-  font-size: 0.8125rem;
-  font-weight: 700;
-  color: var(--p-brand-warn);
-  background: color-mix(in srgb, var(--p-brand-warn) 14%, transparent);
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+
+  .filling-up-dot {
+    position: absolute;
+    top: 0.25rem;
+    right: 0.25rem;
+  }
+}
+
+.filling-up-dot {
+  display: inline-block;
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 50%;
+  background: var(--p-brand-warn);
 }

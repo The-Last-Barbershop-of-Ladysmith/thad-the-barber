@@ -124,6 +124,7 @@ export const semantic: TokenSection = {
       },
       tile: { background: alpha('{espresso.50}', 4), borderColor: alpha('{copper.500}', 18) },
       divider: alpha('{copper.500}', 15),
+      day: { openBackground: alpha('{espresso.50}', 16), closedBackground: alpha('{espresso.50}', 4) },
       // The content width the footer, the `page` utility and the 404 page share, and the gutter beside it.
       pageWidth: '75rem',
       pageGutter: '1.5rem',

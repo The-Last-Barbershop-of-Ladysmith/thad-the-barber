@@ -1,10 +1,8 @@
 import { readFile } from 'node:fs/promises';
 import { Download, Locator, Page, Request, Route } from '@playwright/test';
-import { BookingConfirmation } from '../../src/app/features/booking/dtos/booking-confirmation.dto';
-import { testConfirmationIn } from '../../src/testing/test-booking';
 import { TEST_SHOP } from '../../src/testing/test-shop';
 import { expectNoA11yViolations } from '../support/axe';
-import { isBookingActionRequest, isManagedBookingRequest, saveBookings, toManagedBooking } from '../support/booking';
+import { isBookingActionRequest, isManagedBookingRequest, toManagedBooking } from '../support/booking';
 import { expect, test } from '../support/fixtures';
 
 /** The `GET /api/bookings/{id}` calls the fixture answers, to check their token. */
@@ -64,32 +62,6 @@ test.describe(
         await expect(page.getByTestId('booking-notice')).toBeVisible();
         await expect(page.getByTestId('managed-booking')).toHaveCount(0);
         await expectNoA11yViolations(page);
-      },
-    );
-
-    test(
-      "lists this device's upcoming bookings, soonest first, and opens one with its saved token",
-      async ({ page }: { page: Page; }): Promise<void> => {
-        const requests: Request[] = recordBookingLoads(page);
-        const tomorrow: BookingConfirmation = testConfirmationIn(1, 'made-up-tomorrow');
-        await saveBookings(page, [
-          testConfirmationIn(7, 'made-up-next-week'),
-          testConfirmationIn(-1, 'made-up-yesterday'),
-          tomorrow,
-        ]);
-
-        await page.goto('/book/manage');
-
-        const savedBookings: Locator = page.getByTestId('saved-booking');
-        await expect(savedBookings).toHaveCount(2);
-        await expect(savedBookings.first()).toHaveAttribute('href', '/book/manage/made-up-tomorrow');
-        await expect(page.getByTestId('all-bookings-on-square')).toHaveAttribute('href', TEST_SHOP.squareBookingSiteUrl ?? '');
-        await expectNoA11yViolations(page);
-
-        await savedBookings.first().click();
-
-        await expect(page.getByTestId('managed-booking')).toBeVisible();
-        expect(await requests[0]?.headerValue('x-manage-token')).toBe(tomorrow.manageToken);
       },
     );
 
@@ -182,7 +154,7 @@ test.describe(
     );
 
     test(
-      'moves the booking on the booking page (date, time, review), then returns to it with a toast',
+      'moves the booking on the booking page (day and time, no details), then returns to it with a toast',
       async ({ page }: { page: Page; }): Promise<void> => {
         const moves: Request[] = [];
         await page.route(isBookingActionRequest('reschedule'), async (route: Route): Promise<void> => {
@@ -194,9 +166,12 @@ test.describe(
 
         await page.getByTestId('reschedule').click();
         await expect(page).toHaveURL(/\/book\/manage\/made-up-booking\/reschedule$/);
-        await page.getByTestId('date-list').locator('[role="button"]').first().click();
+        await page.getByTestId('date-picker')
+          .locator('td:not(.p-datepicker-other-month) .p-datepicker-day:not(.p-disabled)')
+          .first()
+          .click();
         await page.getByTestId('time-list').locator('[role="button"]').first().click();
-        await expect(page.getByTestId('change-name')).toHaveCount(0);
+        await expect(page.locator('#booking-name')).toHaveCount(0);
         await expectNoA11yViolations(page);
         await page.getByTestId('confirm-booking').click();
 

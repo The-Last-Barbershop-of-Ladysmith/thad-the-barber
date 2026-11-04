@@ -2,11 +2,9 @@ import { Locator, Page, Request, Route } from '@playwright/test';
 import { BookingConfirmation } from '../../src/app/features/booking/dtos/booking-confirmation.dto';
 import { BookingRequest } from '../../src/app/features/booking/dtos/booking-request.dto';
 import { ProblemCode } from '../../src/app/shared/models/problem-code.model';
-import { decodeBase64 } from '../../src/app/shared/utils/base64.utils';
-import { testConfirmationIn } from '../../src/testing/test-booking';
 import { TEST_SHOP } from '../../src/testing/test-shop';
 import { expectNoA11yViolations } from '../support/axe';
-import { fulfillAvailability, isAvailabilityRequest, isBookingRequest, saveBookings } from '../support/booking';
+import { fulfillAvailability, isAvailabilityRequest, isBookingRequest } from '../support/booking';
 import { expect, test } from '../support/fixtures';
 import { fulfillSession, isSessionRequest } from '../support/session';
 
@@ -38,17 +36,8 @@ async function problem(
   });
 }
 
-/** One open time five minutes from now, so a kept booking hasn't started when the test reloads (BR-22). */
-async function offerTimeSoon(page: Page): Promise<void> {
-  const soon: Date = new Date(Date.now() + 5 * 60_000);
-  soon.setUTCSeconds(0, 0);
-  const date: string = new Intl.DateTimeFormat('en-CA', { timeZone: TEST_SHOP.timeZone }).format(soon);
-  await page.route(isAvailabilityRequest, (route: Route): Promise<void> =>
-    route.fulfill({ json: [{ date, times: [soon.toISOString()] }] }));
-}
-
 function openDays(page: Page): Locator {
-  return page.getByTestId('date-list').locator('[role="button"]');
+  return page.getByTestId('date-picker').locator('td:not(.p-datepicker-other-month) .p-datepicker-day:not(.p-disabled)');
 }
 
 /** The shop has loaded, so the page can show times and a kept booking. */
@@ -56,13 +45,14 @@ async function waitForShop(page: Page): Promise<void> {
   await expect(page.locator(`a[href="tel:${TEST_SHOP.phone}"]`).first()).toBeAttached();
 }
 
-/**
- * Picks the first open day and time and fills in the made-up customer; each pick opens the next step. Then opens the
- * review step from the phone's sticky bar or the desktop's Continue (both `open-review`).
- */
+/** Picks the first open day and time and fills in the made-up customer. */
 async function fillInBooking(page: Page): Promise<void> {
   await openDays(page).first().click();
   await page.getByTestId('time-list').locator('[role="button"]').first().click();
+  await fillInDetails(page);
+}
+
+async function fillInDetails(page: Page): Promise<void> {
   await page.locator('#booking-name').fill('Jordan Customer');
   const phone: Locator = page.locator('#booking-phone');
   // InputMask redraws its buffer on a timer after focus, which can wipe a value filled too soon.
@@ -70,10 +60,8 @@ async function fillInBooking(page: Page): Promise<void> {
     await phone.fill(CUSTOMER_PHONE);
     await expect(phone).toHaveValue('(540) 555-0123', { timeout: 1_000 });
   }).toPass();
-  await page.getByTestId('open-review').click();
 }
 
-/** Fills in the booking and confirms it from the review step. */
 async function book(page: Page): Promise<void> {
   await fillInBooking(page);
   await page.getByTestId('confirm-booking').click();
@@ -109,36 +97,28 @@ test.describe(
     );
 
     test(
-      'keeps the booking, without name or phone, through a reload (BR-22)',
+      'keeps nothing about the booking on the device',
       async ({ page }: { page: Page; }): Promise<void> => {
-        await offerTimeSoon(page);
         await page.route(isBookingRequest, (route: Route): Promise<void> =>
           route.fulfill({ status: 201, json: confirm(route.request()) }));
         await page.goto('/book');
         await book(page);
         await expect(page.getByTestId('booking-confirmation')).toBeVisible();
 
-        await page.goto('/book');
-
-        await expect(page.getByTestId('upcoming-booking')).toBeVisible();
-        const saved: string = decodeBase64(await page.evaluate((): string => localStorage.getItem('ttb-booking') ?? ''));
-        expect(Object.keys(JSON.parse(saved) as object)).toEqual(['savedConfirmations']);
-        expect(saved).not.toContain('Jordan');
-        expect(saved).not.toContain(CUSTOMER_PHONE.slice(-4));
+        const storedKeys: string[] = await page.evaluate((): string[] => Object.keys(localStorage));
+        expect(storedKeys).not.toContain('ttb-booking');
       },
     );
 
     test(
-      'drops a booking once it has started',
+      "sends anyone already booked to Square's booking site, in a new tab",
       async ({ page }: { page: Page; }): Promise<void> => {
-        await saveBookings(page, [testConfirmationIn(-1, 'made-up-yesterday')]);
-
         await page.goto('/book');
         await waitForShop(page);
 
-        await expect(page.getByTestId('upcoming-booking')).toHaveCount(0);
-        const saved: string = decodeBase64(await page.evaluate((): string => localStorage.getItem('ttb-booking') ?? ''));
-        expect(JSON.parse(saved)).toEqual({ savedConfirmations: [] });
+        const manageBookings: Locator = page.getByTestId('manage-bookings-link');
+        await expect(manageBookings).toHaveAttribute('href', TEST_SHOP.squareBookingSiteUrl ?? '');
+        await expect(manageBookings).toHaveAttribute('target', '_blank');
       },
     );
 
@@ -200,7 +180,7 @@ test.describe(
     );
 
     test(
-      'warns that the time was taken and reloads the open times',
+      'warns that the time was taken and takes it off the open times, without reloading them',
       async ({ page }: { page: Page; }): Promise<void> => {
         let availabilityLoads: number = 0;
         await page.route(isAvailabilityRequest, async (route: Route): Promise<void> => {
@@ -214,12 +194,19 @@ test.describe(
         ));
 
         await page.goto('/book');
-        await book(page);
+        await openDays(page).first().click();
+        const openTimes: Locator = page.getByTestId('time-list').locator('[role="button"]');
+        await openTimes.first().waitFor();
+        const openTimeCount: number = await openTimes.count();
+        await openTimes.first().click();
+        await fillInDetails(page);
+        await page.getByTestId('confirm-booking').click();
 
         const notice: Locator = page.getByTestId('booking-notice');
         await expect(notice).toHaveClass(/p-message-warn/);
         await expect(notice.getByTestId('notice-booking-site')).toHaveAttribute('href', TEST_SHOP.squareBookingSiteUrl ?? '');
-        await expect.poll((): number => availabilityLoads).toBe(2);
+        await expect(openTimes).toHaveCount(openTimeCount - 1);
+        expect(availabilityLoads).toBe(1);
         await expectNoA11yViolations(page);
       },
     );
@@ -259,7 +246,6 @@ test.describe(
         const botCheck: Locator = page.getByTestId('bot-check-failed');
         await expect(botCheck.getByTestId('notice-booking-site')).toHaveAttribute('href', TEST_SHOP.squareBookingSiteUrl ?? '');
         await expect(botCheck.getByTestId('notice-call')).toHaveAttribute('href', `tel:${TEST_SHOP.phone}`);
-        // Without a session token no days load, so the review step and its confirm button are never reached.
         await expect(page.getByTestId('confirm-booking')).toHaveCount(0);
         await expectNoA11yViolations(page);
       },

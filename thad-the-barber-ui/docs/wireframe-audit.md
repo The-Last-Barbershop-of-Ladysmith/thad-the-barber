@@ -188,8 +188,8 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 | `subscribe` / `setPhone` / `phoneErr` | `SmsSignup` component + `HomeActions.SmsSignupRequest` → `subscribeToSms` effect → `SmsSignupService` | Mocked 400ms |
 | `slots()`, `available()`, `hash()`, `daysAhead`, `slotMinutes` (`book.html`) | `AvailabilityService` → `GET /api/bookings/availability` (#41); window from `shopFeature.selectBookingSettings` | Real Square availability; the mock pattern and `BOOKING_RULES` are gone |
 | Month nav, `canPrev` / `canNext` | `DateStep` view picker and arrows → `BookingActions.SetAvailabilityView` → `loadAvailability` effect (`?from=&to=`) | The view is the next 31 days or a month, limited to Square's booking window (#205) |
-| Day / time pick, `done`, `tried`, `missing[]` | The page's booking form + `utils/booking-steps.utils.ts` (open step, done and locked steps) | `missing[]` became the disabled Review/Confirm buttons (#207–#209) |
-| `confirm` | `Booking.confirm()` → `BookingService` → `POST /api/bookings` (#41); the page keeps the retry key, confirmation and notice | Error codes become inline `NoticeMessage`s (`toBookingNotice`) |
+| Day / time pick, `done`, `tried`, `missing[]` | The page's booking form (`canConfirm`) | `missing[]` became the disabled confirm button |
+| `confirm` | `Booking.confirm()` → `BookingService` → `POST /api/bookings` (#41); the page keeps the retry key, confirmation and notice | Error codes become inline `NoticeMessage`s (`config/booking-notices.ts`) |
 | `ann`, `touchStart` / `touchEnd`, `goAnn` | Built into `p-carousel` | Removed |
 | `lb`, `stepLb`, `onKey` | Built into `p-galleria` | Removed |
 | `menu` / `toggleMenu` (mobile) | Root `layout` slice + `closeMenuOnNavigation` effect | |
@@ -205,7 +205,7 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 | `booking` | `features/booking/state/booking.{state,actions,reducer,feature,effects}.ts` The days in view (`availabilityView`: the next 31 days or a month, as `firstDay`/`lastDay`), their open days, load status (the availability notice is derived from it), the bookings made on this device, each kept until it starts (the picks and the booking in progress live in the `Booking` page) |
 
 - Each reducer lives in its own `*.reducer.ts`. Each `*.feature.ts` holds the feature key and uses `createFeature` for a scoped feature selector, with `extraSelectors` for derived values such as `selectOpenSlotCount`, `selectSelectedSlot` and `selectHomeSections`.
-- `home`, `shop` and `booking` persist to localStorage through `ngrx-store-localstorage` (`store/meta/meta.reducers.ts`), base64-encoded as `ttb-home`, `ttb-shop` and `ttb-booking`. `booking` keeps only the confirmations of the bookings made on this device, without name or phone, each until it starts (BR-22, #62); availability must be fresh, and the booking page keeps the picks and details itself. `home` clears its slice, and the saved copy, with its own `State Reset` action.
+- `home` and `shop` persist to localStorage through `ngrx-store-localstorage` (`store/meta/meta.reducers.ts`), base64-encoded as `ttb-home` and `ttb-shop`. `booking` isn't persisted (BR-22): availability must be fresh, and the booking page keeps the picks and details itself. `home` clears its slice, and the saved copy, with its own `State Reset` action.
 - Dates are stored as ISO strings to keep state serializable.
 - Stale responses (a month or date the user has already moved past) are ignored by the reducer, and unit tested.
 - Name and phone stay in a reactive form on the booking page; the store only gets them on confirm.
@@ -255,7 +255,7 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 | `features/booking/state/booking.feature.spec.ts` | Days without open times are disabled; the availability notice shows only after a failed load | Stable |
 | `features/booking/state/booking.effects.spec.ts` | Month availability loads, and a failed load is reported | Stable |
 | `features/booking/booking.spec.ts` | Retry key reuse and renewal, one booking only, taken-time reload, failed bot check, the sent phone in the confirmation | Stable |
-| `features/booking/utils/booking-notice.utils.spec.ts` | API error codes → notice severity, fallback and retry, never the raw error | Stable |
+| `features/booking/config/booking-notices.spec.ts` | API error codes → notice severity, fallback and retry, never the raw error | Stable |
 | `features/booking/utils/booking-time.utils.spec.ts` | Booking window, time labels and dates on the shop's clock | Stable |
 | `store/app.reducer.spec.ts` | Menu toggle / close | Mostly stable |
 | `store/app.effects.spec.ts` | Menu closes after navigation | Mostly stable |

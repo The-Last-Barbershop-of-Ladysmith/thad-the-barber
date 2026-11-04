@@ -1,12 +1,15 @@
-import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { Component, NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { Toast } from 'primeng/toast';
 import { App } from './app';
 import { Footer } from './layout/footer/footer';
 import { Header } from './layout/header/header';
+
+@Component({ template: '' })
+class SlowPage {}
 
 describe(
   'App',
@@ -36,6 +39,36 @@ describe(
       'hosts exactly one toast',
       (): void => {
         expect(fixture.debugElement.queryAll(By.directive(Toast))).toHaveLength(1);
+      },
+    );
+
+    it(
+      'shows the loading bar while a page loads, and hides it once the navigation ends',
+      async (): Promise<void> => {
+        let finishLoading: () => void = (): void => undefined;
+        const router: Router = TestBed.inject(Router);
+        router.resetConfig([
+          {
+            path: 'slow',
+            loadComponent: (): Promise<typeof SlowPage> => new Promise<typeof SlowPage>(
+              (resolve: (component: typeof SlowPage) => void): void => {
+                finishLoading = (): void => {
+                  resolve(SlowPage);
+                };
+              },
+            ),
+          },
+        ]);
+
+        const navigation: Promise<boolean> = router.navigateByUrl('/slow');
+        await vi.advanceTimersByTimeAsync(0);
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.css('p-progressbar'))).not.toBeNull();
+
+        finishLoading();
+        await navigation;
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.css('p-progressbar'))).toBeNull();
       },
     );
 

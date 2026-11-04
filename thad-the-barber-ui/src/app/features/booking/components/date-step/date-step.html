@@ -1,134 +1,57 @@
-<section class="stack gap-3">
-  <div class="view-controls">
-    <button
-      pButton
-      type="button"
-      severity="secondary"
-      [outlined]="true"
-      class="view-control view-arrow"
-      aria-label="Previous month"
-      data-testid="previous-view"
-      [disabled]="isFirstView()"
-      (click)="showAdjacentView(-1)"
-    >
-      <i pButtonIcon class="pi pi-chevron-left"></i>
-    </button>
-    <button
-      #monthPickerToggle
-      id="view-picker-label"
-      pButton
-      type="button"
-      severity="secondary"
-      [outlined]="true"
-      class="view-control view-picker-toggle"
-      aria-controls="month-picker"
-      data-testid="view-picker"
-      [attr.aria-expanded]="isMonthPickerOpen()"
-      (click)="toggleMonthPicker()"
-    >
-      <span pButtonLabel>{{ viewTitle() }}</span>
-      <i pButtonIcon class="pi pi-chevron-down view-picker-chevron"></i>
-    </button>
-    <button
-      pButton
-      type="button"
-      severity="secondary"
-      [outlined]="true"
-      class="view-control view-arrow"
-      aria-label="Next month"
-      data-testid="next-view"
-      [disabled]="isLastView()"
-      (click)="showAdjacentView(1)"
-    >
-      <i pButtonIcon class="pi pi-chevron-right"></i>
-    </button>
-  </div>
-
-  @if (isMonthPickerOpen()) {
-    <div
-      id="month-picker"
-      class="month-picker"
-      role="group"
-      aria-label="Pick a month"
-      tabindex="-1"
-      (keydown.escape)="closeMonthPicker()"
-    >
-      <p-selectbutton
-        ariaLabelledBy="view-picker-label"
-        [options]="upcomingOptions"
-        optionLabel="label"
-        optionValue="viewKey"
-        [allowEmpty]="false"
-        [ngModel]="viewKey()"
-        (onChange)="showViewKey($event.value)"
-      >
-        <ng-template #item let-upcomingOption>
-          <span data-testid="upcoming-view">{{ upcomingOption.label }}</span>
-        </ng-template>
-      </p-selectbutton>
-      @for (monthOptionGroup of monthOptionGroups(); track monthOptionGroup.year) {
-        <div class="stack gap-2">
-          <span class="field-label" [id]="'month-year-' + monthOptionGroup.year">{{
-            monthOptionGroup.year
-          }}</span>
-          <p-selectbutton
-            [ariaLabelledBy]="'month-year-' + monthOptionGroup.year"
-            [options]="monthOptionGroup.monthOptions"
-            optionLabel="longLabel"
-            optionValue="month"
-            [allowEmpty]="false"
-            [ngModel]="viewKey()"
-            (onChange)="showViewKey($event.value)"
-          >
-            <ng-template #item let-monthOption>
-              <span [attr.data-testid]="'month-' + monthOption.month">{{
-                monthOption.shortLabel
-              }}</span>
-            </ng-template>
-          </p-selectbutton>
+<section class="date-step">
+  <div class="calendar-column stack gap-3">
+    <div class="calendar-frame">
+      @if (bookingWindow(); as bookingWindow) {
+        <p-datepicker
+          data-testid="date-picker"
+          [pt]="{
+            pcPrevButton: { root: { disabled: isFirstMonth() } },
+            pcNextButton: { root: { disabled: isLastMonth() } },
+          }"
+          [inline]="true"
+          [formControl]="dateControl()"
+          dataType="string"
+          dateFormat="yy-mm-dd"
+          [defaultDate]="bookingWindow.min"
+          [minDate]="bookingWindow.min"
+          [maxDate]="bookingWindow.max"
+          [disabledDates]="closedDates()"
+          [showOtherMonths]="false"
+          (onMonthChange)="showMonth($event)"
+        >
+          <ng-template #date let-dateMeta>
+            <span class="calendar-day">
+              {{ dateMeta.day }}
+              @if (isFillingUp(dateMeta)) {
+                <span class="filling-up-dot" data-testid="filling-up"></span>
+                <span class="sr-only">, filling up</span>
+              }
+            </span>
+          </ng-template>
+        </p-datepicker>
+      }
+      @if (isLoading()) {
+        <div
+          class="calendar-loading"
+          data-testid="dates-loading"
+          role="status"
+          aria-label="Loading open days"
+        >
+          <p-progress-spinner class="size-10" strokeWidth="6" />
         </div>
       }
     </div>
-  }
 
-  <span class="text-sm text-surface-200" aria-live="polite" data-testid="view-caption">{{
-    rangeCaption()
-  }}</span>
-  @if (isLoading()) {
-    <div
-      class="date-list-skeleton"
-      data-testid="dates-loading"
-      aria-busy="true"
-      aria-label="Loading open days"
+    @if (notice(); as availabilityNotice) {
+      <app-notice-message [notice]="availabilityNotice" (retry)="reloadMonth()" />
+    }
+  </div>
+  <div class="availability-legend">
+    <span class="legend-entry"><span class="legend-swatch is-available"></span>available</span>
+    <span class="legend-entry"
+      ><span class="legend-swatch is-unavailable"></span>closed / booked</span
     >
-      @for (placeholder of skeletonRows; track $index) {
-        <p-skeleton height="3.25rem" />
-      }
-    </div>
-  }
-  @if (hasNoOpenDays()) {
-    <app-notice-message [notice]="noOpenDaysNotice" />
-  } @else {
-    <p-selectbutton
-      class="option-list"
-      ariaLabelledBy="step-heading-date"
-      data-testid="date-list"
-      [formControl]="dateControl()"
-      [options]="dateOptions()"
-      optionLabel="accessibleLabel"
-      optionValue="date"
-      [allowEmpty]="false"
-    >
-      <ng-template #item let-dateOption>
-        <span class="date-label">{{ dateOption.label }}</span>
-        @if (dateOption.isFillingUp) {
-          <span class="filling-up-badge" data-testid="filling-up">
-            <i class="pi pi-clock" aria-hidden="true"></i>Only {{ dateOption.openCount }} left
-          </span>
-        } @else {
-          <span class="open-count">{{ dateOption.openCount }} open</span>
-        }
-      </ng-template>
-    </p-selectbutton>
-  }
+    <span class="legend-entry"><span class="legend-swatch is-selected"></span>selected</span>
+    <span class="legend-entry"><span class="filling-up-dot"></span>filling up</span>
+  </div>
 </section>
