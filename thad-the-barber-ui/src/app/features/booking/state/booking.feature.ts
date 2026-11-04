@@ -29,11 +29,11 @@ export const bookingFeature = createFeature({
   }: FeatureSelectors<BookingState>): BookingExtraSelectors => ({
     selectIsLoading: createSelector(
       selectLoadStatus,
-      toIsLoading,
+      toIsPending,
     ),
     selectIsSubmitting: createSelector(
       selectSubmitStatus,
-      toIsLoading,
+      toIsPending,
     ),
     selectIsSubmitDone: createSelector(
       selectSubmitStatus,
@@ -51,8 +51,8 @@ export const bookingFeature = createFeature({
   }),
 });
 
-function toIsLoading(loadStatus: RequestStatus): boolean {
-  return loadStatus === RequestStatus.Pending;
+function toIsPending(requestStatus: RequestStatus): boolean {
+  return requestStatus === RequestStatus.Pending;
 }
 
 function toIsSubmitDone(submitStatus: RequestStatus): boolean {

@@ -23,12 +23,12 @@ const LEAVE_RESCHEDULING: LeaveQuestion = {
 
 /** Asks in the page's `p-confirmdialog` (#210); staying is the default, and Escape stays too. */
 export const leaveBookingGuard: CanDeactivateFn<LeaveConfirmable> =
-  (page: LeaveConfirmable): boolean | Promise<boolean> => {
-    if (!page.hasUnconfirmedPick()) {
+  (bookingPage: LeaveConfirmable): boolean | Promise<boolean> => {
+    if (!bookingPage.hasUnconfirmedPick()) {
       return true;
     }
     const confirmationService: ConfirmationService = inject(ConfirmationService);
-    const leaveQuestion: LeaveQuestion = page.isRescheduling() ? LEAVE_RESCHEDULING : LEAVE_BOOKING;
+    const leaveQuestion: LeaveQuestion = bookingPage.isRescheduling() ? LEAVE_RESCHEDULING : LEAVE_BOOKING;
     return new Promise<boolean>((resolve: (canLeave: boolean) => void): void => {
       confirmationService.confirm({
         key: 'leave-booking',
