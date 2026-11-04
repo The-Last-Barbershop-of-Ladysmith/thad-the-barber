@@ -98,8 +98,8 @@
                 [disabled]="!calendarFile()"
                 (click)="addToCalendar()"
               >
-                <i pButtonIcon class="pi pi-calendar-plus" aria-hidden="true"></i>
-                <span pButtonLabel>Add to calendar</span>
+                <i class="pi pi-calendar-plus" aria-hidden="true"></i>
+                Add to calendar
               </button>
               <button
                 pButton
@@ -111,8 +111,8 @@
                 [disabled]="isCancelling()"
                 (click)="reschedule()"
               >
-                <i pButtonIcon class="pi pi-calendar-clock" aria-hidden="true"></i>
-                <span pButtonLabel>Pick another time</span>
+                <i class="pi pi-calendar-clock" aria-hidden="true"></i>
+                Pick another time
               </button>
               <div class="quiet-actions stack">
                 <button
@@ -121,12 +121,11 @@
                   class="quiet-action"
                   severity="secondary"
                   [text]="true"
-                  iconPos="right"
                   data-testid="copy-link"
                   (click)="copyManageLink()"
                 >
-                  <span pButtonLabel>Copy link to this page</span>
-                  <i pButtonIcon class="pi pi-copy" aria-hidden="true"></i>
+                  Copy link to this page
+                  <i class="pi pi-copy" aria-hidden="true"></i>
                 </button>
                 <button
                   pButton
@@ -134,13 +133,12 @@
                   class="quiet-action"
                   severity="danger"
                   [text]="true"
-                  iconPos="right"
                   data-testid="cancel-booking"
                   [disabled]="isCancelling()"
                   (click)="confirmCancel()"
                 >
-                  <span pButtonLabel>Cancel appointment</span>
-                  <i pButtonIcon class="pi pi-times" aria-hidden="true"></i>
+                  Cancel appointment
+                  <i class="pi pi-times" aria-hidden="true"></i>
                 </button>
               </div>
               <p class="change-hint">You can move or cancel until it starts.</p>

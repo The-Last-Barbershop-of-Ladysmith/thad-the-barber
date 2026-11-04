@@ -20,8 +20,8 @@
             rel="noopener"
             class="directions"
           >
-            <span pButtonLabel>Get directions</span>
-            <i pButtonIcon class="pi pi-arrow-right"></i>
+            Get directions
+            <i class="pi pi-arrow-right"></i>
           </a>
         }
       </div>
@@ -45,11 +45,12 @@
               pButton
               severity="secondary"
               [rounded]="true"
+              [iconOnly]="true"
               size="small"
               [href]="link.href"
               [attr.aria-label]="link.label"
             >
-              <i pButtonIcon [class]="link.icon"></i>
+              <i [class]="link.icon"></i>
             </a>
           }
         </div>

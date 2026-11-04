@@ -17,8 +17,8 @@
           data-testid="back-to-booking"
           (click)="returnToBooking()"
         >
-          <i pButtonIcon class="pi pi-arrow-left"></i>
-          <span pButtonLabel>Back to your appointment</span>
+          <i class="pi pi-arrow-left"></i>
+          Back to your appointment
         </button>
       }
     } @else {
@@ -125,7 +125,7 @@
                     @if (isSubmitting()) {
                       <svg data-p-icon="spinner" class="animate-spin"></svg>
                     }
-                    <span pButtonLabel>{{ confirmLabel() }}</span>
+                    {{ confirmLabel() }}
                   </button>
                   <small class="recaptcha-terms">
                     This site is protected by reCAPTCHA and the Google

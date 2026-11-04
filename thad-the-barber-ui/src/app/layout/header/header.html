@@ -18,13 +18,14 @@
       type="button"
       severity="secondary"
       [rounded]="true"
+      [iconOnly]="true"
       class="menu-toggle md:hidden"
       data-testid="menu-toggle"
       aria-label="Open menu"
       [attr.aria-expanded]="menuOpen()"
       (click)="toggleMenu()"
     >
-      <i pButtonIcon class="pi pi-bars"></i>
+      <i class="pi pi-bars"></i>
     </button>
   }
 </header>
@@ -50,11 +51,11 @@
   </nav>
   <div class="stack mt-8 gap-3">
     <a pButton routerLink="/book" [fluid]="true" (click)="closeMenu()">
-      <span pButtonLabel>Book online</span>
-      <i pButtonIcon class="pi pi-arrow-right"></i>
+      Book online
+      <i class="pi pi-arrow-right"></i>
     </a>
     <a pButton [outlined]="true" [fluid]="true" [href]="phone().tel">
-      <span pButtonLabel>{{ phone().display }}</span>
+      {{ phone().display }}
     </a>
   </div>
 </p-drawer>

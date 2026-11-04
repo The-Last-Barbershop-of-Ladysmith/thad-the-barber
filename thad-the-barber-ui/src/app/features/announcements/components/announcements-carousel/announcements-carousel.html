@@ -35,9 +35,9 @@
                           [severity]="buttonStyles[button.variant].severity"
                           [variant]="buttonStyles[button.variant].variant"
                         >
-                          <span pButtonLabel>{{ button.label }}</span>
+                          {{ button.label }}
                           @if (isExternal) {
-                            <i pButtonIcon class="pi pi-external-link"></i>
+                            <i class="pi pi-external-link"></i>
                           }
                         </a>
                       }
@@ -67,10 +67,11 @@
           type="button"
           severity="secondary"
           [rounded]="true"
+          [iconOnly]="true"
           aria-label="Previous announcement"
           class="md:absolute md:top-1/2 md:-left-20 md:-translate-y-1/2"
         >
-          <i pButtonIcon class="pi pi-arrow-left"></i>
+          <i class="pi pi-arrow-left"></i>
         </button>
         <p-carousel-indicators />
         <button
@@ -79,10 +80,11 @@
           type="button"
           severity="secondary"
           [rounded]="true"
+          [iconOnly]="true"
           aria-label="Next announcement"
           class="md:absolute md:top-1/2 md:-right-20 md:-translate-y-1/2"
         >
-          <i pButtonIcon class="pi pi-arrow-right"></i>
+          <i class="pi pi-arrow-right"></i>
         </button>
       </div>
     </p-carousel>
