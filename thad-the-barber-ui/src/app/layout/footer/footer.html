@@ -67,6 +67,7 @@
         @for (item of sections(); track item.fragment) {
           <a routerLink="/" [fragment]="item.fragment" class="nav-link">{{ item.label }}</a>
         }
+        <a routerLink="/privacy" class="nav-link" data-testid="footer-privacy">Privacy</a>
         <button type="button" class="nav-link to-top" (click)="scrollToTop()">Back to top ↑</button>
       </nav>
     </div>
