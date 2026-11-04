@@ -1,32 +1,65 @@
+import { signal } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
-import { Booking } from '../booking';
+import { Confirmation, ConfirmationService } from 'primeng/api';
+import { LeaveConfirmable } from '../models/leave-confirmable.model';
 import { leaveBookingGuard } from './leave-booking.guard';
 
 describe(
   'leaveBookingGuard',
   (): void => {
-    it(
-      "leaves the decision to the booking page's confirmLeave",
-      async (): Promise<void> => {
-        const askingPage: Booking = {
-          confirmLeave: (): Promise<boolean> => Promise.resolve(false),
-        } as unknown as Booking;
-        const emptyPage: Booking = { confirmLeave: (): boolean => true } as unknown as Booking;
-        const route: ActivatedRouteSnapshot = {} as ActivatedRouteSnapshot;
-        const state: RouterStateSnapshot = {} as RouterStateSnapshot;
+    let asked: Confirmation | null;
 
-        expect(await leaveBookingGuard(
-          askingPage,
-          route,
-          state,
-          state,
-        )).toBe(false);
-        expect(leaveBookingGuard(
-          emptyPage,
-          route,
-          state,
-          state,
-        )).toBe(true);
+    function leave(page: LeaveConfirmable): boolean | Promise<boolean> {
+      const state: RouterStateSnapshot = {} as RouterStateSnapshot;
+      return TestBed.runInInjectionContext((): boolean | Promise<boolean> => leaveBookingGuard(
+        page,
+        {} as ActivatedRouteSnapshot,
+        state,
+        state,
+      ) as boolean | Promise<boolean>);
+    }
+
+    function pageWith(hasUnconfirmedPick: boolean, isRescheduling: boolean = false): LeaveConfirmable {
+      return { hasUnconfirmedPick: signal(hasUnconfirmedPick), isRescheduling: signal(isRescheduling) };
+    }
+
+    beforeEach((): void => {
+      asked = null;
+      TestBed.configureTestingModule({ providers: [ConfirmationService] });
+      TestBed.inject(ConfirmationService).requireConfirmation$.subscribe((confirmation: Confirmation | null): void => {
+        asked = confirmation;
+      });
+    });
+
+    it(
+      'lets the customer leave without asking while nothing is picked, or once it went through (#210)',
+      (): void => {
+        expect(leave(pageWith(false))).toBe(true);
+        expect(asked).toBeNull();
+      },
+    );
+
+    it(
+      'asks "Leave without booking?" before leaving a picked day, and Keep booking stays (#210)',
+      async (): Promise<void> => {
+        const canLeave: boolean | Promise<boolean> = leave(pageWith(true));
+        asked?.reject?.();
+
+        expect(asked?.header).toBe('Leave without booking?');
+        expect(asked?.defaultFocus).toBe('reject');
+        expect(await canLeave).toBe(false);
+      },
+    );
+
+    it(
+      'asks "Leave without moving?" while rescheduling, and Leave goes',
+      async (): Promise<void> => {
+        const canLeave: boolean | Promise<boolean> = leave(pageWith(true, true));
+        asked?.accept?.();
+
+        expect(asked?.header).toBe('Leave without moving?');
+        expect(await canLeave).toBe(true);
       },
     );
   },

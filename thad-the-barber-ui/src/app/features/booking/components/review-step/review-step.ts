@@ -24,7 +24,7 @@ interface SummaryRow {
 
 /**
  * Step 4 (#209): everything picked, each with a Change link back to its step, and the confirm button, which submits
- * the page's form.
+ * the page's form. Moving a booking shows its current time instead of name and phone, and the button moves it.
  */
 @Component({
   selector: 'app-review-step',
@@ -40,6 +40,9 @@ export class ReviewStep {
   readonly timeLabel: InputSignal<string | null> = input.required<string | null>();
   readonly isFormValid: InputSignal<boolean> = input.required<boolean>();
   readonly isSubmitting: InputSignal<boolean> = input.required<boolean>();
+  readonly isRescheduling: InputSignal<boolean> = input<boolean>(false);
+  /** The time being moved, "Saturday, November 8 at 10:00 AM", while rescheduling. */
+  readonly currentTimeLabel: InputSignal<string | null> = input<string | null>(null);
 
   readonly changeStep: OutputEmitterRef<BookingStep> = output();
 
@@ -47,7 +50,7 @@ export class ReviewStep {
 
   protected readonly summaryRows: Signal<SummaryRow[]> = computed((): SummaryRow[] => {
     const formValue: BookingFormValue = this.bookingFormValue();
-    return [
+    const pickRows: SummaryRow[] = [
       {
         label: 'Date',
         value: this.dateLabel() ?? '—',
@@ -58,6 +61,12 @@ export class ReviewStep {
         value: this.timeLabel() ?? '—',
         step: BookingStep.Time,
       },
+    ];
+    if (this.isRescheduling()) {
+      return pickRows;
+    }
+    return [
+      ...pickRows,
       {
         label: 'Name',
         value: formValue.name.trim() || '—',

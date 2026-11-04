@@ -46,6 +46,45 @@ describe(
     );
 
     it(
+      'cancels and reschedules a booking with its manage token in the header only',
+      (): void => {
+        const managedBooking: ManagedBooking = {
+          id: 'made-up-booking',
+          startAt: '2026-10-03T20:30:00Z',
+          isCancelled: true,
+          canChange: false,
+        };
+        const results: ManagedBooking[] = [];
+        const service: BookingService = TestBed.inject(BookingService);
+        service.cancelBooking('made-up-booking', 'made-up-token').subscribe((booking: ManagedBooking): void => {
+          results.push(booking);
+        });
+        service
+          .rescheduleBooking(
+            'made-up-booking',
+            'made-up-token',
+            { startAt: '2026-10-04T20:00:00Z' },
+          )
+          .subscribe((booking: ManagedBooking): void => {
+            results.push(booking);
+          });
+
+        const controller: HttpTestingController = TestBed.inject(HttpTestingController);
+        const cancel: TestRequest = controller.expectOne(`${BOOKINGS_URL}/made-up-booking/cancel`);
+        const reschedule: TestRequest = controller.expectOne(`${BOOKINGS_URL}/made-up-booking/reschedule`);
+        cancel.flush(managedBooking);
+        reschedule.flush(managedBooking);
+
+        expect(cancel.request.method).toBe('POST');
+        expect(cancel.request.headers.get('X-Manage-Token')).toBe('made-up-token');
+        expect(reschedule.request.method).toBe('POST');
+        expect(reschedule.request.body).toEqual({ startAt: '2026-10-04T20:00:00Z' });
+        expect(reschedule.request.headers.get('X-Manage-Token')).toBe('made-up-token');
+        expect(results).toEqual([managedBooking, managedBooking]);
+      },
+    );
+
+    it(
       'gets a booking with its manage token in the header only, never the URL (BR-08)',
       (): void => {
         const managedBooking: ManagedBooking = {

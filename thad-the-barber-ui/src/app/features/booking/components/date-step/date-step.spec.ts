@@ -1,6 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl } from '@angular/forms';
 import { Action, ActionsSubject, Store, provideStore } from '@ngrx/store';
+import { testBookingWindow, testFirstBlock } from '../../../../../testing/test-availability';
+import { ShopInfo } from '../../../shop/models/shop-info.model';
 import { TEST_SHOP } from '../../../../../testing/test-shop';
 import { AppState } from '../../../../store/app.state';
 import * as ShopActions from '../../../shop/state/shop.actions';
@@ -19,19 +21,6 @@ const OPEN_DAYS: AvailableDay[] = [
   { date: '2026-11-21', times: ['2026-11-21T20:00:00Z'] },
   { date: '2026-11-01', times: ['2026-11-01T20:00:00Z'] },
 ];
-
-function testWindow(): DateRange {
-  const bookingWindow: DateRange | null = toBookingWindow(TEST_SHOP.bookingSettings, TEST_SHOP.timeZone);
-  if (!bookingWindow) {
-    throw new Error('The test shop has a booking window.');
-  }
-  return bookingWindow;
-}
-
-/** The view the page opens on for the test shop: today's 31-day block. */
-function firstBlock(): AvailabilityView {
-  return toUpcomingView(testWindow().min, testWindow());
-}
 
 describe(
   'DateStep',
@@ -65,7 +54,7 @@ describe(
       fixture.detectChanges();
     });
 
-    function load(availableDays: AvailableDay[], availabilityView: AvailabilityView = firstBlock()): void {
+    function load(availableDays: AvailableDay[], availabilityView: AvailabilityView = testFirstBlock()): void {
       store.dispatch(BookingActions.SetAvailabilityView({ availabilityView }));
       store.dispatch(BookingActions.AvailabilityRequestSuccess({ availabilityView, availableDays }));
       fixture.detectChanges();
@@ -79,8 +68,8 @@ describe(
       return [...(fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('[data-testid="date-list"] .p-togglebutton')];
     }
 
-    function laterMonths(): string[] {
-      const bookingWindow: DateRange | null = toBookingWindow(TEST_SHOP.bookingSettings, TEST_SHOP.timeZone);
+    function laterMonths(shopInfo: ShopInfo = TEST_SHOP): string[] {
+      const bookingWindow: DateRange | null = toBookingWindow(shopInfo.bookingSettings, shopInfo.timeZone);
       return bookingWindow ? toLaterMonths(bookingWindow) : [];
     }
 
@@ -149,10 +138,10 @@ describe(
     it(
       'pages the next 31 days in 31-day blocks, with previous back to today and next stopping at the window',
       (): void => {
-        const bookingWindow: DateRange = testWindow();
+        const bookingWindow: DateRange = testBookingWindow();
         const nextBlock: AvailabilityView = toUpcomingView(addDays(bookingWindow.min, 31), bookingWindow);
         load(OPEN_DAYS);
-        store.dispatch(BookingActions.SetAvailabilityView({ availabilityView: firstBlock() }));
+        store.dispatch(BookingActions.SetAvailabilityView({ availabilityView: testFirstBlock() }));
         load(OPEN_DAYS);
 
         find('next-view')?.click();
@@ -163,14 +152,20 @@ describe(
         expect(find('next-view')?.hasAttribute('disabled')).toBe(true);
         expect(find('view-picker')?.textContent).not.toContain('Next 31 days');
         find('previous-view')?.click();
-        expect(dispatched.at(-1)).toEqual(BookingActions.SetAvailabilityView({ availabilityView: firstBlock() }));
+        expect(dispatched.at(-1)).toEqual(BookingActions.SetAvailabilityView({ availabilityView: testFirstBlock() }));
       },
     );
 
     it(
       'steps only through months once a month is picked, with previous off on the first',
       (): void => {
-        const [firstMonth, secondMonth]: string[] = laterMonths();
+        // 90 days always reach two later months; the test shop's 45 don't on the 1st of a month.
+        const longWindowShop: ShopInfo = {
+          ...TEST_SHOP,
+          bookingSettings: { ...TEST_SHOP.bookingSettings, maxAdvanceDays: 90 },
+        };
+        store.dispatch(ShopActions.ShopInfoRequestSuccess({ shopInfo: longWindowShop }));
+        const [firstMonth, secondMonth]: string[] = laterMonths(longWindowShop);
         const firstMonthView: AvailabilityView = toMonthView(firstMonth ?? '');
         store.dispatch(BookingActions.SetAvailabilityView({ availabilityView: firstMonthView }));
         load(OPEN_DAYS, firstMonthView);
@@ -242,7 +237,7 @@ describe(
         expect(find('view-caption')?.textContent).toContain('· 1 open day');
         expect(find('view-caption')?.textContent).not.toContain('days');
 
-        store.dispatch(BookingActions.SetAvailabilityView({ availabilityView: firstBlock() }));
+        store.dispatch(BookingActions.SetAvailabilityView({ availabilityView: testFirstBlock() }));
         fixture.detectChanges();
         expect(find('view-caption')?.textContent).not.toContain('open');
       },

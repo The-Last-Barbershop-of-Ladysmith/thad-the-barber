@@ -2,8 +2,8 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Store, provideStore } from '@ngrx/store';
-import { MessageService, ToastMessageOptions } from 'primeng/api';
+import { Action, ActionsSubject, Store, provideStore } from '@ngrx/store';
+import { Confirmation, ConfirmationService, MessageService, ToastMessageOptions } from 'primeng/api';
 import { Observable, Subject } from 'rxjs';
 import { Mock } from 'vitest';
 import { testConfirmationIn } from '../../../../../testing/test-booking';
@@ -30,6 +30,12 @@ const upcoming: ManagedBooking = {
   canChange: true,
 };
 
+const cancelled: ManagedBooking = {
+  ...upcoming,
+  isCancelled: true,
+  canChange: false,
+};
+
 interface PageSetup {
   fragment?: string | null;
   navigationState?: object | null;
@@ -44,6 +50,9 @@ describe(
     let responses: Subject<ManagedBooking>[];
     let navigateByUrl: Mock;
     let toasts: ToastMessageOptions[];
+    let cancelTokens: string[];
+    let cancelResponses: Subject<ManagedBooking>[];
+    let dispatched: Action[];
 
     function getBooking(_id: string, manageToken: string): Observable<ManagedBooking> {
       const response: Subject<ManagedBooking> = new Subject<ManagedBooking>();
@@ -52,18 +61,27 @@ describe(
       return response;
     }
 
-    function openPage({
+    function cancelBooking(_id: string, manageToken: string): Observable<ManagedBooking> {
+      const response: Subject<ManagedBooking> = new Subject<ManagedBooking>();
+      cancelTokens.push(manageToken);
+      cancelResponses.push(response);
+      return response;
+    }
+
+    async function openPage({
       fragment = 't=made-up-link-token',
       navigationState = null,
       savedConfirmations = [],
-    }: PageSetup = {}): void {
+    }: PageSetup = {}): Promise<void> {
       TestBed.configureTestingModule({
         providers: [
+          // The booking routes provide it in the app.
+          ConfirmationService,
           provideStore({
             [shopFeature.name]: shopFeature.reducer,
             [bookingFeature.name]: bookingFeature.reducer,
           }),
-          { provide: BookingService, useValue: { getBooking } },
+          { provide: BookingService, useValue: { getBooking, cancelBooking } },
           { provide: ActivatedRoute, useValue: { snapshot: { fragment } } },
           {
             provide: Router,
@@ -87,9 +105,14 @@ describe(
         ManageBooking,
         { set: { imports: [NoticeMessage], schemas: [NO_ERRORS_SCHEMA] } },
       );
+      // Compiled with the overridden imports before anything is injected.
+      await TestBed.compileComponents();
       const store: Store<AppState> = TestBed.inject<Store<AppState>>(Store);
       store.dispatch(ShopActions.ShopInfoRequestSuccess({ shopInfo: TEST_SHOP }));
       store.dispatch(BookingActions.SavedConfirmationsAdopt({ savedConfirmations }));
+      TestBed.inject(ActionsSubject).subscribe((action: Action): void => {
+        dispatched.push(action);
+      });
       fixture = TestBed.createComponent(ManageBooking);
       fixture.componentRef.setInput('id', BOOKING_ID);
       fixture.detectChanges();
@@ -114,12 +137,15 @@ describe(
       responses = [];
       navigateByUrl = vi.fn().mockResolvedValue(true);
       toasts = [];
+      cancelTokens = [];
+      cancelResponses = [];
+      dispatched = [];
     });
 
     it(
       "loads the booking with the link's token, then moves the token from the address bar into the navigation state",
-      (): void => {
-        openPage({ navigationState: { isJustBooked: true } });
+      async (): Promise<void> => {
+        await openPage({ navigationState: { isJustBooked: true } });
 
         expect(tokensSent).toEqual(['made-up-link-token']);
         expect(navigateByUrl).toHaveBeenCalledWith(
@@ -135,8 +161,8 @@ describe(
 
     it(
       'uses the token kept in the navigation state after a reload',
-      (): void => {
-        openPage({ fragment: null, navigationState: { manageToken: 'made-up-kept-token' } });
+      async (): Promise<void> => {
+        await openPage({ fragment: null, navigationState: { manageToken: 'made-up-kept-token' } });
 
         expect(tokensSent).toEqual(['made-up-kept-token']);
         expect(navigateByUrl).not.toHaveBeenCalled();
@@ -145,8 +171,8 @@ describe(
 
     it(
       'uses the token saved on this device when opened from the list',
-      (): void => {
-        openPage({ fragment: null, savedConfirmations: [savedTomorrow] });
+      async (): Promise<void> => {
+        await openPage({ fragment: null, savedConfirmations: [savedTomorrow] });
 
         expect(tokensSent).toEqual([savedTomorrow.manageToken]);
       },
@@ -154,8 +180,8 @@ describe(
 
     it(
       "shows the booking as not found, without asking the API, when there's no token",
-      (): void => {
-        openPage({ fragment: null });
+      async (): Promise<void> => {
+        await openPage({ fragment: null });
 
         expect(tokensSent).toEqual([]);
         expect(byTestId('booking-notice')).not.toBeNull();
@@ -165,8 +191,8 @@ describe(
 
     it(
       'right after booking, shows it from the device at once, with the link to keep first, and still loads it',
-      (): void => {
-        openPage({
+      async (): Promise<void> => {
+        await openPage({
           fragment: null,
           navigationState: { isJustBooked: true },
           savedConfirmations: [savedTomorrow],
@@ -186,8 +212,8 @@ describe(
 
     it(
       'replaces the saved booking with what the API says, since a reload or Back restores the just-booked state',
-      (): void => {
-        openPage({
+      async (): Promise<void> => {
+        await openPage({
           fragment: null,
           navigationState: { isJustBooked: true },
           savedConfirmations: [savedTomorrow],
@@ -205,8 +231,8 @@ describe(
 
     it(
       'asks the API when the booking it was opened as just booked has since started',
-      (): void => {
-        openPage({
+      async (): Promise<void> => {
+        await openPage({
           fragment: null,
           navigationState: { isJustBooked: true },
           savedConfirmations: [testConfirmationIn(-1, BOOKING_ID)],
@@ -218,8 +244,8 @@ describe(
 
     it(
       'opened later, shows the appointment and its actions, with copy but no link field or confirmation',
-      (): void => {
-        openPage();
+      async (): Promise<void> => {
+        await openPage();
         respond(upcoming);
 
         expect(byTestId('appointment-time')?.textContent).toBeTruthy();
@@ -240,8 +266,8 @@ describe(
     ]) {
       it(
         `shows a ${changedBooking.isCancelled ? 'cancelled' : 'started'} booking's status and no link or actions`,
-        (): void => {
-          openPage({ navigationState: { isJustBooked: true } });
+        async (): Promise<void> => {
+          await openPage({ navigationState: { isJustBooked: true } });
           respond(changedBooking);
 
           expect(byTestId('booking-status')).not.toBeNull();
@@ -254,8 +280,8 @@ describe(
 
     it(
       "shows a booking the API can't find as not found, with no retry",
-      (): void => {
-        openPage();
+      async (): Promise<void> => {
+        await openPage();
         fail(404, ProblemCode.BookingNotFound);
 
         expect(byTestId('booking-notice')).not.toBeNull();
@@ -266,8 +292,8 @@ describe(
 
     it(
       'offers a retry for any other failure, which loads again with the same token',
-      (): void => {
-        openPage();
+      async (): Promise<void> => {
+        await openPage();
         fail(503, 'square_unavailable');
         byTestId('notice-retry')?.click();
         fixture.detectChanges();
@@ -284,7 +310,7 @@ describe(
       async (): Promise<void> => {
         const writeText: Mock = vi.fn().mockResolvedValue(undefined);
         vi.stubGlobal('navigator', { clipboard: { writeText } });
-        openPage();
+        await openPage();
         respond(upcoming);
 
         byTestId('copy-link')?.click();
@@ -305,7 +331,7 @@ describe(
         for (const clipboard of [{ writeText: vi.fn().mockRejectedValue(new Error('denied')) }, undefined]) {
           vi.stubGlobal('navigator', { clipboard });
           toasts = [];
-          openPage();
+          await openPage();
           respond(upcoming);
 
           byTestId('copy-link')?.click();
@@ -325,12 +351,12 @@ describe(
 
     it(
       'downloads the appointment as an .ics file with its length from the shop',
-      (): void => {
+      async (): Promise<void> => {
         const downloads: HTMLAnchorElement[] = [];
         vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement): void {
           downloads.push(this);
         });
-        openPage();
+        await openPage();
         respond({ ...upcoming, startAt: '2030-10-05T20:00:00Z' });
 
         byTestId('add-to-calendar')?.click();
@@ -345,6 +371,120 @@ describe(
         expect(icsFile).toContain('DTEND:20301005T203000Z');
         expect(icsFile).toContain(`SUMMARY:Appointment at ${TEST_SHOP.name}`);
         vi.restoreAllMocks();
+      },
+    );
+
+    /** Opens the page later (not just booked) on an upcoming booking, and catches the cancel dialog it asks. */
+    async function openUpcoming(): Promise<() => Confirmation | null> {
+      await openPage();
+      respond(upcoming);
+      let asked: Confirmation | null = null;
+      fixture.debugElement.injector.get(ConfirmationService).requireConfirmation$
+        .subscribe((confirmation: Confirmation | null): void => {
+          asked = confirmation;
+        });
+      return (): Confirmation | null => asked;
+    }
+
+    it(
+      'offers Reschedule and Cancel on an upcoming booking, opened later or right after booking',
+      async (): Promise<void> => {
+        await openPage();
+        respond(upcoming);
+
+        expect(byTestId('reschedule')).not.toBeNull();
+        expect(byTestId('cancel-booking')).not.toBeNull();
+
+        TestBed.resetTestingModule();
+        await openPage({
+          fragment: null,
+          navigationState: { isJustBooked: true },
+          savedConfirmations: [savedTomorrow],
+        });
+
+        expect(byTestId('reschedule')).not.toBeNull();
+        expect(byTestId('cancel-booking')).not.toBeNull();
+      },
+    );
+
+    it(
+      'asks before cancelling, with Keep appointment as the default, and sends nothing when kept',
+      async (): Promise<void> => {
+        const asked: () => Confirmation | null = await openUpcoming();
+
+        byTestId('cancel-booking')?.click();
+        asked()?.reject?.();
+
+        expect(asked()?.header).toBe('Cancel this appointment?');
+        expect(asked()?.defaultFocus).toBe('reject');
+        expect(cancelTokens).toEqual([]);
+      },
+    );
+
+    it(
+      'cancels with the token once confirmed: the page shows it cancelled, a toast says so, and the device drops it',
+      async (): Promise<void> => {
+        const asked: () => Confirmation | null = await openUpcoming();
+
+        byTestId('cancel-booking')?.click();
+        asked()?.accept?.();
+        cancelResponses[0]?.next(cancelled);
+        cancelResponses[0]?.complete();
+        fixture.detectChanges();
+
+        expect(cancelTokens).toEqual(['made-up-link-token']);
+        expect(byTestId('booking-status')).not.toBeNull();
+        expect(byTestId('cancel-booking')).toBeNull();
+        expect(toasts).toEqual([{ severity: 'success', summary: 'Appointment cancelled' }]);
+        expect(dispatched).toContainEqual(BookingActions.SavedConfirmationRemove({ bookingId: BOOKING_ID }));
+      },
+    );
+
+    it(
+      'keeps the booking and offers a retry when the cancel fails, which sends it again',
+      async (): Promise<void> => {
+        const asked: () => Confirmation | null = await openUpcoming();
+        byTestId('cancel-booking')?.click();
+        asked()?.accept?.();
+
+        cancelResponses[0]?.error(new HttpErrorResponse({ status: 500, error: { code: 'internal_error' } }));
+        fixture.detectChanges();
+
+        expect(byTestId('cancel-notice')).not.toBeNull();
+        expect(byTestId('booking-status')).toBeNull();
+        expect(toasts).toEqual([]);
+        byTestId('cancel-notice')?.querySelector<HTMLElement>('[data-testid="notice-retry"]')?.click();
+        expect(cancelTokens).toHaveLength(2);
+      },
+    );
+
+    it(
+      'reloads a booking that started meanwhile, so its own status says why, with no second message',
+      async (): Promise<void> => {
+        const asked: () => Confirmation | null = await openUpcoming();
+        byTestId('cancel-booking')?.click();
+        asked()?.accept?.();
+
+        cancelResponses[0]?.error(new HttpErrorResponse({ status: 409, error: { code: ProblemCode.BookingStarted } }));
+        respond({ ...upcoming, canChange: false });
+
+        expect(tokensSent).toHaveLength(2);
+        expect(byTestId('booking-status')).not.toBeNull();
+        expect(byTestId('cancel-notice')).toBeNull();
+      },
+    );
+
+    it(
+      'opens the booking page to move it, with the token and current time in the navigation state, not the URL',
+      async (): Promise<void> => {
+        await openUpcoming();
+
+        byTestId('reschedule')?.click();
+
+        expect(navigateByUrl).toHaveBeenCalledWith(
+          '/book/manage/made-up-booking/reschedule',
+          { state: { manageToken: 'made-up-link-token', startAt: upcoming.startAt } },
+        );
       },
     );
   },

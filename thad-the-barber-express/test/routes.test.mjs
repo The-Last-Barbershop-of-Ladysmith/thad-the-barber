@@ -45,6 +45,7 @@ describe('pages', function() {
     '/book/manage/',
     '/book/manage/made-up_Booking-1',
     '/book/manage/made%20up',
+    '/book/manage/made-up-booking/reschedule',
   ])('serves the app shell for the client route %s', async function(path) {
     var response = await request(app).get(path);
     expect(response.status).toBe(200);

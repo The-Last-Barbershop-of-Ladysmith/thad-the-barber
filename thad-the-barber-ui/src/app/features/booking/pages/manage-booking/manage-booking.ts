@@ -16,11 +16,13 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
-import { MessageService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { SkeletonModule } from 'primeng/skeleton';
+import { finalize } from 'rxjs';
 import { Backdrop } from '../../../../shared/components/backdrop/backdrop';
 import { NoticeMessage } from '../../../../shared/components/notice-message/notice-message';
 import { Notice } from '../../../../shared/models/notice.model';
@@ -31,25 +33,31 @@ import { BookingConfirmation } from '../../dtos/booking-confirmation.dto';
 import { ManagedBooking } from '../../dtos/managed-booking.dto';
 import { CalendarEvent } from '../../models/calendar-event.model';
 import { ManagePageState } from '../../models/manage-page-state.model';
+import { ReschedulePageState } from '../../models/reschedule-page-state.model';
 import { BookingService } from '../../services/booking.service';
+import * as BookingActions from '../../state/booking.actions';
 import { bookingFeature } from '../../state/booking.feature';
 import {
   BOOKING_CANCELLED_NOTICE,
   BOOKING_NOT_FOUND_NOTICE,
   BOOKING_PASSED_NOTICE,
+  CANCEL_FAILED_NOTICE,
   JUST_BOOKED_NOTICE,
+  hasBookingChanged,
+  toManageActionNotice,
   toManageLoadNotice,
 } from '../../utils/booking-notice.utils';
 import { toLongDateTime } from '../../utils/booking-time.utils';
 import { toCalendarEvent, toIcsFile } from '../../utils/ics.utils';
-import { readManageToken, toManageLink, toManagePath } from '../../utils/manage-link.utils';
+import { readManageToken, toManageLink, toManagePath, toReschedulePath } from '../../utils/manage-link.utils';
 
 /**
  * One booking, opened from its manage link (`/book/manage/{id}#t=…`), from this device's list, or by the booking page
  * right after booking. The token comes from the link's fragment, which then leaves the address bar for the router's
  * navigation state, or from the bookings saved on this device (BR-22); it's sent only in the `X-Manage-Token` header
- * (BR-08). Right after booking, this is its confirmation, with the link to keep first; opened later, the appointment's
- * actions come first. Every time shows on the shop's clock.
+ * (BR-08). Right after booking, this is its confirmation, with the link to keep first; opened later, Add to calendar
+ * comes first. Either way it can be rescheduled or cancelled until it starts (BR-07). Every time shows on the shop's
+ * clock.
  */
 @Component({
   selector: 'app-manage-booking',
@@ -57,6 +65,7 @@ import { readManageToken, toManageLink, toManagePath } from '../../utils/manage-
     RouterLink,
     ButtonModule,
     CardModule,
+    ConfirmDialogModule,
     InputTextModule,
     SkeletonModule,
     Backdrop,
@@ -73,6 +82,7 @@ export class ManageBooking implements OnInit {
   private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
   private readonly bookingService: BookingService = inject(BookingService);
   private readonly messageService: MessageService = inject(MessageService);
+  private readonly confirmationService: ConfirmationService = inject(ConfirmationService);
   private readonly router: Router = inject(Router);
   private readonly route: ActivatedRoute = inject(ActivatedRoute);
   private readonly destroyRef: DestroyRef = inject(DestroyRef);
@@ -88,7 +98,7 @@ export class ManageBooking implements OnInit {
 
   /** Read while this page's navigation runs; the router restores it on a reload. */
   private readonly pageState: ManagePageState = this.router.currentNavigation()?.extras.state ?? {};
-  private readonly manageToken: WritableSignal<string | null> = signal(null);
+  protected readonly manageToken: WritableSignal<string | null> = signal(null);
 
   /** Right after booking, the link to keep comes first; opened later, the appointment's actions do. */
   protected readonly isJustBooked: boolean = this.pageState.isJustBooked === true;
@@ -98,6 +108,9 @@ export class ManageBooking implements OnInit {
   protected readonly isLoading: WritableSignal<boolean> = signal(false);
   protected readonly loadNotice: WritableSignal<Notice | null> = signal(null);
   protected readonly managedBooking: WritableSignal<ManagedBooking | null> = signal(null);
+  protected readonly isCancelling: WritableSignal<boolean> = signal(false);
+  /** A cancel that didn't go through, with a retry when retrying can help. */
+  protected readonly cancelNotice: WritableSignal<Notice | null> = signal(null);
 
   protected readonly appointmentTime: Signal<string | null> = computed((): string | null => {
     const managedBooking: ManagedBooking | null = this.managedBooking();
@@ -179,6 +192,65 @@ export class ManageBooking implements OnInit {
       });
   }
 
+  /** Asks first ("Keep appointment" is the default, and Escape keeps it too), then cancels. */
+  protected confirmCancel(): void {
+    this.confirmationService.confirm({
+      key: 'cancel-booking',
+      header: 'Cancel this appointment?',
+      message: `${this.appointmentTime() ?? 'Your appointment'}. You can book again any time.`,
+      rejectButtonProps: { label: 'Keep appointment' },
+      acceptButtonProps: {
+        label: 'Cancel appointment',
+        severity: 'danger',
+        outlined: true,
+      },
+      defaultFocus: 'reject',
+      closeOnEscape: true,
+      accept: (): void => {
+        this.cancel();
+      },
+    });
+  }
+
+  /** The dialog's Cancel appointment, and a failed cancel's retry. */
+  protected cancel(): void {
+    const manageToken: string | null = this.manageToken();
+    if (!manageToken) {
+      return;
+    }
+    this.isCancelling.set(true);
+    this.cancelNotice.set(null);
+    this.bookingService
+      .cancelBooking(this.id(), manageToken)
+      .pipe(
+        // Not tied to the page: a cancel the server made still leaves this device's list if the customer moved on.
+        finalize((): void => {
+          this.isCancelling.set(false);
+        }),
+      )
+      .subscribe({
+        next: (managedBooking: ManagedBooking): void => {
+          this.managedBooking.set(managedBooking);
+          this.store.dispatch(BookingActions.SavedConfirmationRemove({ bookingId: managedBooking.id }));
+          this.messageService.add({ severity: 'success', summary: 'Appointment cancelled' });
+        },
+        error: (error: unknown): void => {
+          this.onCancelFailed(error);
+        },
+      });
+  }
+
+  /** Opens the booking page to move it, handing over the token and current time in the navigation state. */
+  protected reschedule(): void {
+    const managedBooking: ManagedBooking | null = this.managedBooking();
+    const manageToken: string | null = this.manageToken();
+    if (!managedBooking || !manageToken) {
+      return;
+    }
+    const reschedulePageState: ReschedulePageState = { manageToken, startAt: managedBooking.startAt };
+    void this.router.navigateByUrl(toReschedulePath(managedBooking.id), { state: reschedulePageState });
+  }
+
   /** A toast confirms the copy; when the browser refuses, the link stays in its field to select by hand. */
   protected copyManageLink(): void {
     const manageLink: string | null = this.manageLink();
@@ -214,6 +286,15 @@ export class ManageBooking implements OnInit {
     document.body.append(download);
     download.click();
     download.remove();
+  }
+
+  /** A booking that changed meanwhile reloads, so its own state says why; any other failure keeps it, with a retry. */
+  private onCancelFailed(error: unknown): void {
+    if (hasBookingChanged(error)) {
+      this.load();
+      return;
+    }
+    this.cancelNotice.set(toManageActionNotice(error, CANCEL_FAILED_NOTICE));
   }
 
   private show(managedBooking: ManagedBooking): void {

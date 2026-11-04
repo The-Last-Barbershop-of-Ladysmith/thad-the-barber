@@ -12,6 +12,9 @@ import { BookingState } from './booking.state';
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- extraSelectors needs a type alias.
 export type BookingExtraSelectors = {
   selectIsLoading: MemoizedSelector<object, boolean>;
+  selectIsSubmitting: MemoizedSelector<object, boolean>;
+  /** The booking or move went through and the page is leaving: nothing more is sent, and leaving doesn't ask. */
+  selectIsSubmitDone: MemoizedSelector<object, boolean>;
   selectNotice: MemoizedSelector<object, Notice | null>;
   selectUpcomingConfirmations: MemoizedSelector<object, BookingConfirmation[]>;
   selectUpcomingBookingNotice: MemoizedSelector<object, Notice | null>;
@@ -28,6 +31,7 @@ export const bookingFeature = createFeature({
   extraSelectors: ({
     selectLoadStatus,
     selectSavedConfirmations,
+    selectSubmitStatus,
   }: FeatureSelectors<BookingState>): BookingExtraSelectors => {
     // Soonest first, as the slice keeps them. Time isn't in the store, so a booking that starts while a page is open
     // drops on the slice's next change, and from storage on the next load.
@@ -39,6 +43,14 @@ export const bookingFeature = createFeature({
       selectIsLoading: createSelector(
         selectLoadStatus,
         toIsLoading,
+      ),
+      selectIsSubmitting: createSelector(
+        selectSubmitStatus,
+        toIsLoading,
+      ),
+      selectIsSubmitDone: createSelector(
+        selectSubmitStatus,
+        toIsSubmitDone,
       ),
       selectNotice: createSelector(
         selectLoadStatus,
@@ -55,6 +67,10 @@ export const bookingFeature = createFeature({
 
 function toIsLoading(loadStatus: RequestStatus): boolean {
   return loadStatus === RequestStatus.Pending;
+}
+
+function toIsSubmitDone(submitStatus: RequestStatus): boolean {
+  return submitStatus === RequestStatus.Success;
 }
 
 function toUpcomingBookingNotice(upcomingConfirmations: BookingConfirmation[]): Notice | null {

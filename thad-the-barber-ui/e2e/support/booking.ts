@@ -19,12 +19,36 @@ export function isBookingRequest(url: URL): boolean {
   return url.href === BOOKINGS_URL;
 }
 
+/** The path segments after `/api/bookings/`: `[id]`, `[id, 'cancel']`…; none for any other URL. */
+function toBookingSegments(url: URL): string[] {
+  const address: string = `${url.origin}${url.pathname}`;
+  const isUnderBookings: boolean = address.startsWith(`${BOOKINGS_URL}/`) && !isAvailabilityRequest(url);
+  return isUnderBookings ? address.slice(BOOKINGS_URL.length + 1).split('/') : [];
+}
+
 /** `/api/bookings/{id}`, one booking by its ID: not its `/cancel` or `/reschedule`, nor availability. */
 export function isManagedBookingRequest(url: URL): boolean {
-  const address: string = `${url.origin}${url.pathname}`;
-  const id: string = address.slice(BOOKINGS_URL.length + 1);
-  const isOneSegmentUnderBookings: boolean = address.startsWith(`${BOOKINGS_URL}/`) && /^[^/]+$/.test(id);
-  return isOneSegmentUnderBookings && !isAvailabilityRequest(url);
+  return toBookingSegments(url).length === 1;
+}
+
+/** `POST /api/bookings/{id}/cancel` or `…/reschedule`, by `action`. */
+export function isBookingActionRequest(action: string): (url: URL) => boolean {
+  return (url: URL): boolean => {
+    const segments: string[] = toBookingSegments(url);
+    return segments.length === 2 && segments[1] === action;
+  };
+}
+
+/** The booking a request names: upcoming and changeable a day from now, unless `changes` say otherwise. */
+export function toManagedBooking(route: Route, changes: Partial<ManagedBooking> = {}): ManagedBooking {
+  const id: string = decodeURIComponent(toBookingSegments(new URL(route.request().url()))[0] ?? '');
+  return {
+    id,
+    startAt: new Date(Date.now() + DAY_MS).toISOString(),
+    isCancelled: false,
+    canChange: true,
+    ...changes,
+  };
 }
 
 /** Saves bookings to the device as the app does, before the page's scripts run. */
@@ -62,14 +86,7 @@ export async function fulfillManagedBooking(route: Route): Promise<void> {
     await route.fallback();
     return;
   }
-  const id: string = decodeURIComponent(new URL(route.request().url()).pathname.split('/').at(-1) ?? '');
-  const managedBooking: ManagedBooking = {
-    id,
-    startAt: new Date(Date.now() + DAY_MS).toISOString(),
-    isCancelled: false,
-    canChange: true,
-  };
-  await route.fulfill({ json: managedBooking });
+  await route.fulfill({ json: toManagedBooking(route) });
 }
 
 export async function fulfillAvailability(route: Route): Promise<void> {

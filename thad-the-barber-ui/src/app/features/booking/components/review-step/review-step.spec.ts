@@ -13,6 +13,7 @@ import { ReviewStep } from './review-step';
 interface ReviewInputs {
   isFormValid?: boolean;
   isBotCheckFailed?: boolean;
+  isRescheduling?: boolean;
 }
 
 describe(
@@ -41,6 +42,10 @@ describe(
       fixture.componentRef.setInput('timeLabel', '10:00 AM');
       fixture.componentRef.setInput('isFormValid', inputs.isFormValid ?? true);
       fixture.componentRef.setInput('isSubmitting', false);
+      if (inputs.isRescheduling) {
+        fixture.componentRef.setInput('isRescheduling', true);
+        fixture.componentRef.setInput('currentTimeLabel', 'Saturday, October 3 at 9:00 AM');
+      }
       fixture.detectChanges();
       return fixture.nativeElement as HTMLElement;
     }
@@ -48,6 +53,20 @@ describe(
     function confirmButton(host: HTMLElement): HTMLButtonElement | null {
       return host.querySelector<HTMLButtonElement>('[data-testid="confirm-booking"]');
     }
+
+    it(
+      'when moving a booking, shows its current time and the new date and time, no name or phone, and moves it',
+      (): void => {
+        const host: HTMLElement = render({ isRescheduling: true });
+
+        expect(host.querySelector('[data-testid="current-time"]')?.textContent).toContain('Saturday, October 3 at 9:00 AM');
+        expect(host.querySelector('[data-testid="change-date"]')).not.toBeNull();
+        expect(host.querySelector('[data-testid="change-time"]')).not.toBeNull();
+        expect(host.querySelector('[data-testid="change-name"]')).toBeNull();
+        expect(host.querySelector('[data-testid="change-phone"]')).toBeNull();
+        expect(confirmButton(host)?.textContent).toContain('Move appointment');
+      },
+    );
 
     it(
       'turns off confirming until the form is valid',

@@ -2,7 +2,15 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Notice } from '../../../shared/models/notice.model';
 import { ProblemCode } from '../../../shared/models/problem-code.model';
 import { NoticeSeverity } from '../../../shared/models/notice-severity.model';
-import { BOOKING_NOT_FOUND_NOTICE, toBookingNotice, toManageLoadNotice } from './booking-notice.utils';
+import {
+  BOOKING_NOT_FOUND_NOTICE,
+  CANCEL_FAILED_NOTICE,
+  RESCHEDULE_FAILED_NOTICE,
+  hasBookingChanged,
+  toBookingNotice,
+  toManageActionNotice,
+  toManageLoadNotice,
+} from './booking-notice.utils';
 
 const RAW_DETAIL: string = 'Made-up server detail that must never reach the page';
 
@@ -124,6 +132,50 @@ describe(
           });
           expect(notice.text).not.toContain(RAW_DETAIL);
         }
+      },
+    );
+  },
+);
+
+describe(
+  'hasBookingChanged and toManageActionNotice',
+  (): void => {
+    it(
+      'tell a booking that started, was cancelled or is gone apart from a failed request',
+      (): void => {
+        expect(hasBookingChanged(problem(409, ProblemCode.BookingStarted))).toBe(true);
+        expect(hasBookingChanged(problem(409, ProblemCode.BookingCancelled))).toBe(true);
+        expect(hasBookingChanged(problem(404, ProblemCode.BookingNotFound))).toBe(true);
+        expect(hasBookingChanged(problem(409, ProblemCode.SlotUnavailable))).toBe(false);
+        expect(hasBookingChanged(new Error(RAW_DETAIL))).toBe(false);
+      },
+    );
+
+    it(
+      'say why retrying won\'t help for a taken time or too many changes',
+      (): void => {
+        const slotTaken: HttpErrorResponse = problem(409, ProblemCode.SlotUnavailable);
+
+        expect(toManageActionNotice(slotTaken, CANCEL_FAILED_NOTICE).canRetry).toBe(false);
+        expect(toManageActionNotice(problem(429, ProblemCode.RateLimited), CANCEL_FAILED_NOTICE).canRetry).toBe(false);
+      },
+    );
+
+    it(
+      'fall back to the failed notice, with a retry, for anything else, never the raw error',
+      (): void => {
+        const failures: unknown[] = [
+          problem(503, 'square_unavailable'),
+          new HttpErrorResponse({ status: 0 }),
+          new Error(RAW_DETAIL),
+        ];
+
+        for (const failure of failures) {
+          expect(toManageActionNotice(failure, CANCEL_FAILED_NOTICE)).toEqual(CANCEL_FAILED_NOTICE);
+          expect(toManageActionNotice(failure, RESCHEDULE_FAILED_NOTICE)).toEqual(RESCHEDULE_FAILED_NOTICE);
+        }
+        expect(CANCEL_FAILED_NOTICE.canRetry).toBe(true);
+        expect(RESCHEDULE_FAILED_NOTICE.canRetry).toBe(true);
       },
     );
   },
