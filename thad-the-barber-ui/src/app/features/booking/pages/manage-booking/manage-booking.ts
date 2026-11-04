@@ -49,7 +49,7 @@ import {
 } from '../../config/booking-notices';
 import { toLongDate, toTimeLabel } from '../../utils/booking-time.utils';
 import { toCalendarEvent, toIcsFile } from '../../utils/ics.utils';
-import { readManageToken, toManageLink, toManagePath, toReschedulePath } from '../../utils/manage-link.utils';
+import { toManagePath } from '../../utils/manage-link.utils';
 
 interface AppointmentStart {
   day: string;
@@ -134,7 +134,11 @@ export class ManageBooking implements OnInit {
 
   protected readonly manageLink: Signal<string | null> = computed((): string | null => {
     const manageToken: string | null = this.manageToken();
-    return manageToken ? toManageLink(window.location.origin, { id: this.id(), manageToken }) : null;
+    if (!manageToken) {
+      return null;
+    }
+    const fragment: string = new URLSearchParams({ t: manageToken }).toString();
+    return `${window.location.origin}${toManagePath(this.id())}#${fragment}`;
   });
 
   /** Waits for the shop, which holds the appointment's length and address. */
@@ -251,7 +255,7 @@ export class ManageBooking implements OnInit {
       return;
     }
     const reschedulePageState: ReschedulePageState = { manageToken, startAt: managedBooking.startAt };
-    void this.router.navigateByUrl(toReschedulePath(managedBooking.id), { state: reschedulePageState });
+    void this.router.navigateByUrl(`${toManagePath(managedBooking.id)}/reschedule`, { state: reschedulePageState });
   }
 
   /** A toast confirms the copy; when the browser refuses, the link stays in its field to select by hand. */
@@ -296,7 +300,7 @@ export class ManageBooking implements OnInit {
    * the navigation state, so a reload still has it; else the one in the navigation state.
    */
   private findManageToken(): string | null {
-    const fragmentToken: string | null = readManageToken(this.route.snapshot.fragment);
+    const fragmentToken: string | null = new URLSearchParams(this.route.snapshot.fragment ?? '').get('t');
     if (fragmentToken) {
       const managePageState: ManagePageState = { ...this.pageState, manageToken: fragmentToken };
       void this.router.navigateByUrl(

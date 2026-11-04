@@ -159,13 +159,30 @@ describe(
     );
 
     it(
+      'reads a token that needed encoding in the fragment',
+      async (): Promise<void> => {
+        await openPage({ fragment: 't=made%2Bup%26token%3D' });
+
+        expect(tokensSent).toEqual(['made+up&token=']);
+      },
+    );
+
+    it(
       "shows the booking as not found, without asking the API, when there's no token",
       async (): Promise<void> => {
-        await openPage({ fragment: null });
+        for (const fragment of [
+          null,
+          '',
+          't=',
+          'top',
+        ]) {
+          await openPage({ fragment });
 
-        expect(tokensSent).toEqual([]);
-        expect(byTestId('booking-notice')).not.toBeNull();
-        expect(byTestId('notice-retry')).toBeNull();
+          expect(tokensSent).toEqual([]);
+          expect(byTestId('booking-notice')).not.toBeNull();
+          expect(byTestId('notice-retry')).toBeNull();
+          TestBed.resetTestingModule();
+        }
       },
     );
 
