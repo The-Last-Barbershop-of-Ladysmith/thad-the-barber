@@ -61,7 +61,7 @@ interface AngularJson { projects: Record<string, AngularProject>; }
  *   angular.json swaps in for that configuration, so the origins live in one place.
  * - brand.css: the theme's CSS variables for the error pages (src/app/theme/brand-css.ts).
  * - shop.json: the shop name, phone and Square booking URL for the error page, from src/app/core/config/shop-info.ts.
- * - client-routes.json: the routes Express serves the app shell for, from src/app/core/config/client-routes.ts.
+ * - client-routes.json: the routes Express serves the app shell for, from src/app/app.routes.server.ts.
  */
 const ENVIRONMENT_FILE: string = 'src/environments/environment.ts';
 
@@ -96,7 +96,7 @@ const environmentModule: Promise<EnvironmentModule> = importSource(environmentFi
 const brandCssModule: Promise<BrandCssModule> = importSource('src/app/theme/brand-css.ts');
 const shopInfoModule: Promise<ShopInfoModule> = importSource('src/app/core/config/shop-info.ts');
 const phoneUtilsModule: Promise<PhoneUtilsModule> = importSource('src/app/shared/utils/phone.utils.ts');
-const clientRoutesModule: Promise<ClientRoutesModule> = importSource('src/app/core/config/client-routes.ts');
+const clientRoutesModule: Promise<ClientRoutesModule> = importSource('src/app/app.routes.server.ts');
 const { environment }: EnvironmentModule = await environmentModule;
 const { brandCss }: BrandCssModule = await brandCssModule;
 const { SHOP_FALLBACK }: ShopInfoModule = await shopInfoModule;

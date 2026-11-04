@@ -1,5 +1,16 @@
 import { RenderMode, ServerRoute } from '@angular/ssr';
-import { CLIENT_ROUTES } from './core/config/client-routes';
+
+/**
+ * The routes rendered only in the browser. The build writes them to Express's `client-routes.json`
+ * (`scripts/write-express-files.ts`), so Express serves the app shell for them and its 404 page for any other unknown
+ * path. A `:param` stands for any one path segment.
+ * #58: once /book is prerendered, remove it here.
+ */
+export const CLIENT_ROUTES: string[] = [
+  'book',
+  'book/manage/:id',
+  'book/manage/:id/reschedule',
+];
 
 /**
  * Express serves each prerendered page as a file, the app shell for the client routes (`CLIENT_ROUTES`, which the build
