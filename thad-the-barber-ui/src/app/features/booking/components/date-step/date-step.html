@@ -41,8 +41,8 @@
       }
     </div>
 
-    @if (hasNoOpenDays()) {
-      <app-notice-message [notice]="noOpenDaysNotice" />
+    @if (notice(); as availabilityNotice) {
+      <app-notice-message [notice]="availabilityNotice" (retry)="reloadMonth()" />
     }
   </div>
   <div class="availability-legend">

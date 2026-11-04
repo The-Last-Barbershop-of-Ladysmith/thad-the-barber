@@ -33,7 +33,6 @@ import { DateStep } from './components/date-step/date-step';
 import { DetailsStep } from './components/details-step/details-step';
 import { TimeStep } from './components/time-step/time-step';
 import { AvailableDay } from './dtos/available-day.dto';
-import { DayRange } from './models/day-range.model';
 import { BookingForm } from './models/booking-form.model';
 import { BookingFormValue } from './models/booking-form-value.model';
 import { BookingStep } from './models/booking-step.model';
@@ -88,15 +87,12 @@ export class Booking implements LeaveConfirmable {
   });
 
   private readonly timeZone: Signal<string | null> = this.store.selectSignal(shopFeature.selectTimeZone);
-  private readonly dayRange: Signal<DayRange | null> =
-    this.store.selectSignal(bookingFeature.selectDayRange);
   protected readonly isSubmitting: Signal<boolean> = this.store.selectSignal(bookingFeature.selectIsSubmitting);
   private readonly isSubmitDone: Signal<boolean> = this.store.selectSignal(bookingFeature.selectIsSubmitDone);
   protected readonly isBotCheckFailed: Signal<boolean> = inject(SessionService).isBotCheckFailed;
 
   protected readonly botCheckFailedNotice: Notice = BOT_CHECK_FAILED_NOTICE;
   protected readonly bookingNotFoundNotice: Notice = BOOKING_NOT_FOUND_NOTICE;
-  protected readonly availabilityNotice: Signal<Notice | null> = this.store.selectSignal(bookingFeature.selectNotice);
   protected readonly submitNotice: Signal<Notice | null> = this.store.selectSignal(bookingFeature.selectSubmitNotice);
   protected readonly squareBookingUrl: Signal<string> = this.store.selectSignal(shopFeature.selectBookingUrl);
 
@@ -184,13 +180,6 @@ export class Booking implements LeaveConfirmable {
           this.showStep(BookingStep.Confirm);
         }
       });
-  }
-
-  protected reloadDays(): void {
-    const dayRange: DayRange | null = this.dayRange();
-    if (dayRange) {
-      this.store.dispatch(BookingActions.AvailabilityRequest({ dayRange }));
-    }
   }
 
   protected confirm(): void {

@@ -1,7 +1,7 @@
 import { TEST_SHOP } from '../../../../testing/test-shop';
 import { toIsoDate } from '../../../shared/utils/date.utils';
 import { DateRange } from '../models/date-range.model';
-import { toBookingWindow, toLongDate, toLongDateTime, toMonthRange } from './booking-time.utils';
+import { isFillingUp, toBookingWindow, toLongDate, toLongDateTime, toMonthRange } from './booking-time.utils';
 
 const HONOLULU: string = TEST_SHOP.timeZone;
 
@@ -66,6 +66,21 @@ describe(
       "shows the shop's date and time, not UTC's",
       (): void => {
         expect(toLongDateTime(HONOLULU, '2026-10-04T05:30:00Z')).toBe('Saturday, October 3 at 7:30 PM');
+      },
+    );
+  },
+);
+
+describe(
+  'isFillingUp',
+  (): void => {
+    it(
+      'holds for a day with 1 to 4 open times, not for a closed or full day or one with 5 or more (BR-15)',
+      (): void => {
+        expect(isFillingUp(1)).toBe(true);
+        expect(isFillingUp(4)).toBe(true);
+        expect(isFillingUp(0)).toBe(false);
+        expect(isFillingUp(5)).toBe(false);
       },
     );
   },

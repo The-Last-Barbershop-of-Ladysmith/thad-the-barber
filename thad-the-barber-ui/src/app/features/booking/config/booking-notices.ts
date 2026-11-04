@@ -10,7 +10,6 @@ export const AVAILABILITY_FAILED_NOTICE: Notice = {
   canRetry: true,
 };
 
-/** Square doesn't list closed or full days, so a month can come back empty. */
 export const NO_OPEN_DAYS_NOTICE: Notice = {
   severity: NoticeSeverity.Info,
   text: 'No open times in these days.',

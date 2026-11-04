@@ -4,21 +4,17 @@ import { Store } from '@ngrx/store';
 import { DatePickerModule } from 'primeng/datepicker';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { DatePickerDateMeta, DatePickerMonthChangeEvent } from 'primeng/types/datepicker';
-import { FILLING_UP_BELOW } from '../../../../core/config/booking-dates';
 import { NoticeMessage } from '../../../../shared/components/notice-message/notice-message';
 import { Notice } from '../../../../shared/models/notice.model';
-import { RequestStatus } from '../../../../shared/models/request.models';
 import { addDays, fromIsoDate, toIsoDate } from '../../../../shared/utils/date.utils';
 import { AppState } from '../../../../store/app.state';
 import { BookingSettings } from '../../../shop/models/booking-settings.model';
 import { shopFeature } from '../../../shop/state/shop.feature';
-import { AvailableDay } from '../../dtos/available-day.dto';
 import { DateRange } from '../../models/date-range.model';
 import { DayRange } from '../../models/day-range.model';
 import * as BookingActions from '../../state/booking.actions';
 import { bookingFeature } from '../../state/booking.feature';
-import { NO_OPEN_DAYS_NOTICE } from '../../config/booking-notices';
-import { toBookingWindow, toMonthRange } from '../../utils/booking-time.utils';
+import { isFillingUp, toBookingWindow, toMonthRange } from '../../utils/booking-time.utils';
 
 @Component({
   selector: 'app-date-step',
@@ -35,24 +31,19 @@ import { toBookingWindow, toMonthRange } from '../../utils/booking-time.utils';
 export class DateStep {
   readonly dateControl: InputSignal<FormControl<string | null>> = input.required<FormControl<string | null>>();
 
-  protected readonly noOpenDaysNotice: Notice = NO_OPEN_DAYS_NOTICE;
-
   private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
   private readonly bookingSettings: Signal<BookingSettings | null> =
     this.store.selectSignal(shopFeature.selectBookingSettings);
   private readonly timeZone: Signal<string | null> = this.store.selectSignal(shopFeature.selectTimeZone);
-  private readonly availableDays: Signal<AvailableDay[]> = this.store.selectSignal(bookingFeature.selectAvailableDays);
   private readonly dayRange: Signal<DayRange | null> =
     this.store.selectSignal(bookingFeature.selectDayRange);
-  private readonly loadStatus: Signal<RequestStatus> = this.store.selectSignal(bookingFeature.selectLoadStatus);
   protected readonly isLoading: Signal<boolean> = this.store.selectSignal(bookingFeature.selectIsLoading);
+  protected readonly notice: Signal<Notice | null> = this.store.selectSignal(bookingFeature.selectNotice);
+  private readonly openTimeCounts: Signal<Map<string, number>> =
+    this.store.selectSignal(bookingFeature.selectOpenTimeCounts);
 
   protected readonly bookingWindow: Signal<DateRange | null> = computed((): DateRange | null =>
     toBookingWindow(this.bookingSettings(), this.timeZone()));
-
-  private readonly openTimeCounts: Signal<Map<string, number>> = computed((): Map<string, number> =>
-    new Map(this.availableDays().map((availableDay: AvailableDay): [string, number] =>
-      [availableDay.date, availableDay.times.length])));
 
   // Every day of the month in view that isn't open, so only open days can be picked; all of them while it loads.
   protected readonly closedDates: Signal<Date[]> = computed((): Date[] => {
@@ -85,20 +76,23 @@ export class DateStep {
     return !dayRange || !bookingWindow || dayRange.lastDay >= toIsoDate(bookingWindow.max);
   });
 
-  protected readonly hasNoOpenDays: Signal<boolean> = computed((): boolean =>
-    this.loadStatus() === RequestStatus.Success && this.availableDays().length === 0);
-
   protected isFillingUp({
     year,
     month,
     day,
   }: DatePickerDateMeta): boolean {
-    const openTimeCount: number = this.openTimeCounts().get(toIsoDate(new Date(
+    return isFillingUp(this.openTimeCounts().get(toIsoDate(new Date(
       year,
       month,
       day,
-    ))) ?? 0;
-    return openTimeCount > 0 && openTimeCount < FILLING_UP_BELOW;
+    ))) ?? 0);
+  }
+
+  protected reloadMonth(): void {
+    const dayRange: DayRange | null = this.dayRange();
+    if (dayRange) {
+      this.store.dispatch(BookingActions.AvailabilityRequest({ dayRange }));
+    }
   }
 
   // The API refuses a month wholly outside the booking window, which keyboard paging could still reach.

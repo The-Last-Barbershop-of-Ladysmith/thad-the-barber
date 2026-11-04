@@ -72,9 +72,6 @@
             <p-step-panel>
               <ng-template #content>
                 <div class="step-content">
-                  @if (availabilityNotice(); as loadFailureNotice) {
-                    <app-notice-message [notice]="loadFailureNotice" (retry)="reloadDays()" />
-                  }
                   <app-date-step [dateControl]="bookingForm.controls.date" />
                 </div>
               </ng-template>

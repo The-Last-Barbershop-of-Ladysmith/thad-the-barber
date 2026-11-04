@@ -1,3 +1,4 @@
+import { FILLING_UP_BELOW } from '../../../core/config/booking-dates';
 import { BookingSettings } from '../../shop/models/booking-settings.model';
 import {
   addDays,
@@ -53,4 +54,9 @@ export function toLongDate(timeZone: string, startAt: string): string {
 /** "2026-10-03T20:30:00Z" → "Saturday, October 3 at 10:30 AM" on the shop's clock. */
 export function toLongDateTime(timeZone: string, startAt: string): string {
   return `${toLongDate(timeZone, startAt)} at ${toTimeLabel(timeZone, startAt)}`;
+}
+
+/** A day with open times, but fewer than `FILLING_UP_BELOW` (BR-15). */
+export function isFillingUp(openTimeCount: number): boolean {
+  return openTimeCount > 0 && openTimeCount < FILLING_UP_BELOW;
 }

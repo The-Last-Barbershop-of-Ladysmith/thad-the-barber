@@ -3,14 +3,13 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { MessageModule } from 'primeng/message';
 import { SelectButtonModule } from 'primeng/selectbutton';
-import { FILLING_UP_BELOW } from '../../../../core/config/booking-dates';
 import { formatLongDate, fromIsoDate } from '../../../../shared/utils/date.utils';
 import { AppState } from '../../../../store/app.state';
 import { shopFeature } from '../../../shop/state/shop.feature';
 import { AvailableDay } from '../../dtos/available-day.dto';
 import { TimeSlot } from '../../models/time-slot.model';
 import { bookingFeature } from '../../state/booking.feature';
-import { toTimeLabel } from '../../utils/booking-time.utils';
+import { isFillingUp, toTimeLabel } from '../../utils/booking-time.utils';
 
 @Component({
   selector: 'app-time-step',
@@ -43,7 +42,7 @@ export class TimeStep {
 
   protected readonly fillingUpNote: Signal<string | null> = computed((): string | null => {
     const openCount: number = this.timeSlots().length;
-    if (openCount === 0 || openCount >= FILLING_UP_BELOW) {
+    if (!isFillingUp(openCount)) {
       return null;
     }
     return `Filling up: only ${openCount} ${openCount === 1 ? 'time' : 'times'} left this day.`;

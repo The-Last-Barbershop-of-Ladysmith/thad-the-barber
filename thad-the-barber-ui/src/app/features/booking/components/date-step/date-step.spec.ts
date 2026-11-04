@@ -168,5 +168,19 @@ describe(
         expect(byTestId('booking-notice')).not.toBeNull();
       },
     );
+
+    it(
+      'reloads the month in view from the failed notice',
+      (): void => {
+        show(NOVEMBER);
+        store.dispatch(BookingActions.AvailabilityRequestFailure());
+        fixture.detectChanges();
+        dispatched = [];
+
+        byTestId('notice-retry')?.click();
+
+        expect(dispatched).toEqual([BookingActions.AvailabilityRequest({ dayRange: NOVEMBER })]);
+      },
+    );
   },
 );
