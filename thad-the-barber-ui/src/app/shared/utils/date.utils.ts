@@ -48,33 +48,6 @@ export function fromIsoDate(iso: string): Date {
   );
 }
 
-/** Date → "2026-10" */
-export function toMonthKey(date: Date): string {
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}`;
-}
-
-/** "2026-10" → October 1st 2026 at local midnight. */
-export function fromMonthKey(month: string): Date {
-  const [
-    year, monthNumber,
-  ]: [number, number,
-  ] = parseParts<[number, number]>(month, 2);
-  return new Date(
-    year,
-    monthNumber - 1,
-    1,
-  );
-}
-
-/** The 1st of the month `months` after `date`'s. */
-export function addMonths(date: Date, months: number): Date {
-  return new Date(
-    date.getFullYear(),
-    date.getMonth() + months,
-    1,
-  );
-}
-
 export function addDays(date: Date, days: number): Date {
   return new Date(
     date.getFullYear(),
@@ -205,15 +178,6 @@ export function formatShortMonth(date: Date): string {
   return formatDate(
     date,
     'MMM',
-    DATE_LOCALE,
-  );
-}
-
-/** Date → "November 2026" */
-export function formatMonthYear(date: Date): string {
-  return formatDate(
-    date,
-    'MMMM yyyy',
     DATE_LOCALE,
   );
 }

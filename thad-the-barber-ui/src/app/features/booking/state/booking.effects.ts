@@ -30,7 +30,10 @@ import { toBookingWindow, toMonthRange } from '../utils/booking-time.utils';
 import { toManagePath } from '../utils/manage-link.utils';
 import * as BookingActions from './booking.actions';
 
-type FailureActionCreator = (failure: { notice: Notice | null; takenStartAt: string | null; }) => Action;
+interface SubmitFailure {
+  notice: Notice | null;
+  takenStartAt: string | null;
+}
 
 // Waits for the shop, so "today" and the booking window are on its clock, not the browser's.
 export const openFirstMonth: FunctionalEffect = createEffect(
@@ -84,17 +87,13 @@ export const requestBooking: FunctionalEffect = createEffect(
         bookingService.createBooking(bookingRequest).pipe(
           map((bookingConfirmation: BookingConfirmation): Action =>
             BookingActions.BookingRequestSuccess({ bookingConfirmation })),
-          catchError((error: unknown): Observable<Action> => of(toFailure(
+          catchError((error: unknown): Observable<Action> => of(BookingActions.BookingRequestFailure(toFailure(
             error,
-            toProblemNotice(
-              error,
-              BOOKING_PROBLEM_NOTICES,
-              BOOKING_FAILED_NOTICE,
-            ),
+            BOOKING_PROBLEM_NOTICES,
+            BOOKING_FAILED_NOTICE,
             bookingRequest.startAt,
             sessionService,
-            BookingActions.BookingRequestFailure,
-          ))),
+          )))),
         )),
     ),
   { functional: true },
@@ -145,17 +144,13 @@ export const requestReschedule: FunctionalEffect = createEffect(
         ).pipe(
           map((managedBooking: ManagedBooking): Action =>
             BookingActions.RescheduleRequestSuccess({ managedBooking, manageToken })),
-          catchError((error: unknown): Observable<Action> => of(toFailure(
+          catchError((error: unknown): Observable<Action> => of(BookingActions.RescheduleRequestFailure(toFailure(
             error,
-            toProblemNotice(
-              error,
-              CHANGE_PROBLEM_NOTICES,
-              RESCHEDULE_FAILED_NOTICE,
-            ),
+            CHANGE_PROBLEM_NOTICES,
+            RESCHEDULE_FAILED_NOTICE,
             startAt,
             sessionService,
-            BookingActions.RescheduleRequestFailure,
-          ))),
+          )))),
         )),
     ),
   { functional: true },
@@ -188,17 +183,25 @@ export const returnToMovedBooking: FunctionalEffect = createEffect(
   },
 );
 
-// A failed bot check already shows its own message, so its failure carries no notice.
+// A failed bot check already shows its own message, so its failure carries no notice. A taken time comes off the open
+// times.
 function toFailure(
   error: unknown,
-  notice: Notice,
+  problemNotices: Record<string, Notice>,
+  failedNotice: Notice,
   startAt: string,
   sessionService: SessionService,
-  createFailure: FailureActionCreator,
-): Action {
+): SubmitFailure {
   if (sessionService.isBotCheckFailed()) {
-    return createFailure({ notice: null, takenStartAt: null });
+    return { notice: null, takenStartAt: null };
   }
   const isTimeTaken: boolean = getProblemCode(error) === ProblemCode.SlotUnavailable;
-  return createFailure({ notice, takenStartAt: isTimeTaken ? startAt : null });
+  return {
+    notice: toProblemNotice(
+      error,
+      problemNotices,
+      failedNotice,
+    ),
+    takenStartAt: isTimeTaken ? startAt : null,
+  };
 }

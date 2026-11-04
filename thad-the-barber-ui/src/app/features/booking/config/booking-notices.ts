@@ -121,10 +121,3 @@ export const CHANGE_PROBLEM_NOTICES: Record<string, Notice> = {
     canRetry: false,
   },
 };
-
-/** A cancel refused because the booking changed meanwhile reloads it, so its own state says why it can't change. */
-export const BOOKING_CHANGED_CODES: string[] = [
-  ProblemCode.BookingStarted,
-  ProblemCode.BookingCancelled,
-  ProblemCode.BookingNotFound,
-];

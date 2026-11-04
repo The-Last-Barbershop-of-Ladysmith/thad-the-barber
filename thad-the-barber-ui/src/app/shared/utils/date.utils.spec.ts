@@ -3,7 +3,6 @@ import {
   formatFullDate,
   formatLongDate,
   formatMonthDay,
-  formatMonthYear,
   formatShortDate,
   formatShortMonth,
   fromIsoDate,
@@ -63,7 +62,6 @@ describe(
     it(
       'formats month labels',
       (): void => {
-        expect(formatMonthYear(saturday)).toBe('October 2026');
         expect(formatShortMonth(saturday)).toBe('Oct');
         expect(formatMonthDay(saturday)).toBe('Oct 3');
       },

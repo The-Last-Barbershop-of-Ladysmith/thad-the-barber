@@ -65,7 +65,6 @@ export const BookingRequestSuccess = createAction(
   props<{ bookingConfirmation: BookingConfirmation; }>(),
 );
 
-/** `notice` is null for a failed bot check, which has its own message; `takenStartAt` comes off the open times. */
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
 export const BookingRequestFailure = createAction(
   BookingActionTypes.BookingRequestFailure,
@@ -78,7 +77,6 @@ export const RescheduleRequestSuccess = createAction(
   props<{ managedBooking: ManagedBooking; manageToken: string; }>(),
 );
 
-/** `notice` is null for a failed bot check, which has its own message; `takenStartAt` comes off the open times. */
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
 export const RescheduleRequestFailure = createAction(
   BookingActionTypes.RescheduleRequestFailure,

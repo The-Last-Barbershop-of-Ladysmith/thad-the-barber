@@ -34,7 +34,6 @@ import { DetailsStep } from './components/details-step/details-step';
 import { TimeStep } from './components/time-step/time-step';
 import { AvailableDay } from './dtos/available-day.dto';
 import { BookingForm } from './models/booking-form.model';
-import { BookingFormValue } from './models/booking-form-value.model';
 import { BookingStep } from './models/booking-step.model';
 import { LeaveConfirmable } from './models/leave-confirmable.model';
 import { ManagePageState } from './models/manage-page-state.model';
@@ -44,6 +43,15 @@ import { bookingFeature } from './state/booking.feature';
 import { BOOKING_NOT_FOUND_NOTICE, BOT_CHECK_FAILED_NOTICE } from './config/booking-notices';
 import { toLongDateTime, toTimeLabel } from './utils/booking-time.utils';
 import { toManagePath } from './utils/manage-link.utils';
+
+interface BookingFormValue {
+  name: string;
+  phone: string;
+  /** The picked day on the shop's calendar ("2026-10-27"). */
+  date: string | null;
+  /** One of the picked day's UTC start times. */
+  startAt: string | null;
+}
 
 @Component({
   selector: 'app-booking',

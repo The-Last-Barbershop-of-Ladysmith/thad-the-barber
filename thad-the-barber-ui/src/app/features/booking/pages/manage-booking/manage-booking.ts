@@ -38,7 +38,7 @@ import { ReschedulePageState } from '../../models/reschedule-page-state.model';
 import { BookingService } from '../../services/booking.service';
 import {
   BOOKING_CANCELLED_NOTICE,
-  BOOKING_CHANGED_CODES,
+  BOOKING_CHANGED_NOTICE,
   BOOKING_LOAD_FAILED_NOTICE,
   BOOKING_NOT_FOUND_NOTICE,
   BOOKING_PASSED_NOTICE,
@@ -227,15 +227,17 @@ export class ManageBooking implements OnInit {
           this.messageService.add({ severity: 'success', summary: 'Appointment cancelled' });
         },
         error: (error: unknown): void => {
-          if (BOOKING_CHANGED_CODES.includes(getProblemCode(error) ?? '')) {
-            this.load();
-            return;
-          }
-          this.cancelNotice.set(toProblemNotice(
+          const notice: Notice = toProblemNotice(
             error,
             CHANGE_PROBLEM_NOTICES,
             CANCEL_FAILED_NOTICE,
-          ));
+          );
+          // A booking that changed meanwhile reloads, so its own state says why it can't change.
+          if (notice === BOOKING_CHANGED_NOTICE) {
+            this.load();
+            return;
+          }
+          this.cancelNotice.set(notice);
         },
       });
   }

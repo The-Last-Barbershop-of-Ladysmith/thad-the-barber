@@ -7,9 +7,14 @@ import { formatLongDate, fromIsoDate } from '../../../../shared/utils/date.utils
 import { AppState } from '../../../../store/app.state';
 import { shopFeature } from '../../../shop/state/shop.feature';
 import { AvailableDay } from '../../dtos/available-day.dto';
-import { TimeSlot } from '../../models/time-slot.model';
 import { bookingFeature } from '../../state/booking.feature';
 import { isFillingUp, toTimeLabel } from '../../utils/booking-time.utils';
+
+/** An open start time: the UTC instant the API returned and its label on the shop's clock ("2:30 PM"). */
+interface TimeSlot {
+  startAt: string;
+  label: string;
+}
 
 @Component({
   selector: 'app-time-step',
