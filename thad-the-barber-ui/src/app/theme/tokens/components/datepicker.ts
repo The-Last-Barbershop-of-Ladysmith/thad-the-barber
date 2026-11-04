@@ -32,14 +32,13 @@ export const datepicker: DatePickerDesignTokens = {
     .p-datepicker-day-view { width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 4px; }
     .p-datepicker-day-cell { padding: 0; }
     .p-datepicker-day { aspect-ratio: 1; width: 100%; }
-    .p-datepicker-day:not(.p-datepicker-day-selected) { background: color-mix(in srgb, var(--p-espresso-50) 16%, transparent); }
+    .p-datepicker-day:not(.p-datepicker-day-selected) { background: var(--p-brand-day-open-background); }
     .p-datepicker-day.p-disabled {
-      background: color-mix(in srgb, var(--p-espresso-50) 4%, transparent);
+      background: var(--p-brand-day-closed-background);
       color: var(--p-espresso-600);
       text-decoration: line-through;
       opacity: 1;
     }
-    .p-datepicker-other-month .p-datepicker-day { visibility: hidden; }
     @media (min-width: 40rem) {
       .p-datepicker-panel-inline { padding: 1rem; }
       .p-datepicker-day-view { border-spacing: 6px; }

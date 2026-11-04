@@ -13,7 +13,7 @@
           pButton
           type="button"
           [link]="true"
-          class="back-to-booking"
+          class="self-start"
           data-testid="back-to-booking"
           (click)="returnToBooking()"
         >
@@ -63,7 +63,7 @@
             <p-step>
               <span class="step-title">Pick A Day</span>
               @if (pickedDayLabel(); as pickedDay) {
-                <span class="step-pick"
+                <span class="step-pick text-muted-color"
                   ><i class="pi pi-dot"></i>
                   {{ pickedDay }}
                 </span>
@@ -71,7 +71,7 @@
             </p-step>
             <p-step-panel>
               <ng-template #content>
-                <div class="step-content">
+                <div class="step-content stack gap-4">
                   <app-date-step [dateControl]="bookingForm.controls.date" />
                 </div>
               </ng-template>
@@ -82,12 +82,14 @@
             <p-step [disabled]="!bookingFormValue().date">
               <span class="step-title">Select A Time</span>
               @if (pickedTimeLabel(); as pickedTime) {
-                <span class="step-pick"><i class="pi pi-dot"></i> {{ pickedTime }}</span>
+                <span class="step-pick text-muted-color"
+                  ><i class="pi pi-dot"></i> {{ pickedTime }}</span
+                >
               }
             </p-step>
             <p-step-panel>
               <ng-template #content>
-                <div class="step-content">
+                <div class="step-content stack gap-4">
                   <app-time-step
                     [startAtControl]="bookingForm.controls.startAt"
                     [selectedDate]="bookingFormValue().date"
@@ -105,7 +107,7 @@
             </p-step>
             <p-step-panel>
               <ng-template #content>
-                <div class="step-content">
+                <div class="step-content stack gap-4">
                   @if (!isRescheduling()) {
                     <app-details-step
                       [nameControl]="bookingForm.controls.name"

@@ -72,8 +72,9 @@ export const button: ButtonDesignTokens = {
       letter-spacing: 0.14em;
       white-space: nowrap;
     }
-    .p-button-rounded, .p-button-link { text-transform: none; letter-spacing: 0; }
-    .p-button-link { padding-inline: 0; font-weight: 600; }
+    .p-button-rounded, .p-button-link, .p-button-text { text-transform: none; letter-spacing: 0; }
+    .p-button-link { padding-inline: 0; }
+    .p-button-link, .p-button-text { font-weight: 600; }
 
     /* Primary CTA: dark-to-copper gradient that sweeps on hover (wireframe .cta) */
     .p-button:not(.p-button-secondary, .p-button-outlined, .p-button-text, .p-button-link, .p-button-success, .p-button-info, .p-button-warn, .p-button-help, .p-button-danger, .p-button-contrast) {
