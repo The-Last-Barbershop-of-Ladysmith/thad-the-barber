@@ -58,9 +58,9 @@
         />
       }
       <p-card>
-        <p-stepper class="booking-steps" [(value)]="openStep">
+        <p-stepper class="booking-steps" [(value)]="openStep" [pt]="stepperPt">
           <p-step-item [value]="bookingStep.Day">
-            <p-step>
+            <p-step [pt]="stepPt">
               <span class="step-title">Pick A Day</span>
               @if (pickedDayLabel(); as pickedDay) {
                 <span class="step-pick text-muted-color"
@@ -79,7 +79,7 @@
           </p-step-item>
 
           <p-step-item [value]="bookingStep.Time">
-            <p-step [disabled]="!bookingFormValue().date">
+            <p-step [pt]="stepPt" [disabled]="!bookingFormValue().date">
               <span class="step-title">Select A Time</span>
               @if (pickedTimeLabel(); as pickedTime) {
                 <span class="step-pick text-muted-color"
@@ -100,7 +100,7 @@
           </p-step-item>
 
           <p-step-item [value]="bookingStep.Confirm">
-            <p-step [disabled]="!bookingFormValue().startAt">
+            <p-step [pt]="stepPt" [disabled]="!bookingFormValue().startAt">
               <span class="step-title">{{
                 isRescheduling() ? 'Confirm' : 'Details & confirm'
               }}</span>

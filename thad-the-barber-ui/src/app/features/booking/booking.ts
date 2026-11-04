@@ -15,6 +15,7 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { ButtonModule } from 'primeng/button';
+import { StepPassThrough, StepperPassThrough } from 'primeng/types/stepper';
 import { CardModule } from 'primeng/card';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { SpinnerIcon } from 'primeng/icons/spinner';
@@ -126,6 +127,10 @@ export class Booking implements LeaveConfirmable {
   private idempotencyKey: string | null = null;
 
   protected readonly bookingStep: typeof BookingStep = BookingStep;
+  // PrimeNG makes the stepper a tablist, which ARIA allows only around a row of tabs. Each step here opens its panel
+  // below its header, as an accordion does, so the stepper has no role and its headers are buttons.
+  protected readonly stepperPt: StepperPassThrough = { root: { role: 'presentation' } };
+  protected readonly stepPt: StepPassThrough = { header: { role: 'button' } };
   protected readonly openStep: WritableSignal<BookingStep> = signal(BookingStep.Day);
 
   protected readonly pickedDayLabel: Signal<string | null> = computed((): string | null => {
