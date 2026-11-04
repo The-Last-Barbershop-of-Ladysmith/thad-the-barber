@@ -120,5 +120,14 @@ describe(
         expect(bookingReducer(sent, BookingActions.BookingPageOpen())).toEqual(october);
       },
     );
+
+    it(
+      'keeps a booking still being sent when the page opens again, so another send waits for it',
+      (): void => {
+        const sending: BookingState = { ...october, submitStatus: RequestStatus.Pending };
+
+        expect(bookingReducer(sending, BookingActions.BookingPageOpen()).submitStatus).toBe(RequestStatus.Pending);
+      },
+    );
   },
 );

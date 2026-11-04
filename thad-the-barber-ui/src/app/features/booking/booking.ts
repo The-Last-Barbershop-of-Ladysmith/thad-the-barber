@@ -25,6 +25,7 @@ import { SessionService } from '../../core/services/session.service';
 import { Backdrop } from '../../shared/components/backdrop/backdrop';
 import { NoticeMessage } from '../../shared/components/notice-message/notice-message';
 import { Notice } from '../../shared/models/notice.model';
+import { RequestStatus } from '../../shared/models/request.models';
 import { formatLongDate, fromIsoDate } from '../../shared/utils/date.utils';
 import { toE164 } from '../../shared/utils/phone.utils';
 import { AppState } from '../../store/app.state';
@@ -40,6 +41,7 @@ import { ManagePageState } from './models/manage-page-state.model';
 import { ReschedulePageState } from './models/reschedule-page-state.model';
 import * as BookingActions from './state/booking.actions';
 import { bookingFeature } from './state/booking.feature';
+import { BookingState } from './state/booking.state';
 import { BOOKING_NOT_FOUND_NOTICE, BOT_CHECK_FAILED_NOTICE } from './config/booking-notices';
 import { toLongDateTime, toTimeLabel } from './utils/booking-time.utils';
 import { toManagePath } from './utils/manage-link.utils';
@@ -253,13 +255,23 @@ export class Booking implements LeaveConfirmable {
     });
   }
 
-  // A taken time comes off the open times; the pick goes with it.
+  // A taken time comes off the open times; the pick goes with it. Only a loaded month holding the picked day can say
+  // it's gone, so paging to another month keeps the pick.
   private clearPicksNoLongerOpen(): void {
     this.store
-      .select(bookingFeature.selectAvailableDays)
+      .select(bookingFeature.selectBookingState)
       .pipe(takeUntilDestroyed())
-      .subscribe((availableDays: AvailableDay[]): void => {
+      .subscribe(({
+        loadStatus,
+        dayRange,
+        availableDays,
+      }: BookingState): void => {
         const { date, startAt }: BookingFormValue = this.bookingForm.getRawValue();
+        const isPickInView: boolean = date !== null && dayRange !== null
+          && date >= dayRange.firstDay && date <= dayRange.lastDay;
+        if (loadStatus !== RequestStatus.Success || !isPickInView) {
+          return;
+        }
         const pickedDay: AvailableDay | undefined = availableDays
           .find((availableDay: AvailableDay): boolean => availableDay.date === date);
         if (date && !pickedDay) {

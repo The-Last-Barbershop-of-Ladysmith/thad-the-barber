@@ -12,6 +12,7 @@
           [formControl]="dateControl()"
           dataType="string"
           dateFormat="yy-mm-dd"
+          [defaultDate]="bookingWindow.min"
           [minDate]="bookingWindow.min"
           [maxDate]="bookingWindow.max"
           [disabledDates]="closedDates()"

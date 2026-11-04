@@ -236,7 +236,9 @@ export class ManageBooking implements OnInit {
           );
           // A booking that changed meanwhile reloads, so its own state says why it can't change.
           if (notice === BOOKING_CHANGED_NOTICE) {
-            this.load();
+            if (!this.destroyRef.destroyed) {
+              this.load();
+            }
             return;
           }
           this.cancelNotice.set(notice);

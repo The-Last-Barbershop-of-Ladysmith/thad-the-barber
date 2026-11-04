@@ -251,6 +251,21 @@ describe(
     );
 
     it(
+      'keeps the pick while another month loads and shows',
+      (): void => {
+        openPage();
+        pick(FIRST_TIME);
+        store.dispatch(BookingActions.AvailabilityRequest({ dayRange: { firstDay: '2099-01-01', lastDay: '2099-01-31' } }));
+        store.dispatch(BookingActions.AvailabilityRequestSuccess({
+          availableDays: [{ date: '2099-01-01', times: ['2099-01-01T20:00:00Z'] }],
+        }));
+
+        expect(page.bookingForm.controls.date.value).toBe(TODAY);
+        expect(page.bookingForm.controls.startAt.value).toBe(FIRST_TIME);
+      },
+    );
+
+    it(
       "clears the last day's time when another day is picked, and keeps it when the same day is picked again",
       (): void => {
         openPage();

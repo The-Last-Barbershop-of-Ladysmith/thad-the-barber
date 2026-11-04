@@ -21,7 +21,9 @@ export const bookingReducer: ActionReducer<BookingState> = createReducer(
     BookingActions.BookingPageOpen,
     (state: BookingState): BookingState => ({
       ...state,
-      submitStatus: RequestStatus.Idle,
+      // A booking still being sent, from before the customer left and came back, finishes first: another send now
+      // would be dropped while it runs.
+      submitStatus: state.submitStatus === RequestStatus.Pending ? RequestStatus.Pending : RequestStatus.Idle,
       submitNotice: null,
     }),
   ),
