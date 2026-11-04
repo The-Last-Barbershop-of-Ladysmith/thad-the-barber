@@ -74,7 +74,8 @@ export const button: ButtonDesignTokens = {
     }
     .p-button-rounded, .p-button-link, .p-button-text { text-transform: none; letter-spacing: 0; }
     .p-button-link { padding-inline: 0; }
-    .p-button-link, .p-button-text { font-weight: 600; }
+    /* PrimeNG sizes small and large icons through .p-button-icon, which only the deprecated pButtonIcon adds */
+    .p-button-sm > .pi, .p-button-lg > .pi { font-size: inherit; }
 
     /* Primary CTA: dark-to-copper gradient that sweeps on hover (wireframe .cta) */
     .p-button:not(.p-button-secondary, .p-button-outlined, .p-button-text, .p-button-link, .p-button-success, .p-button-info, .p-button-warn, .p-button-help, .p-button-danger, .p-button-contrast) {
