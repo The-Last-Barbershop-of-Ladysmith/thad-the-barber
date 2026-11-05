@@ -7,10 +7,11 @@ import { Action, Store, provideStore } from '@ngrx/store';
 import { MessageService, ToastMessageOptions } from 'primeng/api';
 import { Observable, Subject, of, throwError } from 'rxjs';
 import { Mock } from 'vitest';
-import { testFirstMonth, testMonthView } from '../../../../testing/test-availability';
+import { testBookingWindow, testFirstMonth, testMonthView } from '../../../../testing/test-availability';
 import { TEST_SHOP } from '../../../../testing/test-shop';
 import { SessionService } from '../../../core/services/session.service';
 import { ProblemCode } from '../../../shared/models/problem-code.model';
+import { addDays, toIsoDate } from '../../../shared/utils/date.utils';
 import { AppState } from '../../../store/app.state';
 import * as ShopActions from '../../shop/state/shop.actions';
 import { shopFeature } from '../../shop/state/shop.feature';
@@ -21,6 +22,7 @@ import { ManagedBooking } from '../dtos/managed-booking.dto';
 import { DayRange } from '../models/day-range.model';
 import { AvailabilityService } from '../services/availability.service';
 import { BookingService } from '../services/booking.service';
+import { toMonthRange } from '../utils/booking-time.utils';
 import { BOOKING_CHANGED_NOTICE, SLOT_TAKEN_NOTICE } from '../config/booking-notices';
 import * as BookingActions from './booking.actions';
 import {
@@ -141,12 +143,25 @@ describe(
     it(
       "opens today's 31-day block when the page opens, once the shop is known, on its clock",
       (): void => {
-        actions$.next(BookingActions.BookingPageOpen());
+        actions$.next(BookingActions.BookingPageOpen({ pickedStartAt: null }));
         expect(emitted).toEqual([]);
 
         store.dispatch(ShopActions.ShopInfoRequestSuccess({ shopInfo: TEST_SHOP }));
 
         expect(emitted).toEqual([BookingActions.AvailabilityRequest({ dayRange: testFirstMonth() })]);
+      },
+    );
+
+    it(
+      'opens the month of a time picked on the home page',
+      (): void => {
+        store.dispatch(ShopActions.ShopInfoRequestSuccess({ shopInfo: TEST_SHOP }));
+        const pickedDay: Date = addDays(testBookingWindow().min, 20);
+        const pickedMonth: DayRange = toMonthRange(pickedDay.getFullYear(), pickedDay.getMonth() + 1);
+
+        actions$.next(BookingActions.BookingPageOpen({ pickedStartAt: `${toIsoDate(pickedDay)}T20:00:00Z` }));
+
+        expect(emitted).toEqual([BookingActions.AvailabilityRequest({ dayRange: pickedMonth })]);
       },
     );
   },

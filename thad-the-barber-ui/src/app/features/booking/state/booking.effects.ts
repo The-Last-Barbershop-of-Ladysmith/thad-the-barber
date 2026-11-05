@@ -16,7 +16,6 @@ import { BookingConfirmation } from '../dtos/booking-confirmation.dto';
 import { BookingRequest } from '../dtos/booking-request.dto';
 import { ManagedBooking } from '../dtos/managed-booking.dto';
 import { DayRange } from '../models/day-range.model';
-import { DateRange } from '../models/date-range.model';
 import { ManagePageState } from '../models/manage-page-state.model';
 import { AvailabilityService } from '../services/availability.service';
 import { BookingService } from '../services/booking.service';
@@ -26,7 +25,7 @@ import {
   CHANGE_PROBLEM_NOTICES,
   RESCHEDULE_FAILED_NOTICE,
 } from '../config/booking-notices';
-import { toBookingWindow, toMonthRange } from '../utils/booking-time.utils';
+import { toFirstMonth } from '../utils/booking-time.utils';
 import { toManagePath } from '../utils/manage-link.utils';
 import * as BookingActions from './booking.actions';
 
@@ -43,18 +42,20 @@ export const openFirstMonth: FunctionalEffect = createEffect(
   ): Observable<Action> =>
     actions$.pipe(
       ofType(BookingActions.BookingPageOpen),
-      switchMap((): Observable<DateRange> => combineLatest([
+      switchMap(({ pickedStartAt }: { pickedStartAt: string | null; }): Observable<DayRange> => combineLatest([
         store.select(shopFeature.selectBookingSettings),
         store.select(shopFeature.selectTimeZone),
       ]).pipe(
-        map(([bookingSettings, timeZone]: [BookingSettings | null, string | null]): DateRange | null =>
-          toBookingWindow(bookingSettings, timeZone)),
-        filter((bookingWindow: DateRange | null): bookingWindow is DateRange => bookingWindow !== null),
+        map(([bookingSettings, timeZone]: [BookingSettings | null, string | null]): DayRange | null =>
+          toFirstMonth(
+            bookingSettings,
+            timeZone,
+            pickedStartAt,
+          )),
+        filter((dayRange: DayRange | null): dayRange is DayRange => dayRange !== null),
         take(1),
       )),
-      map((bookingWindow: DateRange): Action => BookingActions.AvailabilityRequest({
-        dayRange: toMonthRange(bookingWindow.min.getFullYear(), bookingWindow.min.getMonth() + 1),
-      })),
+      map((dayRange: DayRange): Action => BookingActions.AvailabilityRequest({ dayRange })),
     ),
   { functional: true },
 );

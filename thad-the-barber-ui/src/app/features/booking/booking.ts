@@ -26,7 +26,7 @@ import { TitledPage } from '../../shared/components/titled-page/titled-page';
 import { NoticeMessage } from '../../shared/components/notice-message/notice-message';
 import { Notice } from '../../shared/models/notice.model';
 import { RequestStatus } from '../../shared/models/request.models';
-import { formatLongDate, fromIsoDate } from '../../shared/utils/date.utils';
+import { formatLongDate, fromIsoDate, toIsoDateIn } from '../../shared/utils/date.utils';
 import { toE164 } from '../../shared/utils/phone.utils';
 import { AppState } from '../../store/app.state';
 import { shopFeature } from '../shop/state/shop.feature';
@@ -36,6 +36,7 @@ import { DetailsStep } from './components/details-step/details-step';
 import { TimeStep } from './components/time-step/time-step';
 import { AvailableDay } from './dtos/available-day.dto';
 import { BookingForm } from './models/booking-form.model';
+import { BookingPickState } from './models/booking-pick-state.model';
 import { BookingStep } from './models/booking-step.model';
 import { LeaveConfirmable } from './models/leave-confirmable.model';
 import { ManagePageState } from './models/manage-page-state.model';
@@ -250,11 +251,27 @@ export class Booking implements LeaveConfirmable {
     this.route.paramMap
       .pipe(takeUntilDestroyed())
       .subscribe((): void => {
-        this.reschedulePageState.set(this.router.currentNavigation()?.extras.state ?? {});
+        const navigationState: ReschedulePageState & BookingPickState =
+          this.router.currentNavigation()?.extras.state ?? {};
+        const pickedStartAt: string | null = this.isRescheduling() ? null : navigationState.pickedStartAt ?? null;
+        this.reschedulePageState.set(navigationState);
         this.bookingForm.reset();
         this.openStep.set(BookingStep.Day);
-        this.store.dispatch(BookingActions.BookingPageOpen());
+        this.store.dispatch(BookingActions.BookingPageOpen({ pickedStartAt }));
+        this.pickTime(pickedStartAt);
       });
+  }
+
+  // A time tapped on the home page. The days load after this, and a time no longer open is cleared like any other. The
+  // page's first open runs before the form's own step changes are listening, so the step is shown here.
+  private pickTime(startAt: string | null): void {
+    const timeZone: string | null = this.timeZone();
+    if (!startAt || !timeZone) {
+      return;
+    }
+    this.bookingForm.controls.date.setValue(toIsoDateIn(timeZone, new Date(startAt)));
+    this.bookingForm.controls.startAt.setValue(startAt);
+    this.showStep(BookingStep.Confirm);
   }
 
   // Without events, so locking and unlocking doesn't count as the customer changing the booking.
