@@ -1,3 +1,19 @@
+.time-step {
+  display: flex;
+  flex-direction: column;
+  gap: 1.125rem;
+  max-width: 47.5rem;
+
+  .open-count {
+    font-size: 0.9375rem;
+    color: var(--p-espresso-200);
+  }
+
+  .filling-up-note {
+    align-self: flex-start;
+  }
+}
+
 .no-day-picked {
   padding: 1.25rem;
   border: 1px dashed color-mix(in srgb, var(--p-surface-50) 35%, transparent);
