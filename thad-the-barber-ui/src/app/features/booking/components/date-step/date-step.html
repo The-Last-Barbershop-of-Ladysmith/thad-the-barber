@@ -1,8 +1,8 @@
 <section class="date-step">
+  @if (notice(); as availabilityNotice) {
+    <app-notice-message class="w-full" [notice]="availabilityNotice" (retry)="reloadMonth()" />
+  }
   <div class="calendar-column stack gap-3">
-    @if (notice(); as availabilityNotice) {
-      <app-notice-message [notice]="availabilityNotice" (retry)="reloadMonth()" />
-    }
     <div class="calendar-frame">
       @if (bookingWindow(); as bookingWindow) {
         <p-datepicker
