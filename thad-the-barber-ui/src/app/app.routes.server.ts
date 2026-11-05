@@ -13,9 +13,8 @@ export const CLIENT_ROUTES: string[] = [
 ];
 
 /**
- * Express serves each prerendered page as a file, the app shell for the client routes (`CLIENT_ROUTES`, which the build
- * writes to its `client-routes.json`), and the prerendered /404 page with a 404 status for any other path
- * (thad-the-barber-express/routes/index.js).
+ * Express serves each prerendered page as a file, the app shell for `CLIENT_ROUTES`, and the prerendered /404 page with
+ * a 404 status for any other path (thad-the-barber-express/routes/index.js).
  */
 export const serverRoutes: ServerRoute[] = [
   { path: '', renderMode: RenderMode.Prerender },
