@@ -1,6 +1,10 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Signal, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { Store } from '@ngrx/store';
 import { ButtonModule } from 'primeng/button';
+import { AppState } from '../../../../store/app.state';
+import { NextTimeSlot } from '../../models/next-time-slot.model';
+import { homeFeature } from '../../state/home.feature';
 
 @Component({
   selector: 'app-hero',
@@ -9,4 +13,7 @@ import { ButtonModule } from 'primeng/button';
   templateUrl: './hero.html',
   styleUrl: './hero.scss',
 })
-export class Hero {}
+export class Hero {
+  protected readonly nextTimeSlot: Signal<NextTimeSlot | null> =
+    inject<Store<AppState>>(Store).selectSignal(homeFeature.selectFirstNextTimeSlot);
+}
