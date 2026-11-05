@@ -13,4 +13,6 @@ public sealed class RateLimitSettings
     public FixedWindowLimit Booking { get; set; } = new();
 
     public FixedWindowLimit Manage { get; set; } = new();
+
+    public FixedWindowLimit NextTimes { get; set; } = new();
 }
