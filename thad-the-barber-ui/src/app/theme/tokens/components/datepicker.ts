@@ -3,8 +3,8 @@ import { DatePickerDesignTokens } from '@primeuix/themes/types/datepicker';
 /** Booking calendar: square tiles, copper selection, struck-through unavailable days. */
 export const datepicker: DatePickerDesignTokens = {
   panel: {
-    background: '#140d08',
-    borderColor: 'color-mix(in srgb, {espresso.50} 8%, transparent)',
+    background: '{brand.controlBackground}',
+    borderColor: '{brand.hairline}',
     borderRadius: '{border.radius.xl}',
     padding: '0.5rem',
     shadow: 'none',

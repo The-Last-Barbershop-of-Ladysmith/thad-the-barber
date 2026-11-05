@@ -1,10 +1,9 @@
 .booking-steps {
-  --steps-hairline: color-mix(in srgb, var(--p-espresso-50) 12%, transparent);
-  border-top: 1px solid var(--steps-hairline);
+  border-top: 1px solid var(--p-brand-hairline);
 
   p-step-item {
     display: block;
-    border-bottom: 1px solid var(--steps-hairline);
+    border-bottom: 1px solid var(--p-brand-hairline);
   }
 
   .steps-progress {
@@ -25,7 +24,7 @@
       grid-row: 2;
       grid-column: 1 / -1;
       height: 1px;
-      background: var(--steps-hairline);
+      background: var(--p-brand-hairline);
     }
 
     p-step-item {

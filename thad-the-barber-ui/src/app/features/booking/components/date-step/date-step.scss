@@ -54,7 +54,7 @@
       padding-bottom: 0.25rem;
       box-sizing: border-box;
       border-radius: 0.5rem;
-      border: 1px solid color-mix(in srgb, var(--p-espresso-50) 12%, transparent);
+      border: 1px solid var(--p-brand-hairline);
 
       &.is-available {
         background: var(--p-brand-day-open-background);
@@ -68,7 +68,7 @@
     .legend-note {
       margin: 0.5rem 0 0;
       padding-top: 1rem;
-      border-top: 1px solid color-mix(in srgb, var(--p-espresso-50) 10%, transparent);
+      border-top: 1px solid var(--p-brand-hairline);
       font-size: 0.875rem;
       line-height: 1.6;
       color: var(--p-espresso-400);
