@@ -40,6 +40,8 @@
     background: var(--p-surface-950);
     color: var(--p-text-color);
     font-family: var(--p-font-family-sans);
+    letter-spacing: 0.01em;
+    word-spacing: 0.06em;
   }
 
   h1,
@@ -68,6 +70,18 @@
   line-height: 0.95;
   font-weight: 800;
   letter-spacing: -0.02em;
+  text-transform: uppercase;
+  text-wrap: balance;
+  color: var(--p-text-color);
+}
+
+/* Page title in the TitledPage band */
+@utility page-title {
+  margin: 0;
+  font-family: var(--p-font-family-display);
+  font-size: clamp(2.5rem, 5vw, 4.25rem);
+  line-height: 0.95;
+  font-weight: 800;
   text-transform: uppercase;
   text-wrap: balance;
   color: var(--p-text-color);
@@ -163,25 +177,36 @@
 }
 
 /* Link inside running text: text-colored with a copper underline. Set the resting color with `--link-color`. */
+/*
+ * The underline is a 1px background line along the link's bottom edge rather than text-decoration, so it runs
+ * unbroken under the text, the gap and an external-link icon.
+ */
 @utility inline-link {
+  --underline-color: color-mix(in srgb, var(--p-primary-color) 60%, transparent);
   color: var(--link-color, inherit);
-  text-decoration: underline;
-  text-decoration-color: color-mix(in srgb, var(--p-primary-color) 60%, transparent);
-  text-underline-offset: 0.2em;
-  transition:
-    color 0.2s ease,
-    text-decoration-color 0.2s ease;
+  text-decoration: none;
+  background: linear-gradient(var(--underline-color), var(--underline-color)) 0 100% / 100% 1px
+    no-repeat;
+  transition: color 0.2s ease;
   &:hover {
+    --underline-color: currentColor;
     color: var(--p-primary-hover-color);
-    text-decoration-color: currentColor;
   }
 }
 
-/* A link that opens a new tab gets a ↗ mark; its markup still adds the hidden "(opens in a new tab)" text */
+/*
+ * A link that opens a new tab ends with PrimeIcons' external-link icon (pi-external-link's glyph), hidden from
+ * screen readers; its markup still adds the hidden "(opens in a new tab)" text.
+ */
 @utility external-link {
   &::after {
-    content: '\2197' / '';
-    margin-inline-start: 0.2em;
+    content: '\e97f' / '';
+    margin-inline-start: 0.35em;
+    font-family: primeicons;
+    font-size: 0.75em;
+    font-weight: normal;
+    font-style: normal;
+    speak: none;
   }
 }
 
