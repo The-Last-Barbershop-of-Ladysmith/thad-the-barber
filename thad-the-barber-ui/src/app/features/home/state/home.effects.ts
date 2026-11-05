@@ -2,21 +2,8 @@ import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { PLATFORM_ID, inject } from '@angular/core';
 import { Actions, FunctionalEffect, createEffect, ofType } from '@ngrx/effects';
 import { Action } from '@ngrx/store';
-import {
-  EMPTY,
-  Observable,
-  catchError,
-  distinctUntilChanged,
-  exhaustMap,
-  filter,
-  fromEvent,
-  map,
-  of,
-  startWith,
-  switchMap,
-  takeUntil,
-  timer,
-} from 'rxjs';
+import { Observable, catchError, exhaustMap, filter, map, of, switchMap, takeUntil } from 'rxjs';
+import { pollWhileVisible } from '../../../shared/utils/poll-while-visible.utils';
 import { NEXT_TIMES_POLL_INTERVAL_MS } from '../config/next-times';
 import { GalleryPhoto, HomeContent } from '../models/home.models';
 import { GalleryService } from '../services/gallery.service';
@@ -77,12 +64,7 @@ export const pollNextTimes: FunctionalEffect = createEffect(
       ofType(HomeActions.HomePageOpen),
       filter((): boolean => isPlatformBrowser(platformId)),
       switchMap((): Observable<Action> =>
-        fromEvent(document, 'visibilitychange').pipe(
-          startWith(null),
-          map((): boolean => document.visibilityState === 'visible'),
-          distinctUntilChanged(),
-          switchMap((isVisible: boolean): Observable<number> =>
-            isVisible ? timer(0, NEXT_TIMES_POLL_INTERVAL_MS) : EMPTY),
+        pollWhileVisible(document, NEXT_TIMES_POLL_INTERVAL_MS).pipe(
           switchMap((): Observable<Action> =>
             nextTimes.getNextTimes().pipe(
               map((startAts: string[]): Action => HomeActions.NextTimesRequestSuccess({ startAts })),
