@@ -12,11 +12,11 @@
         <p class="body-copy max-w-[28em]">Weekends only. Grab a spot online or give Thad a call.</p>
         <div class="actions">
           <a pButton routerLink="/book">
-            <span pButtonLabel>Book online</span>
-            <i pButtonIcon class="pi pi-arrow-right"></i>
+            Book online
+            <i class="pi pi-arrow-right"></i>
           </a>
           <a pButton [outlined]="true" [href]="phone().tel">
-            <span pButtonLabel>{{ phone().display }}</span>
+            {{ phone().display }}
           </a>
         </div>
       </div>

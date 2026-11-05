@@ -74,7 +74,8 @@ export const button: ButtonDesignTokens = {
     }
     .p-button-rounded, .p-button-link, .p-button-text { text-transform: none; letter-spacing: 0; }
     .p-button-link { padding-inline: 0; }
-    .p-button-link, .p-button-text { font-weight: 600; }
+    /* PrimeNG sizes small and large icons through .p-button-icon, which only the deprecated pButtonIcon adds */
+    .p-button-sm > .pi, .p-button-lg > .pi { font-size: inherit; }
 
     /* Primary CTA: dark-to-copper gradient that sweeps on hover (wireframe .cta) */
     .p-button:not(.p-button-secondary, .p-button-outlined, .p-button-text, .p-button-link, .p-button-success, .p-button-info, .p-button-warn, .p-button-help, .p-button-danger, .p-button-contrast) {
@@ -83,14 +84,13 @@ export const button: ButtonDesignTokens = {
       background-position: 100% 50%;
       box-shadow: 0 6px 18px -8px rgba(0, 0, 0, 0.6);
       transition: background-position 0.6s var(--p-brand-ease), color 0.4s ease, transform 0.35s var(--p-brand-ease),
-        box-shadow 0.35s ease, letter-spacing 0.35s ease, border-color 0.35s ease;
+        box-shadow 0.35s ease, border-color 0.35s ease;
     }
     .p-button:not(.p-button-secondary, .p-button-outlined, .p-button-text, .p-button-link, .p-button-success, .p-button-info, .p-button-warn, .p-button-help, .p-button-danger, .p-button-contrast):not(:disabled):hover {
       background: var(--p-brand-cta-gradient);
       background-size: 260% 100%;
       background-position: 0% 50%;
       transform: translateY(-2px);
-      letter-spacing: 0.16em;
       box-shadow: var(--p-brand-cta-glow);
     }
     .p-button:not(.p-button-secondary, .p-button-outlined, .p-button-text, .p-button-link):not(:disabled):active {
