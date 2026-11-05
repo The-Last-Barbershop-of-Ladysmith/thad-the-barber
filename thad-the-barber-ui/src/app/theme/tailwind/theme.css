@@ -126,6 +126,16 @@
   color: var(--p-surface-100);
 }
 
+/* Muted line under a value or a section: "Next open chair", the tap-a-time hint */
+@utility caption {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: var(--p-text-muted-color);
+  @media (min-width: 64rem) {
+    font-size: 1.0625rem;
+  }
+}
+
 /* Formatting inside rich text from content (announcement bodies); the markup comes in through [innerHTML] */
 @utility rich-text {
   & > * + * {
