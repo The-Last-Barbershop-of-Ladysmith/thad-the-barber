@@ -16,14 +16,13 @@ import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { ButtonModule } from 'primeng/button';
 import { StepPassThrough, StepperPassThrough } from 'primeng/types/stepper';
-import { CardModule } from 'primeng/card';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { SpinnerIcon } from 'primeng/icons/spinner';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { StepperModule } from 'primeng/stepper';
 import { distinctUntilChanged, map } from 'rxjs';
 import { SessionService } from '../../core/services/session.service';
-import { Backdrop } from '../../shared/components/backdrop/backdrop';
+import { TitledPage } from '../../shared/components/titled-page/titled-page';
 import { NoticeMessage } from '../../shared/components/notice-message/notice-message';
 import { Notice } from '../../shared/models/notice.model';
 import { RequestStatus } from '../../shared/models/request.models';
@@ -61,12 +60,11 @@ interface BookingFormValue {
   imports: [
     ReactiveFormsModule,
     ButtonModule,
-    CardModule,
     ConfirmDialogModule,
     ProgressBarModule,
     SpinnerIcon,
     StepperModule,
-    Backdrop,
+    TitledPage,
     NoticeMessage,
     DateStep,
     TimeStep,
