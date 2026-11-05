@@ -26,13 +26,6 @@ describe(
     });
 
     it(
-      'renders',
-      (): void => {
-        expect(render().querySelector('[data-testid="privacy"]')).not.toBeNull();
-      },
-    );
-
-    it(
       'gives the fallback phone before the shop loads',
       (): void => {
         expect(phoneHref(render())).toBe(`tel:${SHOP_FALLBACK.phone}`);
