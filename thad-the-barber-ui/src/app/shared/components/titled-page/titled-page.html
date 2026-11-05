@@ -1,0 +1,26 @@
+<div class="titled-page">
+  <header class="title-band">
+    <img
+      class="band-photo"
+      src="assets/keys/k5.avif"
+      alt=""
+      fetchpriority="high"
+      data-testid="title-band-photo"
+    />
+    <div class="band-content stack gap-3">
+      @if (eyebrow(); as eyebrowText) {
+        <span class="eyebrow">{{ eyebrowText }}</span>
+      }
+      <ng-content select="[pageEyebrow]" />
+      @if (heading(); as headingText) {
+        <h1 class="page-title">{{ headingText }}</h1>
+      }
+      <ng-content select="[pageHeading]" />
+      <ng-content select="[pageSubtitle]" />
+    </div>
+  </header>
+
+  <div class="page-body">
+    <ng-content />
+  </div>
+</div>
