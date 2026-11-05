@@ -1,6 +1,6 @@
 /*
  * The error page, ported from wireframe/site/error.html and matched to the Angular 404 page (pages/not-found).
- * Colors, fonts, radii and the focus ring come from /brand.css, the Angular theme's variables.
+ * Colors, radii and the focus ring come from /brand.css, the Angular theme's variables; /fonts.css loads the fonts.
  */
 
 *,
@@ -47,10 +47,23 @@ summary:focus-visible {
     object-position: 70% 50%;
   }
 
-  /* Dark on the left behind the copy, clearing toward the photo on the right. */
+  /* On phones the copy spans the photo, so the wash darkens it from the lamp down; from 48rem the copy sits on the
+     left, so it darkens there and clears toward the photo on the right. */
   .wash {
     position: absolute;
     inset: 0;
+    background: linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--p-ink) 45%, transparent) 0%,
+      color-mix(in srgb, var(--p-ink) 72%, transparent) 30%,
+      color-mix(in srgb, var(--p-ink) 88%, transparent) 55%,
+      color-mix(in srgb, var(--p-ink) 92%, transparent) 100%
+    );
+  }
+}
+
+@media (min-width: 48rem) {
+  .backdrop .wash {
     background: linear-gradient(
       90deg,
       color-mix(in srgb, var(--p-ink) 92%, transparent) 0%,
@@ -123,9 +136,11 @@ summary:focus-visible {
 
   h1 {
     margin: 0;
-    font-size: clamp(2.75rem, 7vw, 5.5rem);
+    font-family: var(--p-font-family-display);
+    font-size: clamp(2.25rem, 5vw, 4.25rem);
+    font-weight: 800;
     line-height: 0.95;
-    letter-spacing: -0.02em;
+    text-transform: uppercase;
     text-wrap: balance;
     text-shadow: 0 2px 16px rgb(0 0 0 / 50%);
   }

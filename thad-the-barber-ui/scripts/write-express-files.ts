@@ -1,5 +1,5 @@
 import { build } from 'esbuild';
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 /** The environment fields the CSP needs. Node runs this file unbuilt, so it can't import `Environment`. */
@@ -60,6 +60,8 @@ interface AngularJson { projects: Record<string, AngularProject>; }
  * - csp-sources.json: the environment's origins for Express's Content-Security-Policy, from the environment file
  *   angular.json swaps in for that configuration, so the origins live in one place.
  * - brand.css: the theme's CSS variables for the error pages (src/app/theme/brand-css.ts).
+ * - fonts.css: the @font-face rules of the app's display and body fonts, copied from the built stylesheet (its file
+ *   name is hashed) so the error pages load the same files from /media.
  * - shop.json: the shop name, phone and Square booking URL for the error page, from src/app/core/config/shop-info.ts.
  * - client-routes.json: the routes Express serves the app shell for, from src/app/app.routes.server.ts.
  */
@@ -108,6 +110,17 @@ const shop: ErrorPageShop = {
   bookingUrl: SHOP_FALLBACK.squareBookingSiteUrl,
 };
 
+const FONT_RULE_FAMILY: RegExp = /font-family:\s*["']?(?:Syne|Plus Jakarta Sans) Variable/;
+const stylesheetName: string | undefined = readdirSync(outDir).find((name: string): boolean => /^styles(-.*)?\.css$/.test(name));
+if (!stylesheetName) {
+  throw new Error(`${outDir} has no built stylesheet to take the font rules from`);
+}
+const fontRules: string[] = (readFileSync(join(outDir, stylesheetName), 'utf8').match(/@font-face\s*\{[^}]*\}/g) ?? [])
+  .filter((rule: string): boolean => FONT_RULE_FAMILY.test(rule));
+if (fontRules.length === 0) {
+  throw new Error(`${stylesheetName} has no @font-face rules for the Syne or Plus Jakarta Sans fonts`);
+}
+
 const ingestionEndpoint: string | undefined = /IngestionEndpoint=([^;]+)/.exec(environment.appInsightsConnectionString)?.[1];
 const mediaOrigin: string = new URL(environment.mediaBaseUrl).origin;
 const sources: Record<string, string[]> = {
@@ -126,6 +139,7 @@ writeFileSync(join(outDir, 'csp-sources.json'), `${JSON.stringify(
   2,
 )}\n`);
 writeFileSync(join(outDir, 'brand.css'), brandCss());
+writeFileSync(join(outDir, 'fonts.css'), `${fontRules.join('\n')}\n`);
 writeFileSync(join(outDir, 'shop.json'), `${JSON.stringify(
   shop,
   null,
@@ -137,5 +151,5 @@ writeFileSync(join(outDir, 'client-routes.json'), `${JSON.stringify(
   2,
 )}\n`);
 process.stdout.write(
-  `Wrote csp-sources.json from ${environmentFile}, brand.css, shop.json and client-routes.json to ${outDir}\n`,
+  `Wrote csp-sources.json from ${environmentFile}, brand.css, fonts.css, shop.json and client-routes.json to ${outDir}\n`,
 );
