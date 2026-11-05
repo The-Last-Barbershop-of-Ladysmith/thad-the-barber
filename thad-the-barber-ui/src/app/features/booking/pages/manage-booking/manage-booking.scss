@@ -1,4 +1,5 @@
-// The appointment's day and time are the page title; its details sit under it in the title band.
+// The appointment's day and time are the page title. Below it the actions come first on phones; from lg the details
+// stand on the left and the actions on the right, both above the fold.
 .booked-status {
   display: flex;
   align-items: center;
@@ -13,42 +14,120 @@
   }
 }
 
+.ended-status {
+  color: var(--p-text-muted-color);
+}
+
 // Focused on load for screen readers; it isn't a control, so no ring.
 .appointment-heading {
   &:focus {
     outline: none;
   }
 
+  .appointment-day {
+    font-size: clamp(1.75rem, 3.4vw, 3rem);
+  }
+
   .appointment-time {
-    font-size: clamp(3rem, 9vw, 6.5rem);
+    font-size: clamp(3rem, 5.6vw, 5rem);
     color: var(--p-primary-color);
+
+    &.time-ended {
+      color: var(--p-text-muted-color);
+    }
   }
 }
 
-.appointment-details {
-  margin: 0;
-  font-size: 1.0625rem;
-  line-height: 1.6;
-  color: var(--p-surface-200);
+.link-field {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 100%;
+
+  // An input's own width counts toward its row's smallest size, so on a phone the field would push the page wider
+  // than the screen; a zero basis lets it shrink to fit.
+  .link-input {
+    flex: 1 1 0;
+    width: 0;
+    min-width: 0;
+  }
 }
 
-.manage-actions {
-  max-width: 24rem;
+// Inside the green "You're booked" notice the field takes its outline from the notice, not the copper of the page.
+app-notice-message .link-field {
+  --link-field-outline: color-mix(in srgb, var(--p-brand-success) 40%, transparent);
 
-  .quiet-actions {
-    margin-top: 0.5rem;
-    padding-top: 0.5rem;
-    border-top: 1px solid color-mix(in srgb, var(--p-surface-50) 10%, transparent);
+  .link-input {
+    border-color: var(--link-field-outline);
 
-    .quiet-action {
-      justify-content: space-between;
-      width: 100%;
+    &:focus {
+      border-color: var(--p-brand-success);
     }
   }
 
-  .change-hint {
-    margin: 0;
-    font-size: 0.8125rem;
-    color: var(--p-surface-400);
+  .p-button {
+    border-color: var(--link-field-outline);
+    color: var(--p-brand-success);
+
+    &:not(:disabled):hover {
+      border-color: var(--p-brand-success);
+      background: color-mix(in srgb, var(--p-brand-success) 16%, transparent);
+      color: var(--p-brand-success);
+    }
+  }
+}
+
+.manage-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+
+  .manage-details {
+    flex: 1;
+    min-width: 0;
+
+    .details-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      margin: 0;
+
+      dd {
+        margin: 0;
+        font-size: 1.125rem;
+        line-height: 1.5;
+        color: var(--p-text-color);
+      }
+    }
+  }
+
+  .manage-actions {
+    width: 100%;
+
+    .quiet-actions {
+      margin-top: 0.5rem;
+
+      .quiet-action {
+        justify-content: space-between;
+        width: 100%;
+        padding-inline: 0.5rem;
+        border-top: 1px solid var(--p-brand-divider);
+        border-radius: 0;
+      }
+    }
+  }
+
+  @media (min-width: 64rem) {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 4.5rem;
+
+    .manage-details {
+      order: -1;
+    }
+
+    .manage-actions {
+      flex: 0 0 24rem;
+    }
   }
 }

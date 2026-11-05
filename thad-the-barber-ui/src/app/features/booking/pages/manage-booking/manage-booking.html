@@ -2,7 +2,7 @@
   @if (managedBooking()?.canChange) {
     <span pageEyebrow class="eyebrow booked-status"><span class="booked-dot"></span>Booked</span>
   } @else {
-    <span pageEyebrow class="eyebrow">Your booking</span>
+    <span pageEyebrow class="eyebrow ended-status">Your booking</span>
   }
   <h1
     pageHeading
@@ -11,115 +11,94 @@
     tabindex="-1"
   >
     @if (appointmentStart(); as start) {
-      <span>{{ start.day }}</span>
-      <span class="appointment-time" data-testid="appointment-time">{{ start.time }}</span>
+      <span class="appointment-day">{{ start.day }}</span>
+      <span
+        class="appointment-time"
+        [class.time-ended]="!managedBooking()?.canChange"
+        data-testid="appointment-time"
+        >{{ start.time }}</span
+      >
     } @else {
       Your appointment
     }
   </h1>
-  @if (managedBooking()) {
-    <p pageSubtitle class="appointment-details" data-testid="managed-booking" aria-live="polite">
-      @if (bookingSettings(); as settings) {
-        {{ settings.slotMinutes }} minutes at
-      }
-      {{ shopName() }}
-      @if (addressLine(); as address) {
-        <br />{{ address }}
-      }
-      @if (directionsUrl(); as url) {
-        ·
-        <a class="nav-link external-link font-bold" [href]="url" target="_blank" rel="noopener"
-          ><i class="pi pi-map-marker"></i> Get directions<span class="sr-only">
-            (opens in a new tab)</span
-          ></a
-        >
-      }
-    </p>
-  }
 
   @if (loadNotice(); as failureNotice) {
-    <app-notice-message [notice]="failureNotice" (retry)="load()" />
+    <app-notice-message class="mt-4" [notice]="failureNotice" (retry)="load()" />
   }
   @if (managedBooking(); as booking) {
     @if (isJustBooked && booking.canChange) {
-      <app-notice-message data-testid="booking-confirmation" [notice]="justBookedNotice" />
+      <app-notice-message
+        class="mt-4"
+        data-testid="booking-confirmation"
+        [notice]="justBookedNotice"
+      >
+        <ng-container *ngTemplateOutlet="linkField" />
+      </app-notice-message>
     }
   }
   @if (statusNotice(); as status) {
-    <app-notice-message data-testid="booking-status" [notice]="status" />
+    <app-notice-message class="mt-4" data-testid="booking-status" [notice]="status" />
   }
 
-  @if (!managedBooking() && !loadNotice()) {
-    <div
-      class="manage-actions"
-      data-testid="manage-loading"
-      aria-busy="true"
-      aria-label="Loading your booking"
-    >
-      <p-card [dt]="actionsCardTokens">
+  <div class="manage-layout">
+    @if (!managedBooking() && !loadNotice()) {
+      <div
+        class="manage-actions"
+        data-testid="manage-loading"
+        aria-busy="true"
+        aria-label="Loading your booking"
+      >
         <div class="stack gap-3">
           <p-skeleton width="100%" height="3.25rem" />
           <p-skeleton width="100%" height="3.25rem" />
         </div>
-      </p-card>
-    </div>
-  }
+      </div>
+    }
 
-  @if (managedBooking(); as booking) {
-    @if (booking.canChange && manageLink(); as link) {
-      <aside class="manage-actions relative" aria-label="Change this appointment">
-        @if (isCancelling()) {
-          <p-progressbar class="edge-progress" mode="indeterminate" aria-label="Cancelling" />
-        }
-        <p-card [dt]="actionsCardTokens">
-          <div class="stack gap-3">
-            @if (isLinkShown()) {
-              <div class="stack gap-2">
-                <label class="field-label" for="manage-link">Your link to change or cancel</label>
-                <input
-                  #linkField
-                  pInputText
-                  id="manage-link"
-                  class="w-full"
-                  readonly
-                  data-testid="manage-link"
-                  [value]="link"
-                  (focus)="linkField.select()"
-                />
-              </div>
-            }
-            @if (cancelNotice(); as failedCancelNotice) {
-              <app-notice-message
-                data-testid="cancel-notice"
-                [notice]="failedCancelNotice"
-                (retry)="cancel()"
-              />
-            }
-            <button
-              pButton
-              type="button"
-              class="w-full"
-              data-testid="add-to-calendar"
-              [disabled]="!calendarFile()"
-              (click)="addToCalendar()"
-            >
-              <i class="pi pi-calendar-plus" aria-hidden="true"></i>
-              Add to calendar
-            </button>
-            <button
-              pButton
-              type="button"
-              class="w-full"
-              severity="secondary"
-              [outlined]="true"
-              data-testid="reschedule"
-              [disabled]="isCancelling()"
-              (click)="reschedule()"
-            >
-              <i class="pi pi-calendar-clock" aria-hidden="true"></i>
-              Pick another time
-            </button>
-            <div class="quiet-actions stack">
+    @if (managedBooking(); as booking) {
+      @if (booking.canChange && manageLink()) {
+        <aside class="manage-actions stack gap-3" aria-label="Change this appointment">
+          <span class="field-label">Change or cancel</span>
+          @if (isCancelling()) {
+            <p-progressbar mode="indeterminate" aria-label="Cancelling" />
+          }
+          @if (isLinkShown() && !isJustBooked) {
+            <ng-container *ngTemplateOutlet="linkField" />
+          }
+          @if (cancelNotice(); as failedCancelNotice) {
+            <app-notice-message
+              data-testid="cancel-notice"
+              [notice]="failedCancelNotice"
+              (retry)="cancel()"
+            />
+          }
+          <button
+            pButton
+            type="button"
+            class="w-full"
+            data-testid="add-to-calendar"
+            [disabled]="!calendarFile()"
+            (click)="addToCalendar()"
+          >
+            <i class="pi pi-calendar-plus" aria-hidden="true"></i>
+            Add to calendar
+          </button>
+          <button
+            pButton
+            type="button"
+            class="w-full"
+            severity="secondary"
+            [outlined]="true"
+            data-testid="reschedule"
+            [disabled]="isCancelling()"
+            (click)="reschedule()"
+          >
+            <i class="pi pi-calendar-clock" aria-hidden="true"></i>
+            Pick another time
+          </button>
+          <div class="quiet-actions stack">
+            @if (!isLinkShown()) {
               <button
                 pButton
                 type="button"
@@ -132,30 +111,95 @@
                 Copy link to this page
                 <i class="pi pi-copy" aria-hidden="true"></i>
               </button>
-              <button
-                pButton
-                type="button"
-                class="quiet-action"
-                severity="danger"
-                [text]="true"
-                data-testid="cancel-booking"
-                [disabled]="isCancelling()"
-                (click)="confirmCancel()"
-              >
-                Cancel appointment
-                <i class="pi pi-times" aria-hidden="true"></i>
-              </button>
-            </div>
-            <p class="change-hint">You can move or cancel until it starts.</p>
+            }
+            <button
+              pButton
+              type="button"
+              class="quiet-action"
+              severity="danger"
+              [text]="true"
+              data-testid="cancel-booking"
+              [disabled]="isCancelling()"
+              (click)="confirmCancel()"
+            >
+              Cancel appointment
+              <i class="pi pi-times" aria-hidden="true"></i>
+            </button>
           </div>
-        </p-card>
-      </aside>
+          <p class="small-print px-2">You can move or cancel until it starts.</p>
+        </aside>
+      }
     }
-  }
 
-  <nav aria-label="More bookings">
-    <a class="nav-link" routerLink="/book">Book another appointment</a>
-  </nav>
+    <section class="manage-details stack gap-6" aria-label="Appointment details">
+      @if (managedBooking()) {
+        <span class="field-label">Details</span>
+        <dl class="details-list" data-testid="managed-booking" aria-live="polite">
+          @if (bookingSettings(); as settings) {
+            <div class="stack gap-1">
+              <dt class="field-label">Duration</dt>
+              <dd>{{ settings.slotMinutes }} minutes</dd>
+            </div>
+          }
+          <div class="stack gap-1">
+            <dt class="field-label">Where</dt>
+            <dd>
+              {{ shopName() }}
+              @if (addressLine(); as address) {
+                <br />{{ address }}
+              }
+            </dd>
+            @if (directionsUrl(); as url) {
+              <dd>
+                <a
+                  class="inline-link external-link font-bold"
+                  [href]="url"
+                  target="_blank"
+                  rel="noopener"
+                  >Get directions<span class="sr-only"> (opens in a new tab)</span></a
+                >
+              </dd>
+            }
+          </div>
+        </dl>
+      }
+      <nav aria-label="More bookings">
+        @if (managedBooking() && !managedBooking()?.canChange) {
+          <a pButton routerLink="/book">Book another appointment</a>
+        } @else {
+          <a class="nav-link" routerLink="/book">Book another appointment</a>
+        }
+      </nav>
+    </section>
+  </div>
 </app-titled-page>
+
+<ng-template #linkField>
+  <div class="link-field">
+    <label class="sr-only" for="manage-link">Your link to change or cancel</label>
+    <input
+      #linkInput
+      pInputText
+      id="manage-link flex-1"
+      class="link-input"
+      readonly
+      data-testid="manage-link"
+      [value]="manageLink() ?? ''"
+      (focus)="linkInput.select()"
+    />
+    <button
+      pButton
+      type="button"
+      size="small"
+      severity="secondary"
+      [outlined]="true"
+      data-testid="copy-link"
+      (click)="copyManageLink()"
+    >
+      <i class="pi pi-copy" aria-hidden="true"></i>
+      Copy
+    </button>
+  </div>
+</ng-template>
 
 <p-confirmdialog key="cancel-booking" />

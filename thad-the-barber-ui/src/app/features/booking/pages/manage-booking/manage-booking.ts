@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -18,8 +19,6 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
-import { CardDesignTokens } from '@primeuix/themes/types/card';
-import { CardModule } from 'primeng/card';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { ProgressBarModule } from 'primeng/progressbar';
@@ -60,8 +59,8 @@ interface AppointmentStart {
   selector: 'app-manage-booking',
   imports: [
     RouterLink,
+    NgTemplateOutlet,
     ButtonModule,
-    CardModule,
     ConfirmDialogModule,
     InputTextModule,
     ProgressBarModule,
@@ -103,7 +102,6 @@ export class ManageBooking implements OnInit {
   protected readonly loadNotice: WritableSignal<Notice | null> = signal(null);
   protected readonly managedBooking: WritableSignal<ManagedBooking | null> = signal(null);
   protected readonly isCancelling: WritableSignal<boolean> = signal(false);
-  protected readonly actionsCardTokens: CardDesignTokens = { body: { padding: '1.75rem' } };
   protected readonly cancelNotice: WritableSignal<Notice | null> = signal(null);
 
   protected readonly appointmentStart: Signal<AppointmentStart | null> = computed((): AppointmentStart | null => {

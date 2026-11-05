@@ -24,9 +24,14 @@ export const message: MessageDesignTokens = {
   warn: severity('warn'),
   error: severity('error'),
   // Notices run to several lines (title, text, help line, retry), so the icon sits by the first line, not the middle.
+  // The text area fills the row, so a control inside a notice (the booked link's field) can span it.
   css: `
     .p-message-content {
       align-items: flex-start;
+    }
+    .p-message-text {
+      flex: 1;
+      min-width: 0;
     }
   `,
 };

@@ -1,5 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Store, provideStore } from '@ngrx/store';
@@ -97,7 +98,7 @@ describe(
       // Only the page's own messages render; the PrimeNG parts and the backdrop are left out.
       TestBed.overrideComponent(
         ManageBooking,
-        { set: { imports: [NoticeMessage], schemas: [NO_ERRORS_SCHEMA] } },
+        { set: { imports: [NgTemplateOutlet, NoticeMessage], schemas: [NO_ERRORS_SCHEMA] } },
       );
       // Compiled with the overridden imports before anything is injected.
       await TestBed.compileComponents();

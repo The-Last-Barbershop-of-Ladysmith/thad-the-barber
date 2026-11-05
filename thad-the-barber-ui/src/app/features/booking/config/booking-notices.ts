@@ -40,7 +40,7 @@ export const SLOT_TAKEN_NOTICE: Notice = {
 export const JUST_BOOKED_NOTICE: Notice = {
   severity: NoticeSeverity.Success,
   title: 'You’re booked.',
-  text: 'Keep the link below to change or cancel your appointment.',
+  text: 'Keep this link to change or cancel your appointment.',
   canRetry: false,
 };
 
