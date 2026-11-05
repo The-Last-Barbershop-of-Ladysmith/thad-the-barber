@@ -129,8 +129,10 @@ export const semantic: TokenSection = {
       pageWidth: '75rem',
       pageGutter: '1.5rem',
       headerFade: `linear-gradient(180deg, ${alpha('{ink}', 92)} 0%, ${alpha('{ink}', 60)} 55%, transparent 100%)`,
-      ctaGradient: 'linear-gradient(100deg, {ink} 0%, {espresso.800} 30%, {copper.500} 65%, {copper.300} 100%)',
-      ctaGlow: `0 16px 36px -10px ${alpha('{copper.500}', 80)}`,
+      cta: {
+        glow: `0 4px 24px -2px ${alpha('{copper.500}', 45)}`,
+        glowHover: `0 6px 32px 0 ${alpha('{copper.500}', 60)}`,
+      },
       success: '{mint}',
       warn: '{amber}',
       error: '{coral}',

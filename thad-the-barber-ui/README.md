@@ -147,7 +147,7 @@ Styling follows one rule: **if PrimeNG has a component for it, restyle it with t
 | Review stars | `p-rating` readonly | `rating.ts` |
 | Mobile menu | `p-drawer` | `drawer.ts` |
 
-Brand values PrimeNG has no slot for (glass background, CTA gradient, dividers, the success/warn/error colors) live under `semantic.extend.brand` and become `--p-brand-*` CSS variables. `tailwind/theme.css` exposes them as Tailwind colors and utilities:
+Brand values PrimeNG has no slot for (glass background, CTA glow, dividers, the success/warn/error colors) live under `semantic.extend.brand` and become `--p-brand-*` CSS variables. `tailwind/theme.css` exposes them as Tailwind colors and utilities:
 
 - Colors: `text-primary`, `bg-surface-950`, `text-muted-color`, `border-surface` (from tailwindcss-primeui), plus `text-mint`, `border-divider`, `bg-ink`
 - Radii: `rounded-control`, `rounded-tile`, `rounded-panel`
