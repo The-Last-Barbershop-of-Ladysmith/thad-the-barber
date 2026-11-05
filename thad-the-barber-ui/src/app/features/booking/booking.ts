@@ -31,6 +31,7 @@ import { toE164 } from '../../shared/utils/phone.utils';
 import { AppState } from '../../store/app.state';
 import { shopFeature } from '../shop/state/shop.feature';
 import { DateStep } from './components/date-step/date-step';
+import { AppointmentSummary } from './components/appointment-summary/appointment-summary';
 import { DetailsStep } from './components/details-step/details-step';
 import { TimeStep } from './components/time-step/time-step';
 import { AvailableDay } from './dtos/available-day.dto';
@@ -68,6 +69,7 @@ interface BookingFormValue {
     NoticeMessage,
     DateStep,
     TimeStep,
+    AppointmentSummary,
     DetailsStep,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,

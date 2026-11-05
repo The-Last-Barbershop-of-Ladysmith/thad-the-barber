@@ -89,3 +89,12 @@
     padding-top: 2rem;
   }
 }
+
+.confirm-layout {
+  @media (min-width: 64rem) {
+    display: grid;
+    grid-template-columns: minmax(0, 37.5rem) minmax(0, 1fr);
+    gap: 4rem;
+    align-items: start;
+  }
+}

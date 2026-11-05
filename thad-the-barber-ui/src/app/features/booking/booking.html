@@ -109,45 +109,52 @@
           }
           <p-step-panel>
             <ng-template #content>
-              <div class="step-content stack gap-4">
-                @if (!isRescheduling()) {
-                  <app-details-step
-                    [nameControl]="bookingForm.controls.name"
-                    [phoneControl]="bookingForm.controls.phone"
-                  />
-                }
-                <button
-                  pButton
-                  type="submit"
-                  class="confirm-booking"
-                  data-testid="confirm-booking"
-                  [fluid]="true"
-                  [disabled]="!canConfirm()"
-                >
-                  @if (isSubmitting()) {
-                    <svg data-p-icon="spinner" class="animate-spin"></svg>
+              <div class="step-content confirm-layout">
+                <div class="confirm-form stack gap-4">
+                  @if (!isRescheduling()) {
+                    <app-details-step
+                      [nameControl]="bookingForm.controls.name"
+                      [phoneControl]="bookingForm.controls.phone"
+                    />
                   }
-                  {{ confirmLabel() }}
-                </button>
-                <small class="small-print">
-                  This site is protected by reCAPTCHA and the Google
-                  <a
-                    class="inline-link external-link"
-                    href="https://policies.google.com/privacy"
-                    target="_blank"
-                    rel="noopener"
-                    >Privacy Policy<span class="sr-only"> (opens in a new tab)</span></a
+                  <button
+                    pButton
+                    type="submit"
+                    class="confirm-booking"
+                    data-testid="confirm-booking"
+                    [fluid]="true"
+                    [disabled]="!canConfirm()"
                   >
-                  and
-                  <a
-                    class="inline-link external-link"
-                    href="https://policies.google.com/terms"
-                    target="_blank"
-                    rel="noopener"
-                    >Terms of Service<span class="sr-only"> (opens in a new tab)</span></a
-                  >
-                  apply.
-                </small>
+                    @if (isSubmitting()) {
+                      <svg data-p-icon="spinner" class="animate-spin"></svg>
+                    }
+                    {{ confirmLabel() }}
+                  </button>
+                  <small class="small-print">
+                    This site is protected by reCAPTCHA and the Google
+                    <a
+                      class="inline-link external-link"
+                      href="https://policies.google.com/privacy"
+                      target="_blank"
+                      rel="noopener"
+                      >Privacy Policy<span class="sr-only"> (opens in a new tab)</span></a
+                    >
+                    and
+                    <a
+                      class="inline-link external-link"
+                      href="https://policies.google.com/terms"
+                      target="_blank"
+                      rel="noopener"
+                      >Terms of Service<span class="sr-only"> (opens in a new tab)</span></a
+                    >
+                    apply.
+                  </small>
+                </div>
+                @if (pickedDayLabel(); as pickedDay) {
+                  @if (pickedTimeLabel(); as pickedTime) {
+                    <app-appointment-summary [dayLabel]="pickedDay" [timeLabel]="pickedTime" />
+                  }
+                }
               </div>
             </ng-template>
           </p-step-panel>
