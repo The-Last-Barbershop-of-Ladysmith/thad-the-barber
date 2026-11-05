@@ -31,7 +31,16 @@
               <br />{{ address }}
             }
             @if (directionsUrl(); as url) {
-              · <a class="nav-link font-bold" [href]="url" target="_blank" rel="noopener"><i class="pi pi-map-marker"></i> Get directions</a>
+              ·
+              <a
+                class="nav-link external-link font-bold"
+                [href]="url"
+                target="_blank"
+                rel="noopener"
+                ><i class="pi pi-map-marker"></i> Get directions<span class="sr-only">
+                  (opens in a new tab)</span
+                ></a
+              >
             }
           </p>
           @if (isJustBooked && booking.canChange) {

@@ -29,7 +29,6 @@ import { NoticeSeverity } from '../../models/notice-severity.model';
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './notice-message.html',
-  styleUrl: './notice-message.scss',
 })
 export class NoticeMessage {
   readonly notice: InputSignal<Notice> = input.required<Notice>();
