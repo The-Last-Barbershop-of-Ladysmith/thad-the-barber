@@ -41,7 +41,7 @@
     gap: 2rem;
     max-width: calc(var(--p-brand-page-width) + 2 * var(--p-brand-page-gutter));
     margin-inline: auto;
-    // A first block with a border (a notice) must not touch the band: its top edge was getting cut off.
+    // A first block with a border (a notice) must not touch the band above it: its top edge was getting cut off.
     padding: 0.5rem var(--p-brand-page-gutter) 4rem;
   }
 }

@@ -53,19 +53,12 @@
       font-weight: 800;
       white-space: nowrap;
       color: var(--p-text-color);
-
-      .slot-period {
-        font-family: var(--p-font-family);
-        font-size: 0.8125rem;
-        letter-spacing: 0.05em;
-        color: var(--p-text-muted-color);
-      }
     }
   }
 
   li:first-child .slot {
-    border-color: rgb(232 144 74 / 0.45);
-    background: rgb(232 144 74 / 0.1);
+    border-color: color-mix(in srgb, var(--p-primary-color) 45%, transparent);
+    background: color-mix(in srgb, var(--p-primary-color) 10%, transparent);
 
     .slot-day {
       color: var(--p-primary-color);

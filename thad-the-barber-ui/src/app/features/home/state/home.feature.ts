@@ -8,7 +8,7 @@ import { announcementsFeature } from '../../announcements/state/announcements.fe
 import { shopFeature } from '../../shop/state/shop.feature';
 import { GalleryPhoto } from '../models/home.models';
 import { NextTimeSlot } from '../models/next-time-slot.model';
-import { toAreNextTimesMissing, toFirstNextTimeSlot, toNextTimeSlots } from '../utils/next-times.utils';
+import { toAreNextTimesMissing, toNextTimeSlots } from '../utils/next-times.utils';
 import { homeReducer } from './home.reducer';
 import { HomeState, SmsSignupState } from './home.state';
 
@@ -20,7 +20,6 @@ export type HomeExtraSelectors = {
   selectIsContentLoading: MemoizedSelector<object, boolean>;
   selectHomeSections: MemoizedSelector<object, readonly NavItem[]>;
   selectNextTimeSlots: MemoizedSelector<object, NextTimeSlot[]>;
-  selectFirstNextTimeSlot: MemoizedSelector<object, NextTimeSlot | null>;
   selectAreNextTimesMissing: MemoizedSelector<object, boolean>;
 };
 
@@ -65,11 +64,6 @@ export const homeFeature = createFeature({
       selectNextTimes,
       shopFeature.selectTimeZone,
       toNextTimeSlots,
-    ),
-    selectFirstNextTimeSlot: createSelector(
-      selectNextTimes,
-      shopFeature.selectTimeZone,
-      toFirstNextTimeSlot,
     ),
     selectAreNextTimesMissing: createSelector(
       selectNextTimesStatus,

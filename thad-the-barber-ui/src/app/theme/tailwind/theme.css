@@ -136,6 +136,14 @@
   }
 }
 
+/* "AM"/"PM" set small after a time in the display font */
+@utility time-period {
+  font-family: var(--p-font-family);
+  font-size: 0.8125rem;
+  letter-spacing: 0.05em;
+  color: var(--p-text-muted-color);
+}
+
 /* Formatting inside rich text from content (announcement bodies); the markup comes in through [innerHTML] */
 @utility rich-text {
   & > * + * {

@@ -1,7 +1,8 @@
 import { RequestStatus } from '../../../shared/models/request.models';
-import { formatShortDate, fromIsoDate, toIsoDateIn, weekTimeIn } from '../../../shared/utils/date.utils';
+import { WeekTime } from '../../../shared/models/week-time.model';
+import { formatMinutes, formatShortDate, fromIsoDate, toIsoDateIn, weekTimeIn } from '../../../shared/utils/date.utils';
+import { isSettledEmpty } from '../../../shared/utils/request.utils';
 import { WEEKDAY_SHORT_NAMES } from '../../../shared/utils/weekday.utils';
-import { toTimeLabel } from '../../booking/utils/booking-time.utils';
 import { NextTimeSlot } from '../models/next-time-slot.model';
 
 /** The open times with their day and time on the shop's clock; none until the shop's timezone is known. */
@@ -10,19 +11,17 @@ export function toNextTimeSlots(startAts: string[], timeZone: string | null): Ne
     return [];
   }
   return startAts.map((startAt: string): NextTimeSlot => {
-    const [time = '', period = '']: string[] = toTimeLabel(timeZone, startAt).split(' ');
+    const instant: Date = new Date(startAt);
+    const { day, minutes }: WeekTime = weekTimeIn(timeZone, instant);
+    const [time = '', period = '']: string[] = formatMinutes(minutes).split(' ');
     return {
       startAt,
-      weekdayLabel: WEEKDAY_SHORT_NAMES[weekTimeIn(timeZone, new Date(startAt)).day],
-      dayLabel: formatShortDate(fromIsoDate(toIsoDateIn(timeZone, new Date(startAt)))),
+      weekdayLabel: WEEKDAY_SHORT_NAMES[day],
+      dayLabel: formatShortDate(fromIsoDate(toIsoDateIn(timeZone, instant))),
       time,
       period,
     };
   });
-}
-
-export function toFirstNextTimeSlot(startAts: string[], timeZone: string | null): NextTimeSlot | null {
-  return toNextTimeSlots(startAts.slice(0, 1), timeZone)[0] ?? null;
 }
 
 /**
@@ -30,6 +29,5 @@ export function toFirstNextTimeSlot(startAts: string[], timeZone: string | null)
  * isn't missing: those stay on the page.
  */
 export function toAreNextTimesMissing(status: RequestStatus, startAts: string[]): boolean {
-  const isSettled: boolean = status === RequestStatus.Success || status === RequestStatus.Error;
-  return isSettled && startAts.length === 0;
+  return startAts.length === 0 && isSettledEmpty(status, startAts.length);
 }

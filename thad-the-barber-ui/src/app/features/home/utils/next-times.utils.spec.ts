@@ -1,7 +1,7 @@
 import { TEST_SHOP } from '../../../../testing/test-shop';
 import { RequestStatus } from '../../../shared/models/request.models';
 import { NextTimeSlot } from '../models/next-time-slot.model';
-import { toAreNextTimesMissing, toFirstNextTimeSlot, toNextTimeSlots } from './next-times.utils';
+import { toAreNextTimesMissing, toNextTimeSlots } from './next-times.utils';
 
 const HONOLULU: string = TEST_SHOP.timeZone;
 
@@ -37,26 +37,6 @@ describe(
       "shows nothing until the shop's timezone is known",
       (): void => {
         expect(toNextTimeSlots(['2026-10-04T20:00:00Z'], null)).toEqual([]);
-      },
-    );
-  },
-);
-
-describe(
-  'toFirstNextTimeSlot',
-  (): void => {
-    it(
-      'is the earliest time',
-      (): void => {
-        expect(toFirstNextTimeSlot(['2026-10-04T20:00:00Z', '2026-10-04T20:30:00Z'], HONOLULU)?.time)
-          .toBe('10:00');
-      },
-    );
-
-    it(
-      'is null with no times',
-      (): void => {
-        expect(toFirstNextTimeSlot([], HONOLULU)).toBeNull();
       },
     );
   },

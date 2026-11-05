@@ -14,6 +14,6 @@ import { homeFeature } from '../../state/home.feature';
   styleUrl: './hero.scss',
 })
 export class Hero {
-  protected readonly nextTimeSlot: Signal<NextTimeSlot | null> =
-    inject<Store<AppState>>(Store).selectSignal(homeFeature.selectFirstNextTimeSlot);
+  protected readonly nextTimeSlots: Signal<NextTimeSlot[]> =
+    inject<Store<AppState>>(Store).selectSignal(homeFeature.selectNextTimeSlots);
 }

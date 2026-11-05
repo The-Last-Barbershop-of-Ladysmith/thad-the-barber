@@ -7,11 +7,11 @@
       Book a cut
       <i class="pi pi-arrow-right"></i>
     </a>
-    @if (nextTimeSlot(); as nextTimeSlot) {
+    @if (nextTimeSlots()[0]; as nextTimeSlot) {
       <dl class="facts">
         <div data-testid="next-open-chair">
           <dt>
-            {{ nextTimeSlot.weekdayLabel }} {{ nextTimeSlot.time }}<span class="period"> {{ nextTimeSlot.period }}</span>
+            {{ nextTimeSlot.weekdayLabel }} {{ nextTimeSlot.time }}<span class="time-period"> {{ nextTimeSlot.period }}</span>
           </dt>
           <dd class="caption">Next open chair</dd>
         </div>
