@@ -54,6 +54,29 @@ test.describe(
     );
 
     test(
+      'clicking the same entry again scrolls back to it, and the last section is marked at the page end',
+      async ({ page, isMobile }: { page: Page; isMobile: boolean; }): Promise<void> => {
+        test.skip(isMobile, 'Phones get the collapsible box instead of the sidebar.');
+        await page.goto('/privacy');
+        const statsLink: Locator = page.getByTestId('privacy-toc').locator('a[href$="#stats"]');
+        await statsLink.click();
+        await expect(page.locator('#stats')).toBeInViewport();
+
+        await page.evaluate((): void => {
+          window.scrollTo(0, 0);
+        });
+        await statsLink.click();
+        await expect(page.locator('#stats')).toBeInViewport();
+
+        await page.evaluate((): void => {
+          window.scrollTo(0, document.documentElement.scrollHeight);
+        });
+        const lastLink: Locator = page.getByTestId('privacy-toc').locator('a').last();
+        await expect(lastLink).toHaveAttribute('aria-current', 'location');
+      },
+    );
+
+    test(
       'the phone box opens and scrolls to a section',
       async ({ page, isMobile }: { page: Page; isMobile: boolean; }): Promise<void> => {
         test.skip(!isMobile, 'Desktop gets the sidebar instead of the box.');

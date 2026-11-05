@@ -61,6 +61,11 @@ export class Privacy {
   }
 
   private findActiveSection(): string {
+    const isAtPageEnd: boolean = window.scrollY > 0
+      && window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
+    if (isAtPageEnd) {
+      return this.sections.at(-1)?.fragment ?? '';
+    }
     const reached: PrivacySection[] = this.sections.filter((section: PrivacySection): boolean => {
       const top: number | undefined = document.getElementById(section.fragment)?.getBoundingClientRect().top;
       return top !== undefined && top <= ACTIVE_SECTION_OFFSET_PX;
