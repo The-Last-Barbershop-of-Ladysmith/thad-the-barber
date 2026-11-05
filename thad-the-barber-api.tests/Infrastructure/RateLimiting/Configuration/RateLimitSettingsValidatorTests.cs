@@ -45,12 +45,22 @@ public sealed class RateLimitSettingsValidatorTests
         Assert.Contains("RateLimits:Manage:PermitLimit", result.FailureMessage, StringComparison.Ordinal);
     }
 
-    private static ValidateOptionsResult Validate(FixedWindowLimit session, FixedWindowLimit booking, FixedWindowLimit? manage = null) =>
+    [Fact]
+    public void MissingNextTimesLimitFails()
+    {
+        ValidateOptionsResult result = Validate(Limit(5, TimeSpan.FromMinutes(10)), Limit(5, TimeSpan.FromMinutes(10)), nextTimes: new FixedWindowLimit());
+
+        Assert.True(result.Failed);
+        Assert.Contains("RateLimits:NextTimes:PermitLimit", result.FailureMessage, StringComparison.Ordinal);
+    }
+
+    private static ValidateOptionsResult Validate(FixedWindowLimit session, FixedWindowLimit booking, FixedWindowLimit? manage = null, FixedWindowLimit? nextTimes = null) =>
         new RateLimitSettingsValidator().Validate(null, new RateLimitSettings
         {
             Session = session,
             Booking = booking,
             Manage = manage ?? Limit(5, TimeSpan.FromMinutes(10)),
+            NextTimes = nextTimes ?? Limit(5, TimeSpan.FromMinutes(10)),
         });
 
     private static FixedWindowLimit Limit(int permitLimit, TimeSpan window) => new()

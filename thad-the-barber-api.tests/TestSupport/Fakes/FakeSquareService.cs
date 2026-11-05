@@ -20,6 +20,7 @@ public sealed class FakeSquareService : ISquareService
 {
     private int _checks;
     private int _catalogSearches;
+    private int _timeSlotSearches;
 
     public SquareConnection Connection { get; init; } = SquareConnection.Connected;
 
@@ -81,6 +82,8 @@ public sealed class FakeSquareService : ISquareService
 
     public int AppointmentListings { get; private set; }
 
+    public int TimeSlotSearches => _timeSlotSearches;
+
     public Task<SquareConnection> CheckConnectionAsync(CancellationToken cancellationToken)
     {
         Interlocked.Increment(ref _checks);
@@ -97,8 +100,11 @@ public sealed class FakeSquareService : ISquareService
         return FailOr(BookableServices);
     }
 
-    public Task<List<TimeSlot>> SearchAvailableTimeSlotsAsync(string locationId, BookableService bookableService, DateTimeRange dateTimeRange, CancellationToken cancellationToken) =>
-        Task.FromResult(TimeSlots.Where(timeSlot => dateTimeRange.Contains(timeSlot.StartAt)).ToList());
+    public Task<List<TimeSlot>> SearchAvailableTimeSlotsAsync(string locationId, BookableService bookableService, DateTimeRange dateTimeRange, CancellationToken cancellationToken)
+    {
+        Interlocked.Increment(ref _timeSlotSearches);
+        return FailOr(TimeSlots.Where(timeSlot => dateTimeRange.Contains(timeSlot.StartAt)).ToList());
+    }
 
     public Task<List<string>> FindCustomerIdsAsync(string phone, CancellationToken cancellationToken)
     {

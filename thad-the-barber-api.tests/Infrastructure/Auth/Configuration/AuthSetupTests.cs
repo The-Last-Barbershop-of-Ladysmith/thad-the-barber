@@ -27,7 +27,7 @@ public sealed class AuthSetupTests(ApiFactory factory) : IClassFixture<ApiFactor
         $"/api/bookings/availability?from={DateTime.UtcNow:yyyy-MM-dd}&to={DateTime.UtcNow.AddDays(30):yyyy-MM-dd}"
     );
 
-    private static readonly string[] exemptRoutes = ["/api/health", "/api/session", "/api/shop", "/api/webhooks/square"];
+    private static readonly string[] exemptRoutes = ["/api/bookings/next", "/api/health", "/api/session", "/api/shop", "/api/webhooks/square"];
 
     private static CancellationToken Cancellation => TestContext.Current.CancellationToken;
 
@@ -67,7 +67,8 @@ public sealed class AuthSetupTests(ApiFactory factory) : IClassFixture<ApiFactor
     [InlineData("/api/health")]
     [InlineData("/api/health?deep=true")]
     [InlineData("/api/shop")]
-    public async Task HealthAndTheShopNeedNoToken(string path)
+    [InlineData("/api/bookings/next?count=6")]
+    public async Task HealthTheShopAndTheNextTimesNeedNoToken(string path)
     {
         using HttpResponseMessage response = await factory.CreateClientWithoutToken().GetAsync(path, Cancellation);
 
@@ -75,7 +76,7 @@ public sealed class AuthSetupTests(ApiFactory factory) : IClassFixture<ApiFactor
     }
 
     [Fact]
-    public void OnlyHealthSessionShopAndTheSquareWebhookAreOpenWithoutAToken()
+    public void OnlyTheNextTimesHealthSessionShopAndTheSquareWebhookAreOpenWithoutAToken()
     {
         string[] openRoutes =
         [

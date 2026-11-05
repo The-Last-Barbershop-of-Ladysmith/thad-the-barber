@@ -19,6 +19,10 @@ public static class BookingEndpoints
             .NoStore();
         bookings.MapGet("/availability", GetAvailabilityAsync)
             .WithName("GetAvailability");
+        bookings.MapGet("/next", GetNextTimesAsync)
+            .AllowAnonymous()
+            .WithName("GetNextTimes")
+            .RequireRateLimiting(RateLimitSetup.NextTimesPolicy);
         bookings.MapPost("", CreateBookingAsync)
             .WithName("CreateBooking")
             .RequireRateLimiting(RateLimitSetup.BookingPolicy);
@@ -65,6 +69,27 @@ public static class BookingEndpoints
         }
 
         return TypedResults.Ok(await availability.GetAvailableDaysAsync(firstDay, lastDay, cancellationToken));
+    }
+
+    /// <summary>
+    /// The next <c>?count=</c> open times (1 to <see cref="NextTimesService.MaxCount"/>) as UTC instants, earliest
+    /// first. Needs no session token, so a home page view spends no bot check; the times are shared between visitors
+    /// for <see cref="Configuration.BookingSettings.NextTimesCacheFor"/>.
+    /// </summary>
+    internal static async Task<Results<Ok<List<DateTimeOffset>>, ValidationProblem>> GetNextTimesAsync(
+        int count,
+        NextTimesService nextTimes,
+        CancellationToken cancellationToken)
+    {
+        if (count < 1 || count > NextTimesService.MaxCount)
+        {
+            return TypedResults.ValidationProblem(new Dictionary<string, string[]>
+            {
+                [nameof(count)] = [$"Use a number from 1 to {NextTimesService.MaxCount}."],
+            });
+        }
+
+        return TypedResults.Ok(await nextTimes.GetNextAsync(count, cancellationToken));
     }
 
     private static bool TryParseDay(string text, out DateOnly day) =>

@@ -84,6 +84,19 @@ public sealed class RateLimitSetupTests(ApiFactory factory) : IClassFixture<ApiF
     }
 
     [Fact]
+    public async Task ThirdNextTimesRequestFromOneIpIsRateLimited()
+    {
+        using WebApplicationFactory<Program> limited = WithLimitOfTwo();
+        using HttpClient client = ClientFrom(limited, FirstClientIp);
+
+        AssertNotLimited(await client.GetAsync("/api/bookings/next?count=6", TestContext.Current.CancellationToken));
+        AssertNotLimited(await client.GetAsync("/api/bookings/next?count=6", TestContext.Current.CancellationToken));
+        using HttpResponseMessage third = await client.GetAsync("/api/bookings/next?count=6", TestContext.Current.CancellationToken);
+
+        await AssertRateLimitedAsync(third);
+    }
+
+    [Fact]
     public async Task ReadsAreNotRateLimited()
     {
         using WebApplicationFactory<Program> limited = WithLimitOfTwo();
@@ -105,6 +118,7 @@ public sealed class RateLimitSetupTests(ApiFactory factory) : IClassFixture<ApiF
                 ["RateLimits:Session:PermitLimit"] = "2",
                 ["RateLimits:Booking:PermitLimit"] = "2",
                 ["RateLimits:Manage:PermitLimit"] = "2",
+                ["RateLimits:NextTimes:PermitLimit"] = "2",
             }));
         });
 

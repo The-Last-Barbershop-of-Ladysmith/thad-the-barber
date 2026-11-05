@@ -252,7 +252,7 @@ The design for when it's picked up needs no database:
 - CORS (in the .NET app only) allows just the site's origin, so browsers on other sites can't call the API. Auth uses a header, not cookies, so there's no CSRF exposure.
 
 **Abuse:**
-- Rate limits per client IP (#32): `POST /api/session`, `POST /api/bookings` (BR-13) and cancel/reschedule (a separate `Manage` limit, so used-up booking attempts never block managing a booking), from `RateLimits:*` in app config, refused with 429 `rate_limited` and `Retry-After`. App Service's `X-Forwarded-For` gives the client IP (`ASPNETCORE_FORWARDEDHEADERS_ENABLED`). Per-session limits come with #35.
+- Rate limits per client IP (#32): `POST /api/session`, `POST /api/bookings` (BR-13) and cancel/reschedule (a separate `Manage` limit, so used-up booking attempts never block managing a booking) and the anonymous `GET /api/bookings/next` (`NextTimes`, #221), from `RateLimits:*` in app config, refused with 429 `rate_limited` and `Retry-After`. App Service's `X-Forwarded-For` gives the client IP (`ASPNETCORE_FORWARDEDHEADERS_ENABLED`). Per-session limits come with #35.
 - A cap of 6 bookings per phone number in any 31 days and 10 booking attempts per device/IP per 10 minutes (BR-13, set in app config). The per-phone cap is checked in `BookingService` (#35); there's no separate per-session limit, since a new session token only takes a reCAPTCHA pass.
 - Strict request validation and size limits.
 
