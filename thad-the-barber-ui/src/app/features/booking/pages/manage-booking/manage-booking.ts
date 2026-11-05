@@ -25,7 +25,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { SkeletonModule } from 'primeng/skeleton';
 import { finalize } from 'rxjs';
-import { Backdrop } from '../../../../shared/components/backdrop/backdrop';
+import { TitledPage } from '../../../../shared/components/titled-page/titled-page';
 import { NoticeMessage } from '../../../../shared/components/notice-message/notice-message';
 import { Notice } from '../../../../shared/models/notice.model';
 import { ProblemCode } from '../../../../shared/models/problem-code.model';
@@ -66,7 +66,7 @@ interface AppointmentStart {
     InputTextModule,
     ProgressBarModule,
     SkeletonModule,
-    Backdrop,
+    TitledPage,
     NoticeMessage,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,

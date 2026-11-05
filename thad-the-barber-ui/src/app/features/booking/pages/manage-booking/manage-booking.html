@@ -1,166 +1,161 @@
-<app-backdrop mode="still" [still]="5" />
+<app-titled-page>
+  @if (managedBooking()?.canChange) {
+    <span pageEyebrow class="eyebrow booked-status"><span class="booked-dot"></span>Booked</span>
+  } @else {
+    <span pageEyebrow class="eyebrow">Your booking</span>
+  }
+  <h1
+    pageHeading
+    id="manage-heading"
+    class="page-title appointment-heading stack gap-1"
+    tabindex="-1"
+  >
+    @if (appointmentStart(); as start) {
+      <span>{{ start.day }}</span>
+      <span class="appointment-time" data-testid="appointment-time">{{ start.time }}</span>
+    } @else {
+      Your appointment
+    }
+  </h1>
+  @if (managedBooking()) {
+    <p pageSubtitle class="appointment-details" data-testid="managed-booking" aria-live="polite">
+      @if (bookingSettings(); as settings) {
+        {{ settings.slotMinutes }} minutes at
+      }
+      {{ shopName() }}
+      @if (addressLine(); as address) {
+        <br />{{ address }}
+      }
+      @if (directionsUrl(); as url) {
+        ·
+        <a class="nav-link external-link font-bold" [href]="url" target="_blank" rel="noopener"
+          ><i class="pi pi-map-marker"></i> Get directions<span class="sr-only">
+            (opens in a new tab)</span
+          ></a
+        >
+      }
+    </p>
+  }
 
-<div class="page manage-page">
   @if (loadNotice(); as failureNotice) {
     <app-notice-message [notice]="failureNotice" (retry)="load()" />
   }
+  @if (managedBooking(); as booking) {
+    @if (isJustBooked && booking.canChange) {
+      <app-notice-message data-testid="booking-confirmation" [notice]="justBookedNotice" />
+    }
+  }
+  @if (statusNotice(); as status) {
+    <app-notice-message data-testid="booking-status" [notice]="status" />
+  }
 
-  <div class="manage-layout">
-    <header class="appointment-summary stack gap-4">
-      @if (managedBooking()?.canChange) {
-        <span class="eyebrow booked-status"><span class="booked-dot"></span>Booked</span>
-      } @else {
-        <span class="eyebrow">Your booking</span>
-      }
-      <h1 id="manage-heading" class="section-title appointment-heading stack gap-1" tabindex="-1">
-        @if (appointmentStart(); as start) {
-          <span>{{ start.day }}</span>
-          <span class="appointment-time" data-testid="appointment-time">{{ start.time }}</span>
-        } @else {
-          Your appointment
-        }
-      </h1>
-      @if (managedBooking(); as booking) {
-        <div class="stack gap-4" data-testid="managed-booking" aria-live="polite">
-          <p class="appointment-details">
-            @if (bookingSettings(); as settings) {
-              {{ settings.slotMinutes }} minutes at
-            }
-            {{ shopName() }}
-            @if (addressLine(); as address) {
-              <br />{{ address }}
-            }
-            @if (directionsUrl(); as url) {
-              ·
-              <a
-                class="nav-link external-link font-bold"
-                [href]="url"
-                target="_blank"
-                rel="noopener"
-                ><i class="pi pi-map-marker"></i> Get directions<span class="sr-only">
-                  (opens in a new tab)</span
-                ></a
-              >
-            }
-          </p>
-          @if (isJustBooked && booking.canChange) {
-            <app-notice-message data-testid="booking-confirmation" [notice]="justBookedNotice" />
-          }
-          @if (statusNotice(); as status) {
-            <app-notice-message data-testid="booking-status" [notice]="status" />
-          }
+  @if (!managedBooking() && !loadNotice()) {
+    <div
+      class="manage-actions"
+      data-testid="manage-loading"
+      aria-busy="true"
+      aria-label="Loading your booking"
+    >
+      <p-card [dt]="actionsCardTokens">
+        <div class="stack gap-3">
+          <p-skeleton width="100%" height="3.25rem" />
+          <p-skeleton width="100%" height="3.25rem" />
         </div>
-      }
-    </header>
+      </p-card>
+    </div>
+  }
 
-    @if (!managedBooking() && !loadNotice()) {
-      <div
-        class="manage-actions"
-        data-testid="manage-loading"
-        aria-busy="true"
-        aria-label="Loading your booking"
-      >
+  @if (managedBooking(); as booking) {
+    @if (booking.canChange && manageLink(); as link) {
+      <aside class="manage-actions relative" aria-label="Change this appointment">
+        @if (isCancelling()) {
+          <p-progressbar class="edge-progress" mode="indeterminate" aria-label="Cancelling" />
+        }
         <p-card [dt]="actionsCardTokens">
           <div class="stack gap-3">
-            <p-skeleton width="100%" height="3.25rem" />
-            <p-skeleton width="100%" height="3.25rem" />
+            @if (isLinkShown()) {
+              <div class="stack gap-2">
+                <label class="field-label" for="manage-link">Your link to change or cancel</label>
+                <input
+                  #linkField
+                  pInputText
+                  id="manage-link"
+                  class="w-full"
+                  readonly
+                  data-testid="manage-link"
+                  [value]="link"
+                  (focus)="linkField.select()"
+                />
+              </div>
+            }
+            @if (cancelNotice(); as failedCancelNotice) {
+              <app-notice-message
+                data-testid="cancel-notice"
+                [notice]="failedCancelNotice"
+                (retry)="cancel()"
+              />
+            }
+            <button
+              pButton
+              type="button"
+              class="w-full"
+              data-testid="add-to-calendar"
+              [disabled]="!calendarFile()"
+              (click)="addToCalendar()"
+            >
+              <i class="pi pi-calendar-plus" aria-hidden="true"></i>
+              Add to calendar
+            </button>
+            <button
+              pButton
+              type="button"
+              class="w-full"
+              severity="secondary"
+              [outlined]="true"
+              data-testid="reschedule"
+              [disabled]="isCancelling()"
+              (click)="reschedule()"
+            >
+              <i class="pi pi-calendar-clock" aria-hidden="true"></i>
+              Pick another time
+            </button>
+            <div class="quiet-actions stack">
+              <button
+                pButton
+                type="button"
+                class="quiet-action"
+                severity="secondary"
+                [text]="true"
+                data-testid="copy-link"
+                (click)="copyManageLink()"
+              >
+                Copy link to this page
+                <i class="pi pi-copy" aria-hidden="true"></i>
+              </button>
+              <button
+                pButton
+                type="button"
+                class="quiet-action"
+                severity="danger"
+                [text]="true"
+                data-testid="cancel-booking"
+                [disabled]="isCancelling()"
+                (click)="confirmCancel()"
+              >
+                Cancel appointment
+                <i class="pi pi-times" aria-hidden="true"></i>
+              </button>
+            </div>
+            <p class="change-hint">You can move or cancel until it starts.</p>
           </div>
         </p-card>
-      </div>
+      </aside>
     }
-
-    @if (managedBooking(); as booking) {
-      @if (booking.canChange && manageLink(); as link) {
-        <aside class="manage-actions relative" aria-label="Change this appointment">
-          @if (isCancelling()) {
-            <p-progressbar class="edge-progress" mode="indeterminate" aria-label="Cancelling" />
-          }
-          <p-card [dt]="actionsCardTokens">
-            <div class="stack gap-3">
-              @if (isLinkShown()) {
-                <div class="stack gap-2">
-                  <label class="field-label" for="manage-link">Your link to change or cancel</label>
-                  <input
-                    #linkField
-                    pInputText
-                    id="manage-link"
-                    class="w-full"
-                    readonly
-                    data-testid="manage-link"
-                    [value]="link"
-                    (focus)="linkField.select()"
-                  />
-                </div>
-              }
-              @if (cancelNotice(); as failedCancelNotice) {
-                <app-notice-message
-                  data-testid="cancel-notice"
-                  [notice]="failedCancelNotice"
-                  (retry)="cancel()"
-                />
-              }
-              <button
-                pButton
-                type="button"
-                class="w-full"
-                data-testid="add-to-calendar"
-                [disabled]="!calendarFile()"
-                (click)="addToCalendar()"
-              >
-                <i class="pi pi-calendar-plus" aria-hidden="true"></i>
-                Add to calendar
-              </button>
-              <button
-                pButton
-                type="button"
-                class="w-full"
-                severity="secondary"
-                [outlined]="true"
-                data-testid="reschedule"
-                [disabled]="isCancelling()"
-                (click)="reschedule()"
-              >
-                <i class="pi pi-calendar-clock" aria-hidden="true"></i>
-                Pick another time
-              </button>
-              <div class="quiet-actions stack">
-                <button
-                  pButton
-                  type="button"
-                  class="quiet-action"
-                  severity="secondary"
-                  [text]="true"
-                  data-testid="copy-link"
-                  (click)="copyManageLink()"
-                >
-                  Copy link to this page
-                  <i class="pi pi-copy" aria-hidden="true"></i>
-                </button>
-                <button
-                  pButton
-                  type="button"
-                  class="quiet-action"
-                  severity="danger"
-                  [text]="true"
-                  data-testid="cancel-booking"
-                  [disabled]="isCancelling()"
-                  (click)="confirmCancel()"
-                >
-                  Cancel appointment
-                  <i class="pi pi-times" aria-hidden="true"></i>
-                </button>
-              </div>
-              <p class="change-hint">You can move or cancel until it starts.</p>
-            </div>
-          </p-card>
-        </aside>
-      }
-    }
-  </div>
+  }
 
   <nav aria-label="More bookings">
     <a class="nav-link" routerLink="/book">Book another appointment</a>
   </nav>
-</div>
+</app-titled-page>
 
 <p-confirmdialog key="cancel-booking" />
