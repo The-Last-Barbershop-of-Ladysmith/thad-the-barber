@@ -114,6 +114,34 @@ public sealed class BookingEndpointsTests
     }
 
     [Fact]
+    public async Task NextTimesListsTheFirstOpenTimesAsUtcInstantsWithoutAToken()
+    {
+        using ApiFactory api = Api();
+
+        using HttpResponseMessage response = await api.CreateClientWithoutToken().GetAsync("/api/bookings/next?count=3", Cancellation);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        JsonElement times = await response.Content.ReadFromJsonAsync<JsonElement>(Cancellation);
+        Assert.Equal(3, times.GetArrayLength());
+        Assert.Equal("2026-10-06T15:30:00+00:00", times[0].GetString());
+    }
+
+    [Theory]
+    [InlineData("count=0")]
+    [InlineData("count=13")]
+    [InlineData("count=-1")]
+    [InlineData("count=six")]
+    [InlineData("")]
+    public async Task ANextTimesCountOutsideOneToTwelveIs400(string query)
+    {
+        using ApiFactory api = Api();
+
+        using HttpResponseMessage response = await api.CreateClientWithoutToken().GetAsync($"/api/bookings/next?{query}", Cancellation);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
     public async Task ABookingIs201WithOnlyItsIdUtcStartAndManageToken()
     {
         using ApiFactory api = Api();

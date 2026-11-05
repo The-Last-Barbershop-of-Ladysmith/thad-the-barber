@@ -210,6 +210,30 @@ public sealed class AvailabilityServiceTests
         Assert.Equal(isFound, timeSlot is not null);
     }
 
+    [Fact]
+    public async Task UpcomingTimesRunInOrderFromNowThroughTheNext31DaysOnly()
+    {
+        FakeSquareService square = new()
+        {
+            TimeSlots = SlotsAt(
+                "2026-11-06T15:00:00Z",
+                "2026-10-06T15:30:00Z",
+                "2026-11-07T15:00:00Z",
+                "2026-10-06T15:00:00Z",
+                "2026-10-20T13:00:00Z"),
+        };
+
+        List<DateTimeOffset> times = await Service(square).GetUpcomingTimesAsync(Cancellation);
+
+        Assert.Equal(
+            [
+                Instant("2026-10-06T15:30:00Z"),
+                Instant("2026-10-20T13:00:00Z"),
+                Instant("2026-11-06T15:00:00Z"),
+            ],
+            times);
+    }
+
     private static AvailabilityService Service(FakeSquareService square) => Service(square, now);
 
     private static AvailabilityService Service(FakeSquareService square, DateTimeOffset clock) => new(

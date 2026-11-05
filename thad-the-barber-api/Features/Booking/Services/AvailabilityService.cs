@@ -47,6 +47,25 @@ public sealed class AvailabilityService(ISquareService square, BookableServiceRe
     }
 
     /// <summary>
+    /// Every open time from the start of the booking window through the next <see cref="MaxDayCount"/> days (one Square
+    /// search), earliest first; empty when there is none.
+    /// </summary>
+    public async Task<List<DateTimeOffset>> GetUpcomingTimesAsync(CancellationToken cancellationToken)
+    {
+        ShopDetails shopDetails = await square.GetShopDetailsAsync(cancellationToken);
+        BookingProfile bookingProfile = await square.GetBookingProfileAsync(shopDetails.LocationId, cancellationToken);
+        DateTimeRange bookingWindow = GetBookingWindow(bookingProfile);
+        DateTimeRange searchRange = new(
+            bookingWindow.Start,
+            new[] { bookingWindow.End, bookingWindow.Start.AddDays(MaxDayCount) }.Min()
+        );
+        BookableService bookableService = await resolver.ResolveAsync(cancellationToken);
+        List<TimeSlot> timeSlots = await square.SearchAvailableTimeSlotsAsync(shopDetails.LocationId, bookableService, searchRange, cancellationToken);
+
+        return [.. timeSlots.Select(timeSlot => timeSlot.StartAt).Order()];
+    }
+
+    /// <summary>
     /// The open time starting exactly at <paramref name="startAt"/>, or null when it's taken or now outside the booking
     /// window (the minimum notice may have passed while the customer filled in the form).
     /// </summary>

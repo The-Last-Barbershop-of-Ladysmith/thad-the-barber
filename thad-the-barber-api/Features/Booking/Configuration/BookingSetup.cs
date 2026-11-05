@@ -17,6 +17,7 @@ public static class BookingSetup
             .ValidateOnStart();
         services.AddSingleton<ManageTokenSigner>();
         services.AddSingleton<AvailabilityService>();
+        services.AddSingleton<NextTimesService>();
         services.AddSingleton<BookingService>();
         services.AddSingleton<ManageBookingService>();
         return services;

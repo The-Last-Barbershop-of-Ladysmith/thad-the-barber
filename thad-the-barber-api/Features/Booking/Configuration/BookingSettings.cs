@@ -19,4 +19,11 @@ public sealed class BookingSettings
     /// </summary>
     [Range(typeof(TimeSpan), "1.00:00:00", "366.00:00:00")]
     public TimeSpan CapWindow { get; set; }
+
+    /// <summary>
+    /// How long the home page's next open times are kept and shared by every visitor, so Square is searched at most
+    /// once per this long however many people are on the page (#221).
+    /// </summary>
+    [Range(typeof(TimeSpan), "00:00:01", "00:10:00")]
+    public TimeSpan NextTimesCacheFor { get; set; }
 }
