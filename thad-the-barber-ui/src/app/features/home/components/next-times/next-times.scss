@@ -1,0 +1,115 @@
+.chair {
+  position: relative;
+  padding: 3.5rem 1rem;
+  background: linear-gradient(
+    90deg,
+    rgb(12 8 6 / 0.95) 0%,
+    rgb(12 8 6 / 0.85) 55%,
+    rgb(12 8 6 / 0.4) 100%
+  );
+
+  .inner {
+    display: grid;
+    gap: 1.125rem;
+    max-width: 80rem;
+    margin-inline: auto;
+  }
+
+  .slots {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .slot {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    min-height: 2.75rem;
+    padding: 0.875rem 0.75rem;
+    border: 1px solid var(--p-brand-hairline);
+    border-radius: 0.75rem;
+    text-decoration: none;
+    transition: border-color 0.2s ease;
+
+    &:hover {
+      border-color: var(--p-primary-color);
+    }
+
+    .slot-day {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--p-text-muted-color);
+    }
+
+    .slot-time {
+      font-family: var(--p-font-family-display);
+      font-size: 1.25rem;
+      font-weight: 800;
+      white-space: nowrap;
+      color: var(--p-text-color);
+    }
+  }
+
+  li:first-child .slot {
+    border-color: color-mix(in srgb, var(--p-primary-color) 45%, transparent);
+    background: color-mix(in srgb, var(--p-primary-color) 10%, transparent);
+
+    .slot-day {
+      color: var(--p-primary-color);
+    }
+  }
+
+  .calendar-link {
+    --link-color: var(--p-primary-color);
+    justify-self: start;
+    padding-block: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 700;
+  }
+
+  @media (min-width: 64rem) {
+    padding: 6.5rem clamp(1rem, 4vw, 3rem);
+
+    .inner {
+      grid-template-columns: 1fr auto;
+      align-items: end;
+      gap: 2.5rem 3rem;
+    }
+
+    .slots {
+      grid-column: 1 / -1;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 0.625rem;
+    }
+
+    .heading {
+      grid-row: 1;
+    }
+
+    .calendar-link {
+      grid-row: 1;
+      grid-column: 2;
+      padding-block: 0;
+      font-size: 0.9375rem;
+    }
+
+    .slot {
+      padding: 1.125rem 0.75rem;
+
+      .slot-day {
+        font-size: 0.85rem;
+        letter-spacing: 0.12em;
+      }
+
+      .slot-time {
+        font-size: clamp(1rem, 1.6vw, 1.625rem);
+      }
+    }
+  }
+}

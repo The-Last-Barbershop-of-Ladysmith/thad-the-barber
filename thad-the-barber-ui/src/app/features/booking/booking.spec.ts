@@ -20,6 +20,7 @@ import { shopFeature } from '../shop/state/shop.feature';
 import { Booking } from './booking';
 import { BookingConfirmation } from './dtos/booking-confirmation.dto';
 import { BookingForm } from './models/booking-form.model';
+import { BookingPickState } from './models/booking-pick-state.model';
 import { BookingStep } from './models/booking-step.model';
 import { ReschedulePageState } from './models/reschedule-page-state.model';
 import * as BookingActions from './state/booking.actions';
@@ -84,7 +85,7 @@ describe(
     });
 
     /** Opens the page; with `bookingId`, to move it, handed `reschedulePageState` as the manage page does. */
-    function openPage(bookingId?: string, reschedulePageState: ReschedulePageState = {}): void {
+    function openPage(bookingId?: string, reschedulePageState: ReschedulePageState & BookingPickState = {}): void {
       store.dispatch(ShopActions.ShopInfoRequestSuccess({ shopInfo: TEST_SHOP }));
       handOver(reschedulePageState);
       routeParams.next(convertToParamMap(bookingId ? { id: bookingId } : {}));
@@ -100,7 +101,7 @@ describe(
       });
     }
 
-    function handOver(reschedulePageState: ReschedulePageState): void {
+    function handOver(reschedulePageState: ReschedulePageState & BookingPickState): void {
       vi.spyOn(TestBed.inject(Router), 'currentNavigation')
         .mockReturnValue({ extras: { state: reschedulePageState } } as unknown as Navigation);
     }
@@ -143,6 +144,44 @@ describe(
         expect(store.selectSignal(bookingFeature.selectSubmitNotice)()).toBeNull();
         expect(store.selectSignal(bookingFeature.selectDayRange)()).toEqual(testFirstMonth());
         expect(store.selectSignal(bookingFeature.selectLoadStatus)()).toBe(RequestStatus.Pending);
+      },
+    );
+
+    it(
+      'opens with the time tapped on the home page picked and the last step open',
+      (): void => {
+        openPage(undefined, { pickedStartAt: SECOND_TIME });
+
+        expect(page.bookingForm.getRawValue()).toEqual(expect.objectContaining({
+          date: TODAY,
+          startAt: SECOND_TIME,
+        }));
+        expect(page.openStep()).toBe(BookingStep.Confirm);
+        expect(page.hasUnconfirmedPick()).toBe(true);
+      },
+    );
+
+    it(
+      'drops a tapped time that is no longer open once the days load, like any taken time',
+      (): void => {
+        openPage(undefined, { pickedStartAt: `${TODAY}T21:00:00Z` });
+
+        store.dispatch(BookingActions.AvailabilityRequestSuccess({
+          availableDays: [{ date: TODAY, times: [FIRST_TIME] }],
+        }));
+
+        expect(page.bookingForm.controls.startAt.value).toBeNull();
+        expect(page.bookingForm.controls.date.value).toBe(TODAY);
+        expect(page.openStep()).toBe(BookingStep.Time);
+      },
+    );
+
+    it(
+      'ignores a tapped time when moving a booking, which has its own current time',
+      (): void => {
+        openPage('made-up-booking', { pickedStartAt: SECOND_TIME, startAt: FIRST_TIME });
+
+        expect(page.bookingForm.controls.startAt.value).toBeNull();
       },
     );
 

@@ -117,7 +117,7 @@ describe(
           submitNotice: failedNotice,
         };
 
-        expect(bookingReducer(sent, BookingActions.BookingPageOpen())).toEqual(october);
+        expect(bookingReducer(sent, BookingActions.BookingPageOpen({ pickedStartAt: null }))).toEqual(october);
       },
     );
 
@@ -126,7 +126,9 @@ describe(
       (): void => {
         const sending: BookingState = { ...october, submitStatus: RequestStatus.Pending };
 
-        expect(bookingReducer(sending, BookingActions.BookingPageOpen()).submitStatus).toBe(RequestStatus.Pending);
+        const reopened: BookingState = bookingReducer(sending, BookingActions.BookingPageOpen({ pickedStartAt: null }));
+
+        expect(reopened.submitStatus).toBe(RequestStatus.Pending);
       },
     );
   },

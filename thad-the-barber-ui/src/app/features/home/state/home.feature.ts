@@ -5,7 +5,10 @@ import { FeatureSelectors } from '../../../shared/models/ngrx.models';
 import { RequestStatus } from '../../../shared/models/request.models';
 import { isSettledEmpty } from '../../../shared/utils/request.utils';
 import { announcementsFeature } from '../../announcements/state/announcements.feature';
+import { shopFeature } from '../../shop/state/shop.feature';
 import { GalleryPhoto } from '../models/home.models';
+import { NextTimeSlot } from '../models/next-time-slot.model';
+import { toAreNextTimesMissing, toNextTimeSlots } from '../utils/next-times.utils';
 import { homeReducer } from './home.reducer';
 import { HomeState, SmsSignupState } from './home.state';
 
@@ -16,6 +19,8 @@ export type HomeExtraSelectors = {
   selectIsSubscribingSms: MemoizedSelector<object, boolean>;
   selectIsContentLoading: MemoizedSelector<object, boolean>;
   selectHomeSections: MemoizedSelector<object, readonly NavItem[]>;
+  selectNextTimeSlots: MemoizedSelector<object, NextTimeSlot[]>;
+  selectAreNextTimesMissing: MemoizedSelector<object, boolean>;
 };
 
 /** Store key for this slice; also names its localStorage entry (`ttb-home`). */
@@ -34,6 +39,8 @@ export const homeFeature = createFeature({
     selectContentStatus,
     selectGallery,
     selectGalleryStatus,
+    selectNextTimes,
+    selectNextTimesStatus,
   }: FeatureSelectors<HomeState>): HomeExtraSelectors => ({
     selectIsSubscribedToSms: createSelector(
       selectSmsSignup,
@@ -52,6 +59,16 @@ export const homeFeature = createFeature({
       selectGalleryStatus,
       selectGallery,
       toHomeSections,
+    ),
+    selectNextTimeSlots: createSelector(
+      selectNextTimes,
+      shopFeature.selectTimeZone,
+      toNextTimeSlots,
+    ),
+    selectAreNextTimesMissing: createSelector(
+      selectNextTimesStatus,
+      selectNextTimes,
+      toAreNextTimesMissing,
     ),
   }),
 });

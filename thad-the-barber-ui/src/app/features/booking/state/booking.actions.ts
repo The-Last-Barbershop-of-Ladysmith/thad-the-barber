@@ -26,10 +26,14 @@ export const AvailabilityRequest = createAction(
   props<{ dayRange: DayRange; }>(),
 );
 
-/** Starts the booking or move over: no notice, nothing sent, and loads the first days. */
+/**
+ * Starts the booking or move over: no notice, nothing sent, and loads the first days: the month of `pickedStartAt`
+ * when the page opens with a time already picked (from the home page), else the month of today.
+ */
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
 export const BookingPageOpen = createAction(
   BookingActionTypes.BookingPageOpen,
+  props<{ pickedStartAt: string | null; }>(),
 );
 
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.

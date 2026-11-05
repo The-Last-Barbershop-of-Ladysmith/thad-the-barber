@@ -1,5 +1,8 @@
-import { Locator, Page } from '@playwright/test';
+import { Locator, Page, Request, Response, Route } from '@playwright/test';
+import { BookingConfirmation } from '../../src/app/features/booking/dtos/booking-confirmation.dto';
+import { BookingRequest } from '../../src/app/features/booking/dtos/booking-request.dto';
 import { expectNoA11yViolations } from '../support/axe';
+import { isBookingRequest, isNextTimesRequest } from '../support/booking';
 import { expect, test } from '../support/fixtures';
 
 const SECTIONS: readonly string[] = [
@@ -51,6 +54,126 @@ test.describe(
             }
           },
         );
+      },
+    );
+  },
+);
+
+test.describe(
+  'home next open times',
+  (): void => {
+    test(
+      'shows the next six times, and a tapped one opens the booking page with it picked',
+      async ({ page }: { page: Page; }): Promise<void> => {
+        const bookings: Request[] = [];
+        await page.route(isBookingRequest, async (route: Route): Promise<void> => {
+          bookings.push(route.request());
+          const body: BookingRequest = route.request().postDataJSON() as BookingRequest;
+          const confirmation: BookingConfirmation = {
+            id: 'made-up-booking',
+            startAt: body.startAt,
+            manageToken: 'made-up-manage-token',
+          };
+          await route.fulfill({ status: 201, json: confirmation });
+        });
+        const nextTimesLoaded: Promise<Response> = page.waitForResponse((response: Response): boolean =>
+          isNextTimesRequest(new URL(response.url())));
+        await page.goto('/');
+        const startAts: string[] = await (await nextTimesLoaded).json() as string[];
+
+        const timeLinks: Locator = page.getByTestId('next-time');
+        await expect(timeLinks).toHaveCount(6);
+        await timeLinks.nth(2).click();
+
+        await expect(page).toHaveURL(/\/book$/);
+        await page.locator('#booking-name').fill('Jordan Customer');
+        await page.locator('#booking-phone').pressSequentially('5405550123');
+        await expect(page.getByTestId('confirm-booking')).toBeEnabled();
+        await page.getByTestId('confirm-booking').click();
+        await expect(page).toHaveURL(/\/book\/manage\/made-up-booking$/);
+        const [booking]: Request[] = bookings;
+        expect((booking?.postDataJSON() as BookingRequest).startAt).toBe(startAts[2]);
+      },
+    );
+
+    test(
+      'shows the first open time in the hero',
+      async ({ page }: { page: Page; }): Promise<void> => {
+        await page.goto('/');
+
+        await expect(page.getByTestId('next-open-chair')).toBeVisible();
+        await expect(page.getByTestId('next-open-chair')).toHaveText(/\d/);
+      },
+    );
+
+    test(
+      'highlights a time and the calendar link on hover',
+      async ({ page, isMobile }: { page: Page; isMobile: boolean; }): Promise<void> => {
+        test.skip(isMobile, 'Touch screens have no hover.');
+        await page.goto('/');
+        const calendarLink: Locator = page.locator('.calendar-link');
+        const secondTime: Locator = page.getByTestId('next-time').nth(1);
+        const colorOf: (link: Locator) => Promise<string> = (link: Locator): Promise<string> =>
+          link.evaluate((element: Element): string => getComputedStyle(element).color);
+        const borderOf: (tile: Locator) => Promise<string> = (tile: Locator): Promise<string> =>
+          tile.evaluate((element: Element): string => getComputedStyle(element).borderTopColor);
+        const linkColorBefore: string = await colorOf(calendarLink);
+        const borderBefore: string = await borderOf(secondTime);
+
+        await calendarLink.hover();
+        await expect.poll((): Promise<string> => colorOf(calendarLink)).not.toBe(linkColorBefore);
+        await secondTime.hover();
+        await expect.poll((): Promise<string> => borderOf(secondTime)).not.toBe(borderBefore);
+      },
+    );
+
+    test(
+      'fits every time and the hero time on one line from a small phone to a wide desktop',
+      async ({ page }: { page: Page; }): Promise<void> => {
+        for (const width of [
+          320,
+          390,
+          768,
+          1024,
+          1280,
+          1920,
+        ]) {
+          await page.setViewportSize({ width, height: 900 });
+          await page.goto('/');
+          await expect(page.getByTestId('next-time').first()).toBeVisible();
+
+          const overflows: number[] = await page.getByTestId('next-time').evaluateAll((slots: Element[]): number[] =>
+            slots.map((slot: Element): number => {
+              const style: CSSStyleDeclaration = getComputedStyle(slot);
+              const room: number = slot.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+              return (slot.querySelector('.slot-time')?.scrollWidth ?? 0) - room;
+            }));
+          const heroLines: number = await page.getByTestId('next-open-chair').locator('dt').evaluate((time: Element): number =>
+            time.getBoundingClientRect().height / parseFloat(getComputedStyle(time).lineHeight));
+
+          const rowTops: number[] = await page.getByTestId('next-time').evaluateAll((slots: Element[]): number[] =>
+            slots.map((slot: Element): number => Math.round(slot.getBoundingClientRect().top)));
+
+          expect(Math.max(...overflows), `a tile's time overflows at ${width}px`).toBeLessThanOrEqual(0);
+          if (width >= 1024) {
+            expect(new Set(rowTops).size, `the times wrap to a second row at ${width}px`).toBe(1);
+          }
+          expect(heroLines, `the hero time wraps at ${width}px`).toBeLessThanOrEqual(1.01);
+        }
+      },
+    );
+
+    test(
+      "offers a call, a text and Square's booking site when no time can be shown",
+      async ({ page }: { page: Page; }): Promise<void> => {
+        await page.route(isNextTimesRequest, (route: Route): Promise<void> => route.fulfill({ status: 503 }));
+        await page.goto('/');
+
+        const fallback: Locator = page.getByTestId('next-times-missing');
+        await expect(fallback).toBeVisible();
+        await expect(fallback.locator('a')).toHaveCount(3);
+        await expect(page.getByTestId('next-time')).toHaveCount(0);
+        await expect(page.getByTestId('next-open-chair')).toHaveCount(0);
       },
     );
   },

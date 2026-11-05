@@ -1,0 +1,32 @@
+@if (areNextTimesMissing() || nextTimeSlots().length > 0) {
+  <section class="chair">
+    <div class="inner">
+      <div class="heading">
+        <app-section-heading eyebrow="Grab a chair" title="Next open times" />
+      </div>
+      @if (areNextTimesMissing()) {
+        <p class="missing body-copy" data-testid="next-times-missing">
+          No open times to show right now.
+          <a class="inline-link" [href]="phone().tel">Call</a> or <a class="inline-link" [href]="phone().sms">text</a>
+          Thad, or
+          <a class="inline-link" [href]="squareBookingUrl()" target="_blank" rel="noopener"
+            >book on Square<span class="sr-only"> (opens in a new tab)</span></a
+          >.
+        </p>
+      } @else {
+        <ul class="slots">
+          @for (nextTimeSlot of nextTimeSlots(); track nextTimeSlot.startAt) {
+            <li>
+              <a class="slot" data-testid="next-time" routerLink="/book" [state]="{ pickedStartAt: nextTimeSlot.startAt }">
+                <span class="slot-day">{{ nextTimeSlot.dayLabel }}</span>&ngsp;
+                <span class="slot-time">{{ nextTimeSlot.time }}<span class="time-period"> {{ nextTimeSlot.period }}</span></span>
+              </a>
+            </li>
+          }
+        </ul>
+        <a class="calendar-link inline-link" routerLink="/book">See the full calendar →</a>
+        <p class="caption hidden lg:col-span-full lg:block">Tap a time to jump straight into booking with it picked.</p>
+      }
+    </div>
+  </section>
+}

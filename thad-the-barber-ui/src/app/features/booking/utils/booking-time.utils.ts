@@ -25,6 +25,34 @@ export function toBookingWindow(
   return { min, max: addDays(min, bookingSettings.maxAdvanceDays) };
 }
 
+/**
+ * The month the booking page opens on: the one holding the day of `pickedStartAt` when it falls inside the booking
+ * window, else today's. Null until the shop's settings and timezone are known.
+ */
+export function toFirstMonth(
+  bookingSettings: BookingSettings | null,
+  timeZone: string | null,
+  pickedStartAt: string | null,
+  now: Date = new Date(),
+): DayRange | null {
+  const bookingWindow: DateRange | null = toBookingWindow(
+    bookingSettings,
+    timeZone,
+    now,
+  );
+  if (!bookingWindow || !timeZone) {
+    return null;
+  }
+  let monthDay: Date = bookingWindow.min;
+  if (pickedStartAt) {
+    const pickedDay: Date = fromIsoDate(toIsoDateIn(timeZone, new Date(pickedStartAt)));
+    if (pickedDay >= bookingWindow.min && pickedDay <= bookingWindow.max) {
+      monthDay = pickedDay;
+    }
+  }
+  return toMonthRange(monthDay.getFullYear(), monthDay.getMonth() + 1);
+}
+
 /** A calendar month (`month` 1–12), 1st through last day: at most 31 days, as one availability request allows. */
 export function toMonthRange(year: number, month: number): DayRange {
   return {

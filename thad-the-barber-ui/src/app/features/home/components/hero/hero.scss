@@ -3,6 +3,7 @@
   min-height: 100svh;
   align-items: flex-end;
   padding-block: 6rem 4rem;
+  background: linear-gradient(90deg, rgb(12 8 6 / 0.94) 0%, rgb(12 8 6 / 0.72) 42%, rgb(12 8 6 / 0) 75%);
 
   .content {
     display: flex;
@@ -10,5 +11,31 @@
     align-items: flex-start;
     gap: 1.25rem;
     max-width: 40rem;
+
+    .facts {
+      width: 100%;
+      max-width: 27.5rem;
+      margin: 0.5rem 0 0;
+      padding-top: 0.875rem;
+      border-top: 1px solid var(--p-brand-hairline);
+
+      dt {
+        font-family: var(--p-font-family-display);
+        font-size: 1.5rem;
+        font-weight: 800;
+        white-space: nowrap;
+        color: var(--p-text-color);
+      }
+    }
+
+    @media (min-width: 64rem) {
+      .facts {
+        padding-top: 1.25rem;
+
+        dt {
+          font-size: 2rem;
+        }
+      }
+    }
   }
 }

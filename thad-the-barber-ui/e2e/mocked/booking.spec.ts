@@ -98,6 +98,22 @@ test.describe(
     );
 
     test(
+      'keeps a notice above the steps clear of the title band, so its top border shows',
+      async ({ page }: { page: Page; }): Promise<void> => {
+        await page.goto('/book/manage/made-up-booking/reschedule');
+
+        const notice: Locator = page.getByTestId('reschedule-not-found');
+        await expect(notice).toBeVisible();
+        const bandBottom: number = await page.getByTestId('title-band-photo').evaluate((photo: Element): number =>
+          photo.getBoundingClientRect().bottom);
+        const noticeTop: number = await notice.evaluate((element: Element): number =>
+          element.getBoundingClientRect().top);
+
+        expect(noticeTop).toBeGreaterThan(bandBottom);
+      },
+    );
+
+    test(
       'keeps nothing about the booking on the device',
       async ({ page }: { page: Page; }): Promise<void> => {
         await page.route(isBookingRequest, (route: Route): Promise<void> =>

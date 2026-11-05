@@ -1,5 +1,12 @@
 import { Page, Route, test as base, expect } from '@playwright/test';
-import { fulfillAvailability, fulfillManagedBooking, isAvailabilityRequest, isManagedBookingRequest } from './booking';
+import {
+  fulfillAvailability,
+  fulfillManagedBooking,
+  fulfillNextTimes,
+  isAvailabilityRequest,
+  isManagedBookingRequest,
+  isNextTimesRequest,
+} from './booking';
 import { fulfillMedia, isMedia } from './media';
 import { fulfillRecaptcha, fulfillSession, isRecaptchaScript, isSessionRequest } from './session';
 import { fulfillShop, isShopRequest } from './shop';
@@ -15,8 +22,8 @@ export function isTelemetryIngestion(url: URL): boolean {
  * Telemetry is accepted and dropped, so test runs never reach App Insights, and the media container serves the
  * made-up gallery in `media.ts`. Google's reCAPTCHA script is a stub and `/api/session` issues a made-up token
  * (`session.ts`), since every API call needs a session token. `GET /api/shop` returns the made-up shop in
- * `src/testing/test-shop.ts` (`shop.ts`), availability opens every day from today, and any booking asked for by ID is
- * upcoming (`booking.ts`).
+ * `src/testing/test-shop.ts` (`shop.ts`), availability opens every day from today, the next open times are six over
+ * the next three days, and any booking asked for by ID is upcoming (`booking.ts`).
  * Tests mock endpoints with their own `page.route`, which takes precedence over the catch-all.
  * Each test already gets a fresh browser context, so localStorage starts empty.
  * No fake clock: `page.clock` stalls PrimeNG's drawer animation.
@@ -38,6 +45,7 @@ export const test: typeof base = base.extend({
     await page.route(isSessionRequest, fulfillSession);
     await page.route(isShopRequest, fulfillShop);
     await page.route(isAvailabilityRequest, fulfillAvailability);
+    await page.route(isNextTimesRequest, fulfillNextTimes);
     await page.route(isManagedBookingRequest, fulfillManagedBooking);
 
     const cspViolations: string[] = [];

@@ -5,11 +5,14 @@ export enum HomeActionTypes {
   /** Clears the slice back to its initial state (also overwrites its saved copy). */
   HomeStateReset = '[Home Page] State Reset',
   HomePageOpen = '[Home Page] Opened',
+  HomePageClose = '[Home Page] Closed',
   SmsSignupRequest = '[Home Page] Sms Signup Submitted',
   HomeContentRequestSuccess = '[Home API] Content Loaded',
   HomeContentRequestFailure = '[Home API] Content Load Failed',
   GalleryRequestSuccess = '[Home API] Gallery Loaded',
   GalleryRequestFailure = '[Home API] Gallery Load Failed',
+  NextTimesRequestSuccess = '[Home API] Next Times Loaded',
+  NextTimesRequestFailure = '[Home API] Next Times Load Failed',
   SmsSignupRequestSuccess = '[Home API] Sms Signup Succeeded',
   SmsSignupRequestFailure = '[Home API] Sms Signup Failed',
 }
@@ -22,6 +25,22 @@ export const HomeStateReset = createAction(
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
 export const HomePageOpen = createAction(
   HomeActionTypes.HomePageOpen,
+);
+
+// eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
+export const HomePageClose = createAction(
+  HomeActionTypes.HomePageClose,
+);
+
+// eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
+export const NextTimesRequestSuccess = createAction(
+  HomeActionTypes.NextTimesRequestSuccess,
+  props<{ startAts: string[]; }>(),
+);
+
+// eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
+export const NextTimesRequestFailure = createAction(
+  HomeActionTypes.NextTimesRequestFailure,
 );
 
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
