@@ -1,10 +1,32 @@
 .booking-steps {
-  // From lg the step headers sit in a row and the open step's panel spans the width beneath them; phones keep
-  // PrimeNG's vertical stepper. One template, so the steps and their panels never exist twice.
+  --steps-hairline: color-mix(in srgb, var(--p-espresso-50) 12%, transparent);
+  border-top: 1px solid var(--steps-hairline);
+
+  p-step-item {
+    display: block;
+    border-bottom: 1px solid var(--steps-hairline);
+  }
+
+  .steps-progress {
+    margin-bottom: 1.125rem;
+  }
+
+  // From lg the step headers are tabs in a row over one hairline, and the open step's panel spans the width beneath
+  // them; phones keep PrimeNG's vertical rows. One template, so the steps and their panels never exist twice.
   @media (min-width: 64rem) {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    column-gap: 1rem;
+    grid-template-rows: repeat(5, auto);
+    border-top: 0;
+
+    // The hairline under the tabs; while a booking is sent the progress bar takes its place.
+    &::before {
+      content: '';
+      grid-row: 2;
+      grid-column: 1 / -1;
+      height: 1px;
+      background: var(--steps-hairline);
+    }
 
     p-step-item {
       display: contents;
@@ -12,40 +34,47 @@
 
     p-step {
       grid-row: 1;
-      padding-bottom: 2rem;
     }
 
-    // PrimeNG draws separators only for a step list, so the headers in a row get their own line to the next step.
-    p-step-item:not(:last-child) p-step::after {
-      content: '';
-      flex: 1 1 0;
-      min-width: 1.5rem;
-      height: var(--p-stepper-separator-size);
-      background: var(--p-stepper-separator-background);
-    }
-
-    p-step-item:has(~ .p-stepitem-active) p-step::after {
-      background: var(--p-stepper-separator-active-background);
-    }
-
-    // Shown at once, not animated, since every panel shares one cell and a closing one would overlap the next.
-    p-step-panel {
+    .steps-progress {
       grid-row: 2;
       grid-column: 1 / -1;
+      margin-bottom: 0;
+    }
 
-      &:not(.p-steppanel-active) {
-        display: none;
-      }
+    // Each panel has its own row under the tabs, so PrimeNG's own collapse and expand run here as on phones: the
+    // step that closes shrinks while the next one opens, and the page moves with them.
+    p-step-panel {
+      grid-column: 1 / -1;
+    }
+
+    p-step-item:nth-child(1) p-step-panel {
+      grid-row: 3;
+    }
+
+    p-step-item:nth-child(2) p-step-panel {
+      grid-row: 4;
+    }
+
+    p-step-item:nth-child(3) p-step-panel {
+      grid-row: 5;
     }
   }
 }
 
-.step-title {
-  font-weight: 700;
-}
-
 .step-pick {
-  margin-left: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  color: var(--p-text-muted-color);
+
+  // Tabs say "Not picked yet"; the phone rows stay as short as the title.
+  &.is-empty {
+    display: none;
+
+    @media (min-width: 64rem) {
+      display: block;
+    }
+  }
 }
 
 .step-content {
@@ -54,5 +83,9 @@
   // The label names the picked day and time, too long for one line on phones.
   .confirm-booking {
     white-space: normal;
+  }
+
+  @media (min-width: 64rem) {
+    padding-top: 2rem;
   }
 }

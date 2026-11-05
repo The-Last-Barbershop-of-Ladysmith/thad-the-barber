@@ -142,6 +142,14 @@ export class Booking implements LeaveConfirmable {
     return startAt && timeZone ? toTimeLabel(timeZone, startAt) : null;
   });
 
+  protected readonly isDayDone: Signal<boolean> = computed(
+    (): boolean => this.pickedDayLabel() !== null && this.openStep() !== BookingStep.Day,
+  );
+
+  protected readonly isTimeDone: Signal<boolean> = computed(
+    (): boolean => this.pickedTimeLabel() !== null && this.openStep() !== BookingStep.Time,
+  );
+
   protected readonly canConfirm: Signal<boolean> = computed((): boolean => {
     const { date, startAt }: BookingFormValue = this.bookingFormValue();
     // `invalid`, not `valid`: the form is disabled while sending, and disabled controls are never valid.

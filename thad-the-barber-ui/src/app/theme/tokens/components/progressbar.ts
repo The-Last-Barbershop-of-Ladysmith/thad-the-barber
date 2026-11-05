@@ -10,10 +10,12 @@ export const progressbar: ProgressBarDesignTokens = {
   value: {
     background: '{copper.300}',
   },
-  // The root's overflow would cut the glow to the 4px track, so it clips sideways only.
+  // The root's overflow would cut the glow to the 4px track, so it clips sideways only. clip-path doesn't change what
+  // the page scrolls, so the sliding bar would widen it while it passes the edge; overflow-x does.
   css: `
     .p-progressbar-indeterminate {
       overflow: visible;
+      overflow-x: clip;
       clip-path: inset(-12px 0);
     }
     .p-progressbar-indeterminate .p-progressbar-value::before,

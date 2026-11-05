@@ -108,14 +108,6 @@
   color: var(--p-text-muted-color);
 }
 
-/* A p-progressbar along the top edge of the card it's in; the parent is `relative` */
-@utility edge-progress {
-  position: absolute;
-  top: 0;
-  inset-inline: 1rem;
-  z-index: 1;
-}
-
 /* Fine print under a form or action: the privacy line, the reCAPTCHA notice */
 @utility small-print {
   margin: 0;

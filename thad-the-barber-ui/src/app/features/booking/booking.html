@@ -52,22 +52,14 @@
       <app-notice-message [notice]="failureNotice" (retry)="confirm()" />
     }
     <form class="relative" [formGroup]="bookingForm" (ngSubmit)="confirm()">
-      @if (isSubmitting()) {
-        <p-progressbar
-          class="edge-progress"
-          mode="indeterminate"
-          [attr.aria-label]="isRescheduling() ? 'Moving' : 'Booking'"
-        />
-      }
       <p-stepper class="booking-steps" [(value)]="openStep" [pt]="stepperPt">
         <p-step-item [value]="bookingStep.Day">
-          <p-step [pt]="stepPt">
-            <span class="step-title">Pick A Day</span>
+          <p-step [pt]="stepPt" [class.is-done]="isDayDone()">
+            <span class="step-title">Pick a day</span>
             @if (pickedDayLabel(); as pickedDay) {
-              <span class="step-pick text-muted-color"
-                ><i class="pi pi-dot"></i>
-                {{ pickedDay }}
-              </span>
+              <span class="step-pick">{{ pickedDay }}</span>
+            } @else {
+              <span class="step-pick is-empty">Not picked yet</span>
             }
           </p-step>
           <p-step-panel>
@@ -80,12 +72,16 @@
         </p-step-item>
 
         <p-step-item [value]="bookingStep.Time">
-          <p-step [pt]="stepPt" [disabled]="!bookingFormValue().date">
-            <span class="step-title">Select A Time</span>
+          <p-step
+            [pt]="stepPt"
+            [class.is-done]="isTimeDone()"
+            [disabled]="!bookingFormValue().date"
+          >
+            <span class="step-title">Select a time</span>
             @if (pickedTimeLabel(); as pickedTime) {
-              <span class="step-pick text-muted-color"
-                ><i class="pi pi-dot"></i> {{ pickedTime }}</span
-              >
+              <span class="step-pick">{{ pickedTime }}</span>
+            } @else {
+              <span class="step-pick is-empty">Not picked yet</span>
             }
           </p-step>
           <p-step-panel>
@@ -104,6 +100,13 @@
           <p-step [pt]="stepPt" [disabled]="!bookingFormValue().startAt">
             <span class="step-title">{{ isRescheduling() ? 'Confirm' : 'Details & confirm' }}</span>
           </p-step>
+          @if (isSubmitting()) {
+            <p-progressbar
+              class="steps-progress"
+              mode="indeterminate"
+              [attr.aria-label]="isRescheduling() ? 'Moving' : 'Booking'"
+            />
+          }
           <p-step-panel>
             <ng-template #content>
               <div class="step-content stack gap-4">
