@@ -11,6 +11,7 @@
 
 @theme inline {
   --font-sans: var(--p-font-family-sans);
+  --font-display: var(--p-font-family-display);
 
   --color-ink: var(--p-ink);
   --color-mint: var(--p-brand-success);
@@ -40,6 +41,12 @@
     color: var(--p-text-color);
     font-family: var(--p-font-family-sans);
   }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--p-font-family-display);
+  }
 }
 
 /* ---- Typography ---------------------------------------------------------- */
@@ -56,6 +63,7 @@
 /* Hero wordmark */
 @utility display-title {
   margin: 0;
+  font-family: var(--p-font-family-display);
   font-size: clamp(3rem, 8vw, 6rem);
   line-height: 0.95;
   font-weight: 800;
@@ -68,6 +76,7 @@
 /* Section headings */
 @utility section-title {
   margin: 0;
+  font-family: var(--p-font-family-display);
   font-size: clamp(2rem, 4.5vw, 3.25rem);
   line-height: 1;
   font-weight: 800;

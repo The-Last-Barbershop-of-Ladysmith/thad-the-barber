@@ -77,10 +77,12 @@ export const button: ButtonDesignTokens = {
     /* PrimeNG sizes small and large icons through .p-button-icon, which only the deprecated pButtonIcon adds */
     .p-button-sm > .pi, .p-button-lg > .pi { font-size: inherit; }
 
-    /* Primary CTA: dark-to-copper gradient that sweeps on hover (wireframe .cta) */
+    /* Primary CTA: dark-to-copper gradient that sweeps on hover (wireframe .cta).
+       Its origin is the border box, or the repeated gradient's dark start shows under the translucent right border. */
     .p-button:not(.p-button-secondary, .p-button-outlined, .p-button-text, .p-button-link, .p-button-success, .p-button-info, .p-button-warn, .p-button-help, .p-button-danger, .p-button-contrast) {
       background: var(--p-brand-cta-gradient);
       background-size: 260% 100%;
+      background-origin: border-box;
       background-position: 100% 50%;
       box-shadow: 0 6px 18px -8px rgba(0, 0, 0, 0.6);
       transition: background-position 0.6s var(--p-brand-ease), color 0.4s ease, transform 0.35s var(--p-brand-ease),
@@ -89,6 +91,7 @@ export const button: ButtonDesignTokens = {
     .p-button:not(.p-button-secondary, .p-button-outlined, .p-button-text, .p-button-link, .p-button-success, .p-button-info, .p-button-warn, .p-button-help, .p-button-danger, .p-button-contrast):not(:disabled):hover {
       background: var(--p-brand-cta-gradient);
       background-size: 260% 100%;
+      background-origin: border-box;
       background-position: 0% 50%;
       transform: translateY(-2px);
       box-shadow: var(--p-brand-cta-glow);

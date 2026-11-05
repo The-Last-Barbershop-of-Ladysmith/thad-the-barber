@@ -56,5 +56,8 @@ export const primitive: TokenSection = {
 
   coral: '#f28b7d',
 
-  fontFamily: { sans: 'Helvetica, Arial, sans-serif' },
+  fontFamily: {
+    sans: "'Plus Jakarta Sans Variable', Helvetica, Arial, sans-serif",
+    display: "'Syne Variable', 'Plus Jakarta Sans Variable', Helvetica, Arial, sans-serif",
+  },
 };
