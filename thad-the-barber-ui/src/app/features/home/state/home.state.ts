@@ -12,6 +12,9 @@ export interface HomeState {
   gallery: GalleryPhoto[];
   galleryStatus: RequestStatus;
   contentStatus: RequestStatus;
+  /** The next open times as UTC instants; a failed refresh keeps the last ones. */
+  nextTimes: string[];
+  nextTimesStatus: RequestStatus;
   smsSignup: SmsSignupState;
 }
 
@@ -20,6 +23,8 @@ export const initialHomeState: HomeState = {
   gallery: [],
   galleryStatus: RequestStatus.Idle,
   contentStatus: RequestStatus.Idle,
+  nextTimes: [],
+  nextTimesStatus: RequestStatus.Idle,
   smsSignup: {
     status: RequestStatus.Idle,
     phone: null,

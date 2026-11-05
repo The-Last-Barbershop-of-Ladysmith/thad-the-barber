@@ -42,6 +42,18 @@ export const homeReducer: ActionReducer<HomeState> = createReducer(
     (state: HomeState): HomeState => ({ ...state, galleryStatus: RequestStatus.Error }),
   ),
   on(
+    HomeActions.NextTimesRequestSuccess,
+    (state: HomeState, { startAts }: { startAts: string[]; }): HomeState => ({
+      ...state,
+      nextTimes: startAts,
+      nextTimesStatus: RequestStatus.Success,
+    }),
+  ),
+  on(
+    HomeActions.NextTimesRequestFailure,
+    (state: HomeState): HomeState => ({ ...state, nextTimesStatus: RequestStatus.Error }),
+  ),
+  on(
     HomeActions.SmsSignupRequest,
     (state: HomeState, { phone }: { phone: string; }): HomeState => ({
       ...state,
