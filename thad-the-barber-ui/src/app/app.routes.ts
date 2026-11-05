@@ -2,6 +2,7 @@ import { Route, Routes } from '@angular/router';
 import * as bookingRoutes from './features/booking/booking.routes';
 import { HOME_ROUTES } from './features/home/home.routes';
 import * as notFound from './pages/not-found/not-found';
+import * as privacy from './pages/privacy/privacy';
 
 const notFoundRoute: Route = {
   title: 'Page not found · Thad The Barber',
@@ -24,6 +25,12 @@ export const routes: Routes = [
     path: 'book',
     loadChildren: (): Promise<Routes> =>
       import('./features/booking/booking.routes').then((m: typeof bookingRoutes): Routes => m.BOOKING_ROUTES),
+  },
+  {
+    path: 'privacy',
+    title: 'Privacy policy · Thad The Barber',
+    loadComponent: (): Promise<typeof privacy.Privacy> =>
+      import('./pages/privacy/privacy').then((m: typeof privacy): typeof privacy.Privacy => m.Privacy),
   },
   { path: '404', ...notFoundRoute },
   { path: '**', ...notFoundRoute },

@@ -8,6 +8,7 @@ import { CLIENT_ROUTES } from './core/config/client-routes';
  */
 export const serverRoutes: ServerRoute[] = [
   { path: '', renderMode: RenderMode.Prerender },
+  { path: 'privacy', renderMode: RenderMode.Prerender },
   { path: '404', renderMode: RenderMode.Prerender },
   ...CLIENT_ROUTES.map((path: string): ServerRoute => ({ path, renderMode: RenderMode.Client })),
   { path: '**', renderMode: RenderMode.Client },

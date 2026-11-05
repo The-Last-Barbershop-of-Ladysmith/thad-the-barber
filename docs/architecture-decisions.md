@@ -265,7 +265,7 @@ The design for when it's picked up needs no database:
 - Customer data is never returned from a phone number alone (decision [D](#d-customer-info-and-privacy)).
 - No names or phone numbers in logs.
 - No PII kept in the browser after a booking is confirmed.
-- A privacy policy page.
+- A privacy policy page at `/privacy` ([#67](https://github.com/The-Last-Barbershop-of-Ladysmith/thad-the-barber/issues/67)), prerendered, linked from the footer and the booking details step (in a new tab, so a booking in progress stays open); its contact phone comes from the `shop` slice. When the site starts collecting or sharing something new, update the page and its "Last updated" date.
 
 **Supply chain:**
 - `gitleaks`, Dependabot, and failing CI on high or critical `npm audit` / NuGet vulnerabilities.

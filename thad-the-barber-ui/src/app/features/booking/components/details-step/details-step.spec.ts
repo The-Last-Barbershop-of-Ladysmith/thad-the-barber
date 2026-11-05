@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl } from '@angular/forms';
+import { provideRouter } from '@angular/router';
 import { DetailsStep } from './details-step';
 
 describe(
@@ -17,6 +18,21 @@ describe(
       }
       return phoneInput;
     }
+
+    beforeEach((): void => {
+      TestBed.configureTestingModule({ providers: [provideRouter([])] });
+    });
+
+    it(
+      'links to the privacy policy in a new tab, so the booking in progress stays open',
+      (): void => {
+        const privacyLink: HTMLAnchorElement | null = render('').closest('section')
+          ?.querySelector<HTMLAnchorElement>('[data-testid="details-privacy"]') ?? null;
+
+        expect(privacyLink?.getAttribute('href')).toBe('/privacy');
+        expect(privacyLink?.target).toBe('_blank');
+      },
+    );
 
     it(
       'puts the caret on the first digit slot when an empty phone field is clicked anywhere in the mask',

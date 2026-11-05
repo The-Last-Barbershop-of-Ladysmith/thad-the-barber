@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, InputSignal, input } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { InputMaskModule } from 'primeng/inputmask';
 import { InputTextModule } from 'primeng/inputtext';
 
@@ -7,6 +8,7 @@ import { InputTextModule } from 'primeng/inputtext';
   selector: 'app-details-step',
   imports: [
     ReactiveFormsModule,
+    RouterLink,
     InputTextModule,
     InputMaskModule,
   ],
