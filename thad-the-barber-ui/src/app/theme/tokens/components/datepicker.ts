@@ -3,7 +3,8 @@ import { DatePickerDesignTokens } from '@primeuix/themes/types/datepicker';
 /** Booking calendar: square tiles, copper selection, struck-through unavailable days. */
 export const datepicker: DatePickerDesignTokens = {
   panel: {
-    background: '{brand.glass.background}',
+    background: '{brand.controlBackground}',
+    borderColor: '{brand.hairline}',
     borderRadius: '{border.radius.xl}',
     padding: '0.5rem',
     shadow: 'none',
@@ -28,7 +29,7 @@ export const datepicker: DatePickerDesignTokens = {
   },
   today: { background: 'color-mix(in srgb, {espresso.50} 16%, transparent)', color: '{text.color}' },
   css: `
-    .p-datepicker-inline { width: 100%; backdrop-filter: blur(var(--p-brand-glass-blur)); }
+    .p-datepicker-inline { width: 100%; }
     .p-datepicker-day-view { width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 4px; }
     .p-datepicker-day-cell { padding: 0; }
     .p-datepicker-day { aspect-ratio: 1; width: 100%; }

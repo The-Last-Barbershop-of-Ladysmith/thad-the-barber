@@ -16,14 +16,13 @@ import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { ButtonModule } from 'primeng/button';
 import { StepPassThrough, StepperPassThrough } from 'primeng/types/stepper';
-import { CardModule } from 'primeng/card';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { SpinnerIcon } from 'primeng/icons/spinner';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { StepperModule } from 'primeng/stepper';
 import { distinctUntilChanged, map } from 'rxjs';
 import { SessionService } from '../../core/services/session.service';
-import { Backdrop } from '../../shared/components/backdrop/backdrop';
+import { TitledPage } from '../../shared/components/titled-page/titled-page';
 import { NoticeMessage } from '../../shared/components/notice-message/notice-message';
 import { Notice } from '../../shared/models/notice.model';
 import { RequestStatus } from '../../shared/models/request.models';
@@ -32,6 +31,7 @@ import { toE164 } from '../../shared/utils/phone.utils';
 import { AppState } from '../../store/app.state';
 import { shopFeature } from '../shop/state/shop.feature';
 import { DateStep } from './components/date-step/date-step';
+import { AppointmentSummary } from './components/appointment-summary/appointment-summary';
 import { DetailsStep } from './components/details-step/details-step';
 import { TimeStep } from './components/time-step/time-step';
 import { AvailableDay } from './dtos/available-day.dto';
@@ -61,15 +61,15 @@ interface BookingFormValue {
   imports: [
     ReactiveFormsModule,
     ButtonModule,
-    CardModule,
     ConfirmDialogModule,
     ProgressBarModule,
     SpinnerIcon,
     StepperModule,
-    Backdrop,
+    TitledPage,
     NoticeMessage,
     DateStep,
     TimeStep,
+    AppointmentSummary,
     DetailsStep,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -143,6 +143,14 @@ export class Booking implements LeaveConfirmable {
     const timeZone: string | null = this.timeZone();
     return startAt && timeZone ? toTimeLabel(timeZone, startAt) : null;
   });
+
+  protected readonly isDayDone: Signal<boolean> = computed(
+    (): boolean => this.pickedDayLabel() !== null && this.openStep() !== BookingStep.Day,
+  );
+
+  protected readonly isTimeDone: Signal<boolean> = computed(
+    (): boolean => this.pickedTimeLabel() !== null && this.openStep() !== BookingStep.Time,
+  );
 
   protected readonly canConfirm: Signal<boolean> = computed((): boolean => {
     const { date, startAt }: BookingFormValue = this.bookingFormValue();

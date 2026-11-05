@@ -4,8 +4,10 @@ import { Store } from '@ngrx/store';
 import { DatePickerModule } from 'primeng/datepicker';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { DatePickerDateMeta, DatePickerMonthChangeEvent } from 'primeng/types/datepicker';
+import { FILLING_UP_BELOW } from '../../../../core/config/booking-dates';
 import { NoticeMessage } from '../../../../shared/components/notice-message/notice-message';
 import { Notice } from '../../../../shared/models/notice.model';
+import { PhoneLinks } from '../../../../shared/models/phone-links.model';
 import { addDays, fromIsoDate, toIsoDate } from '../../../../shared/utils/date.utils';
 import { AppState } from '../../../../store/app.state';
 import { BookingSettings } from '../../../shop/models/booking-settings.model';
@@ -31,7 +33,10 @@ import { isFillingUp, toBookingWindow, toMonthRange } from '../../utils/booking-
 export class DateStep {
   readonly dateControl: InputSignal<FormControl<string | null>> = input.required<FormControl<string | null>>();
 
+  protected readonly fillingUpBelow: number = FILLING_UP_BELOW;
+
   private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
+  protected readonly phone: Signal<PhoneLinks> = this.store.selectSignal(shopFeature.selectPhoneLinks);
   private readonly bookingSettings: Signal<BookingSettings | null> =
     this.store.selectSignal(shopFeature.selectBookingSettings);
   private readonly timeZone: Signal<string | null> = this.store.selectSignal(shopFeature.selectTimeZone);

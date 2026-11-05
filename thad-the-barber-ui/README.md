@@ -147,16 +147,17 @@ Styling follows one rule: **if PrimeNG has a component for it, restyle it with t
 | Review stars | `p-rating` readonly | `rating.ts` |
 | Mobile menu | `p-drawer` | `drawer.ts` |
 
-Brand values PrimeNG has no slot for (glass background, CTA gradient, dividers, the success/warn/error colors) live under `semantic.extend.brand` and become `--p-brand-*` CSS variables. `tailwind/theme.css` exposes them as Tailwind colors and utilities:
+Brand values PrimeNG has no slot for (glass background, CTA glow, dividers, the success/warn/error colors) live under `semantic.extend.brand` and become `--p-brand-*` CSS variables. `tailwind/theme.css` exposes them as Tailwind colors and utilities:
 
 - Colors: `text-primary`, `bg-surface-950`, `text-muted-color`, `border-surface` (from tailwindcss-primeui), plus `text-mint`, `border-divider`, `bg-ink`
 - Radii: `rounded-control`, `rounded-tile`, `rounded-panel`
-- Type: `eyebrow`, `display-title`, `section-title`, `lead`, `body-copy`, `field-label`
+- Type: `eyebrow`, `display-title`, `section-title`, `lead`, `body-copy`, `small-print`, `field-label`, `rich-text` (Syne for headings, Plus Jakarta Sans for the rest, self-hosted from `@fontsource-variable`)
+- Links: `nav-link` (menus and lists), `inline-link` (inside running text), `external-link` (adds the `pi-external-link` icon to a link that opens a new tab; its markup still adds a `sr-only` "(opens in a new tab)")
 - Surfaces: `glass`, `glass-strong`, `tile`, `header-fade`, `photo-frame`, `photo-mat`, `media-placeholder`
 
 The layer order in `styles.css` (`theme, base, primeng, components, utilities`) lets Tailwind utilities override PrimeNG styles without `!important`.
 
-**Outside Angular** (#68): `theme/brand-css.ts` asks PrimeNG's own generator for the primitive and semantic CSS variables (`--p-copper-500`, `--p-focus-ring-color`, `--p-brand-*`, …), so they always match the theme. The `build:express:*` post-build hook (`scripts/write-express-files.ts`, which bundles it with esbuild) writes them to `brand.css` next to the build, where Express serves them at `/brand.css` for its error pages. Put `class="app-dark"` on `<html>` as the app does. A Playwright test in CI checks that every variable in `brand.css` computes to the same value as on the live page.
+**Outside Angular** (#68): `theme/brand-css.ts` asks PrimeNG's own generator for the primitive and semantic CSS variables (`--p-copper-500`, `--p-focus-ring-color`, `--p-brand-*`, …), so they always match the theme. The `build:express:*` post-build hook (`scripts/write-express-files.ts`, which bundles it with esbuild) writes them to `brand.css` next to the build, where Express serves them at `/brand.css` for its error pages, and copies the two fonts' `@font-face` rules from the built stylesheet to `fonts.css` beside it. Put `class="app-dark"` on `<html>` as the app does. A Playwright test in CI checks that every variable in `brand.css` computes to the same value as on the live page.
 
 ## Feedback messages
 
@@ -184,7 +185,7 @@ Success, warning and error messages look and behave the same everywhere (#110):
   - Breakpoint utilities: `md:`, `lg:` and similar
 - **SCSS nests** to follow the template's DOM tree. Content that PrimeNG renders into an overlay (drawer links, Galleria lightbox) stays top-level, because it isn't inside the component's markup at runtime.
 - **SCSS never sets a property that an inline breakpoint class changes.** Component styles are unlayered, so they beat every Tailwind utility. For a responsive property, keep the base value inline too, for example `px-6 md:px-8`.
-- **Link colors:** set `--link-color` for `nav-link`, not `color`, so the copper hover still applies.
+- **Link colors:** set `--link-color` for `nav-link` and `inline-link`, not `color`, so the copper hover still applies.
 
 ## TypeScript conventions and linting
 

@@ -1,12 +1,12 @@
-<section class="stack gap-3">
+<section class="time-step">
   @if (selectedDateLabel(); as pickedDateLabel) {
-    <span class="text-sm text-surface-200"
-      >{{ pickedDateLabel }} · {{ timeSlots().length }} open</span
-    >
+    <span class="open-count">{{ pickedDateLabel }} · {{ timeSlots().length }} open</span>
     @if (fillingUpNote(); as fillingUp) {
-      <p-message severity="warn" size="small" icon="pi pi-clock" data-testid="filling-up-note">{{
-        fillingUp
-      }}</p-message>
+      <div class="filling-up-note">
+        <p-message severity="warn" size="small" icon="pi pi-clock" data-testid="filling-up-note">{{
+          fillingUp
+        }}</p-message>
+      </div>
     }
     <p-selectbutton
       data-testid="time-list"

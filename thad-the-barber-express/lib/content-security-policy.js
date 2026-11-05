@@ -53,11 +53,12 @@ function contentSecurityPolicy(nonce, sources, styleHashes = []) {
   return serialize(directives);
 }
 
-// The error page has no inline code: its stylesheet, brand.css from the Angular build and the logo are all same-origin.
+// The error page has no inline code: its stylesheet, brand.css and fonts.css from the Angular build, the fonts and the logo are all same-origin.
 function errorPagePolicy() {
   return serialize({
     'default-src': ["'none'"],
     'style-src': ["'self'"],
+    'font-src': ["'self'"],
     'img-src': ["'self'"],
     'frame-ancestors': ["'none'"],
     'base-uri': ["'none'"],

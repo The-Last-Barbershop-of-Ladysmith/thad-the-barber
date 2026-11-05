@@ -1,8 +1,8 @@
 <section class="date-step">
+  @if (notice(); as availabilityNotice) {
+    <app-notice-message class="w-full" [notice]="availabilityNotice" (retry)="reloadMonth()" />
+  }
   <div class="calendar-column stack gap-3">
-    @if (notice(); as availabilityNotice) {
-      <app-notice-message [notice]="availabilityNotice" (retry)="reloadMonth()" />
-    }
     <div class="calendar-frame">
       @if (bookingWindow(); as bookingWindow) {
         <p-datepicker
@@ -45,12 +45,17 @@
       }
     </div>
   </div>
-  <div class="availability-legend">
-    <span class="legend-entry"><span class="legend-swatch is-available"></span>available</span>
-    <span class="legend-entry"
-      ><span class="legend-swatch is-unavailable"></span>closed / booked</span
-    >
-    <span class="legend-entry"><span class="legend-swatch is-selected"></span>selected</span>
-    <span class="legend-entry"><span class="filling-up-dot"></span>filling up</span>
-  </div>
+  <aside class="availability-legend" aria-label="How to read the calendar">
+    <span class="eyebrow">How to read it</span>
+    <p class="legend-entry"><span class="legend-swatch is-available"></span>Open day</p>
+    <p class="legend-entry">
+      <span class="legend-swatch"><span class="filling-up-dot"></span></span>
+      Filling up, fewer than {{ fillingUpBelow }} times left
+    </p>
+    <p class="legend-entry is-muted"><span class="legend-swatch is-unavailable"></span>Closed or full</p>
+    <p class="legend-note">
+      Times show on the shop's clock. Questions? Call or text
+      <a class="inline-link" [href]="phone().tel">{{ phone().display }}</a>.
+    </p>
+  </aside>
 </section>

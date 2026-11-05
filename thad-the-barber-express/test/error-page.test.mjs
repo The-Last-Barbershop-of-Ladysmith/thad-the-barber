@@ -31,11 +31,12 @@ describe('error page', function() {
     expect(response.type).toBe('text/html');
     expect(response.text).toContain('<h1>We hit a snag.</h1>');
     expect(response.text).toContain('href="/brand.css"');
+    expect(response.text).toContain('href="/fonts.css"');
     expect(response.text).toMatch(/data-testid="error-request-id">[0-9a-f]{32}</);
     expect(response.text).not.toContain('Forced test error');
     expect(response.text).not.toContain('error-details');
     expect(response.headers['content-security-policy']).toBe(
-      "default-src 'none'; style-src 'self'; img-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
+      "default-src 'none'; style-src 'self'; font-src 'self'; img-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
     );
     expect(response.headers['cache-control']).toBe('no-store');
   });

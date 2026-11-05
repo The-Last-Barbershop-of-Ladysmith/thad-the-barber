@@ -3,7 +3,7 @@ import { primitive } from './tokens/primitive';
 
 interface PrimitiveTokens {
   ink: string;
-  fontFamily: { sans: string; };
+  fontFamily: { sans: string; display: string; };
   borderRadius: Record<string, string>;
   copper: Record<string, string>;
   espresso: Record<string, string>;
@@ -30,6 +30,7 @@ describe(
       (): void => {
         expect(css).toContain(`--p-ink:${tokens.ink};`);
         expect(css).toContain(`--p-font-family-sans:${tokens.fontFamily.sans};`);
+        expect(css).toContain(`--p-font-family-display:${tokens.fontFamily.display};`);
         Object.entries(tokens.borderRadius).forEach(([size, value]: [string, string]): void => {
           expect(css).toContain(`--p-border-radius-${size}:${value};`);
         });

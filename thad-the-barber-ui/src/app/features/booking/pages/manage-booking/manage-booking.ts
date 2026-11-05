@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -18,14 +19,12 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
-import { CardDesignTokens } from '@primeuix/themes/types/card';
-import { CardModule } from 'primeng/card';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { SkeletonModule } from 'primeng/skeleton';
 import { finalize } from 'rxjs';
-import { Backdrop } from '../../../../shared/components/backdrop/backdrop';
+import { TitledPage } from '../../../../shared/components/titled-page/titled-page';
 import { NoticeMessage } from '../../../../shared/components/notice-message/notice-message';
 import { Notice } from '../../../../shared/models/notice.model';
 import { ProblemCode } from '../../../../shared/models/problem-code.model';
@@ -60,13 +59,13 @@ interface AppointmentStart {
   selector: 'app-manage-booking',
   imports: [
     RouterLink,
+    NgTemplateOutlet,
     ButtonModule,
-    CardModule,
     ConfirmDialogModule,
     InputTextModule,
     ProgressBarModule,
     SkeletonModule,
-    Backdrop,
+    TitledPage,
     NoticeMessage,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -103,7 +102,6 @@ export class ManageBooking implements OnInit {
   protected readonly loadNotice: WritableSignal<Notice | null> = signal(null);
   protected readonly managedBooking: WritableSignal<ManagedBooking | null> = signal(null);
   protected readonly isCancelling: WritableSignal<boolean> = signal(false);
-  protected readonly actionsCardTokens: CardDesignTokens = { body: { padding: '1.75rem' } };
   protected readonly cancelNotice: WritableSignal<Notice | null> = signal(null);
 
   protected readonly appointmentStart: Signal<AppointmentStart | null> = computed((): AppointmentStart | null => {

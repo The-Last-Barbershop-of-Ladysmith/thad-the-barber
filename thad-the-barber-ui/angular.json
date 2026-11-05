@@ -32,7 +32,12 @@
                 "input": "public"
               }
             ],
-            "styles": ["node_modules/primeicons/primeicons.css", "src/styles.css"],
+            "styles": [
+              "node_modules/@fontsource-variable/plus-jakarta-sans/index.css",
+              "node_modules/@fontsource-variable/syne/index.css",
+              "node_modules/primeicons/primeicons.css",
+              "src/styles.css"
+            ],
             "server": "src/main.server.ts",
             "outputMode": "static",
             "outputPath": {

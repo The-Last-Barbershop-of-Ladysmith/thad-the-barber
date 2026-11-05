@@ -10,25 +10,31 @@
     }
     <span>{{ notice().text }}</span>
     @if (notice().link; as link) {
-      <a class="notice-link w-fit" data-testid="notice-link" [routerLink]="link.path">{{
-        link.label
-      }}</a>
+      <a
+        class="inline-link w-fit font-semibold"
+        data-testid="notice-link"
+        [routerLink]="link.path"
+        >{{ link.label }}</a
+      >
     }
+    <ng-content />
     @if (isProblem()) {
       <span>
         Still having trouble? Call
-        <a class="notice-link" data-testid="notice-call" [href]="phone().tel">{{
+        <a class="inline-link font-semibold" data-testid="notice-call" [href]="phone().tel">{{
           phone().display
         }}</a
-        >, <a class="notice-link" data-testid="notice-text" [href]="phone().sms">text us</a>, or
-        book on
+        >,
+        <a class="inline-link font-semibold" data-testid="notice-text" [href]="phone().sms"
+          >text us</a
+        >, or book on
         <a
-          class="notice-link"
+          class="inline-link external-link font-semibold"
           data-testid="notice-booking-site"
           target="_blank"
           rel="noopener"
           [href]="bookingUrl()"
-          >our Square booking page</a
+          >our Square booking page<span class="sr-only"> (opens in a new tab)</span></a
         >.
       </span>
     }

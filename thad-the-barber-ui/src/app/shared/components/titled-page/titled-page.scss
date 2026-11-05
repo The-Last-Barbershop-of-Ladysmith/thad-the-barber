@@ -1,0 +1,46 @@
+// The band and the body share the footer's content width and gutters, so their edges line up.
+.titled-page {
+  .title-band {
+    position: relative;
+    isolation: isolate;
+    padding: 8rem var(--p-brand-page-gutter) 4rem;
+
+    .band-photo {
+      position: absolute;
+      inset: 0;
+      z-index: -2;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 40%;
+    }
+
+    // Solid page color at the bottom, so the band runs into the content below it.
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background: linear-gradient(
+        0deg,
+        var(--p-surface-950) 0%,
+        color-mix(in srgb, var(--p-surface-950) 80%, transparent) 60%,
+        color-mix(in srgb, var(--p-surface-950) 55%, transparent) 100%
+      );
+    }
+
+    .band-content {
+      max-width: var(--p-brand-page-width);
+      margin-inline: auto;
+    }
+  }
+
+  .page-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    max-width: calc(var(--p-brand-page-width) + 2 * var(--p-brand-page-gutter));
+    margin-inline: auto;
+    padding: 0 var(--p-brand-page-gutter) 4rem;
+  }
+}

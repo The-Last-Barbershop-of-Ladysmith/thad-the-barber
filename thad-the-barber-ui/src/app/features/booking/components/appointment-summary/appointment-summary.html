@@ -1,0 +1,10 @@
+<aside class="appointment-summary" data-testid="appointment-summary" aria-label="Your appointment">
+  <span class="eyebrow">Your appointment</span>
+  <p class="when">{{ dayLabel() }}<br />{{ timeLabel() }}</p>
+  <p class="where">
+    {{ shopName() }}
+    @if (addressLine(); as address) {
+      <br />{{ address }}
+    }
+  </p>
+</aside>

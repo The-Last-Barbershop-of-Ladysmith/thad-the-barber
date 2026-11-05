@@ -43,7 +43,7 @@ export const primitive: TokenSection = {
     700: '#4a3a2d',
     800: '#2a1a0e', // gradient mid-stop
     900: '#1d140d', // media wells
-    950: '#140d08', // page background
+    950: '#0c0806', // page background
   },
 
   /** Deepest shade, used for glass panels, header fade and CTA gradient start. */
@@ -56,5 +56,8 @@ export const primitive: TokenSection = {
 
   coral: '#f28b7d',
 
-  fontFamily: { sans: 'Helvetica, Arial, sans-serif' },
+  fontFamily: {
+    sans: "'Plus Jakarta Sans Variable', Helvetica, Arial, sans-serif",
+    display: "'Syne Variable', 'Plus Jakarta Sans Variable', Helvetica, Arial, sans-serif",
+  },
 };

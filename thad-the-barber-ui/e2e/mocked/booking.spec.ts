@@ -87,6 +87,7 @@ test.describe(
         await expect(page).toHaveURL(/\/book\/manage\/made-up-booking$/);
         await expect(page.getByTestId('booking-confirmation')).toBeVisible();
         await expect(page.getByTestId('manage-link')).toHaveValue(/\/book\/manage\/made-up-booking#t=made-up-manage-token$/);
+        await expect(page.getByTestId('manage-link')).toHaveAccessibleName(/.+/);
         await expectNoA11yViolations(page);
         const [booking]: Request[] = bookings;
         const body: BookingRequest = booking?.postDataJSON() as BookingRequest;

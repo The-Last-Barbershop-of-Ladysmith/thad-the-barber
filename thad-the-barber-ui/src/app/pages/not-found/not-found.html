@@ -21,12 +21,5 @@
         Go to homepage
       </a>
     </div>
-
-    <nav class="links border-divider" aria-label="Page sections">
-      @for (item of sections; track item.fragment) {
-        <a routerLink="/" [fragment]="item.fragment" class="nav-link">{{ item.label }}</a>
-      }
-      <a [href]="phone().tel" class="nav-link">{{ phone().display }}</a>
-    </nav>
   </div>
 </section>
