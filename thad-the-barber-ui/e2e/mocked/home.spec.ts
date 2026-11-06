@@ -4,11 +4,8 @@ import { BookingRequest } from '../../src/app/features/booking/dtos/booking-requ
 import { expectNoA11yViolations } from '../support/axe';
 import { isBookingRequest, isNextTimesRequest } from '../support/booking';
 import { expect, test } from '../support/fixtures';
+import { isStaticMap } from '../support/map';
 import { servedEnvironment } from '../support/served-environment';
-
-const STATIC_MAP_URL: string = 'https://maps.googleapis.com/maps/api/staticmap?**';
-
-const BLANK_PNG: Buffer = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgYGD4DwABBAEAwS2OUAAAAABJRU5ErkJggg==', 'base64');
 
 const SECTIONS: readonly string[] = [
   'announcements',
@@ -22,7 +19,6 @@ test.describe(
   'home',
   (): void => {
     test.beforeEach(async ({ page }: { page: Page; }): Promise<void> => {
-      await page.route(STATIC_MAP_URL, (route: Route): Promise<void> => route.fulfill({ body: BLANK_PNG, contentType: 'image/png' }));
       await page.goto('/');
       // The prerendered hero shows before the app starts; until its first NavigationEnd a menu opened now would close.
       await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
@@ -215,10 +211,6 @@ test.describe(
 test.describe(
   'home visit map',
   (): void => {
-    test.beforeEach(async ({ page }: { page: Page; }): Promise<void> => {
-      await page.route(STATIC_MAP_URL, (route: Route): Promise<void> => route.fulfill({ body: BLANK_PNG, contentType: 'image/png' }));
-    });
-
     test(
       'links the map image to directions in a new tab',
       async ({ page }: { page: Page; }): Promise<void> => {
@@ -235,7 +227,7 @@ test.describe(
     test(
       'hides the map when the image fails, keeping the rest of the section',
       async ({ page }: { page: Page; }): Promise<void> => {
-        await page.route(STATIC_MAP_URL, (route: Route): Promise<void> => route.abort());
+        await page.route(isStaticMap, (route: Route): Promise<void> => route.abort());
         await page.goto('/');
 
         await expect(page.locator('#visit app-hours-list')).toBeVisible();

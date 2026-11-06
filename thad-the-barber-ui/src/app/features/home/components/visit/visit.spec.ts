@@ -80,7 +80,7 @@ describe(
       (): void => {
         environment.staticMapApiKey = '';
 
-        expect(findMap(render({ ...TEST_SHOP }).element)).toBeNull();
+        expect(findMap(render(TEST_SHOP).element)).toBeNull();
       },
     );
   },

@@ -1,7 +1,5 @@
 import { MemoizedSelector, createFeature, createSelector } from '@ngrx/store';
 import { SHOP_FALLBACK } from '../../../core/config/shop-info';
-import { environment } from '../../../../environments/environment';
-import { Environment } from '../../../../environments/environment.model';
 import { BookingSettings } from '../models/booking-settings.model';
 import { PhoneLinks } from '../../../shared/models/phone-links.model';
 import { ShopAddress } from '../models/shop-address.model';
@@ -21,7 +19,6 @@ export type ShopExtraSelectors = {
   selectBookingUrl: MemoizedSelector<object, string>;
   selectAddress: MemoizedSelector<object, ShopAddress | null>;
   selectAddressLine: MemoizedSelector<object, string | null>;
-  selectStaticMapUrl: MemoizedSelector<object, string | null>;
   selectDirectionsUrl: MemoizedSelector<object, string | null>;
   selectTimeZone: MemoizedSelector<object, string | null>;
   selectOpeningHours: MemoizedSelector<object, ShopOpeningHours[]>;
@@ -61,10 +58,6 @@ export const shopFeature = createFeature({
       selectShopInfo,
       toShopAddressLine,
     ),
-    selectStaticMapUrl: createSelector(
-      selectShopInfo,
-      toStaticMapUrl,
-    ),
     selectDirectionsUrl: createSelector(
       selectShopInfo,
       toDirectionsUrl,
@@ -87,17 +80,6 @@ export const shopFeature = createFeature({
     ),
   }),
 });
-
-function toStaticMapUrl(shopInfo: ShopInfo | null): string | null {
-  const { staticMapApiKey, staticMapId }: Environment = environment;
-  if (!shopInfo || !staticMapApiKey || !staticMapId) {
-    return null;
-  }
-  const query: string = toMapQuery(shopInfo.address);
-  return `https://maps.googleapis.com/maps/api/staticmap?center=${query}&zoom=15&size=640x480&scale=2`
-    + `&map_id=${encodeURIComponent(staticMapId)}&markers=color:0xe8904a%7C${query}`
-    + `&key=${encodeURIComponent(staticMapApiKey)}`;
-}
 
 function toDirectionsUrl(shopInfo: ShopInfo | null): string | null {
   if (!shopInfo) {

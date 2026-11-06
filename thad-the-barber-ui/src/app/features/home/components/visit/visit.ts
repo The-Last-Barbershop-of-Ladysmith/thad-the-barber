@@ -2,10 +2,12 @@ import { ChangeDetectionStrategy, Component, Signal, WritableSignal, computed, i
 import { Store } from '@ngrx/store';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
+import { environment } from '../../../../../environments/environment';
 import { PhoneLinks } from '../../../../shared/models/phone-links.model';
 import { ShopAddress } from '../../../shop/models/shop-address.model';
 import { HoursList } from '../../../shop/components/hours-list/hours-list';
 import { SectionHeading } from '../../../../shared/components/section-heading/section-heading';
+import { toStaticMapUrl } from '../../utils/static-map.utils';
 import { AppState } from '../../../../store/app.state';
 import { shopFeature } from '../../../shop/state/shop.feature';
 
@@ -29,12 +31,20 @@ export class Visit {
   protected readonly phone: Signal<PhoneLinks> = this.store.selectSignal(shopFeature.selectPhoneLinks);
   protected readonly address: Signal<ShopAddress | null> = this.store.selectSignal(shopFeature.selectAddress);
   protected readonly directionsUrl: Signal<string | null> = this.store.selectSignal(shopFeature.selectDirectionsUrl);
-  protected readonly staticMapUrl: Signal<string | null> = this.store.selectSignal(shopFeature.selectStaticMapUrl);
-
+  private readonly addressLine: Signal<string | null> = this.store.selectSignal(shopFeature.selectAddressLine);
   private readonly hasMapFailed: WritableSignal<boolean> = signal(false);
-  protected readonly isMapShown: Signal<boolean> = computed(
-    (): boolean => this.staticMapUrl() !== null && !this.hasMapFailed(),
-  );
+
+  protected readonly mapImageUrl: Signal<string | null> = computed((): string | null => {
+    const addressLine: string | null = this.addressLine();
+    if (addressLine === null || this.hasMapFailed()) {
+      return null;
+    }
+    return toStaticMapUrl(
+      addressLine,
+      environment.staticMapApiKey,
+      environment.staticMapId,
+    );
+  });
 
   protected hideMap(): void {
     this.hasMapFailed.set(true);

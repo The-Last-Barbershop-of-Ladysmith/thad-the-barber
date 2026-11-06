@@ -1,4 +1,3 @@
-import { environment } from '../../../../environments/environment';
 import { TEST_SHOP } from '../../../../testing/test-shop';
 import { SHOP_FALLBACK } from '../../../core/config/shop-info';
 import { ShopInfo } from '../models/shop-info.model';
@@ -9,19 +8,6 @@ import { ShopState, initialShopState } from './shop.state';
 describe(
   'shop feature',
   (): void => {
-    const savedMapKey: string = environment.staticMapApiKey;
-    const savedMapId: string = environment.staticMapId;
-
-    beforeEach((): void => {
-      environment.staticMapApiKey = 'fake-static-map-key';
-      environment.staticMapId = 'fake-map-id';
-    });
-
-    afterEach((): void => {
-      environment.staticMapApiKey = savedMapKey;
-      environment.staticMapId = savedMapId;
-    });
-
     function root(shopInfo: ShopInfo | null): Record<string, ShopState> {
       return {
         [shopFeature.name]: {
@@ -55,7 +41,6 @@ describe(
           (): void => {
             expect(shopFeature.selectAddress(state)).toBeNull();
             expect(shopFeature.selectAddressLine(state)).toBeNull();
-            expect(shopFeature.selectStaticMapUrl(state)).toBeNull();
             expect(shopFeature.selectDirectionsUrl(state)).toBeNull();
             expect(shopFeature.selectTimeZone(state)).toBeNull();
             expect(shopFeature.selectOpeningHours(state)).toEqual([]);
@@ -106,22 +91,8 @@ describe(
 
             expect(shopFeature.selectAddress(state)).toEqual(TEST_SHOP.address);
             expect(shopFeature.selectAddressLine(state)).toBe('12 Pretend Pl, Faketown, HI 96999-0001');
-            expect(shopFeature.selectStaticMapUrl(state)).toBe(
-              'https://maps.googleapis.com/maps/api/staticmap'
-              + `?center=${query}&zoom=15&size=640x480&scale=2&map_id=fake-map-id`
-              + `&markers=color:0xe8904a%7C${query}&key=fake-static-map-key`,
-            );
             expect(shopFeature.selectDirectionsUrl(state))
               .toBe(`https://www.google.com/maps/dir/?api=1&destination=${query}`);
-          },
-        );
-
-        it(
-          'has no static map URL when the environment has no map key or ID',
-          (): void => {
-            environment.staticMapId = '';
-
-            expect(shopFeature.selectStaticMapUrl(root({ ...TEST_SHOP }))).toBeNull();
           },
         );
 
