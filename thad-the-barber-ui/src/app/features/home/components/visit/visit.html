@@ -1,16 +1,24 @@
 <section class="page-section">
   <p-card class="w-full max-w-275">
-    <div class="panel md:grid-cols-2">
-      <div class="map">
-        @if (mapUrl(); as mapUrl) {
-          <iframe
-            title="Map to {{ shopName() }}"
-            [src]="mapUrl"
-            loading="lazy"
-            class="map-frame"
-          ></iframe>
-        }
-      </div>
+    <div class="panel" [class.has-map]="mapImageUrl() !== null">
+      @if (mapImageUrl(); as mapImageUrl) {
+        <a
+          data-testid="visit-map"
+          class="map"
+          [href]="directionsUrl()"
+          target="_blank"
+          rel="noopener"
+          aria-label="{{ shopName() }} · Open in Maps (opens directions in a new tab)"
+        >
+          <img
+            class="map-image"
+            [src]="mapImageUrl"
+            alt="Map of {{ shopName() }}'s location"
+            (error)="hideMap()"
+          />
+          <span class="map-label" aria-hidden="true">{{ shopName() }} · Open in Maps ↗</span>
+        </a>
+      }
 
       <div class="details">
         <app-section-heading eyebrow="Visit us" title="Find the shop" />

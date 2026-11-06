@@ -19,7 +19,6 @@ export type ShopExtraSelectors = {
   selectBookingUrl: MemoizedSelector<object, string>;
   selectAddress: MemoizedSelector<object, ShopAddress | null>;
   selectAddressLine: MemoizedSelector<object, string | null>;
-  selectMapEmbedUrl: MemoizedSelector<object, string | null>;
   selectDirectionsUrl: MemoizedSelector<object, string | null>;
   selectTimeZone: MemoizedSelector<object, string | null>;
   selectOpeningHours: MemoizedSelector<object, ShopOpeningHours[]>;
@@ -59,10 +58,6 @@ export const shopFeature = createFeature({
       selectShopInfo,
       toShopAddressLine,
     ),
-    selectMapEmbedUrl: createSelector(
-      selectShopInfo,
-      toMapEmbedUrl,
-    ),
     selectDirectionsUrl: createSelector(
       selectShopInfo,
       toDirectionsUrl,
@@ -85,13 +80,6 @@ export const shopFeature = createFeature({
     ),
   }),
 });
-
-function toMapEmbedUrl(shopInfo: ShopInfo | null): string | null {
-  if (!shopInfo) {
-    return null;
-  }
-  return `https://maps.google.com/maps?q=${toMapQuery(shopInfo.address)}&z=14&output=embed`;
-}
 
 function toDirectionsUrl(shopInfo: ShopInfo | null): string | null {
   if (!shopInfo) {

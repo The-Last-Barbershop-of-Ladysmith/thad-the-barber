@@ -7,6 +7,7 @@ import {
   isManagedBookingRequest,
   isNextTimesRequest,
 } from './booking';
+import { fulfillStaticMap, isStaticMap } from './map';
 import { fulfillMedia, isMedia } from './media';
 import { fulfillRecaptcha, fulfillSession, isRecaptchaScript, isSessionRequest } from './session';
 import { fulfillShop, isShopRequest } from './shop';
@@ -41,6 +42,7 @@ export const test: typeof base = base.extend({
 
     await page.route(isTelemetryIngestion, (route: Route): Promise<void> => route.fulfill({ status: 200, json: {} }));
     await page.route(isMedia, fulfillMedia);
+    await page.route(isStaticMap, fulfillStaticMap);
     await page.route(isRecaptchaScript, fulfillRecaptcha);
     await page.route(isSessionRequest, fulfillSession);
     await page.route(isShopRequest, fulfillShop);

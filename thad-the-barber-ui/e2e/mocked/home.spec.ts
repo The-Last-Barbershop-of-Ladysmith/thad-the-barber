@@ -4,6 +4,8 @@ import { BookingRequest } from '../../src/app/features/booking/dtos/booking-requ
 import { expectNoA11yViolations } from '../support/axe';
 import { isBookingRequest, isNextTimesRequest } from '../support/booking';
 import { expect, test } from '../support/fixtures';
+import { isStaticMap } from '../support/map';
+import { servedEnvironment } from '../support/served-environment';
 
 const SECTIONS: readonly string[] = [
   'announcements',
@@ -201,6 +203,35 @@ test.describe(
         await rail.getByRole('link', { name: 'Schedule' }).click();
         await expect(rail.locator('[aria-current="true"]')).toHaveAccessibleName('Schedule');
         await expect(page.locator('#schedule')).toBeInViewport();
+      },
+    );
+  },
+);
+
+test.describe(
+  'home visit map',
+  (): void => {
+    test(
+      'links the map image to directions in a new tab',
+      async ({ page }: { page: Page; }): Promise<void> => {
+        test.skip(!servedEnvironment.staticMapApiKey || !servedEnvironment.staticMapId, 'The served build has no map key or ID yet');
+        await page.goto('/');
+
+        const map: Locator = page.getByTestId('visit-map');
+        await expect(map).toHaveAttribute('href', /^https:\/\/www\.google\.com\/maps\/dir\//);
+        await expect(map).toHaveAttribute('target', '_blank');
+        await expect(map.locator('img')).toHaveJSProperty('complete', true);
+      },
+    );
+
+    test(
+      'hides the map when the image fails, keeping the rest of the section',
+      async ({ page }: { page: Page; }): Promise<void> => {
+        await page.route(isStaticMap, (route: Route): Promise<void> => route.abort());
+        await page.goto('/');
+
+        await expect(page.locator('#visit app-hours-list')).toBeVisible();
+        await expect(page.getByTestId('visit-map')).toHaveCount(0);
       },
     );
   },
