@@ -155,7 +155,7 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 | Component | Location | Why custom |
 | --- | --- | --- |
 | `SectionHeading` | `shared/components/section-heading` | Eyebrow + title pair used in 4 sections |
-| `HoursList` | `features/shop/components/hours-list` | One data source, 3 layouts: `table` (schedule), `stacked` (visit), `compact` (footer) |
+| `HoursList` | `features/shop/components/hours-list` | One data source, 3 layouts: `table` (schedule), `stacked` (unused since the Visit redo, #54), `compact` (footer) |
 | `Backdrop` | `shared/components/backdrop` | Fixed photo background: `scroll` (home) and `still` (booking) |
 | `Header`, `Footer` | `layout/` | App shell |
 | Section components | `features/home/components/*` | Page composition only |
@@ -241,6 +241,7 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 | Booking API, SMS provider, content API | Mocked services | Swap each service body for `HttpClient` calls (`environment.apiBaseUrl`) |
 | SSR / prerender | Not set up | Add `@angular/ssr` when hosting is decided |
 | Gallery images | The wireframe's 720–960px photos, served as uploaded in a fixed 4:5 frame (#168) | Thad uploads his own in the portal |
+| Visit section (card with hours, "Questions? Text this number.", map iframe) | Shopfront redo (#54): no card, address as the heading, themed static map image linking to directions, "Get directions" and "Call / Text (number)" buttons; hours live only in the Hours section and footer, and the "Questions?" line is dropped | Client-approved mockups (Shopfront boards); remove the unused `stacked` hours layout in the pre-prod unused audit |
 
 ---
 
