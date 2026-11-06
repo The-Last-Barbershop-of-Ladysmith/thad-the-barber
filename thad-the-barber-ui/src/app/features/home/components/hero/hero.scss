@@ -3,7 +3,40 @@
   min-height: 100svh;
   align-items: flex-end;
   padding-block: 6rem 4rem;
-  background: linear-gradient(90deg, rgb(12 8 6 / 0.94) 0%, rgb(12 8 6 / 0.72) 42%, rgb(12 8 6 / 0) 75%);
+  position: relative;
+  isolation: isolate;
+  // Fades into the tint the sections below start with, so the hero's bottom edge has no seam.
+  background: linear-gradient(
+    180deg,
+    rgb(12 8 6 / 0) 55%,
+    var(--page-tint)
+  );
+
+  // The photo shows through from the right as the screen widens: the fade ends at the right edge on a phone (25rem)
+  // and 75% across from 75rem, with no jump between. Its stops follow an eased curve, so there is no visible edge, and
+  // it fades out down the hero so only the flat tint is left at the bottom.
+  --fade-end: clamp(75%, 100% - 0.375 * (100vw - 25rem), 100%);
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(
+      90deg,
+      rgb(12 8 6 / 0.94) 0%,
+      rgb(12 8 6 / 0.9) calc(var(--fade-end) * 0.25),
+      rgb(12 8 6 / 0.72) calc(var(--fade-end) * 0.5),
+      rgb(12 8 6 / 0.45) calc(var(--fade-end) * 0.7),
+      rgb(12 8 6 / 0.2) calc(var(--fade-end) * 0.85),
+      rgb(12 8 6 / 0) var(--fade-end)
+    );
+    mask-image: linear-gradient(
+      180deg,
+      #000 55%,
+      transparent
+    );
+  }
 
   .content {
     display: flex;

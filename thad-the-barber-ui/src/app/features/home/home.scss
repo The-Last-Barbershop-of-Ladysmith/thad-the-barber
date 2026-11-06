@@ -1,0 +1,23 @@
+.page-tint {
+  --page-tint: rgb(12 8 6 / 0.72);
+}
+
+// One flat tint behind every section below the hero. The hero fades into it at its bottom edge, so they meet with no
+// seam; it fades out again over the last 40rem, before the footer, so the photo shows there.
+.below-hero {
+  position: relative;
+  isolation: isolate;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: var(--page-tint);
+    mask-image: linear-gradient(
+      180deg,
+      #000 calc(100% - 40rem),
+      transparent 100%
+    );
+  }
+}

@@ -28,6 +28,7 @@ import * as HomeActions from './state/home.actions';
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './home.html',
+  styleUrl: './home.scss',
 })
 export class Home implements OnInit, OnDestroy {
   private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
