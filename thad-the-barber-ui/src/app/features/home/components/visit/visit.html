@@ -30,8 +30,8 @@
     }
 
     <div class="actions">
-      @if (directionsUrl(); as directionsUrl) {
-        <a pButton data-testid="visit-directions" [href]="directionsUrl" target="_blank" rel="noopener">
+      @if (directionsUrl() !== null) {
+        <a pButton data-testid="visit-directions" [href]="directionsUrl()" target="_blank" rel="noopener">
           Get directions
           <span class="sr-only">(opens in a new tab)</span>
         </a>
