@@ -102,6 +102,7 @@ describe(
         const button: HTMLAnchorElement | null = findByTestId(render(TEST_SHOP).element, 'visit-directions');
 
         expect(button?.getAttribute('href')).toContain('https://www.google.com/maps/dir/?api=1&destination=');
+        expect(button?.querySelector('.sr-only')).not.toBeNull();
         expect(button?.getAttribute('target')).toBe('_blank');
         expect(button?.getAttribute('rel')).toContain('noopener');
       },
