@@ -230,7 +230,8 @@ test.describe(
         await page.route(isStaticMap, (route: Route): Promise<void> => route.abort());
         await page.goto('/');
 
-        await expect(page.locator('#visit app-hours-list')).toBeVisible();
+        await expect(page.getByTestId('visit-directions')).toBeVisible();
+        await expect(page.getByTestId('visit-phone')).toBeVisible();
         await expect(page.getByTestId('visit-map')).toHaveCount(0);
       },
     );
