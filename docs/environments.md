@@ -267,3 +267,12 @@ Topic/123-ticker-bar ────┘         Topic/130-…   (one per issue, del
 - Cut the next `dev/*` from `main` after a release. If it was cut earlier, the release workflow opens a `main` → `dev/*` PR.
 - Versions follow SemVer. `release/X.Y` ships as `vX.Y.0`, and hotfixes bump the patch number.
 - Branch rulesets for `main`, `release/*` and `dev/*` allow changes by PR only and require all four checks. On a private repo, rulesets are only enforced on a paid GitHub plan; otherwise the checks still run but can't block a merge.
+
+## Themed map (#223)
+
+The visit section shows a Google Static Maps image built in the UI from `staticMapApiKey` and `staticMapId` in `thad-the-barber-ui/src/environments/environment.*.ts`. Both are public in the page and in this public repo, so neither is a secret or in Key Vault; the key is protected in Google Cloud. With either empty the map stays hidden. One key and one Map ID serve every environment. Check by hand:
+
+- Enable **Maps Static API** and create one key restricted to that API and to Websites (HTTP referrers): each environment's site address and `http://localhost:4200/*` and `http://localhost:3000/*`, each ending in `/*`. Add the production domain when it exists. It is a separate key from `Recaptcha--ApiKey`, which is server-side and can't have a referrer restriction.
+- Set a quota of about 300 requests per day on the Maps Static API so the free monthly allowance can't be exceeded; past it the image fails and the map hides.
+- Create a map style and a Map ID (Google Cloud Console, Google Maps Platform, Map Management) in the site's dark copper colours.
+- Put the key and Map ID in all four `environment.*.ts` files.
