@@ -28,7 +28,7 @@ function styleAttributeHashes(html) {
   });
 }
 
-// sources is the build's csp-sources.json: the environment's API, App Insights and media origins.
+// sources is the build's csp-sources.json: the environment's API, App Insights and media origins, and the Static Maps image origin.
 function contentSecurityPolicy(nonce, sources, styleHashes = []) {
   var directives = {
     'default-src': ["'self'"],
@@ -37,8 +37,6 @@ function contentSecurityPolicy(nonce, sources, styleHashes = []) {
     'img-src': ["'self'", 'data:'].concat(sources['img-src'] || []),
     'connect-src': ["'self'"].concat(sources['connect-src'] || [], 'https://www.google.com/recaptcha/'),
     'frame-src': [
-      'https://maps.google.com/maps',
-      'https://www.google.com/maps/',
       'https://www.google.com/recaptcha/',
       'https://recaptcha.google.com/recaptcha/',
     ],
