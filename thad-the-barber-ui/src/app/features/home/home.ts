@@ -7,6 +7,7 @@ import { Gallery } from './components/gallery/gallery';
 import { Hero } from './components/hero/hero';
 import { NextTimes } from './components/next-times/next-times';
 import { ScheduleCta } from './components/schedule-cta/schedule-cta';
+import { ScrollRail } from './components/scroll-rail/scroll-rail';
 import { Testimonials } from './components/testimonials/testimonials';
 import { Visit } from './components/visit/visit';
 import * as HomeActions from './state/home.actions';
@@ -20,6 +21,7 @@ import * as HomeActions from './state/home.actions';
     AnnouncementsCarousel,
     NextTimes,
     ScheduleCta,
+    ScrollRail,
     Visit,
     Testimonials,
     Gallery,
