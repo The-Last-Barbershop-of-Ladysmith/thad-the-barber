@@ -1,5 +1,5 @@
 import { Weekday } from '../models/weekday.model';
-import { WEEKDAY_SHORT_NAMES, toWeekday, weekdaySpanLabel } from './weekday.utils';
+import { WEEKDAY_SHORT_NAMES, WEEK_FROM_MONDAY, toDayRuns, toWeekday, weekdaySpanLabel } from './weekday.utils';
 
 describe(
   'weekday utils',
@@ -21,6 +21,66 @@ describe(
           Weekday.Friday,
           WEEKDAY_SHORT_NAMES,
         )).toBe('Mon – Fri');
+      },
+    );
+
+    it(
+      'groups neighbouring days into one run',
+      (): void => {
+        expect(toDayRuns([
+          Weekday.Tuesday,
+          Weekday.Monday,
+          Weekday.Wednesday,
+        ])).toEqual([
+          [
+            Weekday.Monday,
+            Weekday.Tuesday,
+            Weekday.Wednesday,
+          ],
+        ]);
+      },
+    );
+
+    it(
+      'splits days that are not neighbours into separate runs',
+      (): void => {
+        expect(toDayRuns([
+          Weekday.Monday,
+          Weekday.Wednesday,
+          Weekday.Thursday,
+          Weekday.Saturday,
+        ])).toEqual([
+          [Weekday.Monday],
+          [Weekday.Wednesday, Weekday.Thursday],
+          [Weekday.Saturday],
+        ]);
+      },
+    );
+
+    it(
+      'joins Sunday to the Monday after it, in week order',
+      (): void => {
+        expect(toDayRuns([
+          Weekday.Sunday,
+          Weekday.Monday,
+          Weekday.Tuesday,
+          Weekday.Thursday,
+        ])).toEqual([
+          [Weekday.Thursday],
+          [
+            Weekday.Sunday,
+            Weekday.Monday,
+            Weekday.Tuesday,
+          ],
+        ]);
+      },
+    );
+
+    it(
+      'keeps a whole closed week as one run and no days as none',
+      (): void => {
+        expect(toDayRuns([...WEEK_FROM_MONDAY])).toHaveLength(1);
+        expect(toDayRuns([])).toEqual([]);
       },
     );
   },
