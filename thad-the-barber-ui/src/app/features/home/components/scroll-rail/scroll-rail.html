@@ -1,0 +1,14 @@
+<nav class="rail" aria-label="Page progress" data-testid="scroll-rail">
+  @for (section of sections(); track section.fragment; let index = $index) {
+    <a
+      routerLink="/"
+      [fragment]="section.fragment"
+      class="hit"
+      [attr.aria-label]="section.label"
+      [attr.aria-current]="index === currentIndex() ? 'true' : null"
+      data-testid="scroll-rail-tooth"
+    >
+      <span class="tooth" [class.passed]="index <= currentIndex()" [class.current]="index === currentIndex()"></span>
+    </a>
+  }
+</nav>
