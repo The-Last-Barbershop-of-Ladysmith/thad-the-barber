@@ -29,10 +29,10 @@ test.describe(
         for (const place of PHONE_PLACES) {
           await expect(phoneLinks(page.locator(place), TEST_SHOP)).toBeAttached();
         }
-        await expect(page.locator('a[href^="https://www.google.com/maps/dir/"][href*="12%20Pretend%20Pl"]')).toHaveCount(2);
+        await expect(page.locator('a[href^="https://www.google.com/maps/dir/"][href*="12%20Pretend%20Pl"]')).toHaveCount(3);
         await expect(page.locator('a[href="https://www.instagram.com/made.up%20fades/"]')).toBeAttached();
         await expect(page.locator('a[href="https://www.facebook.com/made-up-fades"]')).toBeAttached();
-        await expect(page.locator('#visit iframe')).toHaveAttribute('src', /12%20Pretend%20Pl/);
+        await expect(page.getByTestId('visit-map').locator('img')).toHaveAttribute('src', /center=12%20Pretend%20Pl/);
         await expectNoA11yViolations(page);
         expect(angularErrors).toEqual([]);
       },
@@ -65,7 +65,7 @@ test.describe(
         await failedLoad;
 
         await expect(phoneLinks(page, TEST_SHOP).first()).toBeAttached();
-        await expect(page.locator('#visit iframe')).toHaveAttribute('src', /12%20Pretend%20Pl/);
+        await expect(page.getByTestId('visit-map').locator('img')).toHaveAttribute('src', /center=12%20Pretend%20Pl/);
         expect(pageErrors).toEqual([]);
         expect(angularErrors).toEqual([]);
       },
