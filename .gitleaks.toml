@@ -31,6 +31,13 @@ regexTarget = "line"
 regexes = ['''^\s*("SiteKey":\s*"6L[\w-]{38}"|recaptchaSiteKey:\s*'6L[\w-]{38}',)\s*$''']
 
 [[allowlists]]
+description = "The Static Maps key is public: the page's image URL carries it, so Google Cloud restricts it to the site's domains and the Maps Static API (#223)"
+condition = "AND"
+paths = ['''^thad-the-barber-ui/src/environments/environment[\w.-]*\.ts$''']
+regexTarget = "line"
+regexes = ['''^\s*staticMapApiKey:\s*'AIza[\w-]{35}',\s*$''']
+
+[[allowlists]]
 description = "The test host's manage-link HMAC key is made up: base64 of 'test-only-manage-link-key-32byte' (#29)"
 condition = "AND"
 paths = ['''^thad-the-barber-api\.tests/TestSupport/ApiFactory\.cs$''']

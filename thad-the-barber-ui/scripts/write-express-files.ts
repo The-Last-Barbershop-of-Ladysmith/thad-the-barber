@@ -129,7 +129,10 @@ const sources: Record<string, string[]> = {
     mediaOrigin,
     ...(ingestionEndpoint ? [new URL(ingestionEndpoint).origin] : []),
   ],
-  'img-src': [mediaOrigin],
+  'img-src': [
+    mediaOrigin,
+    'https://maps.googleapis.com',
+  ],
 };
 
 mkdirSync(outDir, { recursive: true });
