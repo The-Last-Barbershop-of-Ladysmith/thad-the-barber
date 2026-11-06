@@ -10,10 +10,8 @@ import {
   input,
   viewChild,
 } from '@angular/core';
-import { CLIP_COUNT, KEYFRAME_URLS } from './backdrop.frames';
+import { CLIP_COUNT } from './backdrop.frames';
 import { FrameScrubber } from './frame-scrubber';
-
-export type BackdropMode = 'scroll' | 'still';
 
 /**
  * A CSS selector for the element whose top edge sits on a keyframe, or `null` for a keyframe placed halfway
@@ -22,10 +20,8 @@ export type BackdropMode = 'scroll' | 'still';
 export type BackdropAnchor = string | null;
 
 /**
- * Fixed full-screen photo behind the page.
- * - `scroll`: the wireframe's scroll-scrubbed video (see `FrameScrubber`). Keyframe k lands when `anchors[k]`
- *   reaches the top of the viewport; the last anchor (the footer) sits at the bottom of the page.
- * - `still`:  one keyframe under a dark wash (booking page).
+ * Fixed full-screen photo behind the page: the wireframe's scroll-scrubbed video (see `FrameScrubber`). Keyframe k
+ * lands when `anchors[k]` reaches the top of the viewport; the last anchor (the footer) sits at the bottom of the page.
  */
 @Component({
   selector: 'app-backdrop',
@@ -34,13 +30,9 @@ export type BackdropAnchor = string | null;
   styleUrl: './backdrop.scss',
 })
 export class Backdrop {
-  readonly mode: InputSignal<BackdropMode> = input<BackdropMode>('scroll');
-  /** Keyframe index (0-6) shown in `still` mode. */
-  readonly still: InputSignal<number> = input<number>(5);
-  /** One anchor per keyframe (`CLIP_COUNT + 1`), in page order. Required in `scroll` mode. */
+  /** One anchor per keyframe (`CLIP_COUNT + 1`), in page order. */
   readonly anchors: InputSignal<readonly BackdropAnchor[]> = input<readonly BackdropAnchor[]>([]);
 
-  protected readonly keyframes: readonly string[] = KEYFRAME_URLS;
   private readonly canvas: Signal<ElementRef<HTMLCanvasElement> | undefined> =
     viewChild<ElementRef<HTMLCanvasElement>>('canvas');
 
@@ -48,7 +40,7 @@ export class Backdrop {
     const destroyRef: DestroyRef = inject(DestroyRef);
     afterNextRender((): void => {
       const canvas: HTMLCanvasElement | undefined = this.canvas()?.nativeElement;
-      if (this.mode() !== 'scroll' || !canvas) {
+      if (!canvas) {
         return;
       }
 
