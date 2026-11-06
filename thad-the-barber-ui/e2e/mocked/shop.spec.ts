@@ -12,7 +12,6 @@ function phoneLinks(scope: Page | Locator, shop: ShopInfo): Locator {
 
 /** The places that show the phone without opening the mobile menu. */
 const PHONE_PLACES: readonly string[] = [
-  '#schedule',
   '#visit',
   'footer',
 ];
@@ -21,7 +20,7 @@ test.describe(
   'shop details',
   (): void => {
     test(
-      'come from GET /api/shop in the header, schedule, visit section and footer',
+      'come from GET /api/shop in the header, visit section and footer',
       async ({ page }: { page: Page; }): Promise<void> => {
         const angularErrors: string[] = collectAngularErrors(page);
         await page.goto('/');

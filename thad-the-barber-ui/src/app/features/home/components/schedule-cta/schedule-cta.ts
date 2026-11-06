@@ -1,22 +1,15 @@
 import { ChangeDetectionStrategy, Component, Signal, inject } from '@angular/core';
+import { HoursListVariant } from '../../../shop/models/hours-list-variant.model';
 import { OpenStatus } from '../../../shop/models/open-status.model';
-import { PhoneLinks } from '../../../../shared/models/phone-links.model';
-import { RouterLink } from '@angular/router';
-import { Store } from '@ngrx/store';
-import { ButtonModule } from 'primeng/button';
-import { CardModule } from 'primeng/card';
+import { SectionHeading } from '../../../../shared/components/section-heading/section-heading';
 import { ShopHoursService } from '../../../shop/services/shop-hours.service';
 import { HoursList } from '../../../shop/components/hours-list/hours-list';
-import { AppState } from '../../../../store/app.state';
-import { shopFeature } from '../../../shop/state/shop.feature';
 
-/** "Ready for a cut?" panel: live open status, booking + call buttons, weekly hours. */
+/** The hours section: the live open status beside every weekday's hours, on the shop's clock. */
 @Component({
   selector: 'app-schedule-cta',
   imports: [
-    RouterLink,
-    ButtonModule,
-    CardModule,
+    SectionHeading,
     HoursList,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -24,8 +17,6 @@ import { shopFeature } from '../../../shop/state/shop.feature';
   styleUrl: './schedule-cta.scss',
 })
 export class ScheduleCta {
-  private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
-
-  protected readonly phone: Signal<PhoneLinks> = this.store.selectSignal(shopFeature.selectPhoneLinks);
+  protected readonly hoursVariant: HoursListVariant = HoursListVariant.Table;
   protected readonly status: Signal<OpenStatus | null> = inject(ShopHoursService).currentOpenStatus;
 }

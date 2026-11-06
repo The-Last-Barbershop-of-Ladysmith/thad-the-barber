@@ -10,6 +10,7 @@ import {
   WEEKDAY_NAMES,
   WEEKDAY_SHORT_NAMES,
   WEEK_FROM_MONDAY,
+  toDayRuns,
   toWeekday,
   weekdaySpanLabel,
 } from '../../../shared/utils/weekday.utils';
@@ -27,10 +28,23 @@ export class ShopHoursService {
   private readonly timeZone: Signal<string | null> = this.store.selectSignal(shopFeature.selectTimeZone);
   private readonly now: WritableSignal<Date> = signal(new Date());
 
-  /** One row per open day, Monday first (so the weekend reads Sat, Sun), then one "closed" row for the rest. */
+  /**
+   * One row per open day, Monday first (so the weekend reads Sat, Sun), then one "closed" row for each run of
+   * closed days.
+   */
   readonly businessHours: Signal<HoursRow[]> = computed(
     (): HoursRow[] => this.generateOperatingHoursRows(this.hours()),
   );
+
+  /** One row for each weekday, Monday first, closed days included, with the shop's current day marked. */
+  readonly weekHours: Signal<HoursRow[]> = computed((): HoursRow[] => {
+    const timeZone: string | null = this.timeZone();
+    if (timeZone === null || this.hours().length === 0) {
+      return [];
+    }
+    const today: Weekday = weekTimeIn(timeZone, this.now()).day;
+    return WEEK_FROM_MONDAY.map((day: Weekday): HoursRow => this.toDayRow(day, day === today));
+  });
 
   readonly currentOpenStatus: Signal<OpenStatus | null> = computed((): OpenStatus | null => {
     const timeZone: string | null = this.timeZone();
@@ -87,6 +101,18 @@ export class ShopHoursService {
       .sort((a: ShopOpeningHours, b: ShopOpeningHours): number => fromTimeOfDay(a.opens) - fromTimeOfDay(b.opens));
   }
 
+  private toDayRow(day: Weekday, isToday: boolean): HoursRow {
+    const periods: ShopOpeningHours[] = this.fetchShopHoursForDay(day);
+    return {
+      label: WEEKDAY_NAMES[day],
+      shortLabel: WEEKDAY_SHORT_NAMES[day],
+      range: periods.map((period: ShopOpeningHours): string => toRange(period, false)).join(', '),
+      shortRange: periods.map((period: ShopOpeningHours): string => toRange(period, true)).join(', '),
+      isClosed: periods.length === 0,
+      isToday,
+    };
+  }
+
   private generateOperatingHoursRows(hours: ShopOpeningHours[]): HoursRow[] {
     if (hours.length === 0) {
       return [];
@@ -94,42 +120,31 @@ export class ShopHoursService {
 
     const operatingHours: HoursRow[] = WEEK_FROM_MONDAY
       .filter((day: Weekday): boolean => this.isOpenDay(day))
-      .map((day: Weekday): HoursRow => {
-        const periods: ShopOpeningHours[] = this.fetchShopHoursForDay(day);
+      .map((day: Weekday): HoursRow => this.toDayRow(day, false));
+
+    const closedRows: HoursRow[] = toDayRuns(WEEK_FROM_MONDAY.filter((day: Weekday): boolean => !this.isOpenDay(day)))
+      .map((run: Weekday[]): HoursRow => {
+        const first: Weekday = run[0] ?? Weekday.Monday;
+        const last: Weekday = run[run.length - 1] ?? first;
         return {
-          label: WEEKDAY_NAMES[day],
-          shortLabel: WEEKDAY_SHORT_NAMES[day],
-          range: periods.map((period: ShopOpeningHours): string => toRange(period, false)).join(', '),
-          shortRange: periods.map((period: ShopOpeningHours): string => toRange(period, true)).join(', '),
-          closed: false,
+          label: weekdaySpanLabel(
+            first,
+            last,
+            WEEKDAY_NAMES,
+          ),
+          shortLabel: weekdaySpanLabel(
+            first,
+            last,
+            WEEKDAY_SHORT_NAMES,
+          ),
+          range: '',
+          shortRange: '',
+          isClosed: true,
+          isToday: false,
         };
       });
 
-    const closedDays: Weekday[] = WEEK_FROM_MONDAY.filter((day: Weekday): boolean => !this.isOpenDay(day));
-    const first: Weekday | undefined = closedDays[0];
-    const last: Weekday | undefined = closedDays[closedDays.length - 1];
-    if (first === undefined || last === undefined) {
-      return operatingHours;
-    }
-
-    return [
-      ...operatingHours,
-      {
-        label: weekdaySpanLabel(
-          first,
-          last,
-          WEEKDAY_NAMES,
-        ),
-        shortLabel: weekdaySpanLabel(
-          first,
-          last,
-          WEEKDAY_SHORT_NAMES,
-        ),
-        range: 'Closed',
-        shortRange: 'Closed',
-        closed: true,
-      },
-    ];
+    return [...operatingHours, ...closedRows];
   }
 }
 

@@ -13,6 +13,10 @@ describe(
   (): void => {
     let service: ShopHoursService;
 
+    function toLine(row: HoursRow): string {
+      return row.isClosed ? `${row.label}: closed` : `${row.label}: ${row.range}`;
+    }
+
     function loadShop(): void {
       TestBed.inject(Store).dispatch(ShopActions.ShopInfoRequestSuccess({ shopInfo: TEST_SHOP }));
     }
@@ -91,10 +95,10 @@ describe(
         it(
           'lists open days then one closed row',
           (): void => {
-            expect(service.businessHours().map((row: HoursRow): string => `${row.label}: ${row.range}`)).toEqual([
+            expect(service.businessHours().map((row: HoursRow): string => toLine(row))).toEqual([
               'Saturday: 10:00 AM – 7:30 PM',
               'Sunday: 10:00 AM – 4:00 PM',
-              'Monday – Friday: Closed',
+              'Monday – Friday: closed',
             ]);
           },
         );
@@ -154,10 +158,47 @@ describe(
         it(
           'shows one row per day, Saturday before Sunday, with both periods on it',
           (): void => {
-            expect(service.businessHours().map((row: HoursRow): string => `${row.label}: ${row.range}`)).toEqual([
+            expect(service.businessHours().map((row: HoursRow): string => toLine(row))).toEqual([
               'Saturday: 9:30 AM – 12:00 PM, 1:00 PM – 7:45 PM',
               'Sunday: 10:00 AM – 4:00 PM',
-              'Monday – Friday: Closed',
+              'Monday – Friday: closed',
+            ]);
+          },
+        );
+      },
+    );
+
+    describe(
+      'with closed days that are not neighbours',
+      (): void => {
+        const midweekShop: ShopInfo = {
+          ...TEST_SHOP,
+          hours: [
+            {
+              day: Weekday.Wednesday,
+              opens: '09:00:00',
+              closes: '17:00:00',
+            },
+            {
+              day: Weekday.Saturday,
+              opens: '10:00:00',
+              closes: '14:00:00',
+            },
+          ],
+        };
+
+        beforeEach((): void => {
+          TestBed.inject(Store).dispatch(ShopActions.ShopInfoRequestSuccess({ shopInfo: midweekShop }));
+        });
+
+        it(
+          'gives each run of closed days its own row, joining Sunday to Monday',
+          (): void => {
+            expect(service.businessHours().map(toLine)).toEqual([
+              'Wednesday: 9:00 AM – 5:00 PM',
+              'Saturday: 10:00 AM – 2:00 PM',
+              'Thursday – Friday: closed',
+              'Sunday – Tuesday: closed',
             ]);
           },
         );
