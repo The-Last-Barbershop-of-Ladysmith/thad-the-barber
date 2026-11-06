@@ -1,25 +1,17 @@
 import { ChangeDetectionStrategy, Component, Signal, WritableSignal, computed, inject, signal } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { ButtonModule } from 'primeng/button';
-import { CardModule } from 'primeng/card';
 import { environment } from '../../../../../environments/environment';
 import { PhoneLinks } from '../../../../shared/models/phone-links.model';
 import { ShopAddress } from '../../../shop/models/shop-address.model';
-import { HoursList } from '../../../shop/components/hours-list/hours-list';
-import { SectionHeading } from '../../../../shared/components/section-heading/section-heading';
 import { toStaticMapUrl } from '../../utils/static-map.utils';
 import { AppState } from '../../../../store/app.state';
 import { shopFeature } from '../../../shop/state/shop.feature';
 
-/** Themed map image plus location, hours and phone details. */
+/** Street address, directions and phone buttons beside the themed map image. */
 @Component({
   selector: 'app-visit',
-  imports: [
-    ButtonModule,
-    CardModule,
-    HoursList,
-    SectionHeading,
-  ],
+  imports: [ButtonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './visit.html',
   styleUrl: './visit.scss',

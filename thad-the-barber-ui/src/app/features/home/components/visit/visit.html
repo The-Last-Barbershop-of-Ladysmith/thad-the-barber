@@ -1,63 +1,44 @@
-<section class="page-section">
-  <p-card class="w-full max-w-275">
-    <div class="panel" [class.has-map]="mapImageUrl() !== null">
-      @if (mapImageUrl(); as mapImageUrl) {
-        <a
-          data-testid="visit-map"
-          class="map"
-          [href]="directionsUrl()"
-          target="_blank"
-          rel="noopener"
-          aria-label="{{ shopName() }} · Open in Maps (opens directions in a new tab)"
-        >
-          <img
-            class="map-image"
-            [src]="mapImageUrl"
-            alt="Map of {{ shopName() }}'s location"
-            (error)="hideMap()"
-          />
-          <span class="map-label" aria-hidden="true">{{ shopName() }} · Open in Maps ↗</span>
+<section class="visit">
+  <div class="panel" [class.has-map]="mapImageUrl() !== null">
+    <div class="address">
+      <span class="eyebrow">Pull up</span>
+      @if (address(); as address) {
+        <h2 class="section-title address-title">
+          {{ address.street }}<br />
+          <span class="address-city">{{ address.city }}, {{ address.state }} {{ address.postalCode }}</span>
+        </h2>
+      }
+    </div>
+
+    @if (mapImageUrl(); as mapImageUrl) {
+      <a
+        data-testid="visit-map"
+        class="map"
+        [href]="directionsUrl()"
+        target="_blank"
+        rel="noopener"
+        aria-label="{{ shopName() }} · Open in Maps (opens directions in a new tab)"
+      >
+        <img
+          class="map-image"
+          [src]="mapImageUrl"
+          alt="Map of {{ shopName() }}'s location"
+          (error)="hideMap()"
+        />
+        <span class="map-label" aria-hidden="true">{{ shopName() }} · Open in Maps ↗</span>
+      </a>
+    }
+
+    <div class="actions">
+      @if (directionsUrl(); as directionsUrl) {
+        <a pButton data-testid="visit-directions" [href]="directionsUrl" target="_blank" rel="noopener">
+          Get directions
+          <span class="sr-only">(opens in a new tab)</span>
         </a>
       }
-
-      <div class="details">
-        <app-section-heading eyebrow="Visit us" title="Find the shop" />
-
-        <div class="facts">
-          @if (address(); as address) {
-            <div class="fact ruled">
-              <span class="field-label">Location</span>
-              <span class="leading-snug text-surface-100"
-                >{{ address.street }}<br />{{ address.city }}, {{ address.state }}
-                {{ address.postalCode }}</span
-              >
-              <a
-                pButton
-                [link]="true"
-                [href]="directionsUrl()"
-                target="_blank"
-                rel="noopener"
-                class="mt-1.5 self-start"
-              >
-                Get directions
-                <i class="pi pi-arrow-right"></i>
-                <span class="sr-only">(opens in a new tab)</span>
-              </a>
-            </div>
-          }
-
-          <div class="fact ruled">
-            <span class="field-label">Hours</span>
-            <app-hours-list variant="stacked" />
-          </div>
-
-          <div class="fact">
-            <span class="field-label">Phone</span>
-            <a [href]="phone().tel" class="nav-link phone">{{ phone().display }}</a>
-            <span class="text-sm text-muted-color">Questions? Text this number.</span>
-          </div>
-        </div>
-      </div>
+      <a pButton data-testid="visit-phone" [outlined]="true" [href]="phone().tel">
+        Call / Text {{ phone().display }}
+      </a>
     </div>
-  </p-card>
+  </div>
 </section>

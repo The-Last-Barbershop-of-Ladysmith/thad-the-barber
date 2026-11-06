@@ -71,7 +71,7 @@ describe(
 
         expect(findMap(element)).toBeNull();
         expect(element.querySelector('.panel')?.classList.contains('has-map')).toBe(false);
-        expect(element.querySelector('app-hours-list')).not.toBeNull();
+        expect(element.querySelector('[data-testid="visit-directions"]')).not.toBeNull();
       },
     );
 
@@ -81,6 +81,39 @@ describe(
         environment.staticMapApiKey = '';
 
         expect(findMap(render(TEST_SHOP).element)).toBeNull();
+      },
+    );
+
+    it(
+      'shows the street as the heading with the city line under it',
+      (): void => {
+        const { element }: { element: HTMLElement; } = render(TEST_SHOP);
+
+        expect(element.querySelector('h2')?.textContent).toContain('12 Pretend Pl');
+        expect(element.querySelector('.address-city')?.textContent).toContain('Faketown, HI 96999-0001');
+      },
+    );
+
+    it(
+      'opens directions in a new tab from the Get directions button',
+      (): void => {
+        const button: HTMLAnchorElement | null = render(TEST_SHOP).element
+          .querySelector<HTMLAnchorElement>('[data-testid="visit-directions"]');
+
+        expect(button?.getAttribute('href')).toContain('https://www.google.com/maps/dir/?api=1&destination=');
+        expect(button?.getAttribute('target')).toBe('_blank');
+        expect(button?.getAttribute('rel')).toContain('noopener');
+      },
+    );
+
+    it(
+      'calls the shop from a button whose text is the number',
+      (): void => {
+        const button: HTMLAnchorElement | null = render(TEST_SHOP).element
+          .querySelector<HTMLAnchorElement>('[data-testid="visit-phone"]');
+
+        expect(button?.getAttribute('href')).toMatch(/^tel:\+\d+$/);
+        expect(button?.textContent).toMatch(/\(\d{3}\) \d{3}-\d{4}/);
       },
     );
   },
