@@ -1,18 +1,23 @@
 @switch (variant()) {
-  @case ('table') {
+  @case (HoursListVariant.Table) {
     <dl class="table">
-      @for (hourEntry of shopHoursEntries(); track hourEntry.label) {
-        <div class="table-row" [class.closed]="hourEntry.closed">
-          <dt class="day">{{ hourEntry.label }}</dt>
-          <dd class="hours">{{ hourEntry.range }}</dd>
+      @for (hourEntry of weekHoursEntries(); track hourEntry.label) {
+        <div class="table-row" [class.closed]="hourEntry.isClosed" [class.today]="hourEntry.isToday">
+          <dt class="day">
+            {{ hourEntry.label }}
+            @if (hourEntry.isToday) {
+              <span class="today-badge">Today</span>
+            }
+          </dt>
+          <dd class="hours">{{ hourEntry.isClosed ? 'Closed' : hourEntry.range }}</dd>
         </div>
       }
     </dl>
   }
-  @case ('stacked') {
+  @case (HoursListVariant.Stacked) {
     <div class="stack gap-1">
       @for (hourEntry of shopHoursEntries(); track hourEntry.label) {
-        @if (hourEntry.closed) {
+        @if (hourEntry.isClosed) {
           <span class="text-sm text-muted-color">Closed {{ hourEntry.label }}</span>
         } @else {
           <span class="font-semibold text-color">
@@ -22,10 +27,10 @@
       }
     </div>
   }
-  @case ('compact') {
+  @case (HoursListVariant.Compact) {
     <div class="compact">
       @for (hourEntry of shopHoursEntries(); track hourEntry.label) {
-        @if (hourEntry.closed) {
+        @if (hourEntry.isClosed) {
           <span class="text-sm text-muted-color">Closed {{ hourEntry.shortLabel }}</span>
         } @else {
           <span class="text-surface-100">

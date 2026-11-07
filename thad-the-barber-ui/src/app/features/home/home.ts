@@ -6,7 +6,7 @@ import { AnnouncementsCarousel } from '../announcements/components/announcements
 import { Gallery } from './components/gallery/gallery';
 import { Hero } from './components/hero/hero';
 import { NextTimes } from './components/next-times/next-times';
-import { ScheduleCta } from './components/schedule-cta/schedule-cta';
+import { Hours } from './components/hours/hours';
 import { ScrollRail } from './components/scroll-rail/scroll-rail';
 import { Testimonials } from './components/testimonials/testimonials';
 import { Visit } from './components/visit/visit';
@@ -20,7 +20,7 @@ import * as HomeActions from './state/home.actions';
     Hero,
     AnnouncementsCarousel,
     NextTimes,
-    ScheduleCta,
+    Hours,
     ScrollRail,
     Visit,
     Testimonials,
@@ -28,6 +28,7 @@ import * as HomeActions from './state/home.actions';
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './home.html',
+  styleUrl: './home.scss',
 })
 export class Home implements OnInit, OnDestroy {
   private readonly store: Store<AppState> = inject<Store<AppState>>(Store);

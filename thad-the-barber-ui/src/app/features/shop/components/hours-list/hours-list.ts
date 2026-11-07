@@ -1,12 +1,11 @@
 import { ChangeDetectionStrategy, Component, InputSignal, Signal, inject, input } from '@angular/core';
+import { HoursListVariant } from '../../models/hours-list-variant.model';
 import { HoursRow } from '../../models/hours-row.model';
 import { ShopHoursService } from '../../services/shop-hours.service';
 
-export type HoursListVariant = 'table' | 'stacked' | 'compact';
-
 /**
  * Opening hours in the three shapes the wireframe uses:
- * - `table`:   ruled rows, full day names and times (schedule section)
+ * - `table`:   one ruled row per weekday, today marked and closed days dimmed (schedule section)
  * - `stacked`: "Saturday · 10 AM – 7 PM" lines (visit section)
  * - `compact`: short labels in the footer
  */
@@ -17,6 +16,9 @@ export type HoursListVariant = 'table' | 'stacked' | 'compact';
   styleUrl: './hours-list.scss',
 })
 export class HoursList {
-  readonly variant: InputSignal<HoursListVariant> = input<HoursListVariant>('table');
-  protected readonly shopHoursEntries: Signal<HoursRow[]> = inject(ShopHoursService).businessHours;
+  protected readonly HoursListVariant: typeof HoursListVariant = HoursListVariant;
+  readonly variant: InputSignal<HoursListVariant> = input<HoursListVariant>(HoursListVariant.Table);
+  private readonly shopHoursService: ShopHoursService = inject(ShopHoursService);
+  protected readonly shopHoursEntries: Signal<HoursRow[]> = this.shopHoursService.businessHours;
+  protected readonly weekHoursEntries: Signal<HoursRow[]> = this.shopHoursService.weekHours;
 }

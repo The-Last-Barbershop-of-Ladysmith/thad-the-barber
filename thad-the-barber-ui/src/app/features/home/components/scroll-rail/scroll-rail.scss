@@ -43,6 +43,12 @@
 @media (min-width: 48rem) {
   .rail {
     display: flex;
+    right: 0rem;
+  }
+}
+
+@media (min-width: 96rem) {
+  .rail {
     right: 1.5rem;
   }
 }

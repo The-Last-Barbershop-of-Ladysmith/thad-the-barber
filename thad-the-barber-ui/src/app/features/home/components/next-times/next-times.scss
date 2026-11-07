@@ -1,18 +1,10 @@
 .chair {
   position: relative;
-  padding: 3.5rem 1rem;
-  background: linear-gradient(
-    90deg,
-    rgb(12 8 6 / 0.95) 0%,
-    rgb(12 8 6 / 0.85) 55%,
-    rgb(12 8 6 / 0.4) 100%
-  );
+  padding-block: 3.5rem;
 
   .inner {
     display: grid;
     gap: 1.125rem;
-    max-width: 80rem;
-    margin-inline: auto;
   }
 
   .slots {
@@ -74,7 +66,7 @@
   }
 
   @media (min-width: 64rem) {
-    padding: 6.5rem clamp(1rem, 4vw, 3rem);
+    padding-block: 6.5rem;
 
     .inner {
       grid-template-columns: 1fr auto;

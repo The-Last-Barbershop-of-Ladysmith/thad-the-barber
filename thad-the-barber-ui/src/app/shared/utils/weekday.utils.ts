@@ -56,3 +56,30 @@ export function weekdaySpanLabel(
 ): string {
   return first === last ? names[first] : `${names[first]} – ${names[last]}`;
 }
+
+/**
+ * Groups days into runs of neighbours in a week that wraps from Sunday to Monday, so closed Mon and Wed are two
+ * runs and closed Sat, Sun and Mon are one. Each run is in week order, starting at its first day.
+ */
+export function toDayRuns(days: readonly Weekday[]): Weekday[][] {
+  const firstRunStart: Weekday | undefined = WEEK_FROM_MONDAY.find(
+    (day: Weekday): boolean => days.includes(day) && !days.includes(toWeekday(day - 1)),
+  );
+  if (firstRunStart === undefined) {
+    return days.length === 0 ? [] : [[...WEEK_FROM_MONDAY]];
+  }
+  const runs: Weekday[][] = [];
+  for (let offset: number = 0; offset < 7; offset++) {
+    const day: Weekday = toWeekday(firstRunStart + offset);
+    if (!days.includes(day)) {
+      continue;
+    }
+    const lastRun: Weekday[] | undefined = runs.at(-1);
+    if (lastRun !== undefined && days.includes(toWeekday(day - 1))) {
+      lastRun.push(day);
+    } else {
+      runs.push([day]);
+    }
+  }
+  return runs;
+}

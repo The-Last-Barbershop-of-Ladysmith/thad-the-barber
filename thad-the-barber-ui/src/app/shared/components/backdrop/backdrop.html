@@ -1,8 +1,3 @@
 <div class="backdrop" aria-hidden="true">
-  @if (mode() === 'scroll') {
-    <canvas #canvas class="canvas"></canvas>
-  } @else {
-    <img [src]="keyframes[still()]" alt="" class="still" />
-    <div class="wash"></div>
-  }
+  <canvas #canvas class="canvas"></canvas>
 </div>

@@ -103,7 +103,7 @@ src/
     └── features/
         ├── home/
         │   ├── home.ts / home.html / home.routes.ts
-        │   ├── components/         # hero, announcements, sms-signup, schedule-cta, visit, testimonials, gallery
+        │   ├── components/         # hero, announcements, sms-signup, hours, visit, testimonials, gallery
         │   ├── data/  models/  services/
         │   └── state/              # home.state, home.actions, home.feature, home.effects
         └── booking/

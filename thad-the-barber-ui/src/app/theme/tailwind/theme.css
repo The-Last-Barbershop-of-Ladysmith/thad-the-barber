@@ -238,6 +238,14 @@
 }
 
 /*
+ * Side padding of the header, the hero and every home section: the mock's 4vw gutter (16px to 48px), or more once the
+ * screen is wider than 80rem, which centres their content in one column so all their edges line up.
+ */
+@utility site-gutter {
+  padding-inline: max(clamp(1rem, 4vw, 3rem), calc((100% - 80rem) / 2));
+}
+
+/*
  * A page's content column below the fixed header, with its blocks stacked. It shares the footer's width and gutters
  * (`--p-brand-page-width`, `--p-brand-page-gutter`), so their edges line up at every width; pages set no width or
  * padding of their own.

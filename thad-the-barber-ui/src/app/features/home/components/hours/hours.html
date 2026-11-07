@@ -1,0 +1,14 @@
+<section class="schedule site-gutter">
+  <div class="inner">
+    <div class="heading">
+      <app-section-heading eyebrow="Hours" title="When the chair's open" />
+      @if (status(); as status) {
+        <div class="status" [class.open]="status.isOpen">
+          <span class="status-dot"></span>
+          <span>{{ status.label }}</span>
+        </div>
+      }
+    </div>
+    <app-hours-list [variant]="hoursVariant" />
+  </div>
+</section>
