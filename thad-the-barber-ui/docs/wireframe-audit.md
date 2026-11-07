@@ -60,7 +60,7 @@ Every hard-coded value in the wireframe was collected and grouped into PrimeNG t
 | `rgba(244,230,216,.06)` | Input fill | `formField.background` |
 | `rgba(232,144,74,.14)` / `.4` | "You're on the list" notice | `highlight.background`, `message.info.*` |
 | `rgba(8,5,3,.92)` | Lightbox mask | `mask.background` |
-| `linear-gradient(180deg, rgba(13,8,5,.92)…0)` | Fixed header fade | `brand.headerFade` |
+| `rgba(12,8,6,.94)` + `rgba(232,144,74,.12)` | Fixed header bar and its bottom line | `brand.header.background`, `brand.header.borderColor` |
 | `linear-gradient(100deg, #0d0805, #2a1a0e 30%, #E8904A 65%, #F4B46E)` | CTA sweep | `brand.ctaGradient` |
 | `0 16px 36px -10px rgba(232,144,74,.8)` | CTA hover glow | `brand.ctaGlow` |
 | `cubic-bezier(.2,.8,.2,1)` | Hover motion | `brand.ease` |
@@ -111,7 +111,6 @@ These are repeated wireframe patterns that aren't PrimeNG components.
 | `field-label` | Muted uppercase labels | 5 |
 | `nav-link` | Link hover to `#F4B46E` | 20+ |
 | `glass`, `glass-strong` | Frosted containers that aren't cards (footer) | 1 (cards cover the rest) |
-| `header-fade` | Fixed header gradient | 2 (site + booking) |
 | `photo-frame`, `photo-mat` | Gallery lightbox | 16 |
 | `media-placeholder` | Striped "[ photo — … ]" wells | 2 |
 | Colors `text-mint`, `border-divider`, `bg-ink` | Status, dividers, deep fills | many |

@@ -281,11 +281,6 @@
   -webkit-backdrop-filter: blur(var(--p-brand-glass-blur));
 }
 
-/* Fixed header gradient fade */
-@utility header-fade {
-  background: var(--p-brand-header-fade);
-}
-
 /* Gallery print: black frame around a cream mat */
 @utility photo-frame {
   background: #000;

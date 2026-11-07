@@ -1,8 +1,8 @@
 <div class="top">
   <app-announcement-strip />
-  <header class="header-fade bar site-gutter pt-3.5 pb-9 md:pt-5.5 md:pb-14">
+  <header class="bar site-gutter py-2.5 md:py-3.5">
     <a routerLink="/" class="home-link" (click)="closeMenu()">
-      <img src="assets/logo.png" [alt]="shopName()" class="logo drop-shadow-logo h-9 md:h-12" />
+      <img src="assets/logo.png" [alt]="shopName()" class="logo h-9 md:h-11" />
     </a>
 
     @if (onBookingPage()) {
@@ -10,18 +10,25 @@
         <i class="pi pi-arrow-left text-sm"></i> Back to site
       </a>
     } @else {
-      <nav class="section-nav hidden md:flex" aria-label="Page sections" data-testid="header-nav">
+      <nav class="section-nav hidden lg:flex" aria-label="Page sections" data-testid="header-nav">
         @for (item of sections(); track item.fragment) {
           <a routerLink="/" [fragment]="item.fragment" class="nav-link bar-link">{{ item.label }}</a>
         }
       </nav>
+      <div class="actions hidden lg:flex">
+        <a [href]="phone().tel" class="nav-link phone-link hidden xl:flex" data-testid="header-phone">
+          <i class="pi pi-phone"></i>
+          {{ phone().display }}
+        </a>
+        <a pButton size="small" routerLink="/book" data-testid="header-book">Book a cut</a>
+      </div>
       <button
         pButton
         type="button"
         severity="secondary"
         [rounded]="true"
         [iconOnly]="true"
-        class="menu-toggle md:hidden"
+        class="menu-toggle lg:hidden"
         data-testid="menu-toggle"
         aria-label="Open menu"
         [attr.aria-expanded]="menuOpen()"

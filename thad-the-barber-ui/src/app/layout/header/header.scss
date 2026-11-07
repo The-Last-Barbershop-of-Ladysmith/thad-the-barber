@@ -1,15 +1,12 @@
 // Padding, logo height and nav/menu visibility change per breakpoint, so they stay inline
 // as md: utilities; component SCSS would otherwise override them at every width.
 
-// The announcement strip and the bar, fixed together so the bar sits below the strip when there is one. Its pointer
-// events are off so the page underneath the bar's fade stays clickable; the strip, logo, links and menu button
-// opt back in.
+// The announcement strip and the bar, fixed together so the bar sits below the strip when there is one.
 .top {
   position: fixed;
   inset-inline: 0;
   top: 0;
   z-index: 20;
-  pointer-events: none;
 }
 
 .bar {
@@ -17,13 +14,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-
-  .home-link,
-  .bar-link,
-  .section-nav,
-  .menu-toggle {
-    pointer-events: auto;
-  }
+  border-bottom: 1px solid var(--p-brand-header-border-color);
+  background: var(--p-brand-header-background);
 
   .home-link {
     display: block;
@@ -36,21 +28,42 @@
   }
 
   .bar-link {
-    font-size: 0.9375rem;
-    font-weight: 600;
-    text-shadow: 0 1px 8px rgb(0 0 0 / 0.8);
+    --link-color: var(--p-text-muted-color);
+
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    white-space: nowrap;
 
     &.back-link {
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      white-space: nowrap;
     }
   }
 
   .section-nav {
     flex-wrap: wrap;
-    gap: 1.625rem;
+    gap: 0.5rem 1.75rem;
+  }
+
+  .actions {
+    align-items: center;
+    gap: 1.25rem;
+
+    .phone-link {
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8125rem;
+      font-weight: 700;
+      white-space: nowrap;
+
+      .pi {
+        font-size: 0.875rem;
+        color: var(--p-primary-color);
+      }
+    }
   }
 }
 

@@ -153,7 +153,7 @@ Brand values PrimeNG has no slot for (glass background, CTA glow, dividers, the 
 - Radii: `rounded-control`, `rounded-tile`, `rounded-panel`
 - Type: `eyebrow`, `display-title`, `section-title`, `lead`, `body-copy`, `small-print`, `field-label`, `rich-text` (Syne for headings, Plus Jakarta Sans for the rest, self-hosted from `@fontsource-variable`)
 - Links: `nav-link` (menus and lists), `inline-link` (inside running text), `external-link` (adds the `pi-external-link` icon to a link that opens a new tab; its markup still adds a `sr-only` "(opens in a new tab)")
-- Surfaces: `glass`, `glass-strong`, `header-fade`, `photo-frame`, `photo-mat`, `media-placeholder`
+- Surfaces: `glass`, `glass-strong`, `photo-frame`, `photo-mat`, `media-placeholder`
 
 The layer order in `styles.css` (`theme, base, primeng, components, utilities`) lets Tailwind utilities override PrimeNG styles without `!important`.
 
