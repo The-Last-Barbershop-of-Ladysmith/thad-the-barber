@@ -1,3 +1,4 @@
+import { DOCUMENT, ViewportScroller } from '@angular/common';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import {
   ApplicationConfig,
@@ -24,6 +25,7 @@ import { metaReducers } from './store/meta/meta.reducers';
 import * as shopEffects from './features/shop/state/shop.effects';
 import { shopFeature } from './features/shop/state/shop.feature';
 import { homeFeature } from './features/home/state/home.feature';
+import { toHeaderScrollOffset } from './shared/utils/scroll-offset.utils';
 import { ThadPreset, themeOptions } from './theme';
 import { provideClientHydration } from '@angular/platform-browser';
 
@@ -63,6 +65,10 @@ export const appConfig: ApplicationConfig = {
     // PrimeNG injects its theme styles at runtime, so they need the page's CSP nonce (from ngCspNonce in index.html).
     provideEnvironmentInitializer((): void => {
       inject(PrimeNG).csp.set({ nonce: inject(CSP_NONCE) ?? undefined });
+    }),
+    provideEnvironmentInitializer((): void => {
+      const document: Document = inject(DOCUMENT);
+      inject(ViewportScroller).setOffset((): [number, number] => toHeaderScrollOffset(document));
     }),
     provideClientHydration(),
     MessageService,

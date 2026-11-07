@@ -11,7 +11,7 @@ export const primitive: TokenSection = {
     xs: '2px', // gallery photo frame
     sm: '4px',
     md: '10px', // buttons, inputs, notices
-    lg: '14px', // testimonial tiles, media
+    lg: '14px', // media
     xl: '18px', // glass panels, modals
   },
 

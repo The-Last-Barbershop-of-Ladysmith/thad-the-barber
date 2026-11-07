@@ -1,0 +1,66 @@
+@if (announcements().length > 0 && !isClosed()) {
+  <div
+    class="strip site-gutter"
+    data-testid="announcement-strip"
+    (pointerenter)="rotation.hold()"
+    (pointerleave)="rotation.release()"
+  >
+    <div class="message">
+      <span class="tag">Shop update</span>
+      <div class="items crossfade-stack">
+        @for (announcement of announcements(); track $index; let i = $index) {
+          @let isShown = i === rotation.shownIndex();
+          <div
+            class="item crossfade-item"
+            [class.is-shown]="isShown"
+            [class.is-leaving]="i === rotation.leavingIndex()"
+            [attr.aria-hidden]="isShown ? null : 'true'"
+            [attr.inert]="isShown ? null : ''"
+          >
+            <span class="title">{{ announcement.title }}</span>
+            <a
+              class="inline-link details"
+              routerLink="/"
+              fragment="announcements"
+              [attr.aria-label]="'Details about: ' + announcement.title"
+              (click)="showInCarousel(i)"
+              >Details →</a
+            >
+          </div>
+        }
+      </div>
+    </div>
+    <div class="controls">
+      @if (announcements().length > 1) {
+        <button
+          pButton
+          type="button"
+          severity="secondary"
+          size="small"
+          [text]="true"
+          [rounded]="true"
+          [iconOnly]="true"
+          [attr.aria-label]="rotation.isPaused() ? 'Resume announcements' : 'Pause announcements'"
+          data-testid="announcement-strip-pause"
+          (click)="rotation.togglePause()"
+        >
+          <i class="pi" [class.pi-pause]="!rotation.isPaused()" [class.pi-play]="rotation.isPaused()"></i>
+        </button>
+      }
+      <button
+        pButton
+        type="button"
+        severity="secondary"
+        size="small"
+        [text]="true"
+        [rounded]="true"
+        [iconOnly]="true"
+        aria-label="Close announcement banner"
+        data-testid="announcement-strip-close"
+        (click)="close()"
+      >
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+  </div>
+}

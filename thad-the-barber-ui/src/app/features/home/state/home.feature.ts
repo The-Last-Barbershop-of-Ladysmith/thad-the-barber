@@ -1,5 +1,6 @@
 import { MemoizedSelector, createFeature, createSelector } from '@ngrx/store';
 import { HOME_SECTIONS } from '../../../core/config/shop-info';
+import { HomeSection } from '../../../shared/models/home-section.model';
 import { NavItem } from '../../../shared/models/nav-item.model';
 import { FeatureSelectors } from '../../../shared/models/ngrx.models';
 import { RequestStatus } from '../../../shared/models/request.models';
@@ -83,9 +84,12 @@ function toHomeSections(
   gallery: GalleryPhoto[],
 ): readonly NavItem[] {
   const hidesGallery: boolean = isSettledEmpty(galleryStatus, gallery.length);
-  return HOME_SECTIONS.filter((section: NavItem): boolean => {
-    const isHiddenAnnouncements: boolean = section.fragment === 'announcements' && isAnnouncementsHidden;
-    const isHiddenGallery: boolean = section.fragment === 'gallery' && hidesGallery;
-    return !isHiddenAnnouncements && !isHiddenGallery;
-  });
+  const hiddenFragments: string[] = [];
+  if (isAnnouncementsHidden) {
+    hiddenFragments.push(HomeSection.Announcements);
+  }
+  if (hidesGallery) {
+    hiddenFragments.push(HomeSection.Gallery);
+  }
+  return HOME_SECTIONS.filter((section: NavItem): boolean => !hiddenFragments.includes(section.fragment));
 }

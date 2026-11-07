@@ -12,9 +12,10 @@ import { HomeState, initialHomeState } from './home.state';
 const ALL_SECTIONS: string[] = HOME_SECTIONS.map((section: NavItem): string => section.fragment);
 
 const WITHOUT_STORAGE_CONTENT: string[] = [
-  'schedule',
+  'chair',
+  'hours',
+  'reviews',
   'visit',
-  'testimonials',
 ];
 
 describe(
@@ -32,6 +33,7 @@ describe(
         },
       ],
       loadStatus: RequestStatus.Success,
+      shownIndex: 0,
     };
 
     function fragments(home: HomeState, announcements: AnnouncementsState): string[] {

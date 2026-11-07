@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject } from '@
 import { AppState } from '../../store/app.state';
 import { Store } from '@ngrx/store';
 import { Backdrop, BackdropAnchor } from '../../shared/components/backdrop/backdrop';
+import { HomeSection } from '../../shared/models/home-section.model';
 import { AnnouncementsCarousel } from '../announcements/components/announcements-carousel/announcements-carousel';
 import { Gallery } from './components/gallery/gallery';
 import { Hero } from './components/hero/hero';
@@ -33,15 +34,17 @@ import * as HomeActions from './state/home.actions';
 export class Home implements OnInit, OnDestroy {
   private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
 
+  protected readonly sections: typeof HomeSection = HomeSection;
+
   /** Where each backdrop keyframe lands, as in the wireframe; `#chair` is in the slot of its removed "services". */
   protected readonly backdropAnchors: readonly BackdropAnchor[] = [
     'app-hero',
-    '#announcements',
-    '#chair',
-    '#schedule',
-    '#visit',
-    '#testimonials',
-    '#gallery',
+    `#${HomeSection.OpenTimes}`,
+    `#${HomeSection.Hours}`,
+    `#${HomeSection.Announcements}`,
+    `#${HomeSection.Gallery}`,
+    `#${HomeSection.Reviews}`,
+    `#${HomeSection.Visit}`,
     'app-footer',
   ];
 

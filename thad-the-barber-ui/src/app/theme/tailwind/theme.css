@@ -32,7 +32,6 @@
 @layer base {
   html {
     scroll-behavior: smooth;
-    scroll-padding-top: 5rem;
   }
 
   body {
@@ -52,6 +51,38 @@
 }
 
 /* ---- Typography ---------------------------------------------------------- */
+
+/* Children stacked in one grid cell, so the tallest sets the height. Pair with `crossfade-item` on each child. */
+@utility crossfade-stack {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/*
+ * One of a crossfade-stack: waits below, rises in when `is-shown` is set, and lifts away when it was just shown.
+ * Set `--crossfade-lift` and `--crossfade-duration` on the stack.
+ */
+@utility crossfade-item {
+  grid-area: 1 / 1;
+  opacity: 0;
+  transform: translateY(var(--crossfade-lift));
+  transition:
+    opacity var(--crossfade-duration) var(--p-brand-ease),
+    transform var(--crossfade-duration) var(--p-brand-ease);
+
+  &.is-shown {
+    opacity: 1;
+    transform: none;
+  }
+
+  &.is-leaving:not(.is-shown) {
+    transform: translateY(calc(var(--crossfade-lift) * -1));
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
 
 /* Small copper label above headings: "VISIT US", "TESTIMONIALS" */
 @utility eyebrow {
@@ -79,12 +110,17 @@
 @utility page-title {
   margin: 0;
   font-family: var(--p-font-family-display);
-  font-size: clamp(2.25rem, 5vw, 4.25rem);
+  /* On phones the width of the screen decides, so the longest title word ("APPOINTMENT") fits at 320px. */
+  font-size: clamp(1.25rem, 6.2vw, 2.5rem);
   line-height: 0.95;
   font-weight: 800;
   text-transform: uppercase;
   text-wrap: balance;
   color: var(--p-text-color);
+
+  @media (min-width: 48rem) {
+    font-size: clamp(2.25rem, 5vw, 4.25rem);
+  }
 }
 
 /* Section headings */
@@ -228,21 +264,25 @@
   flex-direction: column;
 }
 
-/* Full-height home section that centers its panel below the fixed header */
-@utility page-section {
-  display: flex;
-  min-height: 100svh;
-  align-items: center;
-  justify-content: center;
-  padding: 7rem 1.5rem 4rem;
-}
-
 /*
  * Side padding of the header, the hero and every home section: the mock's 4vw gutter (16px to 48px), or more once the
  * screen is wider than 80rem, which centres their content in one column so all their edges line up.
  */
 @utility site-gutter {
   padding-inline: max(clamp(1rem, 4vw, 3rem), calc((100% - 80rem) / 2));
+}
+
+/*
+ * Vertical padding of a home section, taller from 48rem. A section that differs from the default sets
+ * `--section-padding` (below 48rem) or `--section-padding-lg` (from 48rem) on itself.
+ */
+@utility site-section {
+  position: relative;
+  padding-block: var(--section-padding, 3.5rem);
+
+  @media (min-width: 48rem) {
+    padding-block: var(--section-padding-lg, 5.5rem);
+  }
 }
 
 /*
@@ -262,36 +302,6 @@
 }
 
 /* ---- Surfaces ------------------------------------------------------------ */
-
-/* Frosted panel for non-card containers (the p-card token override covers cards) */
-@utility glass {
-  background: var(--p-brand-glass-background);
-  border: 1px solid var(--p-content-border-color);
-  border-radius: var(--p-border-radius-xl);
-  backdrop-filter: blur(var(--p-brand-glass-blur));
-  -webkit-backdrop-filter: blur(var(--p-brand-glass-blur));
-}
-
-/* Denser frosted panel: footer */
-@utility glass-strong {
-  background: var(--p-brand-glass-strong-background);
-  border: 1px solid var(--p-content-border-color);
-  border-radius: var(--p-border-radius-xl);
-  backdrop-filter: blur(var(--p-brand-glass-blur));
-  -webkit-backdrop-filter: blur(var(--p-brand-glass-blur));
-}
-
-/* Quieter nested surface: testimonial tiles */
-@utility tile {
-  background: var(--p-brand-tile-background);
-  border: 1px solid var(--p-brand-tile-border-color);
-  border-radius: var(--p-border-radius-lg);
-}
-
-/* Fixed header gradient fade */
-@utility header-fade {
-  background: var(--p-brand-header-fade);
-}
 
 /* Gallery print: black frame around a cream mat */
 @utility photo-frame {

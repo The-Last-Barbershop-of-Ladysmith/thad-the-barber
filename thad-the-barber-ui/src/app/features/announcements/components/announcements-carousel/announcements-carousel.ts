@@ -1,9 +1,16 @@
-import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, Signal, inject } from '@angular/core';
+import { DatePipe, DecimalPipe } from '@angular/common';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  EffectCleanupRegisterFn,
+  Signal,
+  computed,
+  effect,
+  inject,
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { ButtonModule } from 'primeng/button';
-import { CardModule } from 'primeng/card';
 import { CarouselModule } from 'primeng/carousel';
 import { ButtonStyle, ButtonVariant } from '../../../../shared/models/button.models';
 import { LinkKind } from '../../../../shared/models/link.models';
@@ -11,11 +18,13 @@ import { BUTTON_STYLES } from '../../../../shared/utils/button.utils';
 import { linkKind } from '../../../../shared/utils/link.utils';
 import { Announcement } from '../../models/announcement.model';
 import { AnnouncementImagePosition } from '../../models/announcement-image-position.model';
+import * as AnnouncementsActions from '../../state/announcements.actions';
 import { announcementsFeature } from '../../state/announcements.feature';
 import { AppState } from '../../../../store/app.state';
 
 /**
- * Full-height slider (PrimeNG composable carousel; swipe, arrows and dots are built in) of today's announcements.
+ * Slider (PrimeNG composable carousel; swipe, arrows and bars are built in) of today's announcements: the text, then
+ * its image on the right on wide screens and below on phones, unless the announcement asks for it on the left.
  * Renders nothing without announcements (BR-32). Links to this site's own pages, in the body or on a button, go
  * through the Router.
  */
@@ -23,8 +32,8 @@ import { AppState } from '../../../../store/app.state';
   selector: 'app-announcements-carousel',
   imports: [
     DatePipe,
+    DecimalPipe,
     ButtonModule,
-    CardModule,
     CarouselModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -37,12 +46,49 @@ export class AnnouncementsCarousel {
   private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
 
   protected readonly announcements: Signal<Announcement[]> = this.store.selectSignal(
-    announcementsFeature.selectActive,
+    announcementsFeature.selectActiveNewestFirst,
   );
 
   protected readonly linkKinds: typeof LinkKind = LinkKind;
   protected readonly imagePositions: typeof AnnouncementImagePosition = AnnouncementImagePosition;
   protected readonly buttonStyles: Readonly<Record<ButtonVariant, ButtonStyle>> = BUTTON_STYLES;
+  private readonly jumpSettleMs: number = 1200;
+  private reportedIndex: number = 0;
+  private isJumping: boolean = false;
+  private readonly storedShownIndex: Signal<number> = this.store.selectSignal(announcementsFeature.selectShownIndex);
+
+  protected readonly shownIndex: Signal<number> = computed(
+    (): number => Math.min(this.storedShownIndex(), this.announcements().length - 1),
+  );
+
+  /**
+   * While the carousel scrolls to a slide the strip chose, it reports the slides it passes, starting with the one it
+   * left; those reports are ignored, or they would scroll it back.
+   */
+  constructor() {
+    effect((onCleanup: EffectCleanupRegisterFn): void => {
+      const index: number = this.shownIndex();
+      if (index === this.reportedIndex) {
+        return;
+      }
+      this.reportedIndex = index;
+      this.isJumping = true;
+      const settleTimerId: ReturnType<typeof setTimeout> = setTimeout((): void => {
+        this.isJumping = false;
+      }, this.jumpSettleMs);
+      onCleanup((): void => {
+        clearTimeout(settleTimerId);
+      });
+    });
+  }
+
+  protected showSlide(index: number): void {
+    if (this.isJumping) {
+      return;
+    }
+    this.reportedIndex = index;
+    this.store.dispatch(AnnouncementsActions.AnnouncementShown({ index }));
+  }
 
   /** A plain click on an `/…` link routes in the app without a reload; modified clicks keep the browser's behavior. */
   protected followInternalLink(event: MouseEvent): void {

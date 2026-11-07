@@ -43,7 +43,7 @@ describe(
         expect(css).toContain('--p-focus-ring-color:var(--p-primary-color);');
         expect(css).toContain('--p-primary-color:var(--p-copper-500);');
         expect(css).toContain('--p-text-color:var(--p-espresso-50);');
-        expect(css).toContain('--p-brand-glass-background:color-mix(in srgb, var(--p-ink) 76%, transparent);');
+        expect(css).toContain('--p-brand-glass-strong-background:color-mix(in srgb, var(--p-ink) 86%, transparent);');
       },
     );
 

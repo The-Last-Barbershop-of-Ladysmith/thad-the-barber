@@ -52,16 +52,15 @@ Every hard-coded value in the wireframe was collected and grouped into PrimeNG t
 
 | Wireframe value | Used for | Token |
 | --- | --- | --- |
-| `rgba(13,8,5,.74–.76)` + `blur(12px)` | Section panels | `content.background`, `brand.glass.background`, `brand.glass.blur` |
-| `rgba(13,8,5,.86)` | Footer panel | `brand.glass.strongBackground` |
+| `rgba(13,8,5,.74–.76)` + `blur(12px)` | Section panels | `content.background`, `brand.glass.blur` |
+| `rgba(13,8,5,.86)` | Card, dialog and drawer panels | `brand.glass.strongBackground` |
 | `rgba(232,144,74,.22)` | Panel border | `content.borderColor` |
 | `rgba(232,144,74,.15)` | Row dividers | `brand.divider` |
-| `rgba(232,144,74,.18)` + `rgba(244,230,216,.04)` | Testimonial tiles | `brand.tile.borderColor`, `brand.tile.background` |
 | `rgba(232,144,74,.45)` | Input border | `formField.borderColor` |
 | `rgba(244,230,216,.06)` | Input fill | `formField.background` |
 | `rgba(232,144,74,.14)` / `.4` | "You're on the list" notice | `highlight.background`, `message.info.*` |
 | `rgba(8,5,3,.92)` | Lightbox mask | `mask.background` |
-| `linear-gradient(180deg, rgba(13,8,5,.92)…0)` | Fixed header fade | `brand.headerFade` |
+| `rgba(12,8,6,.94)` + `rgba(232,144,74,.12)` | Fixed header bar and its bottom line | `brand.header.background`, `brand.header.borderColor` |
 | `linear-gradient(100deg, #0d0805, #2a1a0e 30%, #E8904A 65%, #F4B46E)` | CTA sweep | `brand.ctaGradient` |
 | `0 16px 36px -10px rgba(232,144,74,.8)` | CTA hover glow | `brand.ctaGlow` |
 | `cubic-bezier(.2,.8,.2,1)` | Hover motion | `brand.ease` |
@@ -74,7 +73,7 @@ Values under `semantic.extend.brand` become `--p-brand-*` CSS variables. This wa
 | --- | --- | --- | --- |
 | `2px` | Photo frame | `borderRadius.xs` | none |
 | `10px` | Buttons, inputs, notices | `borderRadius.md` | `rounded-control` |
-| `12px` / `14px` | Media / testimonial tiles (merged) | `borderRadius.lg` | `rounded-tile` |
+| `12px` / `14px` | Media tiles | `borderRadius.lg` | `rounded-tile` |
 | `18px` | Glass panels, modals | `borderRadius.xl` | `rounded-panel` |
 | `50%` | Arrow, dot and social buttons | `pButton [rounded]` / carousel tokens | `rounded-full` |
 
@@ -111,10 +110,7 @@ These are repeated wireframe patterns that aren't PrimeNG components.
 | `lead`, `body-copy` | Intro and panel paragraphs | 6 |
 | `field-label` | Muted uppercase labels | 5 |
 | `nav-link` | Link hover to `#F4B46E` | 20+ |
-| `glass`, `glass-strong` | Frosted containers that aren't cards (footer) | 1 (cards cover the rest) |
-| `tile` | Testimonial cards | 4 |
-| `header-fade` | Fixed header gradient | 2 (site + booking) |
-| `photo-frame`, `photo-mat` | Gallery prints + lightbox | 16 |
+| `photo-frame`, `photo-mat` | Gallery lightbox | 16 |
 | `media-placeholder` | Striped "[ photo — … ]" wells | 2 |
 | Colors `text-mint`, `border-divider`, `bg-ink` | Status, dividers, deep fills | many |
 
@@ -135,7 +131,7 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 | Glass circle buttons (slider ←/→, social icons, hamburger) | 5 | `pButton severity="secondary" [rounded]` | `button.ts` | Secondary tokens re-skinned as glass |
 | "Get directions →" | 2 | `pButton [link]` | `button.ts` | |
 | Frosted section panels | 6 | `p-card` | `card.ts` | Border and backdrop blur via `css` |
-| Announcement slider, swipe, arrows, dots | 1 | `p-carousel` (PrimeNG 22 composable API) | `carousel.ts` | Ring dots that fill and scale when active |
+| Announcement slider, swipe, arrows, indicators | 1 | `p-carousel` (PrimeNG 22 composable API) | `carousel.ts` | Short bars (the active one longer and copper), a `01 / 02` count and previous / next circles under the slide |
 | Gallery lightbox, prev/next, close, counter, Esc/arrow keys | 1 | `p-galleria [fullScreen]` | `galleria.ts` | `#item` / `#footer` templates |
 | Booking month calendar and legend | 1 | Replaced by a list of open days (#205, see §8): `p-selectbutton` | `selectbutton.ts` | One full-width row per day ("Monday, October 27th 2026"), with an amber "Only N left" badge on filling-up days (BR-15, #206) |
 | Month navigation (‹ month ›) | 1 | `pButton` arrows + a `p-selectbutton` month grid per year | `button.ts`, `selectbutton.ts` | "Next 31 days" first, then every later month in Square's booking window |
@@ -166,12 +162,12 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 
 | Wireframe | Route | Feature | Components |
 | --- | --- | --- | --- |
-| `index.html` / `mobile.html` | `/` | `features/home` | `hero`, `announcements`, `hours`, `visit`, `testimonials`, `gallery` |
+| `index.html` / `mobile.html` | `/` | `features/home` | `hero`, `hours`, `announcements`, `gallery`, `testimonials`, `visit` |
 | `book.html` | `/book` | `features/booking` | `date-step`, `time-step`, `details-step`, `booking-summary` |
 | Header / footer on all pages | Shell | `layout/` | `header`, `footer` |
 
 - Both features lazy-load and register their own store slices (`home.routes.ts`, `booking.routes.ts`).
-- In-page links (`#schedule` and so on) use `routerLink="/" fragment="…"` with router anchor scrolling. They work from `/book` too.
+- In-page links (`#hours` and so on) use `routerLink="/" fragment="…"` with router anchor scrolling. They work from `/book` too.
 - The header switches to "← Back to site" on `/book`, as in the wireframe.
 
 ---
@@ -230,7 +226,7 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 | --- | --- | --- |
 | Scroll-scrubbed video background (canvas, 847 frames, motion retiming) | Replaced by a keyframe crossfade | Port into `Backdrop` and host the frames on a CDN (the mobile wireframe already streamed them remotely) |
 | Background "loading…%" overlay | Dropped (not needed for the stills) | Bring back with the frame scrubber |
-| Announcement arrows | At panel sides on desktop; beside the dots on mobile | Confirm with design |
+| Announcement controls | Under the image in the right column on desktop; full width under the slide on phones, no card around the slide | Confirm with design |
 | Lightbox arrows | Inside the photo edges (Galleria default) rather than at the viewport sides | Adjust `galleria.ts` if needed |
 | Instagram / Facebook URLs (`href="#"`) | From Square's location profile (#39) | Unset ones are hidden (BR-40) |
 | Announcement photos ("kid in the chair", "hot towel") | Placeholders dropped; images come from the media container | Thad uploads to `announcements/` and names the file in `image.fileName` |
@@ -240,7 +236,7 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 | Filling-up warning, leave prompt | New: "Only N left" under 5 open times (BR-15, #206); "Leave without booking?" with unconfirmed picks (#210) | Not in the wireframe |
 | Booking API, SMS provider, content API | Mocked services | Swap each service body for `HttpClient` calls (`environment.apiBaseUrl`) |
 | SSR / prerender | Not set up | Add `@angular/ssr` when hosting is decided |
-| Gallery images | The wireframe's 720–960px photos, served as uploaded in a fixed 4:5 frame (#168) | Thad uploads his own in the portal |
+| Gallery images | The wireframe's 720–960px photos, served as uploaded, cropped to a fixed 4:5 ratio in staggered columns (#168) | Thad uploads his own in the portal |
 | Visit section (card with hours, "Questions? Text this number.", map iframe) | Shopfront redo (#54): no card, address as the heading, themed static map image linking to directions, "Get directions" and "Call / Text (number)" buttons; hours live only in the Hours section and footer, and the "Questions?" line is dropped | Client-approved mockups (Shopfront boards); remove the unused `stacked` hours layout in the pre-prod unused audit |
 
 ---

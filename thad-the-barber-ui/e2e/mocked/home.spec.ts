@@ -9,9 +9,9 @@ import { servedEnvironment } from '../support/served-environment';
 
 const SECTIONS: readonly string[] = [
   'announcements',
-  'schedule',
+  'hours',
   'visit',
-  'testimonials',
+  'reviews',
   'gallery',
 ];
 
@@ -199,12 +199,14 @@ test.describe(
         await expect(rail).toBeVisible();
         await expect(rail.locator('[aria-current="true"]')).toHaveAccessibleName('Top');
 
-        await page.evaluate((): void => document.getElementById('visit')?.scrollIntoView());
-        await expect(rail.locator('[aria-current="true"]')).toHaveAccessibleName('Visit');
+        await expect(async (): Promise<void> => {
+          await page.evaluate((): void => document.getElementById('visit')?.scrollIntoView());
+          await expect(rail.locator('[aria-current="true"]')).toHaveAccessibleName('Visit', { timeout: 1000 });
+        }).toPass();
 
-        await rail.getByRole('link', { name: 'Schedule' }).click();
-        await expect(rail.locator('[aria-current="true"]')).toHaveAccessibleName('Schedule');
-        await expect(page.locator('#schedule')).toBeInViewport();
+        await rail.getByRole('link', { name: 'Hours' }).click();
+        await expect(rail.locator('[aria-current="true"]')).toHaveAccessibleName('Hours');
+        await expect(page.locator('#hours')).toBeInViewport();
       },
     );
   },
@@ -235,6 +237,29 @@ test.describe(
         await expect(page.getByTestId('visit-directions')).toBeVisible();
         await expect(page.getByTestId('visit-phone')).toBeVisible();
         await expect(page.getByTestId('visit-map')).toHaveCount(0);
+      },
+    );
+  },
+);
+
+test.describe(
+  'reCAPTCHA notice',
+  (): void => {
+    test(
+      'hides the Google badge and shows its notice in the footer',
+      async ({ page }: { page: Page; }): Promise<void> => {
+        await page.goto('/');
+        await page.evaluate((): void => {
+          const badge: HTMLDivElement = document.createElement('div');
+          badge.className = 'grecaptcha-badge';
+          badge.textContent = 'badge';
+          document.body.append(badge);
+        });
+
+        await expect(page.locator('.grecaptcha-badge')).toBeHidden();
+        const notice: Locator = page.locator('footer .recaptcha-notice');
+        await expect(notice.locator('a[href="https://policies.google.com/privacy"]')).toHaveCount(1);
+        await expect(notice.locator('a[href="https://policies.google.com/terms"]')).toHaveCount(1);
       },
     );
   },

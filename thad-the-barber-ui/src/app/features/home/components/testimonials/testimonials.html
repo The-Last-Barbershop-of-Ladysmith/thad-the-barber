@@ -1,33 +1,42 @@
-<section class="page-section">
-  <p-card class="w-full max-w-300">
-    <div class="stack gap-8">
-      <div class="header">
-        <app-section-heading eyebrow="Testimonials" title="What folks are saying" />
-        <div class="score">
-          <span class="score-value">{{ reviews.score }}</span>
-          <span class="stack gap-0.5">
-            <p-rating [ngModel]="5" [readonly]="true" />
-            <span class="text-[13px] text-muted-color"
-              >{{ reviews.count }} {{ reviews.source }} reviews</span
-            >
-          </span>
-        </div>
-      </div>
-
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        @for (review of testimonials(); track review.id) {
-          <figure class="tile review">
-            <div class="stack gap-3.5">
-              <p-rating [ngModel]="review.rating" [readonly]="true" />
-              <blockquote class="quote">“{{ review.quote }}”</blockquote>
-            </div>
-            <figcaption class="stack gap-0.5">
-              <span class="text-[15px] font-bold">{{ review.author }}</span>
-              <span class="source">{{ review.source }}</span>
+@if (testimonials().length > 0) {
+  <section class="testimonials site-gutter site-section" data-testid="testimonials">
+    <div class="inner" (pointerenter)="rotation.hold()" (pointerleave)="rotation.release()">
+      <span class="eyebrow">From the chair</span>
+      <span class="score">{{ reviews.score }} from {{ reviews.count }} {{ reviews.source }} reviews</span>
+      <div class="stage crossfade-stack">
+        @for (testimonial of testimonials(); track testimonial.id; let i = $index) {
+          @let isShown = i === rotation.shownIndex();
+          <figure
+            class="review crossfade-item"
+            [class.is-shown]="isShown"
+            [class.is-leaving]="i === rotation.leavingIndex()"
+            [attr.aria-hidden]="isShown ? null : 'true'"
+            [attr.inert]="isShown ? null : ''"
+          >
+            <blockquote class="quote">“{{ testimonial.quote }}”</blockquote>
+            <figcaption class="author">
+              <strong class="author-name">{{ testimonial.author }}</strong>
+              <p-rating [ngModel]="testimonial.rating" [readonly]="true" />
             </figcaption>
           </figure>
         }
       </div>
+      @if (testimonials().length > 1) {
+        <button
+          pButton
+          type="button"
+          severity="secondary"
+          size="small"
+          [text]="true"
+          [rounded]="true"
+          [iconOnly]="true"
+          [attr.aria-label]="rotation.isPaused() ? 'Resume reviews' : 'Pause reviews'"
+          data-testid="testimonials-pause"
+          (click)="rotation.togglePause()"
+        >
+          <i class="pi" [class.pi-pause]="!rotation.isPaused()" [class.pi-play]="rotation.isPaused()"></i>
+        </button>
+      }
     </div>
-  </p-card>
-</section>
+  </section>
+}

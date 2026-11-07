@@ -244,7 +244,7 @@ jobs:
           path: thad-the-barber-express/public/app/thad-the-barber-ui
 
       - run: npm run e2e
-        timeout-minutes: 10
+        timeout-minutes: 15
 
       - name: Summarize
         if: ${{ !cancelled() }}

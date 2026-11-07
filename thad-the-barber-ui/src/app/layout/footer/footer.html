@@ -1,77 +1,90 @@
-<footer class="footer">
-  <div class="glass-strong panel">
+<footer class="footer site-gutter">
+  <div class="top">
+    <img src="assets/logo.png" [alt]="shopName()" class="logo" />
+
     <div class="columns">
-      <div class="column brand">
-        <img src="assets/logo.png" [alt]="shopName()" class="logo" />
+      <div class="column">
+        <span class="heading eyebrow">Site</span>
+        <div class="column-links is-split">
+          @for (section of sections(); track section.fragment) {
+            <a class="nav-link" routerLink="/" [fragment]="section.fragment">{{ section.label }}</a>
+          }
+        </div>
       </div>
 
       <div class="column">
-        <span class="eyebrow">Visit</span>
+        <span class="heading eyebrow">Bookings</span>
+        <div class="column-links">
+          <a class="nav-link" routerLink="/book">Book a cut</a>
+          <a class="nav-link" routerLink="/book/manage">Manage a booking</a>
+        </div>
+      </div>
+
+      <div class="column">
+        <span class="heading eyebrow">Visit</span>
         @if (address(); as address) {
-          <span class="copy"
+          <span class="address"
             >{{ address.street }}<br />{{ address.city }}, {{ address.state }}
             {{ address.postalCode }}</span
           >
-          <a
-            pButton
-            [link]="true"
-            [href]="directionsUrl()"
-            target="_blank"
-            rel="noopener"
-            class="directions"
-          >
-            Get directions
-            <i class="pi pi-arrow-right"></i>
-            <span class="sr-only">(opens in a new tab)</span>
+          <a class="nav-link directions" [href]="directionsUrl()" target="_blank" rel="noopener">
+            Get directions →<span class="sr-only"> (opens in a new tab)</span>
           </a>
         }
       </div>
 
       <div class="column">
-        <span class="eyebrow">Hours</span>
+        <span class="heading eyebrow">Hours</span>
         <app-hours-list [variant]="hoursVariant" />
       </div>
 
-      <div class="column contact">
-        <span class="eyebrow">Contact</span>
-        <a [href]="phone().tel" class="nav-link">{{ phone().display }}</a>
-        <a [href]="phone().sms" class="nav-link">Text a question</a>
-      </div>
-
-      <div class="column social">
-        <span class="eyebrow">Follow</span>
-        <div class="flex gap-2.5">
-          @for (link of social(); track link.label) {
-            <a
-              pButton
-              severity="secondary"
-              [rounded]="true"
-              [iconOnly]="true"
-              size="small"
-              [href]="link.href"
-              [attr.aria-label]="link.label"
-            >
-              <i [class]="link.icon"></i>
-            </a>
-          }
+      <div class="column">
+        <span class="heading eyebrow">Contact</span>
+        <div class="column-links">
+          <a class="nav-link" [href]="phone().tel">{{ phone().display }}</a>
+          <a class="nav-link" [href]="phone().sms">Text a question</a>
         </div>
       </div>
-    </div>
 
-    <div class="bottom">
-      <span class="text-[13px] text-muted-color"
-        >© {{ year }} {{ shopName() }}
-        @if (address(); as address) {
-          · {{ address.city }}, {{ address.state }}
-        }
-      </span>
-      <nav class="bottom-nav" aria-label="Footer">
-        @for (item of sections(); track item.fragment) {
-          <a routerLink="/" [fragment]="item.fragment" class="nav-link">{{ item.label }}</a>
-        }
-        <a routerLink="/privacy" class="nav-link" data-testid="footer-privacy">Privacy</a>
-        <button type="button" class="nav-link to-top" (click)="scrollToTop()">Back to top ↑</button>
-      </nav>
+      @if (social().length > 0) {
+        <div class="column">
+          <span class="heading eyebrow">Follow</span>
+          <div class="column-links">
+            @for (link of social(); track link.href) {
+              <a class="nav-link" [href]="link.href" target="_blank" rel="noopener"
+                >{{ link.label }}<span class="sr-only"> (opens in a new tab)</span></a
+              >
+            }
+          </div>
+        </div>
+      }
     </div>
+  </div>
+
+  <div class="bottom">
+    <div class="bottom-content">
+      <span>© {{ year }} {{ shopName() }}</span>
+      <a routerLink="/privacy" class="nav-link" data-testid="footer-privacy">Privacy</a>
+      <button type="button" class="nav-link to-top" (click)="scrollToTop()">Back to top ↑</button>
+    </div>
+    <p class="recaptcha-notice">
+      This site is protected by reCAPTCHA and the Google
+      <a
+        class="inline-link external-link"
+        href="https://policies.google.com/privacy"
+        target="_blank"
+        rel="noopener"
+        >Privacy Policy<span class="sr-only"> (opens in a new tab)</span></a
+      >
+      and
+      <a
+        class="inline-link external-link"
+        href="https://policies.google.com/terms"
+        target="_blank"
+        rel="noopener"
+        >Terms of Service<span class="sr-only"> (opens in a new tab)</span></a
+      >
+      apply.
+    </p>
   </div>
 </footer>

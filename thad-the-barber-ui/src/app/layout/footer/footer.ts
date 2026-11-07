@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, Signal, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
-import { ButtonModule } from 'primeng/button';
 import { NavItem } from '../../shared/models/nav-item.model';
 import { PhoneLinks } from '../../shared/models/phone-links.model';
 import { HoursListVariant } from '../../features/shop/models/hours-list-variant.model';
@@ -16,7 +15,6 @@ import { shopFeature } from '../../features/shop/state/shop.feature';
   selector: 'app-footer',
   imports: [
     RouterLink,
-    ButtonModule,
     HoursList,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -28,10 +26,10 @@ export class Footer {
 
   protected readonly hoursVariant: HoursListVariant = HoursListVariant.Compact;
   protected readonly shopName: Signal<string> = this.store.selectSignal(shopFeature.selectShopName);
-  protected readonly phone: Signal<PhoneLinks> = this.store.selectSignal(shopFeature.selectPhoneLinks);
   protected readonly address: Signal<ShopAddress | null> = this.store.selectSignal(shopFeature.selectAddress);
   protected readonly directionsUrl: Signal<string | null> = this.store.selectSignal(shopFeature.selectDirectionsUrl);
   protected readonly sections: Signal<readonly NavItem[]> = this.store.selectSignal(homeFeature.selectHomeSections);
+  protected readonly phone: Signal<PhoneLinks> = this.store.selectSignal(shopFeature.selectPhoneLinks);
   protected readonly social: Signal<SocialLink[]> = this.store.selectSignal(shopFeature.selectSocialLinks);
   protected readonly year: number = new Date().getFullYear();
 

@@ -5,7 +5,7 @@ import { alpha } from './alpha';
  * Semantic tokens: give primitives a job (primary, surface, text, form fields...).
  * The site has a single dark look, so values are set directly rather than with light-dark().
  * `extend` holds brand-only tokens PrimeNG has no slot for; they become CSS variables
- * (for example `--p-brand-glass-background`) that `tailwind/theme.css` exposes as utilities.
+ * (for example `--p-brand-glass-blur`) that `tailwind/theme.css` exposes as utilities.
  */
 export const semantic: TokenSection = {
   typography: { fontFamily: '{font.family.sans}', fontSize: '1rem' },
@@ -118,21 +118,21 @@ export const semantic: TokenSection = {
   extend: {
     brand: {
       glass: {
-        background: alpha('{ink}', 76),
         strongBackground: alpha('{ink}', 86),
         blur: '12px',
       },
-      tile: { background: alpha('{espresso.50}', 4), borderColor: alpha('{copper.500}', 18) },
       divider: alpha('{copper.500}', 15),
       hairline: alpha('{espresso.50}', 12),
       controlBackground: '#140d08',
+      footerBackground: 'rgb(7 5 4 / 0.92)',
+      strip: { background: '#26180f', borderColor: alpha('{copper.500}', 22) },
       day: { openBackground: alpha('{espresso.50}', 16), closedBackground: alpha('{espresso.50}', 4) },
       // The content width the footer, the `page` utility and the 404 page share, and the gutter beside it.
       pageWidth: '75rem',
       pageGutter: '1.5rem',
       // The flat tint behind every home section below the hero; the hero fades into it.
       pageTint: alpha('{espresso.950}', 72),
-      headerFade: `linear-gradient(180deg, ${alpha('{ink}', 92)} 0%, ${alpha('{ink}', 60)} 55%, transparent 100%)`,
+      header: { background: alpha('{ink}', 94), borderColor: alpha('{copper.500}', 12) },
       cta: {
         glow: `0 4px 24px -2px ${alpha('{copper.500}', 45)}`,
         glowHover: `0 6px 32px 0 ${alpha('{copper.500}', 60)}`,

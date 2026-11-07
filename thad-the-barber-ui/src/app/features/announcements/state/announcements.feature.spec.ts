@@ -3,7 +3,12 @@ import { Announcement } from '../models/announcement.model';
 import { RequestStatus } from '../../../shared/models/request.models';
 import { shopFeatureKey } from '../../shop/state/shop.feature';
 import { initialShopState } from '../../shop/state/shop.state';
-import { announcementsFeature, announcementsFeatureKey, toActiveAnnouncements } from './announcements.feature';
+import {
+  announcementsFeature,
+  announcementsFeatureKey,
+  toActiveAnnouncements,
+  toNewestFirst,
+} from './announcements.feature';
 import { AnnouncementsState, initialAnnouncementsState } from './announcements.state';
 
 describe(
@@ -171,7 +176,11 @@ describe(
       (): void => {
         const expired: Announcement = { ...TEST_ANNOUNCEMENT, endDate: '2026-10-14' };
 
-        expect(isHidden({ announcements: [expired], loadStatus: RequestStatus.Success })).toBe(true);
+        expect(isHidden({
+          announcements: [expired],
+          loadStatus: RequestStatus.Success,
+          shownIndex: 0,
+        })).toBe(true);
       },
     );
 
@@ -185,7 +194,104 @@ describe(
     it(
       'shows the section with an active announcement',
       (): void => {
-        expect(isHidden({ announcements: [TEST_ANNOUNCEMENT], loadStatus: RequestStatus.Success })).toBe(false);
+        expect(isHidden({
+          announcements: [TEST_ANNOUNCEMENT],
+          loadStatus: RequestStatus.Success,
+          shownIndex: 0,
+        })).toBe(false);
+      },
+    );
+  },
+);
+
+describe(
+  'toNewestFirst',
+  (): void => {
+    function startingOn(title: string, startDate: string): Announcement {
+      return {
+        ...TEST_ANNOUNCEMENT,
+        title,
+        startDate,
+      };
+    }
+
+    function titlesOf(announcements: Announcement[]): string[] {
+      return announcements.map((announcement: Announcement): string => announcement.title);
+    }
+
+    it(
+      'is empty with no announcements',
+      (): void => {
+        expect(toNewestFirst([])).toEqual([]);
+      },
+    );
+
+    it(
+      'orders by start date, latest first, wherever each sits in the list',
+      (): void => {
+        expect(titlesOf(toNewestFirst([
+          startingOn('Oldest', '2026-10-01'),
+          startingOn('Newest', '2026-10-20'),
+          startingOn('Middle', '2026-10-10'),
+        ]))).toEqual([
+          'Newest',
+          'Middle',
+          'Oldest',
+        ]);
+      },
+    );
+
+    it(
+      'puts the later one in the file first when two start the same day, without changing the list it was given',
+      (): void => {
+        const listed: Announcement[] = [
+          startingOn('First listed', '2026-10-20'),
+          startingOn('Second listed', '2026-10-20'),
+          startingOn('Older', '2026-10-01'),
+        ];
+
+        expect(titlesOf(toNewestFirst(listed))).toEqual([
+          'Second listed',
+          'First listed',
+          'Older',
+        ]);
+        expect(titlesOf(listed)).toEqual([
+          'First listed',
+          'Second listed',
+          'Older',
+        ]);
+      },
+    );
+
+    it(
+      'is exposed on the feature for the active announcements only',
+      (): void => {
+        const expired: Announcement = {
+          ...startingOn('Expired but newer', '2026-10-25'),
+          endDate: '2026-10-26',
+        };
+        const active: Announcement = {
+          ...startingOn('Active', '2026-10-01'),
+          endDate: '2099-12-31',
+        };
+        const olderActive: Announcement = {
+          ...startingOn('Active but older', '2026-09-01'),
+          endDate: '2099-12-31',
+        };
+
+        const selected: Announcement[] = announcementsFeature.selectActiveNewestFirst({
+          [announcementsFeatureKey]: {
+            announcements: [
+              olderActive,
+              expired,
+              active,
+            ],
+            loadStatus: RequestStatus.Success,
+          },
+          [shopFeatureKey]: initialShopState,
+        });
+
+        expect(titlesOf(selected)).toEqual(['Active', 'Active but older']);
       },
     );
   },
