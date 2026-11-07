@@ -3,13 +3,13 @@
 <app-scroll-rail />
 
 <div class="relative">
-  <app-hero id="top" />
+  <app-hero [id]="sections.Top" />
   <div class="below-hero">
-    <app-next-times id="chair" />
-    <app-hours id="hours" />
-    <app-announcements-carousel id="announcements" />
-    <app-gallery id="gallery" />
-    <app-testimonials id="reviews" />
-    <app-visit id="visit" />
+    <app-next-times [id]="sections.OpenTimes" />
+    <app-hours [id]="sections.Hours" />
+    <app-announcements-carousel [id]="sections.Announcements" />
+    <app-gallery [id]="sections.Gallery" />
+    <app-testimonials [id]="sections.Reviews" />
+    <app-visit [id]="sections.Visit" />
   </div>
 </div>

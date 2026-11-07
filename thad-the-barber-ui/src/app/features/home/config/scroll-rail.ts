@@ -1,13 +1,14 @@
+import { HomeSection } from '../../../shared/models/home-section.model';
 import { NavItem } from '../../../shared/models/nav-item.model';
 
 export const SCROLL_RAIL_SECTIONS: readonly NavItem[] = [
-  { label: 'Top', fragment: 'top' },
-  { label: 'Open times', fragment: 'chair' },
-  { label: 'Hours', fragment: 'hours' },
-  { label: 'Shop news', fragment: 'announcements' },
-  { label: 'Gallery', fragment: 'gallery' },
-  { label: 'Reviews', fragment: 'reviews' },
-  { label: 'Visit', fragment: 'visit' },
+  { label: 'Top', fragment: HomeSection.Top },
+  { label: 'Open times', fragment: HomeSection.OpenTimes },
+  { label: 'Hours', fragment: HomeSection.Hours },
+  { label: 'Shop news', fragment: HomeSection.Announcements },
+  { label: 'Gallery', fragment: HomeSection.Gallery },
+  { label: 'Reviews', fragment: HomeSection.Reviews },
+  { label: 'Visit', fragment: HomeSection.Visit },
 ];
 
 export const SCROLL_RAIL_CURRENT_LINE: number = 0.4;

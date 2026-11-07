@@ -1,3 +1,4 @@
+import { HomeSection } from '../../shared/models/home-section.model';
 import { NavItem } from '../../shared/models/nav-item.model';
 import { ShopContent } from '../models/shop-content.model';
 import { ShopFallback } from '../models/shop-fallback.model';
@@ -19,10 +20,10 @@ export const SHOP_CONTENT: ShopContent = {
 
 /** In-page sections of the home feature, used by the header, mobile drawer and footer. */
 export const HOME_SECTIONS: readonly NavItem[] = [
-  { label: 'Open times', fragment: 'chair' },
-  { label: 'Hours', fragment: 'hours' },
-  { label: 'Shop news', fragment: 'announcements' },
-  { label: 'Gallery', fragment: 'gallery' },
-  { label: 'Reviews', fragment: 'reviews' },
-  { label: 'Visit', fragment: 'visit' },
+  { label: 'Open times', fragment: HomeSection.OpenTimes },
+  { label: 'Hours', fragment: HomeSection.Hours },
+  { label: 'Shop news', fragment: HomeSection.Announcements },
+  { label: 'Gallery', fragment: HomeSection.Gallery },
+  { label: 'Reviews', fragment: HomeSection.Reviews },
+  { label: 'Visit', fragment: HomeSection.Visit },
 ];
