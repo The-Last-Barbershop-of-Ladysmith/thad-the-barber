@@ -62,29 +62,24 @@ export function weekdaySpanLabel(
  * runs and closed Sat, Sun and Mon are one. Each run is in week order, starting at its first day.
  */
 export function toDayRuns(days: readonly Weekday[]): Weekday[][] {
+  const firstRunStart: Weekday | undefined = WEEK_FROM_MONDAY.find(
+    (day: Weekday): boolean => days.includes(day) && !days.includes(toWeekday(day - 1)),
+  );
+  if (firstRunStart === undefined) {
+    return days.length === 0 ? [] : [[...WEEK_FROM_MONDAY]];
+  }
   const runs: Weekday[][] = [];
-  for (const day of WEEK_FROM_MONDAY) {
+  for (let offset: number = 0; offset < 7; offset++) {
+    const day: Weekday = toWeekday(firstRunStart + offset);
     if (!days.includes(day)) {
       continue;
     }
-    const lastRun: Weekday[] | undefined = runs[runs.length - 1];
-    const isNextToLastRun: boolean = lastRun?.[lastRun.length - 1] === toWeekday(day - 1);
-    if (lastRun !== undefined && isNextToLastRun) {
+    const lastRun: Weekday[] | undefined = runs.at(-1);
+    if (lastRun !== undefined && days.includes(toWeekday(day - 1))) {
       lastRun.push(day);
     } else {
       runs.push([day]);
     }
-  }
-  const firstRun: Weekday[] | undefined = runs[0];
-  const lastRun: Weekday[] | undefined = runs[runs.length - 1];
-  const isWrapping: boolean = runs.length > 1
-    && firstRun !== undefined
-    && lastRun !== undefined
-    && firstRun[0] === Weekday.Monday
-    && lastRun[lastRun.length - 1] === Weekday.Sunday;
-  if (isWrapping && firstRun !== undefined && lastRun !== undefined) {
-    runs.shift();
-    lastRun.push(...firstRun);
   }
   return runs;
 }

@@ -36,14 +36,21 @@ export class ShopHoursService {
     (): HoursRow[] => this.generateOperatingHoursRows(this.hours()),
   );
 
+  private readonly today: Signal<Weekday | null> = computed((): Weekday | null => {
+    const timeZone: string | null = this.timeZone();
+    if (timeZone === null) {
+      return null;
+    }
+    return weekTimeIn(timeZone, this.now()).day;
+  });
+
   /** One row for each weekday, Monday first, closed days included, with the shop's current day marked. */
   readonly weekHours: Signal<HoursRow[]> = computed((): HoursRow[] => {
-    const timeZone: string | null = this.timeZone();
-    if (timeZone === null || this.hours().length === 0) {
+    if (this.hours().length === 0) {
       return [];
     }
-    const today: Weekday = weekTimeIn(timeZone, this.now()).day;
-    return WEEK_FROM_MONDAY.map((day: Weekday): HoursRow => this.toDayRow(day, day === today));
+    const today: Weekday | null = this.today();
+    return WEEK_FROM_MONDAY.map((day: Weekday): HoursRow => ({ ...this.toDayRow(day), isToday: day === today }));
   });
 
   readonly currentOpenStatus: Signal<OpenStatus | null> = computed((): OpenStatus | null => {
@@ -101,7 +108,7 @@ export class ShopHoursService {
       .sort((a: ShopOpeningHours, b: ShopOpeningHours): number => fromTimeOfDay(a.opens) - fromTimeOfDay(b.opens));
   }
 
-  private toDayRow(day: Weekday, isToday: boolean): HoursRow {
+  private toDayRow(day: Weekday): HoursRow {
     const periods: ShopOpeningHours[] = this.fetchShopHoursForDay(day);
     return {
       label: WEEKDAY_NAMES[day],
@@ -109,7 +116,7 @@ export class ShopHoursService {
       range: periods.map((period: ShopOpeningHours): string => toRange(period, false)).join(', '),
       shortRange: periods.map((period: ShopOpeningHours): string => toRange(period, true)).join(', '),
       isClosed: periods.length === 0,
-      isToday,
+      isToday: false,
     };
   }
 
@@ -120,7 +127,7 @@ export class ShopHoursService {
 
     const operatingHours: HoursRow[] = WEEK_FROM_MONDAY
       .filter((day: Weekday): boolean => this.isOpenDay(day))
-      .map((day: Weekday): HoursRow => this.toDayRow(day, false));
+      .map((day: Weekday): HoursRow => this.toDayRow(day));
 
     const closedRows: HoursRow[] = toDayRuns(WEEK_FROM_MONDAY.filter((day: Weekday): boolean => !this.isOpenDay(day)))
       .map((run: Weekday[]): HoursRow => {
