@@ -54,7 +54,7 @@ describe(
         const labels: string[] = toTeethLabels(page);
 
         expect(labels).not.toContain('Announcements');
-        expect(labels).toContain('Schedule');
+        expect(labels).toContain('Hours');
       },
     );
   },

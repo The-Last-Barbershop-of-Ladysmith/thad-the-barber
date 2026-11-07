@@ -9,9 +9,9 @@ import { servedEnvironment } from '../support/served-environment';
 
 const SECTIONS: readonly string[] = [
   'announcements',
-  'schedule',
+  'hours',
   'visit',
-  'testimonials',
+  'reviews',
   'gallery',
 ];
 
@@ -202,9 +202,9 @@ test.describe(
         await page.evaluate((): void => document.getElementById('visit')?.scrollIntoView());
         await expect(rail.locator('[aria-current="true"]')).toHaveAccessibleName('Visit');
 
-        await rail.getByRole('link', { name: 'Schedule' }).click();
-        await expect(rail.locator('[aria-current="true"]')).toHaveAccessibleName('Schedule');
-        await expect(page.locator('#schedule')).toBeInViewport();
+        await rail.getByRole('link', { name: 'Hours' }).click();
+        await expect(rail.locator('[aria-current="true"]')).toHaveAccessibleName('Hours');
+        await expect(page.locator('#hours')).toBeInViewport();
       },
     );
   },

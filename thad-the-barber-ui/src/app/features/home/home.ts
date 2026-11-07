@@ -37,10 +37,10 @@ export class Home implements OnInit, OnDestroy {
   protected readonly backdropAnchors: readonly BackdropAnchor[] = [
     'app-hero',
     '#chair',
-    '#schedule',
+    '#hours',
     '#announcements',
     '#gallery',
-    '#testimonials',
+    '#reviews',
     '#visit',
     'app-footer',
   ];

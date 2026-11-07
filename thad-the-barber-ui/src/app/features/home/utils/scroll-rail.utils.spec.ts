@@ -59,10 +59,10 @@ describe(
           .toEqual([
             'top',
             'chair',
-            'schedule',
+            'hours',
             'announcements',
             'gallery',
-            'testimonials',
+            'reviews',
             'visit',
           ]);
       },
@@ -78,8 +78,8 @@ describe(
         expect(toFragments(toShownRailSections(shown))).toEqual([
           'top',
           'chair',
-          'schedule',
-          'testimonials',
+          'hours',
+          'reviews',
           'visit',
         ]);
       },

@@ -169,7 +169,7 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 | Header / footer on all pages | Shell | `layout/` | `header`, `footer` |
 
 - Both features lazy-load and register their own store slices (`home.routes.ts`, `booking.routes.ts`).
-- In-page links (`#schedule` and so on) use `routerLink="/" fragment="…"` with router anchor scrolling. They work from `/book` too.
+- In-page links (`#hours` and so on) use `routerLink="/" fragment="…"` with router anchor scrolling. They work from `/book` too.
 - The header switches to "← Back to site" on `/book`, as in the wireframe.
 
 ---
