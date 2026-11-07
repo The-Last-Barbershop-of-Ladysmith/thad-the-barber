@@ -114,7 +114,7 @@ These are repeated wireframe patterns that aren't PrimeNG components.
 | `glass`, `glass-strong` | Frosted containers that aren't cards (footer) | 1 (cards cover the rest) |
 | `tile` | Testimonial cards | 4 |
 | `header-fade` | Fixed header gradient | 2 (site + booking) |
-| `photo-frame`, `photo-mat` | Gallery prints + lightbox | 16 |
+| `photo-frame`, `photo-mat` | Gallery lightbox | 16 |
 | `media-placeholder` | Striped "[ photo — … ]" wells | 2 |
 | Colors `text-mint`, `border-divider`, `bg-ink` | Status, dividers, deep fills | many |
 
@@ -240,7 +240,7 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 | Filling-up warning, leave prompt | New: "Only N left" under 5 open times (BR-15, #206); "Leave without booking?" with unconfirmed picks (#210) | Not in the wireframe |
 | Booking API, SMS provider, content API | Mocked services | Swap each service body for `HttpClient` calls (`environment.apiBaseUrl`) |
 | SSR / prerender | Not set up | Add `@angular/ssr` when hosting is decided |
-| Gallery images | The wireframe's 720–960px photos, served as uploaded in a fixed 4:5 frame (#168) | Thad uploads his own in the portal |
+| Gallery images | The wireframe's 720–960px photos, served as uploaded, cropped to a fixed 4:5 ratio in staggered columns (#168) | Thad uploads his own in the portal |
 | Visit section (card with hours, "Questions? Text this number.", map iframe) | Shopfront redo (#54): no card, address as the heading, themed static map image linking to directions, "Get directions" and "Call / Text (number)" buttons; hours live only in the Hours section and footer, and the "Questions?" line is dropped | Client-approved mockups (Shopfront boards); remove the unused `stacked` hours layout in the pre-prod unused audit |
 
 ---

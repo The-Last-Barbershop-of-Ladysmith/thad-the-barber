@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, Signal, WritableSignal, inject, signal } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { CardModule } from 'primeng/card';
 import { GalleriaModule } from 'primeng/galleria';
 import { SectionHeading } from '../../../../shared/components/section-heading/section-heading';
 import { AppState } from '../../../../store/app.state';
@@ -8,13 +7,12 @@ import { GalleryPhoto } from '../../models/home.models';
 import { homeFeature } from '../../state/home.feature';
 
 /**
- * Grid of framed prints; clicking one opens the PrimeNG Galleria full-screen lightbox.
+ * Lookbook of staggered prints; clicking one opens the PrimeNG Galleria full-screen lightbox.
  * Photos load as uploaded, lazily. With no photos the section is hidden.
  */
 @Component({
   selector: 'app-gallery',
   imports: [
-    CardModule,
     GalleriaModule,
     SectionHeading,
   ],
