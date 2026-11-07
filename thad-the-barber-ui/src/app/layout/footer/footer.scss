@@ -118,6 +118,8 @@
     .top {
       padding-bottom: 3rem;
       flex-direction: row;
+      align-items: start;
+      gap: 2rem 8rem;
     }
 
     .columns {
@@ -137,6 +139,12 @@
 
     .bottom {
       padding-top: 2.5rem;
+    }
+  }
+
+  @media (min-width: 64rem) {
+    .recaptcha-notice {
+      margin-left: auto;
     }
   }
 }

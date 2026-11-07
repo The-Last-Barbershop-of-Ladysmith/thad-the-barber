@@ -5,7 +5,9 @@
       @for (link of column.links; track link.label) {
         @switch (link.kind) {
           @case (linkKinds.Internal) {
-            <a class="nav-link" [routerLink]="link.url" [fragment]="link.fragment">{{ link.label }}</a>
+            <a class="nav-link" [routerLink]="link.url" [fragment]="link.fragment">{{
+              link.label
+            }}</a>
           }
           @case (linkKinds.External) {
             <a class="nav-link" [href]="link.url" target="_blank" rel="noopener"
@@ -36,7 +38,8 @@
         <span class="heading">Visit</span>
         @if (address(); as address) {
           <span class="address"
-            >{{ address.street }}<br />{{ address.city }}, {{ address.state }} {{ address.postalCode }}</span
+            >{{ address.street }}<br />{{ address.city }}, {{ address.state }}
+            {{ address.postalCode }}</span
           >
           <a class="nav-link directions" [href]="directionsUrl()" target="_blank" rel="noopener">
             Get directions →<span class="sr-only"> (opens in a new tab)</span>
@@ -64,17 +67,24 @@
     </span>
     <a routerLink="/privacy" class="nav-link" data-testid="footer-privacy">Privacy</a>
     <button type="button" class="nav-link to-top" (click)="scrollToTop()">Back to top ↑</button>
+    <p class="recaptcha-notice">
+      This site is protected by reCAPTCHA and the Google
+      <a
+        class="inline-link external-link"
+        href="https://policies.google.com/privacy"
+        target="_blank"
+        rel="noopener"
+        >Privacy Policy<span class="sr-only"> (opens in a new tab)</span></a
+      >
+      and
+      <a
+        class="inline-link external-link"
+        href="https://policies.google.com/terms"
+        target="_blank"
+        rel="noopener"
+        >Terms of Service<span class="sr-only"> (opens in a new tab)</span></a
+      >
+      apply.
+    </p>
   </div>
-
-  <p class="recaptcha-notice">
-    This site is protected by reCAPTCHA and the Google
-    <a class="inline-link external-link" href="https://policies.google.com/privacy" target="_blank" rel="noopener"
-      >Privacy Policy<span class="sr-only"> (opens in a new tab)</span></a
-    >
-    and
-    <a class="inline-link external-link" href="https://policies.google.com/terms" target="_blank" rel="noopener"
-      >Terms of Service<span class="sr-only"> (opens in a new tab)</span></a
-    >
-    apply.
-  </p>
 </footer>
