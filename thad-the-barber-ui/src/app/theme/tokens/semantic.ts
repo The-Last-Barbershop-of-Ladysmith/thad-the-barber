@@ -130,6 +130,8 @@ export const semantic: TokenSection = {
       // The content width the footer, the `page` utility and the 404 page share, and the gutter beside it.
       pageWidth: '75rem',
       pageGutter: '1.5rem',
+      // The flat tint behind every home section below the hero; the hero fades into it.
+      pageTint: alpha('{espresso.950}', 72),
       headerFade: `linear-gradient(180deg, ${alpha('{ink}', 92)} 0%, ${alpha('{ink}', 60)} 55%, transparent 100%)`,
       cta: {
         glow: `0 4px 24px -2px ${alpha('{copper.500}', 45)}`,
