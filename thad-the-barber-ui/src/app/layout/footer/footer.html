@@ -1,89 +1,80 @@
-<footer class="footer">
-  <div class="glass-strong panel">
+<ng-template #linkColumn let-column>
+  <div class="column">
+    <span class="heading">{{ column.heading }}</span>
+    <div class="column-links" [class.is-split]="column.isSplit">
+      @for (link of column.links; track link.label) {
+        @switch (link.kind) {
+          @case (linkKinds.Internal) {
+            <a class="nav-link" [routerLink]="link.url" [fragment]="link.fragment">{{ link.label }}</a>
+          }
+          @case (linkKinds.External) {
+            <a class="nav-link" [href]="link.url" target="_blank" rel="noopener"
+              >{{ link.label }}<span class="sr-only"> (opens in a new tab)</span></a
+            >
+          }
+          @default {
+            <a class="nav-link" [href]="link.url">{{ link.label }}</a>
+          }
+        }
+      }
+    </div>
+  </div>
+</ng-template>
+
+<footer class="footer site-gutter">
+  <div class="top">
+    <img src="assets/logo.png" [alt]="shopName()" class="logo" />
+
     <div class="columns">
-      <div class="column brand">
-        <img src="assets/logo.png" [alt]="shopName()" class="logo" />
-      </div>
+      <nav class="links" aria-label="Footer">
+        @for (column of leadingColumns(); track column.heading) {
+          <ng-container *ngTemplateOutlet="linkColumn; context: { $implicit: column }" />
+        }
+      </nav>
 
       <div class="column">
-        <span class="eyebrow">Visit</span>
+        <span class="heading">Visit</span>
         @if (address(); as address) {
-          <span class="copy"
-            >{{ address.street }}<br />{{ address.city }}, {{ address.state }}
-            {{ address.postalCode }}</span
+          <span class="address"
+            >{{ address.street }}<br />{{ address.city }}, {{ address.state }} {{ address.postalCode }}</span
           >
-          <a
-            pButton
-            [link]="true"
-            [href]="directionsUrl()"
-            target="_blank"
-            rel="noopener"
-            class="directions"
-          >
-            Get directions
-            <i class="pi pi-arrow-right"></i>
-            <span class="sr-only">(opens in a new tab)</span>
+          <a class="nav-link directions" [href]="directionsUrl()" target="_blank" rel="noopener">
+            Get directions →<span class="sr-only"> (opens in a new tab)</span>
           </a>
         }
       </div>
 
       <div class="column">
-        <span class="eyebrow">Hours</span>
+        <span class="heading">Hours</span>
         <app-hours-list [variant]="hoursVariant" />
       </div>
 
-      <div class="column contact">
-        <span class="eyebrow">Contact</span>
-        <a [href]="phone().tel" class="nav-link">{{ phone().display }}</a>
-        <a [href]="phone().sms" class="nav-link">Text a question</a>
-      </div>
-
-      <div class="column social">
-        <span class="eyebrow">Follow</span>
-        <div class="flex gap-2.5">
-          @for (link of social(); track link.label) {
-            <a
-              pButton
-              severity="secondary"
-              [rounded]="true"
-              [iconOnly]="true"
-              size="small"
-              [href]="link.href"
-              [attr.aria-label]="link.label"
-            >
-              <i [class]="link.icon"></i>
-            </a>
-          }
-        </div>
-      </div>
+      @for (column of trailingColumns(); track column.heading) {
+        <ng-container *ngTemplateOutlet="linkColumn; context: { $implicit: column }" />
+      }
     </div>
-
-    <div class="bottom">
-      <span class="text-[13px] text-muted-color"
-        >© {{ year }} {{ shopName() }}
-        @if (address(); as address) {
-          · {{ address.city }}, {{ address.state }}
-        }
-      </span>
-      <nav class="bottom-nav" aria-label="Footer">
-        @for (item of sections(); track item.fragment) {
-          <a routerLink="/" [fragment]="item.fragment" class="nav-link">{{ item.label }}</a>
-        }
-        <a routerLink="/privacy" class="nav-link" data-testid="footer-privacy">Privacy</a>
-        <button type="button" class="nav-link to-top" (click)="scrollToTop()">Back to top ↑</button>
-      </nav>
-    </div>
-
-    <p class="recaptcha-notice">
-      This site is protected by reCAPTCHA and the Google
-      <a class="inline-link external-link" href="https://policies.google.com/privacy" target="_blank" rel="noopener"
-        >Privacy Policy<span class="sr-only"> (opens in a new tab)</span></a
-      >
-      and
-      <a class="inline-link external-link" href="https://policies.google.com/terms" target="_blank" rel="noopener"
-        >Terms of Service<span class="sr-only"> (opens in a new tab)</span></a
-      >
-      apply.
-    </p>
   </div>
+
+  <div class="bottom">
+    <span
+      >© {{ year }} {{ shopName() }}
+      @if (address(); as address) {
+        · {{ address.city }}, {{ address.state }}
+      }
+    </span>
+    <a routerLink="/privacy" class="nav-link" data-testid="footer-privacy">Privacy</a>
+    <button type="button" class="nav-link to-top" (click)="scrollToTop()">Back to top ↑</button>
+  </div>
+
+  <p class="recaptcha-notice">
+    This site is protected by reCAPTCHA and the Google
+    <a class="inline-link external-link" href="https://policies.google.com/privacy" target="_blank" rel="noopener"
+      >Privacy Policy<span class="sr-only"> (opens in a new tab)</span></a
+    >
+    and
+    <a class="inline-link external-link" href="https://policies.google.com/terms" target="_blank" rel="noopener"
+      >Terms of Service<span class="sr-only"> (opens in a new tab)</span></a
+    >
+    apply.
+  </p>
 </footer>

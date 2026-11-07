@@ -78,12 +78,17 @@
 @utility page-title {
   margin: 0;
   font-family: var(--p-font-family-display);
-  font-size: clamp(2.25rem, 5vw, 4.25rem);
+  /* On phones the width of the screen decides, so the longest title word ("APPOINTMENT") fits at 320px. */
+  font-size: clamp(1.25rem, 6.2vw, 2.5rem);
   line-height: 0.95;
   font-weight: 800;
   text-transform: uppercase;
   text-wrap: balance;
   color: var(--p-text-color);
+
+  @media (min-width: 48rem) {
+    font-size: clamp(2.25rem, 5vw, 4.25rem);
+  }
 }
 
 /* Section headings */
@@ -261,24 +266,6 @@
 }
 
 /* ---- Surfaces ------------------------------------------------------------ */
-
-/* Frosted panel for non-card containers (the p-card token override covers cards) */
-@utility glass {
-  background: var(--p-brand-glass-background);
-  border: 1px solid var(--p-content-border-color);
-  border-radius: var(--p-border-radius-xl);
-  backdrop-filter: blur(var(--p-brand-glass-blur));
-  -webkit-backdrop-filter: blur(var(--p-brand-glass-blur));
-}
-
-/* Denser frosted panel: footer */
-@utility glass-strong {
-  background: var(--p-brand-glass-strong-background);
-  border: 1px solid var(--p-content-border-color);
-  border-radius: var(--p-border-radius-xl);
-  backdrop-filter: blur(var(--p-brand-glass-blur));
-  -webkit-backdrop-filter: blur(var(--p-brand-glass-blur));
-}
 
 /* Gallery print: black frame around a cream mat */
 @utility photo-frame {

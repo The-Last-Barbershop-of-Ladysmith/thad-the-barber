@@ -41,9 +41,9 @@ describe(
     );
 
     it(
-      'links each home section in the bottom row, then Privacy',
+      'links each home section in the Site column, in page order',
       (): void => {
-        const hrefs: (string | null)[] = Array.from(footer.querySelectorAll<HTMLAnchorElement>('.bottom-nav a'))
+        const hrefs: (string | null)[] = Array.from(footer.querySelectorAll<HTMLAnchorElement>('.column-links.is-split a'))
           .map((link: HTMLAnchorElement): string | null => link.getAttribute('href'));
 
         expect(hrefs).toEqual([
@@ -53,8 +53,29 @@ describe(
           '/#gallery',
           '/#reviews',
           '/#visit',
-          '/privacy',
         ]);
+      },
+    );
+
+    it(
+      'offers booking and managing a booking in the Bookings column, and calling and texting in a Contact column',
+      (): void => {
+        const hrefsIn: (columnIndex: number) => (string | null)[] = (columnIndex: number): (string | null)[] =>
+          Array.from(footer.querySelectorAll('.column').item(columnIndex).querySelectorAll<HTMLAnchorElement>('a'))
+            .map((link: HTMLAnchorElement): string | null => link.getAttribute('href'));
+
+        expect(hrefsIn(1)).toEqual(['/book', '/book/manage']);
+        const contact: (string | null)[] = hrefsIn(4);
+        expect(contact[0]).toMatch(/^tel:/u);
+        expect(contact[1]).toMatch(/^sms:/u);
+      },
+    );
+
+    it(
+      'ends with the privacy page and a way back to the top',
+      (): void => {
+        expect(footer.querySelector('.bottom [data-testid="footer-privacy"]')?.getAttribute('href')).toBe('/privacy');
+        expect(footer.querySelector('.bottom .to-top')).not.toBeNull();
       },
     );
   },

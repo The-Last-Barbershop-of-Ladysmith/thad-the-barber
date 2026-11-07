@@ -53,7 +53,7 @@ Every hard-coded value in the wireframe was collected and grouped into PrimeNG t
 | Wireframe value | Used for | Token |
 | --- | --- | --- |
 | `rgba(13,8,5,.74–.76)` + `blur(12px)` | Section panels | `content.background`, `brand.glass.background`, `brand.glass.blur` |
-| `rgba(13,8,5,.86)` | Footer panel | `brand.glass.strongBackground` |
+| `rgba(13,8,5,.86)` | Card, dialog and drawer panels | `brand.glass.strongBackground` |
 | `rgba(232,144,74,.22)` | Panel border | `content.borderColor` |
 | `rgba(232,144,74,.15)` | Row dividers | `brand.divider` |
 | `rgba(232,144,74,.45)` | Input border | `formField.borderColor` |
@@ -110,7 +110,6 @@ These are repeated wireframe patterns that aren't PrimeNG components.
 | `lead`, `body-copy` | Intro and panel paragraphs | 6 |
 | `field-label` | Muted uppercase labels | 5 |
 | `nav-link` | Link hover to `#F4B46E` | 20+ |
-| `glass`, `glass-strong` | Frosted containers that aren't cards (footer) | 1 (cards cover the rest) |
 | `photo-frame`, `photo-mat` | Gallery lightbox | 16 |
 | `media-placeholder` | Striped "[ photo — … ]" wells | 2 |
 | Colors `text-mint`, `border-divider`, `bg-ink` | Status, dividers, deep fills | many |
