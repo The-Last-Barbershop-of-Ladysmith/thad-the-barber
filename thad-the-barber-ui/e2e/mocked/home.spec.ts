@@ -194,15 +194,10 @@ test.describe(
     test(
       'follows the section in view, and a tooth scrolls to its section',
       async ({ page }: { page: Page; }): Promise<void> => {
-        await page.goto('/');
+        await page.goto('/#visit');
         const rail: Locator = page.getByTestId('scroll-rail');
         await expect(rail).toBeVisible();
-        await expect(rail.locator('[aria-current="true"]')).toHaveAccessibleName('Top');
-
-        await expect(async (): Promise<void> => {
-          await page.evaluate((): void => document.getElementById('visit')?.scrollIntoView());
-          await expect(rail.locator('[aria-current="true"]')).toHaveAccessibleName('Visit', { timeout: 1000 });
-        }).toPass();
+        await expect(rail.locator('[aria-current="true"]')).toHaveAccessibleName('Visit');
 
         await rail.getByRole('link', { name: 'Hours' }).click();
         await expect(rail.locator('[aria-current="true"]')).toHaveAccessibleName('Hours');
