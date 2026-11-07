@@ -124,6 +124,24 @@ describe(
     );
 
     it(
+      'stops changing when paused with the button and carries on when resumed',
+      (): void => {
+        const fixture: ComponentFixture<Testimonials> = render(testimonials);
+        const pauseButton: DebugElement = fixture.debugElement.query(By.css('[data-testid="testimonials-pause"]'));
+
+        pauseButton.triggerEventHandler('click');
+        fixture.detectChanges();
+        waitOneInterval(fixture);
+        expect(shownAuthors(fixture)).toEqual(['Avery Testwell']);
+
+        pauseButton.triggerEventHandler('click');
+        fixture.detectChanges();
+        waitOneInterval(fixture);
+        expect(shownAuthors(fixture)).toEqual(['Jordan Fixture']);
+      },
+    );
+
+    it(
       'does not change a lone testimonial',
       (): void => {
         const fixture: ComponentFixture<Testimonials> = render(testimonials.slice(0, 1));

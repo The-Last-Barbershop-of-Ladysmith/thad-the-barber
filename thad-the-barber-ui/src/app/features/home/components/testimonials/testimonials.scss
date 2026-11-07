@@ -12,39 +12,20 @@
     text-align: center;
   }
 
-  // Reviews share one grid cell, so the tallest sets the height. The next one waits below, the one on show sits
-  // in place and the one that just left has lifted away.
   .stage {
-    display: grid;
+    --crossfade-lift: 1rem;
+    --crossfade-duration: 0.9s;
+
     width: 100%;
   }
 
   .review {
-    grid-area: 1 / 1;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 1.5rem;
     margin: 0;
     padding-inline: 1rem;
-    opacity: 0;
-    transform: translateY(1rem);
-    transition:
-      opacity 0.9s var(--p-brand-ease),
-      transform 0.9s var(--p-brand-ease);
-
-    &.is-shown {
-      opacity: 1;
-      transform: none;
-    }
-
-    &.is-leaving:not(.is-shown) {
-      transform: translateY(-1rem);
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      transition: none;
-    }
   }
 
   .quote {

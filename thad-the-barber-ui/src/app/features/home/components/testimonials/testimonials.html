@@ -1,15 +1,15 @@
 @if (testimonials().length > 0) {
   <section class="testimonials site-gutter" data-testid="testimonials">
-    <div class="inner" (pointerenter)="pause()" (pointerleave)="resume()">
+    <div class="inner" (pointerenter)="rotation.hold()" (pointerleave)="rotation.release()">
       <span class="eyebrow">From the chair</span>
       <span class="score">{{ reviews.score }} from {{ reviews.count }} {{ reviews.source }} reviews</span>
-      <div class="stage">
+      <div class="stage crossfade-stack">
         @for (testimonial of testimonials(); track testimonial.id; let i = $index) {
-          @let isShown = i === shownIndex();
+          @let isShown = i === rotation.shownIndex();
           <figure
-            class="review"
+            class="review crossfade-item"
             [class.is-shown]="isShown"
-            [class.is-leaving]="i === leavingIndex()"
+            [class.is-leaving]="i === rotation.leavingIndex()"
             [attr.aria-hidden]="isShown ? null : 'true'"
             [attr.inert]="isShown ? null : ''"
           >
@@ -21,6 +21,22 @@
           </figure>
         }
       </div>
+      @if (testimonials().length > 1) {
+        <button
+          pButton
+          type="button"
+          severity="secondary"
+          size="small"
+          [text]="true"
+          [rounded]="true"
+          [iconOnly]="true"
+          [attr.aria-label]="rotation.isPaused() ? 'Resume reviews' : 'Pause reviews'"
+          data-testid="testimonials-pause"
+          (click)="rotation.togglePause()"
+        >
+          <i class="pi" [class.pi-pause]="!rotation.isPaused()" [class.pi-play]="rotation.isPaused()"></i>
+        </button>
+      }
     </div>
   </section>
 }

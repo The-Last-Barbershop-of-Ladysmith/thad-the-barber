@@ -2,18 +2,18 @@
   <div
     class="strip site-gutter"
     data-testid="announcement-strip"
-    (pointerenter)="pointerEntered()"
-    (pointerleave)="pointerLeft()"
+    (pointerenter)="rotation.hold()"
+    (pointerleave)="rotation.release()"
   >
     <div class="message">
       <span class="tag">Shop update</span>
-      <div class="items">
+      <div class="items crossfade-stack">
         @for (announcement of announcements(); track $index; let i = $index) {
-          @let isShown = i === shownIndex() % announcements().length;
+          @let isShown = i === rotation.shownIndex();
           <div
-            class="item"
+            class="item crossfade-item"
             [class.is-shown]="isShown"
-            [class.is-leaving]="i === leavingIndex()"
+            [class.is-leaving]="i === rotation.leavingIndex()"
             [attr.aria-hidden]="isShown ? null : 'true'"
             [attr.inert]="isShown ? null : ''"
           >
@@ -40,11 +40,11 @@
           [text]="true"
           [rounded]="true"
           [iconOnly]="true"
-          [attr.aria-label]="isPaused() ? 'Resume announcements' : 'Pause announcements'"
+          [attr.aria-label]="rotation.isPaused() ? 'Resume announcements' : 'Pause announcements'"
           data-testid="announcement-strip-pause"
-          (click)="togglePause()"
+          (click)="rotation.togglePause()"
         >
-          <i class="pi" [class.pi-pause]="!isPaused()" [class.pi-play]="isPaused()"></i>
+          <i class="pi" [class.pi-pause]="!rotation.isPaused()" [class.pi-play]="rotation.isPaused()"></i>
         </button>
       }
       <button

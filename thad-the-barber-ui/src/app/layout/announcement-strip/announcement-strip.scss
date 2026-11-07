@@ -28,36 +28,18 @@
   }
 
   .items {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
+    --crossfade-lift: 0.5rem;
+    --crossfade-duration: 0.6s;
+
     min-width: 0;
     flex: 0 1 auto;
   }
 
   .item {
-    grid-area: 1 / 1;
     display: flex;
     align-items: center;
     gap: 0.75rem;
     min-width: 0;
-    opacity: 0;
-    transform: translateY(0.5rem);
-    transition:
-      opacity 0.6s var(--p-brand-ease),
-      transform 0.6s var(--p-brand-ease);
-
-    &.is-shown {
-      opacity: 1;
-      transform: none;
-    }
-
-    &.is-leaving:not(.is-shown) {
-      transform: translateY(-0.5rem);
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      transition: none;
-    }
   }
 
   .title {
