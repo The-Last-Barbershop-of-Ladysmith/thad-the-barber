@@ -1,38 +1,24 @@
-<ng-template #linkColumn let-column>
-  <div class="column">
-    <span class="heading">{{ column.heading }}</span>
-    <div class="column-links" [class.is-split]="column.isSplit">
-      @for (link of column.links; track link.label) {
-        @switch (link.kind) {
-          @case (linkKinds.Internal) {
-            <a class="nav-link" [routerLink]="link.url" [fragment]="link.fragment">{{
-              link.label
-            }}</a>
-          }
-          @case (linkKinds.External) {
-            <a class="nav-link" [href]="link.url" target="_blank" rel="noopener"
-              >{{ link.label }}<span class="sr-only"> (opens in a new tab)</span></a
-            >
-          }
-          @default {
-            <a class="nav-link" [href]="link.url">{{ link.label }}</a>
-          }
-        }
-      }
-    </div>
-  </div>
-</ng-template>
-
 <footer class="footer site-gutter">
   <div class="top">
     <img src="assets/logo.png" [alt]="shopName()" class="logo" />
 
     <div class="columns">
-      <nav class="links" aria-label="Footer">
-        @for (column of leadingColumns(); track column.heading) {
-          <ng-container *ngTemplateOutlet="linkColumn; context: { $implicit: column }" />
-        }
-      </nav>
+      <div class="column">
+        <span class="heading">Site</span>
+        <div class="column-links is-split">
+          @for (section of sections(); track section.fragment) {
+            <a class="nav-link" routerLink="/" [fragment]="section.fragment">{{ section.label }}</a>
+          }
+        </div>
+      </div>
+
+      <div class="column">
+        <span class="heading">Bookings</span>
+        <div class="column-links">
+          <a class="nav-link" routerLink="/book">Book a cut</a>
+          <a class="nav-link" routerLink="/book/manage">Manage a booking</a>
+        </div>
+      </div>
 
       <div class="column">
         <span class="heading">Visit</span>
@@ -52,21 +38,35 @@
         <app-hours-list [variant]="hoursVariant" />
       </div>
 
-      @for (column of trailingColumns(); track column.heading) {
-        <ng-container *ngTemplateOutlet="linkColumn; context: { $implicit: column }" />
+      <div class="column">
+        <span class="heading">Contact</span>
+        <div class="column-links">
+          <a class="nav-link" [href]="phone().tel">{{ phone().display }}</a>
+          <a class="nav-link" [href]="phone().sms">Text a question</a>
+        </div>
+      </div>
+
+      @if (social().length > 0) {
+        <div class="column">
+          <span class="heading">Follow</span>
+          <div class="column-links">
+            @for (link of social(); track link.href) {
+              <a class="nav-link" [href]="link.href" target="_blank" rel="noopener"
+                >{{ link.label }}<span class="sr-only"> (opens in a new tab)</span></a
+              >
+            }
+          </div>
+        </div>
       }
     </div>
   </div>
 
   <div class="bottom">
-    <span
-      >© {{ year }} {{ shopName() }}
-      @if (address(); as address) {
-        · {{ address.city }}, {{ address.state }}
-      }
-    </span>
-    <a routerLink="/privacy" class="nav-link" data-testid="footer-privacy">Privacy</a>
-    <button type="button" class="nav-link to-top" (click)="scrollToTop()">Back to top ↑</button>
+    <div class="bottom-content">
+      <span>© {{ year }} {{ shopName() }}</span>
+      <a routerLink="/privacy" class="nav-link" data-testid="footer-privacy">Privacy</a>
+      <button type="button" class="nav-link to-top" (click)="scrollToTop()">Back to top ↑</button>
+    </div>
     <p class="recaptcha-notice">
       This site is protected by reCAPTCHA and the Google
       <a
