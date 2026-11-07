@@ -7,16 +7,16 @@ import { HoursList } from '../../../shop/components/hours-list/hours-list';
 
 /** The hours section: the live open status beside every weekday's hours, on the shop's clock. */
 @Component({
-  selector: 'app-schedule-cta',
+  selector: 'app-hours',
   imports: [
     SectionHeading,
     HoursList,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  templateUrl: './schedule-cta.html',
-  styleUrl: './schedule-cta.scss',
+  templateUrl: './hours.html',
+  styleUrl: './hours.scss',
 })
-export class ScheduleCta {
+export class Hours {
   protected readonly hoursVariant: HoursListVariant = HoursListVariant.Table;
   protected readonly status: Signal<OpenStatus | null> = inject(ShopHoursService).currentOpenStatus;
 }

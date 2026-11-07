@@ -166,7 +166,7 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 
 | Wireframe | Route | Feature | Components |
 | --- | --- | --- | --- |
-| `index.html` / `mobile.html` | `/` | `features/home` | `hero`, `announcements`, `schedule-cta`, `visit`, `testimonials`, `gallery` |
+| `index.html` / `mobile.html` | `/` | `features/home` | `hero`, `announcements`, `hours`, `visit`, `testimonials`, `gallery` |
 | `book.html` | `/book` | `features/booking` | `date-step`, `time-step`, `details-step`, `booking-summary` |
 | Header / footer on all pages | Shell | `layout/` | `header`, `footer` |
 
