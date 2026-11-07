@@ -2,7 +2,6 @@ import { ViewportScroller } from '@angular/common';
 import { NavigationEnd, Router } from '@angular/router';
 import { filter, take } from 'rxjs';
 
-const HOLD_MS: number = 8000;
 const VISITOR_INPUT_EVENTS: readonly string[] = [
   'wheel',
   'touchstart',
@@ -13,7 +12,7 @@ const VISITOR_INPUT_EVENTS: readonly string[] = [
 /**
  * A page opened on a link with a fragment scrolls to it once, then images, the map and the announcement strip arrive
  * and move it. Scrolls to it again whenever the page or the fixed header changes size, until the visitor takes over
- * or the time is up.
+ * by scrolling, pressing a key or clicking, or goes to another page.
  */
 export function holdFirstAnchor(
   document: Document,
@@ -31,13 +30,9 @@ export function holdFirstAnchor(
     const sizeObserver: ResizeObserver = new ResizeObserver((): void => {
       viewportScroller.scrollToAnchor(fragment);
     });
-    const timeoutId: ReturnType<typeof setTimeout> = setTimeout((): void => {
-      stop();
-    }, HOLD_MS);
 
     function stop(): void {
       sizeObserver.disconnect();
-      clearTimeout(timeoutId);
       VISITOR_INPUT_EVENTS.forEach((name: string): void => {
         document.removeEventListener(name, stop);
       });
@@ -55,5 +50,9 @@ export function holdFirstAnchor(
         { passive: true },
       );
     });
+    router.events.pipe(
+      filter((later: unknown): later is NavigationEnd => later instanceof NavigationEnd),
+      take(1),
+    ).subscribe(stop);
   });
 }

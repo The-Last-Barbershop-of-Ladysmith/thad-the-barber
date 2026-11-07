@@ -121,13 +121,25 @@ describe(
     );
 
     it(
-      'lets go after a few seconds',
+      'lets go when the visitor goes to another page',
       (): void => {
         arriveAt('/#visit');
 
-        vi.advanceTimersByTime(8000);
+        arriveAt('/privacy');
 
         expect(disconnect).toHaveBeenCalledTimes(1);
+      },
+    );
+
+    it(
+      'keeps holding however long the page takes to settle',
+      (): void => {
+        arriveAt('/#visit');
+
+        vi.advanceTimersByTime(10 * 60 * 1000);
+        notifyResize();
+
+        expect(scrollToAnchor).toHaveBeenCalledWith('visit');
       },
     );
   },
