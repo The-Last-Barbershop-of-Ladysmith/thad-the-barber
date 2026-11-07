@@ -4,7 +4,7 @@
 
     <div class="columns">
       <div class="column">
-        <span class="heading">Site</span>
+        <span class="heading eyebrow">Site</span>
         <div class="column-links is-split">
           @for (section of sections(); track section.fragment) {
             <a class="nav-link" routerLink="/" [fragment]="section.fragment">{{ section.label }}</a>
@@ -13,7 +13,7 @@
       </div>
 
       <div class="column">
-        <span class="heading">Bookings</span>
+        <span class="heading eyebrow">Bookings</span>
         <div class="column-links">
           <a class="nav-link" routerLink="/book">Book a cut</a>
           <a class="nav-link" routerLink="/book/manage">Manage a booking</a>
@@ -21,7 +21,7 @@
       </div>
 
       <div class="column">
-        <span class="heading">Visit</span>
+        <span class="heading eyebrow">Visit</span>
         @if (address(); as address) {
           <span class="address"
             >{{ address.street }}<br />{{ address.city }}, {{ address.state }}
@@ -34,12 +34,12 @@
       </div>
 
       <div class="column">
-        <span class="heading">Hours</span>
+        <span class="heading eyebrow">Hours</span>
         <app-hours-list [variant]="hoursVariant" />
       </div>
 
       <div class="column">
-        <span class="heading">Contact</span>
+        <span class="heading eyebrow">Contact</span>
         <div class="column-links">
           <a class="nav-link" [href]="phone().tel">{{ phone().display }}</a>
           <a class="nav-link" [href]="phone().sms">Text a question</a>
@@ -48,7 +48,7 @@
 
       @if (social().length > 0) {
         <div class="column">
-          <span class="heading">Follow</span>
+          <span class="heading eyebrow">Follow</span>
           <div class="column-links">
             @for (link of social(); track link.href) {
               <a class="nav-link" [href]="link.href" target="_blank" rel="noopener"
