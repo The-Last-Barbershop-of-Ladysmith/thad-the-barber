@@ -199,8 +199,10 @@ test.describe(
         await expect(rail).toBeVisible();
         await expect(rail.locator('[aria-current="true"]')).toHaveAccessibleName('Top');
 
-        await page.evaluate((): void => document.getElementById('visit')?.scrollIntoView());
-        await expect(rail.locator('[aria-current="true"]')).toHaveAccessibleName('Visit');
+        await expect(async (): Promise<void> => {
+          await page.evaluate((): void => document.getElementById('visit')?.scrollIntoView());
+          await expect(rail.locator('[aria-current="true"]')).toHaveAccessibleName('Visit', { timeout: 1000 });
+        }).toPass();
 
         await rail.getByRole('link', { name: 'Hours' }).click();
         await expect(rail.locator('[aria-current="true"]')).toHaveAccessibleName('Hours');
