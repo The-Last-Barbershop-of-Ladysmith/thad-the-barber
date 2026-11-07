@@ -132,6 +132,8 @@ test.describe(
     test(
       'fits every time and the hero time on one line from a small phone to a wide desktop',
       async ({ page }: { page: Page; }): Promise<void> => {
+        // Six full page loads: about 40 s alone in WebKit, over the 60 s limit when the suite runs in parallel.
+        test.slow();
         for (const width of [
           320,
           390,
