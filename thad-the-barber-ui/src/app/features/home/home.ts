@@ -36,9 +36,9 @@ export class Home implements OnInit, OnDestroy {
   /** Where each backdrop keyframe lands, as in the wireframe; `#chair` is in the slot of its removed "services". */
   protected readonly backdropAnchors: readonly BackdropAnchor[] = [
     'app-hero',
-    '#announcements',
     '#chair',
     '#schedule',
+    '#announcements',
     '#gallery',
     '#testimonials',
     '#visit',

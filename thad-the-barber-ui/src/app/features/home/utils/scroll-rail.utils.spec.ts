@@ -58,9 +58,9 @@ describe(
         expect(toFragments(toShownRailSections(HOME_SECTIONS)))
           .toEqual([
             'top',
-            'announcements',
             'chair',
             'schedule',
+            'announcements',
             'gallery',
             'testimonials',
             'visit',
