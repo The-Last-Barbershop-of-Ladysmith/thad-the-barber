@@ -55,8 +55,14 @@ test.describe(
       'follows a link to this site in the body without reloading the page',
       async ({ page }: { page: Page; }): Promise<void> => {
         await page.goto('/#announcements');
-        await page.getByRole('button', { name: 'Next announcement' }).click();
-        await expect(page.locator('.announcements .count')).toHaveText('02 / 02');
+        const count: Locator = page.locator('.announcements .count');
+        const nextButton: Locator = page.getByRole('button', { name: 'Next announcement' });
+        await expect(async (): Promise<void> => {
+          if ((await count.textContent()) === '01 / 02') {
+            await nextButton.click();
+          }
+          await expect(count).toHaveText('02 / 02', { timeout: 1000 });
+        }).toPass();
         const link: Locator = page.getByTestId('announcement-body').locator('a[href="/#visit"]');
         await expect(link).toBeVisible();
         await page.evaluate((): void => {
