@@ -133,7 +133,7 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 | Glass circle buttons (slider ←/→, social icons, hamburger) | 5 | `pButton severity="secondary" [rounded]` | `button.ts` | Secondary tokens re-skinned as glass |
 | "Get directions →" | 2 | `pButton [link]` | `button.ts` | |
 | Frosted section panels | 6 | `p-card` | `card.ts` | Border and backdrop blur via `css` |
-| Announcement slider, swipe, arrows, dots | 1 | `p-carousel` (PrimeNG 22 composable API) | `carousel.ts` | Ring dots that fill and scale when active |
+| Announcement slider, swipe, arrows, indicators | 1 | `p-carousel` (PrimeNG 22 composable API) | `carousel.ts` | Short bars (the active one longer and copper), a `01 / 02` count and previous / next circles under the slide |
 | Gallery lightbox, prev/next, close, counter, Esc/arrow keys | 1 | `p-galleria [fullScreen]` | `galleria.ts` | `#item` / `#footer` templates |
 | Booking month calendar and legend | 1 | Replaced by a list of open days (#205, see §8): `p-selectbutton` | `selectbutton.ts` | One full-width row per day ("Monday, October 27th 2026"), with an amber "Only N left" badge on filling-up days (BR-15, #206) |
 | Month navigation (‹ month ›) | 1 | `pButton` arrows + a `p-selectbutton` month grid per year | `button.ts`, `selectbutton.ts` | "Next 31 days" first, then every later month in Square's booking window |
@@ -228,7 +228,7 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 | --- | --- | --- |
 | Scroll-scrubbed video background (canvas, 847 frames, motion retiming) | Replaced by a keyframe crossfade | Port into `Backdrop` and host the frames on a CDN (the mobile wireframe already streamed them remotely) |
 | Background "loading…%" overlay | Dropped (not needed for the stills) | Bring back with the frame scrubber |
-| Announcement arrows | At panel sides on desktop; beside the dots on mobile | Confirm with design |
+| Announcement controls | Under the image in the right column on desktop; full width under the slide on phones, no card around the slide | Confirm with design |
 | Lightbox arrows | Inside the photo edges (Galleria default) rather than at the viewport sides | Adjust `galleria.ts` if needed |
 | Instagram / Facebook URLs (`href="#"`) | From Square's location profile (#39) | Unset ones are hidden (BR-40) |
 | Announcement photos ("kid in the chair", "hot towel") | Placeholders dropped; images come from the media container | Thad uploads to `announcements/` and names the file in `image.fileName` |

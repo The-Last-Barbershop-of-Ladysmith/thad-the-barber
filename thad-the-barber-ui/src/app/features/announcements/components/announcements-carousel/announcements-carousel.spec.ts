@@ -94,9 +94,9 @@ describe(
         const labels: string[] = Array.from(host.querySelectorAll('.eyebrow'))
           .map((label: Element): string => label.textContent.trim());
 
-        expect(labels[0]).toContain('Oct 31');
-        expect(labels[0]).not.toBe('Oct 31');
-        expect(labels[1]).toBe('Oct 15');
+        expect(labels[0]).toContain('Thru Oct 31');
+        expect(labels[1]).toContain('Oct 15');
+        expect(labels[1]).not.toContain('Thru');
       },
     );
 

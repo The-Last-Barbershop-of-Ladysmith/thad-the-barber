@@ -1,9 +1,8 @@
-import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, Signal, inject } from '@angular/core';
+import { DatePipe, DecimalPipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, Signal, WritableSignal, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { ButtonModule } from 'primeng/button';
-import { CardModule } from 'primeng/card';
 import { CarouselModule } from 'primeng/carousel';
 import { ButtonStyle, ButtonVariant } from '../../../../shared/models/button.models';
 import { LinkKind } from '../../../../shared/models/link.models';
@@ -15,7 +14,8 @@ import { announcementsFeature } from '../../state/announcements.feature';
 import { AppState } from '../../../../store/app.state';
 
 /**
- * Full-height slider (PrimeNG composable carousel; swipe, arrows and dots are built in) of today's announcements.
+ * Slider (PrimeNG composable carousel; swipe, arrows and bars are built in) of today's announcements: the text, then
+ * its image on the right on wide screens and below on phones, unless the announcement asks for it on the left.
  * Renders nothing without announcements (BR-32). Links to this site's own pages, in the body or on a button, go
  * through the Router.
  */
@@ -23,8 +23,8 @@ import { AppState } from '../../../../store/app.state';
   selector: 'app-announcements-carousel',
   imports: [
     DatePipe,
+    DecimalPipe,
     ButtonModule,
-    CardModule,
     CarouselModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -43,6 +43,7 @@ export class AnnouncementsCarousel {
   protected readonly linkKinds: typeof LinkKind = LinkKind;
   protected readonly imagePositions: typeof AnnouncementImagePosition = AnnouncementImagePosition;
   protected readonly buttonStyles: Readonly<Record<ButtonVariant, ButtonStyle>> = BUTTON_STYLES;
+  protected readonly shownIndex: WritableSignal<number> = signal(0);
 
   /** A plain click on an `/…` link routes in the app without a reload; modified clicks keep the browser's behavior. */
   protected followInternalLink(event: MouseEvent): void {
