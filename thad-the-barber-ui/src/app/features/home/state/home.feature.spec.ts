@@ -13,8 +13,8 @@ const ALL_SECTIONS: string[] = HOME_SECTIONS.map((section: NavItem): string => s
 
 const WITHOUT_STORAGE_CONTENT: string[] = [
   'schedule',
-  'visit',
   'testimonials',
+  'visit',
 ];
 
 describe(

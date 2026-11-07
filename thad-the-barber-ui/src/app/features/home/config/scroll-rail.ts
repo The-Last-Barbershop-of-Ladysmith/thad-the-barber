@@ -5,9 +5,9 @@ export const SCROLL_RAIL_SECTIONS: readonly NavItem[] = [
   { label: 'Announcements', fragment: 'announcements' },
   { label: 'Next open times', fragment: 'chair' },
   { label: 'Schedule', fragment: 'schedule' },
-  { label: 'Visit', fragment: 'visit' },
-  { label: 'Testimonials', fragment: 'testimonials' },
   { label: 'Gallery', fragment: 'gallery' },
+  { label: 'Testimonials', fragment: 'testimonials' },
+  { label: 'Visit', fragment: 'visit' },
 ];
 
 export const SCROLL_RAIL_CURRENT_LINE: number = 0.4;

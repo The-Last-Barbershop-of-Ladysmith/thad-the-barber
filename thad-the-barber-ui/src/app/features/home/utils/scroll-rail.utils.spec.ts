@@ -61,9 +61,9 @@ describe(
             'announcements',
             'chair',
             'schedule',
-            'visit',
-            'testimonials',
             'gallery',
+            'testimonials',
+            'visit',
           ]);
       },
     );
@@ -79,8 +79,8 @@ describe(
           'top',
           'chair',
           'schedule',
-          'visit',
           'testimonials',
+          'visit',
         ]);
       },
     );

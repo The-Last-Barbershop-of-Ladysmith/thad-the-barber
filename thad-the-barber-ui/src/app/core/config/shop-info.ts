@@ -21,7 +21,7 @@ export const SHOP_CONTENT: ShopContent = {
 export const HOME_SECTIONS: readonly NavItem[] = [
   { label: 'Announcements', fragment: 'announcements' },
   { label: 'Schedule', fragment: 'schedule' },
-  { label: 'Visit', fragment: 'visit' },
-  { label: 'Testimonials', fragment: 'testimonials' },
   { label: 'Gallery', fragment: 'gallery' },
+  { label: 'Testimonials', fragment: 'testimonials' },
+  { label: 'Visit', fragment: 'visit' },
 ];

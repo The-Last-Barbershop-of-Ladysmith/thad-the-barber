@@ -39,9 +39,9 @@ export class Home implements OnInit, OnDestroy {
     '#announcements',
     '#chair',
     '#schedule',
-    '#visit',
-    '#testimonials',
     '#gallery',
+    '#testimonials',
+    '#visit',
     'app-footer',
   ];
 
