@@ -38,7 +38,7 @@ describe(
 
         const currentTeeth: Element[] = Array.from(page.querySelectorAll('[aria-current="true"]'));
 
-        expect(toTeethLabels(page)).toContain('Next open times');
+        expect(toTeethLabels(page)).toContain('Open times');
         expect(currentTeeth.length).toBe(1);
         expect(currentTeeth[0]?.getAttribute('aria-label')).toBe('Top');
       },
