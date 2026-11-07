@@ -13,6 +13,7 @@ import { RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { ButtonModule } from 'primeng/button';
 import { Announcement } from '../../features/announcements/models/announcement.model';
+import * as AnnouncementsActions from '../../features/announcements/state/announcements.actions';
 import { announcementsFeature } from '../../features/announcements/state/announcements.feature';
 import { AppState } from '../../store/app.state';
 
@@ -58,6 +59,10 @@ export class AnnouncementStrip {
 
   protected togglePause(): void {
     this.isPaused.update((isPaused: boolean): boolean => !isPaused);
+  }
+
+  protected showInCarousel(index: number): void {
+    this.store.dispatch(AnnouncementsActions.AnnouncementShown({ index }));
   }
 
   protected close(): void {

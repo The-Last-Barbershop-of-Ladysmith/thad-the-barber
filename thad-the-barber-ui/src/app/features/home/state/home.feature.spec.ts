@@ -32,6 +32,7 @@ describe(
         },
       ],
       loadStatus: RequestStatus.Success,
+      shownIndex: 0,
     };
 
     function fragments(home: HomeState, announcements: AnnouncementsState): string[] {

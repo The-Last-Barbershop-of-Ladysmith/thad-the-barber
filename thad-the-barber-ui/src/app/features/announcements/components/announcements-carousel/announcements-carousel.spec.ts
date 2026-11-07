@@ -23,7 +23,7 @@ describe(
       buttons: [],
     };
 
-    function render(announcements: Announcement[]): HTMLElement {
+    function render(announcements: Announcement[], shownIndex: number = 0): HTMLElement {
       TestBed.configureTestingModule({
         providers: [
           provideRouter([]),
@@ -34,6 +34,7 @@ describe(
         ],
       });
       TestBed.inject(Store).dispatch(AnnouncementsActions.AnnouncementsRequestSuccess({ announcements }));
+      TestBed.inject(Store).dispatch(AnnouncementsActions.AnnouncementShown({ index: shownIndex }));
       const fixture: ComponentFixture<AnnouncementsCarousel> = TestBed.createComponent(AnnouncementsCarousel);
       fixture.detectChanges();
       return fixture.nativeElement as HTMLElement;
@@ -94,9 +95,51 @@ describe(
         const labels: string[] = Array.from(host.querySelectorAll('.eyebrow'))
           .map((label: Element): string => label.textContent.trim());
 
-        expect(labels[0]).toContain('Thru Oct 31');
-        expect(labels[1]).toContain('Oct 15');
-        expect(labels[1]).not.toContain('Thru');
+        expect(labels[0]).toContain('Oct 15');
+        expect(labels[0]).not.toContain('Thru');
+        expect(labels[1]).toContain('Thru Oct 31');
+      },
+    );
+
+    it(
+      'lists the announcements newest first, the order the strip uses, so both share an index',
+      (): void => {
+        const host: HTMLElement = render([
+          {
+            ...base,
+            title: 'Older special',
+            startDate: '2026-10-02',
+          },
+          {
+            ...base,
+            title: 'Newest special',
+            startDate: '2026-10-12',
+          },
+        ]);
+        const titles: string[] = Array.from(host.querySelectorAll('.slide-title'))
+          .map((title: Element): string => title.textContent.trim());
+
+        expect(titles).toEqual(['Newest special', 'Older special']);
+      },
+    );
+
+    it(
+      'counts from the announcement the strip chose',
+      (): void => {
+        const twoAnnouncements: Announcement[] = [
+          {
+            ...base,
+            startDate: '2026-10-02',
+          },
+          {
+            ...base,
+            startDate: '2026-10-12',
+          },
+        ];
+
+        expect(query(render(twoAnnouncements, 0), '.count').textContent.trim()).toBe('01 / 02');
+        TestBed.resetTestingModule();
+        expect(query(render(twoAnnouncements, 1), '.count').textContent.trim()).toBe('02 / 02');
       },
     );
 
@@ -133,8 +176,8 @@ describe(
         ]);
         const images: HTMLImageElement[] = Array.from(host.querySelectorAll<HTMLImageElement>('[data-testid="announcement-image"]'));
 
-        expect(images.map((image: HTMLImageElement): boolean => image.classList.contains('md:order-first'))).toEqual([false, true]);
-        expect(images.map((image: HTMLImageElement): string | null => image.getAttribute('alt'))).toEqual(['', 'A chair']);
+        expect(images.map((image: HTMLImageElement): boolean => image.classList.contains('md:order-first'))).toEqual([true, false]);
+        expect(images.map((image: HTMLImageElement): string | null => image.getAttribute('alt'))).toEqual(['A chair', '']);
         expect(images.every((image: HTMLImageElement): boolean => image.previousElementSibling?.classList.contains('slide-copy') ?? false)).toBe(true);
       },
     );

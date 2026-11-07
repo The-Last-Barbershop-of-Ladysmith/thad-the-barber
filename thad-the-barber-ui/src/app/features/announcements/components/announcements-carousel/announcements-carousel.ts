@@ -1,5 +1,5 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, Signal, WritableSignal, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Signal, computed, effect, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { ButtonModule } from 'primeng/button';
@@ -10,6 +10,7 @@ import { BUTTON_STYLES } from '../../../../shared/utils/button.utils';
 import { linkKind } from '../../../../shared/utils/link.utils';
 import { Announcement } from '../../models/announcement.model';
 import { AnnouncementImagePosition } from '../../models/announcement-image-position.model';
+import * as AnnouncementsActions from '../../state/announcements.actions';
 import { announcementsFeature } from '../../state/announcements.feature';
 import { AppState } from '../../../../store/app.state';
 
@@ -37,13 +38,46 @@ export class AnnouncementsCarousel {
   private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
 
   protected readonly announcements: Signal<Announcement[]> = this.store.selectSignal(
-    announcementsFeature.selectActive,
+    announcementsFeature.selectActiveNewestFirst,
   );
 
   protected readonly linkKinds: typeof LinkKind = LinkKind;
   protected readonly imagePositions: typeof AnnouncementImagePosition = AnnouncementImagePosition;
   protected readonly buttonStyles: Readonly<Record<ButtonVariant, ButtonStyle>> = BUTTON_STYLES;
-  protected readonly shownIndex: WritableSignal<number> = signal(0);
+  private readonly jumpSettleMs: number = 1200;
+  private reportedIndex: number = 0;
+  private isJumping: boolean = false;
+  private readonly storedShownIndex: Signal<number> = this.store.selectSignal(announcementsFeature.selectShownIndex);
+
+  protected readonly shownIndex: Signal<number> = computed(
+    (): number => Math.min(this.storedShownIndex(), this.announcements().length - 1),
+  );
+
+  /**
+   * While the carousel scrolls to a slide the strip chose, it reports the slides it passes, starting with the one it
+   * left; those reports are ignored, or they would scroll it back.
+   */
+  constructor() {
+    effect((): void => {
+      const index: number = this.shownIndex();
+      if (index === this.reportedIndex) {
+        return;
+      }
+      this.reportedIndex = index;
+      this.isJumping = true;
+      setTimeout((): void => {
+        this.isJumping = false;
+      }, this.jumpSettleMs);
+    });
+  }
+
+  protected showSlide(index: number): void {
+    if (this.isJumping) {
+      return;
+    }
+    this.reportedIndex = index;
+    this.store.dispatch(AnnouncementsActions.AnnouncementShown({ index }));
+  }
 
   /** A plain click on an `/…` link routes in the app without a reload; modified clicks keep the browser's behavior. */
   protected followInternalLink(event: MouseEvent): void {

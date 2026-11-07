@@ -24,6 +24,7 @@
                 routerLink="/"
                 fragment="announcements"
                 [attr.aria-label]="'Details about: ' + announcement.title"
+                (click)="showInCarousel(i)"
                 >Details →</a
               >
             </div>

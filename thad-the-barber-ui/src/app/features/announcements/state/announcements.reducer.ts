@@ -28,4 +28,11 @@ export const announcementsReducer: ActionReducer<AnnouncementsState> = createRed
       loadStatus: RequestStatus.Error,
     }),
   ),
+  on(
+    AnnouncementsActions.AnnouncementShown,
+    (state: AnnouncementsState, { index }: { index: number; }): AnnouncementsState => ({
+      ...state,
+      shownIndex: index,
+    }),
+  ),
 );

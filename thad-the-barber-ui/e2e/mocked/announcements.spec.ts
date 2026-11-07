@@ -27,12 +27,12 @@ test.describe(
   'announcements',
   (): void => {
     test(
-      'shows the active announcements from the media container, with image, rich text and buttons',
+      'shows the active announcements from the media container, newest first, with image, rich text and buttons',
       async ({ page }: { page: Page; }): Promise<void> => {
         await page.goto('/#announcements');
 
         const section: Locator = page.getByTestId('announcements');
-        await expect(section.getByRole('heading', { level: 2 })).toHaveText(ACTIVE_ANNOUNCEMENT_TITLES);
+        await expect(section.getByRole('heading', { level: 2 })).toHaveText([...ACTIVE_ANNOUNCEMENT_TITLES].reverse());
 
         const image: Locator = section.getByTestId('announcement-image');
         await expect(image).toHaveCount(1);
@@ -42,8 +42,8 @@ test.describe(
           image.evaluate((element: HTMLImageElement): number => element.naturalWidth);
         await expect.poll(naturalWidth).toBeGreaterThan(0);
 
-        const firstBody: Locator = section.getByTestId('announcement-body').first();
-        await expect(firstBody.getByRole('listitem')).toHaveCount(1);
+        const listBody: Locator = section.getByTestId('announcement-body').filter({ has: page.getByRole('listitem') });
+        await expect(listBody.getByRole('listitem')).toHaveCount(1);
         await expect(section.locator('a[href="/book"]')).toHaveCount(1);
         await expect(section.locator('a[href="https://example.test/"]')).toHaveAttribute('target', '_blank');
 
@@ -55,7 +55,9 @@ test.describe(
       'follows a link to this site in the body without reloading the page',
       async ({ page }: { page: Page; }): Promise<void> => {
         await page.goto('/#announcements');
-        const link: Locator = page.getByTestId('announcement-body').first().locator('a[href="/#visit"]');
+        await page.getByRole('button', { name: 'Next announcement' }).click();
+        await expect(page.locator('.announcements .count')).toHaveText('02 / 02');
+        const link: Locator = page.getByTestId('announcement-body').locator('a[href="/#visit"]');
         await expect(link).toBeVisible();
         await page.evaluate((): void => {
           (window as ReloadMarker).e2eNoReload = true;
@@ -209,5 +211,25 @@ test.describe(
         expect(logoAfter?.y ?? Infinity).toBeLessThan(logoBefore?.y ?? 0);
       },
     );
+
+    for (const startPath of ['/', '/book']) {
+      test(
+        `opens the carousel on the announcement the strip is showing when "Details" is used from ${startPath}`,
+        async ({ page }: { page: Page; }): Promise<void> => {
+          const olderTitle: string = ACTIVE_ANNOUNCEMENT_TITLES[0] ?? '';
+          await page.goto(startPath);
+          await expect(page.getByTestId('announcement-strip').locator('.item.is-shown .title')).toHaveText(olderTitle, {
+            timeout: 10_000,
+          });
+
+          await page.locator('.item.is-shown a').click();
+
+          await expect(page.locator('.announcements .count')).toHaveText('02 / 02');
+          await expect(page.locator('.announcements .slide-title', { hasText: olderTitle })).toBeInViewport();
+          await page.waitForTimeout(2000);
+          await expect(page.locator('.announcements .count')).toHaveText('02 / 02');
+        },
+      );
+    }
   },
 );

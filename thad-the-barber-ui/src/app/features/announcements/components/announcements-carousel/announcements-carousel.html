@@ -5,7 +5,8 @@
       [loop]="true"
       [spacing]="24"
       aria-label="Announcements"
-      (onSlideChange)="shownIndex.set($event.value)"
+      [slide]="shownIndex()"
+      (onSlideChange)="showSlide($event.value)"
     >
       <p-carousel-content>
         @for (item of announcements(); track $index) {

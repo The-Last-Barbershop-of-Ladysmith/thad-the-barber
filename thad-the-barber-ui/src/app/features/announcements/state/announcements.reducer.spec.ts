@@ -10,6 +10,7 @@ describe(
     const loaded: AnnouncementsState = {
       announcements: [TEST_ANNOUNCEMENT],
       loadStatus: RequestStatus.Success,
+      shownIndex: 0,
     };
 
     it(
@@ -20,7 +21,11 @@ describe(
           AnnouncementsActions.AnnouncementsRequest(),
         );
 
-        expect(state).toEqual({ announcements: [], loadStatus: RequestStatus.Pending });
+        expect(state).toEqual({
+          announcements: [],
+          loadStatus: RequestStatus.Pending,
+          shownIndex: 0,
+        });
       },
     );
 
@@ -30,6 +35,7 @@ describe(
         const before: AnnouncementsState = {
           announcements: [{ ...TEST_ANNOUNCEMENT, title: 'Made-up older post' }],
           loadStatus: RequestStatus.Pending,
+          shownIndex: 0,
         };
 
         const state: AnnouncementsState = announcementsReducer(
@@ -50,6 +56,23 @@ describe(
         );
 
         expect(state.loadStatus).toBe(RequestStatus.Error);
+      },
+    );
+
+    it(
+      'remembers which announcement is shown, and keeps it when the announcements load again',
+      (): void => {
+        const shown: AnnouncementsState = announcementsReducer(
+          loaded,
+          AnnouncementsActions.AnnouncementShown({ index: 2 }),
+        );
+        const reloaded: AnnouncementsState = announcementsReducer(
+          shown,
+          AnnouncementsActions.AnnouncementsRequestSuccess({ announcements: [TEST_ANNOUNCEMENT] }),
+        );
+
+        expect(shown.shownIndex).toBe(2);
+        expect(reloaded.shownIndex).toBe(2);
       },
     );
   },

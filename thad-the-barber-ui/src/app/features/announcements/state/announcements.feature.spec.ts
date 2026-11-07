@@ -176,7 +176,11 @@ describe(
       (): void => {
         const expired: Announcement = { ...TEST_ANNOUNCEMENT, endDate: '2026-10-14' };
 
-        expect(isHidden({ announcements: [expired], loadStatus: RequestStatus.Success })).toBe(true);
+        expect(isHidden({
+          announcements: [expired],
+          loadStatus: RequestStatus.Success,
+          shownIndex: 0,
+        })).toBe(true);
       },
     );
 
@@ -190,7 +194,11 @@ describe(
     it(
       'shows the section with an active announcement',
       (): void => {
-        expect(isHidden({ announcements: [TEST_ANNOUNCEMENT], loadStatus: RequestStatus.Success })).toBe(false);
+        expect(isHidden({
+          announcements: [TEST_ANNOUNCEMENT],
+          loadStatus: RequestStatus.Success,
+          shownIndex: 0,
+        })).toBe(false);
       },
     );
   },
