@@ -53,7 +53,7 @@ describe(
 
         const labels: string[] = toTeethLabels(page);
 
-        expect(labels).not.toContain('Announcements');
+        expect(labels).not.toContain('Shop news');
         expect(labels).toContain('Hours');
       },
     );
