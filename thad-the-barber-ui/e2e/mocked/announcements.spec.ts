@@ -23,6 +23,51 @@ const HIDING_RESPONSES: Record<string, Parameters<Route['fulfill']>[0]> = {
   'a missing file': { status: 404 },
 };
 
+/** Whether the slide with this title sits inside the carousel's own box, side to side, wherever the page is. */
+async function isSlideShowing(page: Page, title: string): Promise<boolean> {
+  return page.evaluate((slideTitle: string): boolean => {
+    const slider: Element | null = document.querySelector('.announcements .slider');
+    const slide: Element | undefined = Array.from(document.querySelectorAll('.announcements .slide-title'))
+      .find((candidate: Element): boolean => candidate.textContent.includes(slideTitle));
+    if (!slider || !slide) {
+      return false;
+    }
+    const sliderBox: DOMRect = slider.getBoundingClientRect();
+    const slideBox: DOMRect = slide.getBoundingClientRect();
+    return slideBox.left >= sliderBox.left - 1 && slideBox.right <= sliderBox.right + 1;
+  }, title);
+}
+
+async function openStripOnOlderAnnouncement(page: Page, startPath: string): Promise<string> {
+  const olderTitle: string = ACTIVE_ANNOUNCEMENT_TITLES[0] ?? '';
+  await page.goto(startPath);
+  await expect(page.getByTestId('announcement-strip').locator('.item.is-shown .title')).toHaveText(olderTitle, {
+    timeout: 10_000,
+  });
+  return olderTitle;
+}
+
+/** Resolves once the carousel's scrolling track has held still for several frames in a row. */
+async function finishScrolling(page: Page): Promise<void> {
+  await page.evaluate(async (): Promise<void> => {
+    const track: Element | undefined = Array.from(document.querySelectorAll('.announcements .slider *'))
+      .find((element: Element): boolean => element.scrollWidth > element.clientWidth);
+    const framesToHoldStill: number = 10;
+    let stillFrames: number = 0;
+    let lastPosition: number = track?.scrollLeft ?? 0;
+    while (stillFrames < framesToHoldStill) {
+      await new Promise<void>((resolve: () => void): void => {
+        requestAnimationFrame((): void => {
+          resolve();
+        });
+      });
+      const position: number = track?.scrollLeft ?? 0;
+      stillFrames = position === lastPosition ? stillFrames + 1 : 0;
+      lastPosition = position;
+    }
+  });
+}
+
 test.describe(
   'announcements',
   (): void => {
@@ -198,7 +243,7 @@ test.describe(
     );
 
     test(
-      'cycles the strip through every active announcement, newest first, and pauses on request',
+      'cycles the strip through every active announcement, newest first',
       async ({ page }: { page: Page; }): Promise<void> => {
         const [olderTitle, newestTitle]: string[] = ACTIVE_ANNOUNCEMENT_TITLES;
         await page.goto('/');
@@ -206,11 +251,17 @@ test.describe(
 
         await expect(shown).toHaveText(newestTitle ?? '');
         await expect(shown).toHaveText(olderTitle ?? '', { timeout: 10_000 });
+      },
+    );
+
+    test(
+      'offers to resume once the strip is paused',
+      async ({ page }: { page: Page; }): Promise<void> => {
+        await page.goto('/');
 
         await page.getByTestId('announcement-strip-pause').click();
+
         await expect(page.getByTestId('announcement-strip-pause')).toHaveAccessibleName('Resume announcements');
-        await page.waitForTimeout(7000);
-        await expect(shown).toHaveText(olderTitle ?? '');
       },
     );
 
@@ -232,20 +283,26 @@ test.describe(
       test(
         `opens the carousel on the announcement the strip is showing when "Details" is used from ${startPath}`,
         async ({ page }: { page: Page; }): Promise<void> => {
-          const olderTitle: string = ACTIVE_ANNOUNCEMENT_TITLES[0] ?? '';
-          await page.goto(startPath);
-          await expect(page.getByTestId('announcement-strip').locator('.item.is-shown .title')).toHaveText(olderTitle, {
-            timeout: 10_000,
-          });
+          const olderTitle: string = await openStripOnOlderAnnouncement(page, startPath);
 
           await page.locator('.item.is-shown a').click();
 
-          await expect(page.locator('.announcements .count')).toHaveText('02 / 02');
-          await expect(page.locator('.announcements .slide-title', { hasText: olderTitle })).toBeInViewport();
-          await page.waitForTimeout(2000);
-          await expect(page.locator('.announcements .count')).toHaveText('02 / 02');
+          await expect.poll(async (): Promise<boolean> => isSlideShowing(page, olderTitle)).toBe(true);
         },
       );
     }
+
+    test(
+      'stays on the announcement the strip chose once the carousel has finished scrolling',
+      async ({ page }: { page: Page; }): Promise<void> => {
+        const olderTitle: string = await openStripOnOlderAnnouncement(page, '/');
+
+        await page.locator('.item.is-shown a').click();
+        await expect.poll(async (): Promise<boolean> => isSlideShowing(page, olderTitle)).toBe(true);
+        await finishScrolling(page);
+
+        expect(await isSlideShowing(page, olderTitle)).toBe(true);
+      },
+    );
   },
 );

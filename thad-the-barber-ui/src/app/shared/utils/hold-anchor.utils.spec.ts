@@ -64,18 +64,43 @@ describe(
       'scrolls to the fragment again each time the page or the fixed header changes size',
       (): void => {
         arriveAt('/#visit');
+
         notifyResize();
         notifyResize();
 
-        expect(scrollToAnchor).toHaveBeenCalledTimes(2);
-        expect(scrollToAnchor).toHaveBeenCalledWith('visit');
+        expect(scrollToAnchor.mock.calls).toEqual([['visit'], ['visit']]);
+      },
+    );
+
+    it(
+      'watches the page',
+      (): void => {
+        arriveAt('/#visit');
+
         expect(observed).toContain(document.documentElement);
+      },
+    );
+
+    it(
+      'watches the fixed header',
+      (): void => {
+        arriveAt('/#visit');
+
         expect(observed.some((element: Element): boolean => element.hasAttribute('data-site-top'))).toBe(true);
       },
     );
 
     it(
-      'does nothing when the first page has no fragment, or for later navigations',
+      'watches nothing when the first page has no fragment',
+      (): void => {
+        arriveAt('/');
+
+        expect(observed).toHaveLength(0);
+      },
+    );
+
+    it(
+      'watches nothing for a later page with a fragment',
       (): void => {
         arriveAt('/');
         arriveAt('/#visit');
@@ -85,7 +110,7 @@ describe(
     );
 
     it(
-      'lets go when the visitor scrolls or presses a key',
+      'lets go when the visitor scrolls',
       (): void => {
         arriveAt('/#visit');
 

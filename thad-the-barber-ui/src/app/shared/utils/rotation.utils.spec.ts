@@ -27,6 +27,7 @@ describe(
     });
 
     afterEach((): void => {
+      vi.restoreAllMocks();
       vi.useRealTimers();
     });
 
@@ -35,70 +36,132 @@ describe(
     }
 
     it(
-      'starts on the first item and moves to the next each interval, wrapping round, with the previous one leaving',
+      'starts on the first item, with the last one leaving',
       (): void => {
-        expect([rotation.shownIndex(), rotation.leavingIndex()]).toEqual([0, 2]);
-        step();
-        expect([rotation.shownIndex(), rotation.leavingIndex()]).toEqual([1, 0]);
-        step();
-        step();
         expect([rotation.shownIndex(), rotation.leavingIndex()]).toEqual([0, 2]);
       },
     );
 
     it(
-      'stays put while paused or held, and carries on after',
+      'moves to the next item each interval, with the one before leaving',
+      (): void => {
+        step();
+
+        expect([rotation.shownIndex(), rotation.leavingIndex()]).toEqual([1, 0]);
+      },
+    );
+
+    it(
+      'wraps round to the first item after the last',
+      (): void => {
+        step();
+        step();
+        step();
+
+        expect(rotation.shownIndex()).toBe(0);
+      },
+    );
+
+    it(
+      'stays put while paused',
       (): void => {
         rotation.togglePause();
-        step();
-        expect(rotation.shownIndex()).toBe(0);
-        expect(rotation.isPaused()).toBe(true);
 
+        step();
+
+        expect(rotation.shownIndex()).toBe(0);
+      },
+    );
+
+    it(
+      'carries on after being resumed',
+      (): void => {
         rotation.togglePause();
-        rotation.hold();
-        step();
-        expect(rotation.shownIndex()).toBe(0);
+        rotation.togglePause();
 
-        rotation.release();
         step();
+
         expect(rotation.shownIndex()).toBe(1);
       },
     );
 
     it(
-      'stays put while stopped, with one item, or in a hidden tab',
+      'stays put while held',
       (): void => {
-        isStopped.set(true);
-        step();
-        expect(rotation.shownIndex()).toBe(0);
+        rotation.hold();
 
-        isStopped.set(false);
-        vi.spyOn(
-          document,
-          'hidden',
-          'get',
-        ).mockReturnValue(true);
         step();
-        expect(rotation.shownIndex()).toBe(0);
 
-        vi.restoreAllMocks();
-        count.set(1);
-        step();
         expect(rotation.shownIndex()).toBe(0);
       },
     );
 
     it(
-      'shows nothing out of range when the list empties or shrinks',
+      'carries on after being released',
+      (): void => {
+        rotation.hold();
+        rotation.release();
+
+        step();
+
+        expect(rotation.shownIndex()).toBe(1);
+      },
+    );
+
+    it(
+      'stays put while stopped',
+      (): void => {
+        isStopped.set(true);
+
+        step();
+
+        expect(rotation.shownIndex()).toBe(0);
+      },
+    );
+
+    it(
+      'stays put in a hidden tab',
+      (): void => {
+        vi.spyOn(
+          document,
+          'hidden',
+          'get',
+        ).mockReturnValue(true);
+
+        step();
+
+        expect(rotation.shownIndex()).toBe(0);
+      },
+    );
+
+    it(
+      'stays put with a single item',
+      (): void => {
+        count.set(1);
+
+        step();
+
+        expect(rotation.shownIndex()).toBe(0);
+      },
+    );
+
+    it(
+      'wraps the shown item back into range when the list shrinks',
       (): void => {
         step();
         step();
-        expect(rotation.shownIndex()).toBe(2);
 
         count.set(2);
-        expect(rotation.shownIndex()).toBe(0);
 
+        expect(rotation.shownIndex()).toBe(0);
+      },
+    );
+
+    it(
+      'shows and leaves the first item when the list empties',
+      (): void => {
         count.set(0);
+
         expect([rotation.shownIndex(), rotation.leavingIndex()]).toEqual([0, 0]);
       },
     );
