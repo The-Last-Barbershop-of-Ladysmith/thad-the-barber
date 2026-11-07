@@ -83,4 +83,12 @@
       }
     }
   }
+
+  .recaptcha-notice {
+    margin: 0;
+    padding-top: 1rem;
+    font-size: 0.75rem;
+    color: var(--p-text-muted-color);
+    text-wrap: pretty;
+  }
 }

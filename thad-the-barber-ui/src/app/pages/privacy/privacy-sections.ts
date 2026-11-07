@@ -70,7 +70,7 @@ export const PRIVACY_SECTIONS: readonly PrivacySection[] = [
       [
         {
           kind: PrivacyPartKind.Text,
-          text: "When you open the booking page or a booking's manage link, Google reCAPTCHA checks that you're a "
+          text: "When you open the home page, the booking page or a booking's manage link, Google reCAPTCHA checks that you're a "
             + 'person, not a bot. It uses Google cookies and sends information about your device and how you use '
             + 'the page to Google. The Google ',
         },

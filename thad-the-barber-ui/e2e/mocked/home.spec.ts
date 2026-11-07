@@ -239,3 +239,26 @@ test.describe(
     );
   },
 );
+
+test.describe(
+  'reCAPTCHA notice',
+  (): void => {
+    test(
+      'hides the Google badge and shows its notice in the footer',
+      async ({ page }: { page: Page; }): Promise<void> => {
+        await page.goto('/');
+        await page.evaluate((): void => {
+          const badge: HTMLDivElement = document.createElement('div');
+          badge.className = 'grecaptcha-badge';
+          badge.textContent = 'badge';
+          document.body.append(badge);
+        });
+
+        await expect(page.locator('.grecaptcha-badge')).toBeHidden();
+        const notice: Locator = page.locator('footer .recaptcha-notice');
+        await expect(notice.locator('a[href="https://policies.google.com/privacy"]')).toHaveCount(1);
+        await expect(notice.locator('a[href="https://policies.google.com/terms"]')).toHaveCount(1);
+      },
+    );
+  },
+);
