@@ -155,7 +155,7 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 | Component | Location | Why custom |
 | --- | --- | --- |
 | `SectionHeading` | `shared/components/section-heading` | Eyebrow + title pair used in 4 sections |
-| `HoursList` | `features/shop/components/hours-list` | One data source, 3 layouts: `table` (schedule), `stacked` (unused since the Visit redo, #54), `compact` (footer) |
+| `HoursList` | `features/shop/components/hours-list` | One data source, 3 layouts: `table` (hours section: every weekday, today marked), `stacked` (unused since the Visit redo, #54), `compact` (footer: open days, then runs of closed days) |
 | `Backdrop` | `shared/components/backdrop` | Fixed photo background: the scroll-scrubbed keyframes on the home page |
 | `Header`, `Footer` | `layout/` | App shell |
 | Section components | `features/home/components/*` | Page composition only |
