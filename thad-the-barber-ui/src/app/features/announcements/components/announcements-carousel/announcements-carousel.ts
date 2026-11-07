@@ -2,7 +2,9 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   EffectCleanupRegisterFn,
+  ElementRef,
   Signal,
   computed,
   effect,
@@ -43,6 +45,8 @@ import { AppState } from '../../../../store/app.state';
 })
 export class AnnouncementsCarousel {
   private readonly router: Router = inject(Router);
+  private readonly host: HTMLElement = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
+  private readonly destroyRef: DestroyRef = inject(DestroyRef);
   private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
 
   protected readonly announcements: Signal<Announcement[]> = this.store.selectSignal(
@@ -52,7 +56,7 @@ export class AnnouncementsCarousel {
   protected readonly linkKinds: typeof LinkKind = LinkKind;
   protected readonly imagePositions: typeof AnnouncementImagePosition = AnnouncementImagePosition;
   protected readonly buttonStyles: Readonly<Record<ButtonVariant, ButtonStyle>> = BUTTON_STYLES;
-  private readonly jumpSettleMs: number = 1200;
+  private readonly jumpBackstopMs: number = 3000;
   private reportedIndex: number = 0;
   private isJumping: boolean = false;
   private readonly storedShownIndex: Signal<number> = this.store.selectSignal(announcementsFeature.selectShownIndex);
@@ -63,9 +67,25 @@ export class AnnouncementsCarousel {
 
   /**
    * While the carousel scrolls to a slide the strip chose, it reports the slides it passes, starting with the one it
-   * left; those reports are ignored, or they would scroll it back.
+   * left; those reports are ignored, or they would scroll it back. The scroll's `scrollend` ends the wait; browsers
+   * without that event (Safari before 26.2) or a scroll that never moves end it after `jumpBackstopMs`.
    */
   constructor() {
+    const endJump: () => void = (): void => {
+      this.isJumping = false;
+    };
+    this.host.addEventListener(
+      'scrollend',
+      endJump,
+      true,
+    );
+    this.destroyRef.onDestroy((): void => {
+      this.host.removeEventListener(
+        'scrollend',
+        endJump,
+        true,
+      );
+    });
     effect((onCleanup: EffectCleanupRegisterFn): void => {
       const index: number = this.shownIndex();
       if (index === this.reportedIndex) {
@@ -73,11 +93,9 @@ export class AnnouncementsCarousel {
       }
       this.reportedIndex = index;
       this.isJumping = true;
-      const settleTimerId: ReturnType<typeof setTimeout> = setTimeout((): void => {
-        this.isJumping = false;
-      }, this.jumpSettleMs);
+      const backstopTimerId: ReturnType<typeof setTimeout> = setTimeout(endJump, this.jumpBackstopMs);
       onCleanup((): void => {
-        clearTimeout(settleTimerId);
+        clearTimeout(backstopTimerId);
       });
     });
   }
