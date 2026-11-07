@@ -5,7 +5,7 @@ import { alpha } from './alpha';
  * Semantic tokens: give primitives a job (primary, surface, text, form fields...).
  * The site has a single dark look, so values are set directly rather than with light-dark().
  * `extend` holds brand-only tokens PrimeNG has no slot for; they become CSS variables
- * (for example `--p-brand-glass-background`) that `tailwind/theme.css` exposes as utilities.
+ * (for example `--p-brand-glass-blur`) that `tailwind/theme.css` exposes as utilities.
  */
 export const semantic: TokenSection = {
   typography: { fontFamily: '{font.family.sans}', fontSize: '1rem' },
@@ -118,7 +118,6 @@ export const semantic: TokenSection = {
   extend: {
     brand: {
       glass: {
-        background: alpha('{ink}', 76),
         strongBackground: alpha('{ink}', 86),
         blur: '12px',
       },

@@ -79,7 +79,7 @@ export class AnnouncementStrip {
 
   private showNext(): void {
     const isOnlyOne: boolean = this.announcements().length < 2;
-    if (this.isPaused() || this.isPointerOver || isOnlyOne) {
+    if (document.hidden || this.isClosed() || this.isPaused() || this.isPointerOver || isOnlyOne) {
       return;
     }
     this.shownIndex.update((index: number): number => (index + 1) % this.announcements().length);

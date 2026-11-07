@@ -1,53 +1,37 @@
-@if (announcements().length > 0) {
-  @if (!isClosed()) {
-    <div
-      class="strip site-gutter"
-      data-testid="announcement-strip"
-      (pointerenter)="pointerEntered()"
-      (pointerleave)="pointerLeft()"
-    >
-      <div class="message">
-        <span class="tag">Shop update</span>
-        <div class="items">
-          @for (announcement of announcements(); track $index; let i = $index) {
-            @let isShown = i === shownIndex() % announcements().length;
-            <div
-              class="item"
-              [class.is-shown]="isShown"
-              [class.is-leaving]="i === leavingIndex()"
-              [attr.aria-hidden]="isShown ? null : 'true'"
-              [attr.inert]="isShown ? null : ''"
-            >
-              <span class="title">{{ announcement.title }}</span>
-              <a
-                class="inline-link details"
-                routerLink="/"
-                fragment="announcements"
-                [attr.aria-label]="'Details about: ' + announcement.title"
-                (click)="showInCarousel(i)"
-                >Details →</a
-              >
-            </div>
-          }
-        </div>
-      </div>
-      <div class="controls">
-        @if (announcements().length > 1) {
-          <button
-            pButton
-            type="button"
-            severity="secondary"
-            size="small"
-            [text]="true"
-            [rounded]="true"
-            [iconOnly]="true"
-            [attr.aria-label]="isPaused() ? 'Resume announcements' : 'Pause announcements'"
-            data-testid="announcement-strip-pause"
-            (click)="togglePause()"
+@if (announcements().length > 0 && !isClosed()) {
+  <div
+    class="strip site-gutter"
+    data-testid="announcement-strip"
+    (pointerenter)="pointerEntered()"
+    (pointerleave)="pointerLeft()"
+  >
+    <div class="message">
+      <span class="tag">Shop update</span>
+      <div class="items">
+        @for (announcement of announcements(); track $index; let i = $index) {
+          @let isShown = i === shownIndex() % announcements().length;
+          <div
+            class="item"
+            [class.is-shown]="isShown"
+            [class.is-leaving]="i === leavingIndex()"
+            [attr.aria-hidden]="isShown ? null : 'true'"
+            [attr.inert]="isShown ? null : ''"
           >
-            <i class="pi" [class.pi-pause]="!isPaused()" [class.pi-play]="isPaused()"></i>
-          </button>
+            <span class="title">{{ announcement.title }}</span>
+            <a
+              class="inline-link details"
+              routerLink="/"
+              fragment="announcements"
+              [attr.aria-label]="'Details about: ' + announcement.title"
+              (click)="showInCarousel(i)"
+              >Details →</a
+            >
+          </div>
         }
+      </div>
+    </div>
+    <div class="controls">
+      @if (announcements().length > 1) {
         <button
           pButton
           type="button"
@@ -56,13 +40,27 @@
           [text]="true"
           [rounded]="true"
           [iconOnly]="true"
-          aria-label="Close announcement banner"
-          data-testid="announcement-strip-close"
-          (click)="close()"
+          [attr.aria-label]="isPaused() ? 'Resume announcements' : 'Pause announcements'"
+          data-testid="announcement-strip-pause"
+          (click)="togglePause()"
         >
-          <i class="pi pi-times"></i>
+          <i class="pi" [class.pi-pause]="!isPaused()" [class.pi-play]="isPaused()"></i>
         </button>
-      </div>
+      }
+      <button
+        pButton
+        type="button"
+        severity="secondary"
+        size="small"
+        [text]="true"
+        [rounded]="true"
+        [iconOnly]="true"
+        aria-label="Close announcement banner"
+        data-testid="announcement-strip-close"
+        (click)="close()"
+      >
+        <i class="pi pi-times"></i>
+      </button>
     </div>
-  }
+  </div>
 }

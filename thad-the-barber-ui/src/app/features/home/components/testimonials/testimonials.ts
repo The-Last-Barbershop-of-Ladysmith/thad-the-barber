@@ -64,7 +64,7 @@ export class Testimonials {
 
   private showNext(): void {
     const isOnlyOne: boolean = this.testimonials().length < 2;
-    if (this.isPaused || isOnlyOne) {
+    if (document.hidden || this.isPaused || isOnlyOne) {
       return;
     }
     this.shownIndex.update((index: number): number => (index + 1) % this.testimonials().length);

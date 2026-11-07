@@ -34,10 +34,6 @@
     }
 
     @media (min-width: 64rem) {
-      &:nth-child(4n + 1) {
-        transform: none;
-      }
-
       &:nth-child(4n + 2) {
         transform: translateY(6rem);
       }

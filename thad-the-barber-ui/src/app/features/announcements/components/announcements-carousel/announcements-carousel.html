@@ -55,6 +55,8 @@
               @if (item.image; as image) {
                 <img
                   [src]="image.src"
+                  loading="lazy"
+                  decoding="async"
                   [alt]="image.alt"
                   class="slide-media"
                   [class.md:order-first]="image.position === imagePositions.Left"

@@ -232,15 +232,6 @@
   flex-direction: column;
 }
 
-/* Full-height home section that centers its panel below the fixed header */
-@utility page-section {
-  display: flex;
-  min-height: 100svh;
-  align-items: center;
-  justify-content: center;
-  padding: 7rem 1.5rem 4rem;
-}
-
 /*
  * Side padding of the header, the hero and every home section: the mock's 4vw gutter (16px to 48px), or more once the
  * screen is wider than 80rem, which centres their content in one column so all their edges line up.

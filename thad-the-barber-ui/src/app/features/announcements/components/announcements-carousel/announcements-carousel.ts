@@ -1,5 +1,13 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, Signal, computed, effect, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  EffectCleanupRegisterFn,
+  Signal,
+  computed,
+  effect,
+  inject,
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { ButtonModule } from 'primeng/button';
@@ -58,16 +66,19 @@ export class AnnouncementsCarousel {
    * left; those reports are ignored, or they would scroll it back.
    */
   constructor() {
-    effect((): void => {
+    effect((onCleanup: EffectCleanupRegisterFn): void => {
       const index: number = this.shownIndex();
       if (index === this.reportedIndex) {
         return;
       }
       this.reportedIndex = index;
       this.isJumping = true;
-      setTimeout((): void => {
+      const settleTimerId: ReturnType<typeof setTimeout> = setTimeout((): void => {
         this.isJumping = false;
       }, this.jumpSettleMs);
+      onCleanup((): void => {
+        clearTimeout(settleTimerId);
+      });
     });
   }
 

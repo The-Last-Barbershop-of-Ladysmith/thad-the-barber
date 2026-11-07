@@ -52,7 +52,7 @@ Every hard-coded value in the wireframe was collected and grouped into PrimeNG t
 
 | Wireframe value | Used for | Token |
 | --- | --- | --- |
-| `rgba(13,8,5,.74–.76)` + `blur(12px)` | Section panels | `content.background`, `brand.glass.background`, `brand.glass.blur` |
+| `rgba(13,8,5,.74–.76)` + `blur(12px)` | Section panels | `content.background`, `brand.glass.blur` |
 | `rgba(13,8,5,.86)` | Card, dialog and drawer panels | `brand.glass.strongBackground` |
 | `rgba(232,144,74,.22)` | Panel border | `content.borderColor` |
 | `rgba(232,144,74,.15)` | Row dividers | `brand.divider` |

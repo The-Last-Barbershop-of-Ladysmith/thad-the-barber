@@ -1,5 +1,5 @@
 // Padding, logo height and nav/menu visibility change per breakpoint, so they stay inline
-// as md: utilities; component SCSS would otherwise override them at every width.
+// as md: and lg: utilities; component SCSS would otherwise override them at every width.
 
 // The announcement strip and the bar, fixed together so the bar sits below the strip when there is one.
 .top {

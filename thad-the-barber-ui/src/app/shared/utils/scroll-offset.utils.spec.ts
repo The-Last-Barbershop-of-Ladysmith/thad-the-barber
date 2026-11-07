@@ -10,7 +10,7 @@ describe(
     function addHeaderReaching(bottom: number): void {
       const appHeader: HTMLElement = document.createElement('app-header');
       const top: HTMLElement = document.createElement('div');
-      top.className = 'top';
+      top.setAttribute('data-site-top', '');
       vi.spyOn(top, 'getBoundingClientRect').mockReturnValue({ bottom } as DOMRect);
       appHeader.append(top);
       document.body.append(appHeader);

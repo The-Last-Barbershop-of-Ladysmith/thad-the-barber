@@ -66,7 +66,6 @@ export const appConfig: ApplicationConfig = {
     provideEnvironmentInitializer((): void => {
       inject(PrimeNG).csp.set({ nonce: inject(CSP_NONCE) ?? undefined });
     }),
-    // Anchor links scroll with the offset measured when they scroll, so they land below the header and the strip.
     provideEnvironmentInitializer((): void => {
       const document: Document = inject(DOCUMENT);
       inject(ViewportScroller).setOffset((): [number, number] => toHeaderScrollOffset(document));
