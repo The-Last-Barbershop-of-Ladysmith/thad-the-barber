@@ -1,18 +1,22 @@
 // Padding, logo height and nav/menu visibility change per breakpoint, so they stay inline
 // as md: utilities; component SCSS would otherwise override them at every width.
 
-// Fixed bar. It ignores pointer events so the page underneath its fade stays clickable;
-// the logo, links and menu button opt back in.
-.bar {
+// The announcement strip and the bar, fixed together so the bar sits below the strip when there is one. Its pointer
+// events are off so the page underneath the bar's fade stays clickable; the strip, logo, links and menu button
+// opt back in.
+.top {
   position: fixed;
   inset-inline: 0;
   top: 0;
   z-index: 20;
+  pointer-events: none;
+}
+
+.bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  pointer-events: none;
 
   .home-link,
   .bar-link,

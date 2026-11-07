@@ -12,11 +12,13 @@ import * as LayoutActions from '../../store/app.actions';
 import { layoutFeature } from '../../store/app.feature';
 import { AppState } from '../../store/app.state';
 import { shopFeature } from '../../features/shop/state/shop.feature';
+import { AnnouncementStrip } from '../announcement-strip/announcement-strip';
 
 /** Fixed top bar: section links on desktop, a drawer menu on mobile, "Back to site" on the booking page. */
 @Component({
   selector: 'app-header',
   imports: [
+    AnnouncementStrip,
     RouterLink,
     ButtonModule,
     DrawerModule,

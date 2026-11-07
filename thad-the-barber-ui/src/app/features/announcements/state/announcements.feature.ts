@@ -12,6 +12,7 @@ import { AnnouncementsState } from './announcements.state';
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- extraSelectors needs a type alias.
 export type AnnouncementsExtraSelectors = {
   selectActive: MemoizedSelector<object, Announcement[]>;
+  selectActiveNewestFirst: MemoizedSelector<object, Announcement[]>;
   selectIsHidden: MemoizedSelector<object, boolean>;
 };
 
@@ -37,6 +38,10 @@ export const announcementsFeature = createFeature({
     );
     return {
       selectActive,
+      selectActiveNewestFirst: createSelector(
+        selectActive,
+        toNewestFirst,
+      ),
       selectIsHidden: createSelector(
         selectLoadStatus,
         selectActive,
@@ -54,4 +59,11 @@ export function toActiveAnnouncements(announcements: Announcement[], timeZone: s
   const today: string = currentDateForTimeZone(timeZone);
   return announcements.filter((announcement: Announcement): boolean =>
     announcement.startDate <= today && today <= announcement.endDate);
+}
+
+/** By start date, latest first; announcements starting the same day keep the later one in the file first. */
+export function toNewestFirst(announcements: Announcement[]): Announcement[] {
+  return [...announcements]
+    .reverse()
+    .sort((first: Announcement, second: Announcement): number => second.startDate.localeCompare(first.startDate));
 }

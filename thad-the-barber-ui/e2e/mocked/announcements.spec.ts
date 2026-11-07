@@ -82,6 +82,7 @@ test.describe(
 
           await expect(page.locator('#visit')).toBeVisible();
           await expect(page.getByTestId('announcements')).toHaveCount(0);
+          await expect(page.getByTestId('announcement-strip')).toHaveCount(0);
           const nav: Locator = isMobile ? page.locator('footer') : page.getByTestId('header-nav');
           await expect(nav.locator('a[href="/#visit"]')).toHaveCount(1);
           await expect(nav.locator('a[href="/#announcements"]')).toHaveCount(0);
@@ -130,6 +131,82 @@ test.describe(
         await expect(page.getByTestId('announcements')).toHaveCount(0);
         await expect(page.getByTestId('gallery')).toHaveCount(0);
         expect(pageErrors).toEqual([]);
+      },
+    );
+
+    test(
+      'starts the strip on the newest active announcement above the header, on the home and booking pages',
+      async ({ page }: { page: Page; }): Promise<void> => {
+        const newestTitle: string = ACTIVE_ANNOUNCEMENT_TITLES[1] ?? '';
+
+        for (const path of ['/', '/book']) {
+          await page.goto(path);
+
+          const strip: Locator = page.getByTestId('announcement-strip');
+          await expect(strip.locator('.item.is-shown .title')).toHaveText(newestTitle);
+          const stripBox: { y: number; height: number; } | null = await strip.boundingBox();
+          const logoBox: { y: number; } | null = await page.locator('.home-link').boundingBox();
+          expect((stripBox?.y ?? 1)).toBe(0);
+          expect(logoBox?.y ?? 0).toBeGreaterThanOrEqual((stripBox?.height ?? 0));
+        }
+      },
+    );
+
+    test(
+      'opens the home announcements section from the strip on the booking page',
+      async ({ page }: { page: Page; }): Promise<void> => {
+        await page.goto('/book');
+
+        await page.getByTestId('announcement-strip').getByRole('link').click();
+
+        await expect(page).toHaveURL('/#announcements');
+        await expect(page.getByTestId('announcements')).toBeInViewport();
+      },
+    );
+
+    test(
+      'leaves a linked section clear of the strip and the header',
+      async ({ page }: { page: Page; }): Promise<void> => {
+        await page.goto('/');
+        await page.locator('#visit').evaluate((section: HTMLElement): void => {
+          section.scrollIntoView({ behavior: 'instant' });
+        });
+        await expect(page.locator('#visit')).toBeInViewport();
+
+        const sectionBox: { y: number; } | null = await page.locator('#visit').boundingBox();
+        const logoBox: { y: number; height: number; } | null = await page.locator('.home-link').boundingBox();
+        expect(sectionBox?.y ?? 0).toBeGreaterThanOrEqual((logoBox?.y ?? 0) + (logoBox?.height ?? 0));
+      },
+    );
+
+    test(
+      'cycles the strip through every active announcement, newest first, and pauses on request',
+      async ({ page }: { page: Page; }): Promise<void> => {
+        const [olderTitle, newestTitle]: string[] = ACTIVE_ANNOUNCEMENT_TITLES;
+        await page.goto('/');
+        const shown: Locator = page.getByTestId('announcement-strip').locator('.item.is-shown .title');
+
+        await expect(shown).toHaveText(newestTitle ?? '');
+        await expect(shown).toHaveText(olderTitle ?? '', { timeout: 10_000 });
+
+        await page.getByTestId('announcement-strip-pause').click();
+        await expect(page.getByTestId('announcement-strip-pause')).toHaveAccessibleName('Resume announcements');
+        await page.waitForTimeout(7000);
+        await expect(shown).toHaveText(olderTitle ?? '');
+      },
+    );
+
+    test(
+      'removes the strip when closed, and the header moves up to the top',
+      async ({ page }: { page: Page; }): Promise<void> => {
+        await page.goto('/');
+        const logoBefore: { y: number; } | null = await page.locator('.home-link').boundingBox();
+
+        await page.getByTestId('announcement-strip-close').click();
+
+        await expect(page.getByTestId('announcement-strip')).toHaveCount(0);
+        const logoAfter: { y: number; } | null = await page.locator('.home-link').boundingBox();
+        expect(logoAfter?.y ?? Infinity).toBeLessThan(logoBefore?.y ?? 0);
       },
     );
   },

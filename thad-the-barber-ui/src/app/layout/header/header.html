@@ -1,34 +1,37 @@
-<header class="header-fade bar site-gutter pt-3.5 pb-9 md:pt-5.5 md:pb-14">
-  <a routerLink="/" class="home-link" (click)="closeMenu()">
-    <img src="assets/logo.png" [alt]="shopName()" class="logo drop-shadow-logo h-9 md:h-12" />
-  </a>
-
-  @if (onBookingPage()) {
-    <a routerLink="/" class="nav-link bar-link back-link">
-      <i class="pi pi-arrow-left text-sm"></i> Back to site
+<div class="top">
+  <app-announcement-strip />
+  <header class="header-fade bar site-gutter pt-3.5 pb-9 md:pt-5.5 md:pb-14">
+    <a routerLink="/" class="home-link" (click)="closeMenu()">
+      <img src="assets/logo.png" [alt]="shopName()" class="logo drop-shadow-logo h-9 md:h-12" />
     </a>
-  } @else {
-    <nav class="section-nav hidden md:flex" aria-label="Page sections" data-testid="header-nav">
-      @for (item of sections(); track item.fragment) {
-        <a routerLink="/" [fragment]="item.fragment" class="nav-link bar-link">{{ item.label }}</a>
-      }
-    </nav>
-    <button
-      pButton
-      type="button"
-      severity="secondary"
-      [rounded]="true"
-      [iconOnly]="true"
-      class="menu-toggle md:hidden"
-      data-testid="menu-toggle"
-      aria-label="Open menu"
-      [attr.aria-expanded]="menuOpen()"
-      (click)="toggleMenu()"
-    >
-      <i class="pi pi-bars"></i>
-    </button>
-  }
-</header>
+
+    @if (onBookingPage()) {
+      <a routerLink="/" class="nav-link bar-link back-link">
+        <i class="pi pi-arrow-left text-sm"></i> Back to site
+      </a>
+    } @else {
+      <nav class="section-nav hidden md:flex" aria-label="Page sections" data-testid="header-nav">
+        @for (item of sections(); track item.fragment) {
+          <a routerLink="/" [fragment]="item.fragment" class="nav-link bar-link">{{ item.label }}</a>
+        }
+      </nav>
+      <button
+        pButton
+        type="button"
+        severity="secondary"
+        [rounded]="true"
+        [iconOnly]="true"
+        class="menu-toggle md:hidden"
+        data-testid="menu-toggle"
+        aria-label="Open menu"
+        [attr.aria-expanded]="menuOpen()"
+        (click)="toggleMenu()"
+      >
+        <i class="pi pi-bars"></i>
+      </button>
+    }
+  </header>
+</div>
 
 <p-drawer
   position="right"

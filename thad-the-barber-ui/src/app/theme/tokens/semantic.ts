@@ -125,6 +125,7 @@ export const semantic: TokenSection = {
       divider: alpha('{copper.500}', 15),
       hairline: alpha('{espresso.50}', 12),
       controlBackground: '#140d08',
+      strip: { background: '#26180f', borderColor: alpha('{copper.500}', 22) },
       day: { openBackground: alpha('{espresso.50}', 16), closedBackground: alpha('{espresso.50}', 4) },
       // The content width the footer, the `page` utility and the 404 page share, and the gutter beside it.
       pageWidth: '75rem',
