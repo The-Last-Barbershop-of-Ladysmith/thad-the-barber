@@ -122,7 +122,6 @@ export const semantic: TokenSection = {
         strongBackground: alpha('{ink}', 86),
         blur: '12px',
       },
-      tile: { background: alpha('{espresso.50}', 4), borderColor: alpha('{copper.500}', 18) },
       divider: alpha('{copper.500}', 15),
       hairline: alpha('{espresso.50}', 12),
       controlBackground: '#140d08',

@@ -281,13 +281,6 @@
   -webkit-backdrop-filter: blur(var(--p-brand-glass-blur));
 }
 
-/* Quieter nested surface: testimonial tiles */
-@utility tile {
-  background: var(--p-brand-tile-background);
-  border: 1px solid var(--p-brand-tile-border-color);
-  border-radius: var(--p-border-radius-lg);
-}
-
 /* Fixed header gradient fade */
 @utility header-fade {
   background: var(--p-brand-header-fade);

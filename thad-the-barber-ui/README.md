@@ -85,7 +85,7 @@ src/
     │   ├── tokens/semantic.ts      #   primary, surface, text, content, formField, overlay + brand `extend`
     │   ├── tokens/components/      #   one file per PrimeNG component override
     │   ├── thad-preset.ts          #   definePreset(Aura, …) + theme options (cssLayer, dark selector)
-    │   └── tailwind/theme.css      #   Tailwind @theme mapping + named utilities (eyebrow, glass, tile…)
+    │   └── tailwind/theme.css      #   Tailwind @theme mapping + named utilities (eyebrow, glass…)
     ├── core/
     │   ├── config/shop-info.ts     # site content + fallback name/phone/booking URL, home sections
     │   ├── config/primeui-license.ts  # PrimeNG license key (all environments)
@@ -153,7 +153,7 @@ Brand values PrimeNG has no slot for (glass background, CTA glow, dividers, the 
 - Radii: `rounded-control`, `rounded-tile`, `rounded-panel`
 - Type: `eyebrow`, `display-title`, `section-title`, `lead`, `body-copy`, `small-print`, `field-label`, `rich-text` (Syne for headings, Plus Jakarta Sans for the rest, self-hosted from `@fontsource-variable`)
 - Links: `nav-link` (menus and lists), `inline-link` (inside running text), `external-link` (adds the `pi-external-link` icon to a link that opens a new tab; its markup still adds a `sr-only` "(opens in a new tab)")
-- Surfaces: `glass`, `glass-strong`, `tile`, `header-fade`, `photo-frame`, `photo-mat`, `media-placeholder`
+- Surfaces: `glass`, `glass-strong`, `header-fade`, `photo-frame`, `photo-mat`, `media-placeholder`
 
 The layer order in `styles.css` (`theme, base, primeng, components, utilities`) lets Tailwind utilities override PrimeNG styles without `!important`.
 
@@ -181,7 +181,7 @@ Success, warning and error messages look and behave the same everywhere (#110):
 - **Templates** go in a `.html` file. Only templates of 4 lines or fewer stay inline.
 - **Wrap, don't style the host.** Each template has its own root element (such as `<section class="page-section">`). Avoid `host: { class }` and `:host` rules.
 - **Class lists:** an element can carry at most 2 plain Tailwind utilities. Anything longer moves to a named class in the component's `.scss`. These don't count toward the limit and stay inline:
-  - Theme utilities: `stack`, `page-section`, `eyebrow`, `glass`, `tile`, and so on
+  - Theme utilities: `stack`, `page-section`, `eyebrow`, `glass`, and so on
   - Breakpoint utilities: `md:`, `lg:` and similar
 - **SCSS nests** to follow the template's DOM tree. Content that PrimeNG renders into an overlay (drawer links, Galleria lightbox) stays top-level, because it isn't inside the component's markup at runtime.
 - **SCSS never sets a property that an inline breakpoint class changes.** Component styles are unlayered, so they beat every Tailwind utility. For a responsive property, keep the base value inline too, for example `px-6 md:px-8`.

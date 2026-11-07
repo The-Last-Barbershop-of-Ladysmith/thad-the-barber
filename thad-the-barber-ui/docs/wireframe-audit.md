@@ -56,7 +56,6 @@ Every hard-coded value in the wireframe was collected and grouped into PrimeNG t
 | `rgba(13,8,5,.86)` | Footer panel | `brand.glass.strongBackground` |
 | `rgba(232,144,74,.22)` | Panel border | `content.borderColor` |
 | `rgba(232,144,74,.15)` | Row dividers | `brand.divider` |
-| `rgba(232,144,74,.18)` + `rgba(244,230,216,.04)` | Testimonial tiles | `brand.tile.borderColor`, `brand.tile.background` |
 | `rgba(232,144,74,.45)` | Input border | `formField.borderColor` |
 | `rgba(244,230,216,.06)` | Input fill | `formField.background` |
 | `rgba(232,144,74,.14)` / `.4` | "You're on the list" notice | `highlight.background`, `message.info.*` |
@@ -74,7 +73,7 @@ Values under `semantic.extend.brand` become `--p-brand-*` CSS variables. This wa
 | --- | --- | --- | --- |
 | `2px` | Photo frame | `borderRadius.xs` | none |
 | `10px` | Buttons, inputs, notices | `borderRadius.md` | `rounded-control` |
-| `12px` / `14px` | Media / testimonial tiles (merged) | `borderRadius.lg` | `rounded-tile` |
+| `12px` / `14px` | Media tiles | `borderRadius.lg` | `rounded-tile` |
 | `18px` | Glass panels, modals | `borderRadius.xl` | `rounded-panel` |
 | `50%` | Arrow, dot and social buttons | `pButton [rounded]` / carousel tokens | `rounded-full` |
 
@@ -112,7 +111,6 @@ These are repeated wireframe patterns that aren't PrimeNG components.
 | `field-label` | Muted uppercase labels | 5 |
 | `nav-link` | Link hover to `#F4B46E` | 20+ |
 | `glass`, `glass-strong` | Frosted containers that aren't cards (footer) | 1 (cards cover the rest) |
-| `tile` | Testimonial cards | 4 |
 | `header-fade` | Fixed header gradient | 2 (site + booking) |
 | `photo-frame`, `photo-mat` | Gallery lightbox | 16 |
 | `media-placeholder` | Striped "[ photo — … ]" wells | 2 |
