@@ -1,7 +1,4 @@
 .hours {
-  position: relative;
-  padding-block: 3.5rem;
-
   .inner {
     display: grid;
     gap: 2rem;
@@ -37,8 +34,6 @@
   }
 
   @media (min-width: 48rem) {
-    padding-block: 5.5rem;
-
     .inner {
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 2.5rem clamp(3rem, 7vw, 6rem);

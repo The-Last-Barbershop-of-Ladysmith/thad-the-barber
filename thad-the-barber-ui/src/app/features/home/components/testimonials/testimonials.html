@@ -1,5 +1,5 @@
 @if (testimonials().length > 0) {
-  <section class="testimonials site-gutter" data-testid="testimonials">
+  <section class="testimonials site-gutter site-section" data-testid="testimonials">
     <div class="inner" (pointerenter)="rotation.hold()" (pointerleave)="rotation.release()">
       <span class="eyebrow">From the chair</span>
       <span class="score">{{ reviews.score }} from {{ reviews.count }} {{ reviews.source }} reviews</span>

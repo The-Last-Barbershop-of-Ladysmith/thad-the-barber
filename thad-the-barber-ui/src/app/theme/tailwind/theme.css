@@ -273,6 +273,19 @@
 }
 
 /*
+ * Vertical padding of a home section, taller from 48rem. A section that differs from the default sets
+ * `--section-padding` (below 48rem) or `--section-padding-lg` (from 48rem) on itself.
+ */
+@utility site-section {
+  position: relative;
+  padding-block: var(--section-padding, 3.5rem);
+
+  @media (min-width: 48rem) {
+    padding-block: var(--section-padding-lg, 5.5rem);
+  }
+}
+
+/*
  * A page's content column below the fixed header, with its blocks stacked. It shares the footer's width and gutters
  * (`--p-brand-page-width`, `--p-brand-page-gutter`), so their edges line up at every width; pages set no width or
  * padding of their own.

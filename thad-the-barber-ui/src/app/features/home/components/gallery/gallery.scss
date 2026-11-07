@@ -1,7 +1,4 @@
 .gallery {
-  position: relative;
-  padding-block: 3.5rem;
-
   .inner {
     display: grid;
     gap: 2rem;
@@ -71,9 +68,6 @@
     border-radius: 0.375rem;
   }
 
-  @media (min-width: 48rem) {
-    padding-block: 5.5rem;
-  }
 }
 
 // Lightbox templates render inside Galleria's full-screen overlay, outside the section above,

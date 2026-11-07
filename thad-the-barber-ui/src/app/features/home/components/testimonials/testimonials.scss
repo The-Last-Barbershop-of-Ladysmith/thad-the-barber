@@ -1,6 +1,6 @@
 .testimonials {
-  position: relative;
-  padding-block: 4rem;
+  --section-padding: 4rem;
+  --section-padding-lg: 8rem;
 
   .inner {
     display: flex;
@@ -57,8 +57,6 @@
   }
 
   @media (min-width: 48rem) {
-    padding-block: 8rem;
-
     .inner {
       gap: 2rem;
     }
