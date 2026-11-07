@@ -167,17 +167,27 @@ test.describe(
     );
 
     test(
-      'leaves a linked section clear of the strip and the header',
+      'leaves a section opened from a link clear of the strip and the header',
       async ({ page }: { page: Page; }): Promise<void> => {
         await page.goto('/');
-        await page.locator('#visit').evaluate((section: HTMLElement): void => {
-          section.scrollIntoView({ behavior: 'instant' });
-        });
-        await expect(page.locator('#visit')).toBeInViewport();
+        await expect(page.getByTestId('announcement-strip')).toBeVisible();
 
+        await page.locator('footer a[href="/#visit"]').click();
+
+        await expect(page).toHaveURL('/#visit');
+        let previousScroll: number = -1;
+        await expect.poll(
+          async (): Promise<boolean> => {
+            const scroll: number = await page.evaluate((): number => window.scrollY);
+            const isSettled: boolean = scroll === previousScroll;
+            previousScroll = scroll;
+            return isSettled;
+          },
+          { intervals: [300] },
+        ).toBe(true);
+        const headerBox: { y: number; height: number; } | null = await page.locator('app-header .top').boundingBox();
         const sectionBox: { y: number; } | null = await page.locator('#visit').boundingBox();
-        const logoBox: { y: number; height: number; } | null = await page.locator('.home-link').boundingBox();
-        expect(sectionBox?.y ?? 0).toBeGreaterThanOrEqual((logoBox?.y ?? 0) + (logoBox?.height ?? 0));
+        expect((sectionBox?.y ?? 0) - ((headerBox?.y ?? 0) + (headerBox?.height ?? 0))).toBeGreaterThanOrEqual(15);
       },
     );
 

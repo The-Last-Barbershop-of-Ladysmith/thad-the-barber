@@ -32,7 +32,6 @@
 @layer base {
   html {
     scroll-behavior: smooth;
-    scroll-padding-top: 7.5rem;
   }
 
   body {
