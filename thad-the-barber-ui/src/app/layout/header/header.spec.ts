@@ -47,6 +47,7 @@ describe(
         const links: HTMLAnchorElement[] = Array.from(host().querySelectorAll<HTMLAnchorElement>('[data-testid="header-nav"] a'));
 
         expect(links.map((link: HTMLAnchorElement): string | null => link.getAttribute('href'))).toEqual([
+          '/#chair',
           '/#hours',
           '/#announcements',
           '/#gallery',

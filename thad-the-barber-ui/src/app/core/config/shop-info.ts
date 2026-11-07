@@ -19,6 +19,7 @@ export const SHOP_CONTENT: ShopContent = {
 
 /** In-page sections of the home feature, used by the header, mobile drawer and footer. */
 export const HOME_SECTIONS: readonly NavItem[] = [
+  { label: 'Book', fragment: 'chair' },
   { label: 'Hours', fragment: 'hours' },
   { label: 'Shop news', fragment: 'announcements' },
   { label: 'Gallery', fragment: 'gallery' },

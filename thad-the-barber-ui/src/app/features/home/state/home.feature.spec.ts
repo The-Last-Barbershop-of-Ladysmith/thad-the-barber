@@ -12,6 +12,7 @@ import { HomeState, initialHomeState } from './home.state';
 const ALL_SECTIONS: string[] = HOME_SECTIONS.map((section: NavItem): string => section.fragment);
 
 const WITHOUT_STORAGE_CONTENT: string[] = [
+  'chair',
   'hours',
   'reviews',
   'visit',
