@@ -269,7 +269,7 @@
  * or more once the screen is wider than 110rem, which centres their content in one column so all their edges line up.
  */
 @utility site-gutter {
-  padding-inline: max(clamp(1rem, 3vw, 1.5rem), calc((100% - 110rem) / 2));
+  padding-inline: max(clamp(1rem, 3vw, var(--p-brand-page-gutter)), calc((100% - 110rem) / 2));
 }
 
 /*

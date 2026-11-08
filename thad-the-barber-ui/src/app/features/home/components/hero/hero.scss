@@ -66,7 +66,8 @@
       }
     }
 
-    // "PRECISION" is about 9.2em wide, so below 378px the heading shrinks to keep it inside the gutters.
+    // "PRECISION" is about 9.4em wide, so below about 370px (9.4 x 2.25rem plus the 1rem gutters)
+    // the heading shrinks to fit.
     h1 {
       font-size: min(clamp(2.25rem, 5.4vw, 5.25rem), (100vw - 2rem) / 9.4);
     }

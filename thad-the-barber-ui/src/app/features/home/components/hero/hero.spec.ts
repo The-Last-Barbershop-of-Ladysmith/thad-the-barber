@@ -15,7 +15,7 @@ describe(
     const SATURDAY_NOON_AT_SHOP: string = '2026-09-26T22:00:00Z';
     const MONDAY_NOON_AT_SHOP: string = '2026-09-28T22:00:00Z';
 
-    function render(now: string, setUp: (store: Store<AppState>) => void = (): void => undefined): HTMLElement {
+    function render(now: string, setUp?: (store: Store<AppState>) => void): HTMLElement {
       vi.useFakeTimers({ now: new Date(now), toFake: ['Date'] });
       TestBed.configureTestingModule({
         providers: [
@@ -28,7 +28,7 @@ describe(
       });
       const store: Store<AppState> = TestBed.inject<Store<AppState>>(Store);
       store.dispatch(ShopActions.ShopInfoRequestSuccess({ shopInfo: TEST_SHOP }));
-      setUp(store);
+      setUp?.(store);
       const fixture: ComponentFixture<Hero> = TestBed.createComponent(Hero);
       fixture.detectChanges();
       return fixture.nativeElement as HTMLElement;
@@ -41,27 +41,27 @@ describe(
     it(
       'has the page heading, once',
       (): void => {
-        const page: HTMLElement = render(SATURDAY_NOON_AT_SHOP);
+        const heroElement: HTMLElement = render(SATURDAY_NOON_AT_SHOP);
 
-        expect(page.querySelectorAll('h1')).toHaveLength(1);
+        expect(heroElement.querySelectorAll('h1')).toHaveLength(1);
       },
     );
 
     it(
       'sends the booking button to the booking page',
       (): void => {
-        const page: HTMLElement = render(SATURDAY_NOON_AT_SHOP);
+        const heroElement: HTMLElement = render(SATURDAY_NOON_AT_SHOP);
 
-        expect(page.querySelector('a[href="/book"]')).not.toBeNull();
+        expect(heroElement.querySelector('a[href="/book"]')).not.toBeNull();
       },
     );
 
     it(
       "links the call button to the shop's phone from the store",
       (): void => {
-        const page: HTMLElement = render(SATURDAY_NOON_AT_SHOP);
+        const heroElement: HTMLElement = render(SATURDAY_NOON_AT_SHOP);
 
-        expect(page.querySelector('[data-testid="hero-call"]')?.getAttribute('href')).toContain('+15550100142');
+        expect(heroElement.querySelector('[data-testid="hero-call"]')?.getAttribute('href')).toContain('+15550100142');
       },
     );
 
@@ -88,22 +88,22 @@ describe(
     it(
       'shows the first open time',
       (): void => {
-        const page: HTMLElement = render(SATURDAY_NOON_AT_SHOP, (store: Store<AppState>): void => {
+        const heroElement: HTMLElement = render(SATURDAY_NOON_AT_SHOP, (store: Store<AppState>): void => {
           store.dispatch(HomeActions.NextTimesRequestSuccess({ startAts: ['2026-09-27T20:00:00Z'] }));
         });
 
-        expect(page.querySelector('[data-testid="next-open-chair"]')?.textContent).toMatch(/\d/);
+        expect(heroElement.querySelector('[data-testid="next-open-chair"]')?.textContent).toMatch(/\d/);
       },
     );
 
     it(
       'hides the open time when none is open',
       (): void => {
-        const page: HTMLElement = render(SATURDAY_NOON_AT_SHOP, (store: Store<AppState>): void => {
+        const heroElement: HTMLElement = render(SATURDAY_NOON_AT_SHOP, (store: Store<AppState>): void => {
           store.dispatch(HomeActions.NextTimesRequestSuccess({ startAts: [] }));
         });
 
-        expect(page.querySelector('[data-testid="next-open-chair"]')).toBeNull();
+        expect(heroElement.querySelector('[data-testid="next-open-chair"]')).toBeNull();
       },
     );
   },
