@@ -5,7 +5,9 @@
         <span class="eyebrow">Pull up</span>
         <h2 class="section-title address-title">
           {{ address.street }}<br />
-          <span class="address-city">{{ address.city }}, {{ address.state }} {{ address.postalCode }}</span>
+          <span class="address-city"
+            >{{ address.city }}, {{ address.state }} {{ address.postalCode }}</span
+          >
         </h2>
       </div>
     }
@@ -31,12 +33,18 @@
 
     <div class="actions">
       @if (directionsUrl() !== null) {
-        <a pButton data-testid="visit-directions" [href]="directionsUrl()" target="_blank" rel="noopener">
+        <a
+          pButton
+          data-testid="visit-directions"
+          [href]="directionsUrl()"
+          target="_blank"
+          rel="noopener"
+        >
           Get directions
           <span class="sr-only">(opens in a new tab)</span>
         </a>
       }
-      <a pButton data-testid="visit-phone" [outlined]="true" [href]="phone().tel">
+      <a pButton data-testid="visit-phone" severity="secondary" [href]="phone().tel">
         Call / Text {{ phone().display }}
       </a>
     </div>
