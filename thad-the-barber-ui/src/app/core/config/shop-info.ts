@@ -1,6 +1,5 @@
 import { HomeSection } from '../../shared/models/home-section.model';
 import { NavItem } from '../../shared/models/nav-item.model';
-import { ShopContent } from '../models/shop-content.model';
 import { ShopFallback } from '../models/shop-fallback.model';
 
 /** Everything else about the shop comes from Square through the `shop` slice (`store/shop`). */
@@ -8,14 +7,6 @@ export const SHOP_FALLBACK: ShopFallback = {
   name: 'Thad The Barber',
   phone: '+15406212143',
   squareBookingSiteUrl: 'https://square.site/book/L36PTJY0KNFV2/thad-the-barber-fredericksburg-va',
-};
-
-export const SHOP_CONTENT: ShopContent = {
-  reviews: {
-    score: 4.9,
-    count: 73,
-    source: 'Google',
-  },
 };
 
 /** In-page sections of the home feature, used by the header, mobile drawer and footer. */

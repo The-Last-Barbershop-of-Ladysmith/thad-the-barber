@@ -1,14 +1,12 @@
 import { ChangeDetectionStrategy, Component, Signal, computed, inject } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { ShopContent } from '../../../../core/models/shop-content.model';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { RatingModule } from 'primeng/rating';
-import { SHOP_CONTENT } from '../../../../core/config/shop-info';
 import { Rotation } from '../../../../shared/models/rotation.model';
 import { createRotation } from '../../../../shared/utils/rotation.utils';
 import { AppState } from '../../../../store/app.state';
-import { Testimonial } from '../../models/home.models';
+import { ReviewRating, Testimonial } from '../../models/home.models';
 import { homeFeature } from '../../state/home.feature';
 
 /**
@@ -30,7 +28,7 @@ export class Testimonials {
   private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
 
   protected readonly testimonials: Signal<Testimonial[]> = this.store.selectSignal(homeFeature.selectTestimonials);
-  protected readonly reviews: ShopContent['reviews'] = SHOP_CONTENT.reviews;
+  protected readonly rating: Signal<ReviewRating | null> = this.store.selectSignal(homeFeature.selectRating);
   protected readonly rotation: Rotation = createRotation({
     count: computed((): number => this.testimonials().length),
     intervalMs: 7000,
