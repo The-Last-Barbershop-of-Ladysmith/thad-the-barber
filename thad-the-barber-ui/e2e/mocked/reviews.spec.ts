@@ -1,4 +1,4 @@
-import { Locator, Page, Route } from '@playwright/test';
+import { Locator, Page, Request, Route } from '@playwright/test';
 import { Testimonial } from '../../src/app/features/home/models/home.models';
 import { expectNoA11yViolations } from '../support/axe';
 import { expect, test } from '../support/fixtures';
@@ -50,6 +50,40 @@ test.describe(
         await expect(page.getByTestId('testimonials')).toBeAttached();
         await expect(page.getByTestId('hero-rating')).toHaveCount(0);
         await expect(page.getByTestId('reviews-rating')).toHaveCount(0);
+      },
+    );
+
+    test(
+      'requests the reviews once on the home page',
+      async ({ page }: { page: Page; }): Promise<void> => {
+        const reviewsRequests: string[] = [];
+        page.on('request', (request: Request): void => {
+          if (request.url().includes(REVIEWS_URL)) {
+            reviewsRequests.push(request.url());
+          }
+        });
+
+        await page.goto('/');
+        await expect(page.getByTestId('testimonials')).toBeAttached();
+
+        expect(reviewsRequests).toHaveLength(1);
+      },
+    );
+
+    test(
+      'makes no reviews request on the booking page',
+      async ({ page }: { page: Page; }): Promise<void> => {
+        const reviewsRequests: string[] = [];
+        page.on('request', (request: Request): void => {
+          if (request.url().includes(REVIEWS_URL)) {
+            reviewsRequests.push(request.url());
+          }
+        });
+
+        await page.goto('/book');
+        await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+
+        expect(reviewsRequests).toEqual([]);
       },
     );
 
