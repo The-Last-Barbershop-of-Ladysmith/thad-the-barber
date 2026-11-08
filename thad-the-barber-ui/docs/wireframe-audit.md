@@ -178,7 +178,7 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 | --- | --- | --- |
 | Phone number, address, map/directions URLs, socials (hard-coded in 3 places) | `GET /api/shop` → `shop` slice (`shopFeature` selectors); `SHOP_FALLBACK` keeps the fallback name/phone/booking URL and site content | Square is the source of truth (#39) |
 | Hours rows repeated in schedule, visit, footer | `shopFeature.selectOpeningHours` + `ShopHoursService.businessHours` | Rows are built from Square's hours |
-| `openLabel` / `openColor` (`index.html` `renderVals`) | `ShopHoursService.getShopCurrentStatus()` / `currentOpenStatus` signal, on the shop's clock | Refreshes every minute; unit tested |
+| `openLabel` / `openColor` (`index.html` `renderVals`) | `ShopHoursService.getShopCurrentStatus()` / `currentOpenStatus` signal, on the shop's clock | Refreshes every minute; unit tested, including Pacific-browser, DST-Sunday and split-shift cases. The open label names the closing time ("Open now · closes 7 PM", the Shopfront mock's wording); a shift that closes at or before it opens never counts as open (#49) |
 | `ANNS` | `content/announcements.json` in the media container via `AnnouncementsService` (#30) | The seed announcements and the text-alerts slide are dropped (BR-35) |
 | Testimonials markup | `features/home/data/home-content.data.ts` via `HomeContentService` | Ready to swap for `GET /api/reviews` (#37) |
 | `subscribe` / `setPhone` / `phoneErr` | `SmsSignup` component + `HomeActions.SmsSignupRequest` → `subscribeToSms` effect → `SmsSignupService` | Mocked 400ms |
