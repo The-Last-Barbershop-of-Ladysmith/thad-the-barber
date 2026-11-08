@@ -43,7 +43,52 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 1.25rem;
-    max-width: 40rem;
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+      margin: 0;
+      padding: 0.4375rem 0.875rem;
+      border: 1px solid color-mix(in srgb, var(--p-primary-color) 30%, transparent);
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--p-ink) 80%, transparent);
+
+      .status-dot {
+        width: 0.5rem;
+        height: 0.5rem;
+        border-radius: 50%;
+        background: currentColor;
+      }
+
+      &.open .status-dot {
+        background: var(--p-brand-success);
+      }
+    }
+
+    // "PRECISION" is about 9.2em wide, so below 378px the heading shrinks to keep it inside the gutters.
+    h1 {
+      font-size: min(clamp(2.25rem, 5.4vw, 5.25rem), (100vw - 2rem) / 9.4);
+    }
+
+    .line {
+      display: block;
+    }
+
+    .lead {
+      max-width: 32em;
+    }
+
+    .actions {
+      display: flex;
+      flex-direction: column;
+      align-self: stretch;
+      gap: 0.875rem;
+
+      .phone-number {
+        display: none;
+      }
+    }
 
     .facts {
       width: 100%;
@@ -58,6 +103,20 @@
         font-weight: 800;
         white-space: nowrap;
         color: var(--p-text-color);
+      }
+    }
+
+    @media (min-width: 40rem) {
+      .actions {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-self: flex-start;
+      }
+    }
+
+    @media (min-width: 48rem) {
+      .actions .phone-number {
+        display: inline;
       }
     }
 

@@ -1,12 +1,25 @@
 <section class="hero site-gutter">
   <div class="content">
+    @if (openStatus(); as status) {
+      <p class="status eyebrow" data-testid="open-status" [class.open]="status.isOpen">
+        <span class="status-dot"></span>
+        {{ status.label }}
+      </p>
+    }
     <h1 class="display-title text-shadow-hero">
-      Thad <span class="text-primary">The</span> Barber
+      <span class="line">Precision cuts.</span>
+      <span class="line text-primary">Timeless craft.</span>
     </h1>
-    <a pButton size="large" routerLink="/book">
-      Book a cut
-      <i class="pi pi-arrow-right"></i>
-    </a>
+    <p class="lead">Fresh, tailored cuts for the whole family. Pick a time online, or call or text Thad.</p>
+    <div class="actions">
+      <a pButton size="large" data-testid="hero-book" routerLink="/book">
+        Book a cut
+        <i class="pi pi-arrow-right"></i>
+      </a>
+      <a pButton size="large" severity="secondary" data-testid="hero-call" [href]="phone().tel">
+        Call / Text<span class="phone-number"> {{ phone().display }}</span>
+      </a>
+    </div>
     @if (nextTimeSlots()[0]; as nextTimeSlot) {
       <dl class="facts">
         <div data-testid="next-open-chair">
