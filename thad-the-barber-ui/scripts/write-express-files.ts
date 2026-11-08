@@ -134,7 +134,7 @@ const fontPreloads: string[] = fontRules
     return fontFile;
   });
 const iconFontName: string | undefined = readdirSync(join(outDir, 'media'))
-  .find((name: string): boolean => /^primeicons-.*\.woff2$/.test(name));
+  .find((name: string): boolean => /^primeicons(-.*)?\.woff2$/.test(name));
 if (fontPreloads.length === 0 || !iconFontName) {
   throw new Error(`${outDir} has no Latin font file or PrimeIcons woff2 to preload`);
 }
