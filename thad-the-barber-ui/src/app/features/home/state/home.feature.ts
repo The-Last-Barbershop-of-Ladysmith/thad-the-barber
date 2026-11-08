@@ -4,7 +4,7 @@ import { HomeSection } from '../../../shared/models/home-section.model';
 import { NavItem } from '../../../shared/models/nav-item.model';
 import { FeatureSelectors } from '../../../shared/models/ngrx.models';
 import { RequestStatus } from '../../../shared/models/request.models';
-import { isSettledEmpty } from '../../../shared/utils/request.utils';
+import { isLoading, isSettledEmpty } from '../../../shared/utils/request.utils';
 import { announcementsFeature } from '../../announcements/state/announcements.feature';
 import { shopFeature } from '../../shop/state/shop.feature';
 import { GalleryPhoto } from '../models/home.models';
@@ -22,6 +22,7 @@ export type HomeExtraSelectors = {
   selectHomeSections: MemoizedSelector<object, readonly NavItem[]>;
   selectNextTimeSlots: MemoizedSelector<object, NextTimeSlot[]>;
   selectAreNextTimesMissing: MemoizedSelector<object, boolean>;
+  selectAreNextTimesLoading: MemoizedSelector<object, boolean>;
 };
 
 /** Store key for this slice; also names its localStorage entry (`ttb-home`). */
@@ -70,6 +71,10 @@ export const homeFeature = createFeature({
       selectNextTimesStatus,
       selectNextTimes,
       toAreNextTimesMissing,
+    ),
+    selectAreNextTimesLoading: createSelector(
+      selectNextTimesStatus,
+      isLoading,
     ),
   }),
 });

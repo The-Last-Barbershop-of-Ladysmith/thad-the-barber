@@ -118,3 +118,28 @@ describe(
     );
   },
 );
+
+describe(
+  'selectAreNextTimesLoading',
+  (): void => {
+    function isLoadingFor(nextTimesStatus: RequestStatus): boolean {
+      return homeFeature.selectAreNextTimesLoading({ [homeFeatureKey]: { ...initialHomeState, nextTimesStatus } });
+    }
+
+    it(
+      'is true before the open times are asked for and while they load',
+      (): void => {
+        expect(isLoadingFor(RequestStatus.Idle)).toBe(true);
+        expect(isLoadingFor(RequestStatus.Pending)).toBe(true);
+      },
+    );
+
+    it(
+      'is false once they have loaded or failed',
+      (): void => {
+        expect(isLoadingFor(RequestStatus.Success)).toBe(false);
+        expect(isLoadingFor(RequestStatus.Error)).toBe(false);
+      },
+    );
+  },
+);
