@@ -186,6 +186,8 @@ module web 'app-service.bicep' = {
       API_ORIGIN: 'https://${apiAppName}.azurewebsites.net'
       MEDIA_BASE_URL: mediaBaseUrl
       NOINDEX: string(noIndex)
+      // Mount the zip (~25,000 node_modules files) instead of Kudu unpacking it, which 504'd on deploy.
+      WEBSITE_RUN_FROM_PACKAGE: '1'
     }
   }
 }
