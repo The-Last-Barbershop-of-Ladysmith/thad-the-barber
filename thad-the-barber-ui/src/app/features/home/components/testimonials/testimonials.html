@@ -4,6 +4,9 @@
       <span class="eyebrow">From the chair</span>
       @if (rating(); as listingRating) {
         <span class="score" data-testid="reviews-rating">
+          <span class="stars" role="img" [attr.aria-label]="listingRating.score + ' out of 5 stars'" data-testid="reviews-rating-stars">
+            <p-rating [ngModel]="summaryStars()" [readonly]="true" [allowHalf]="true" />
+          </span>
           {{ listingRating.score }} from {{ listingRating.count }} Google reviews
         </span>
       }
@@ -20,7 +23,10 @@
             <blockquote class="quote">“{{ testimonial.quote }}”</blockquote>
             <figcaption class="author">
               <strong class="author-name">{{ testimonial.author }}</strong>
-              <p-rating [ngModel]="testimonial.rating" [readonly]="true" />
+              <span class="stars" role="img" [attr.aria-label]="testimonial.rating + ' out of 5 stars'">
+                <p-rating [ngModel]="testimonial.rating" [readonly]="true" />
+              </span>
+              <span class="source">{{ testimonial.source }}</span>
             </figcaption>
           </figure>
         }

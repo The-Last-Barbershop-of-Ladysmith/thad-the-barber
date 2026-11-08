@@ -2,6 +2,7 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Store, provideStore } from '@ngrx/store';
+import { Rating } from 'primeng/rating';
 import { ReviewRating, Testimonial } from '../../models/home.models';
 import * as HomeActions from '../../state/home.actions';
 import { homeFeature } from '../../state/home.feature';
@@ -170,6 +171,36 @@ describe(
           .querySelector('[data-testid="reviews-rating"]')?.textContent.replace(/\s+/g, ' ').trim() ?? '';
         expect(rating).toContain('4.5');
         expect(rating).toContain('12');
+      },
+    );
+
+    it.each([
+      [4.6, 4.5],
+      [4.9, 5],
+    ])(
+      'shows the stars for a score of %s as %s and names the score for assistive tech',
+      async (score: number, expectedStars: number): Promise<void> => {
+        const fixture: ComponentFixture<Testimonials> = render(testimonials, {
+          score,
+          count: 12,
+          url: null,
+        });
+
+        await fixture.whenStable();
+        const stars: HTMLElement | null = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="reviews-rating-stars"]');
+        expect(stars?.getAttribute('aria-label')).toBe(`${score} out of 5 stars`);
+        expect((fixture.debugElement.query(By.css('[data-testid="reviews-rating-stars"] p-rating')).componentInstance as Rating).value()).toBe(expectedStars);
+      },
+    );
+
+    it(
+      'gives each review its stars as a label and its source',
+      (): void => {
+        const fixture: ComponentFixture<Testimonials> = render(testimonials);
+        const firstReview: HTMLElement | null = (fixture.nativeElement as HTMLElement).querySelector('.review');
+
+        expect(firstReview?.querySelector('.stars')?.getAttribute('aria-label')).toBe(`${String(testimonials[0]?.rating)} out of 5 stars`);
+        expect(firstReview?.querySelector('.source')?.textContent.trim()).toBe(testimonials[0]?.source);
       },
     );
 

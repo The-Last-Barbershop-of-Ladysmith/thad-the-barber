@@ -1,9 +1,9 @@
-import { Locator, Page, Route } from '@playwright/test';
+import { Locator, Page, Request, Route } from '@playwright/test';
 import { Testimonial } from '../../src/app/features/home/models/home.models';
 import { expectNoA11yViolations } from '../support/axe';
 import { expect, test } from '../support/fixtures';
 import { collectPageErrors } from '../support/page-errors';
-import { REVIEWS_URL, TEST_REVIEWS } from '../support/reviews';
+import { REVIEWS_URL, TEST_REVIEWS, isReviewsRequest } from '../support/reviews';
 
 const HIDING_RESPONSES: Record<string, Parameters<Route['fulfill']>[0]> = {
   'a failed request': { status: 503 },
@@ -52,6 +52,41 @@ test.describe(
         await expect(page.getByTestId('reviews-rating')).toHaveCount(0);
       },
     );
+
+    const REVIEWS_REQUEST_CASES: [string, (page: Page) => Locator, number][] = [
+      [
+        '/',
+        (page: Page): Locator => page.getByTestId('testimonials'),
+        1,
+      ],
+      [
+        '/book',
+        (page: Page): Locator => page.getByRole('heading', { level: 1 }),
+        0,
+      ],
+    ];
+    for (const [
+      path,
+      readyLocator,
+      expectedRequests,
+    ] of REVIEWS_REQUEST_CASES) {
+      test(
+        `makes ${expectedRequests} reviews request(s) on ${path}`,
+        async ({ page }: { page: Page; }): Promise<void> => {
+          const reviewsRequests: string[] = [];
+          page.on('request', (request: Request): void => {
+            if (isReviewsRequest(new URL(request.url()))) {
+              reviewsRequests.push(request.url());
+            }
+          });
+
+          await page.goto(path);
+          await expect(readyLocator(page)).toBeAttached();
+
+          expect(reviewsRequests).toHaveLength(expectedRequests);
+        },
+      );
+    }
 
     for (const [outage, response] of Object.entries(HIDING_RESPONSES)) {
       test(
