@@ -24,6 +24,10 @@ describe(
     };
 
     function render(announcements: Announcement[], shownIndex: number = 0): HTMLElement {
+      return renderFixture(announcements, shownIndex).nativeElement as HTMLElement;
+    }
+
+    function renderFixture(announcements: Announcement[], shownIndex: number): ComponentFixture<AnnouncementsCarousel> {
       TestBed.configureTestingModule({
         providers: [
           provideRouter([]),
@@ -37,7 +41,7 @@ describe(
       TestBed.inject(Store).dispatch(AnnouncementsActions.AnnouncementShown({ index: shownIndex }));
       const fixture: ComponentFixture<AnnouncementsCarousel> = TestBed.createComponent(AnnouncementsCarousel);
       fixture.detectChanges();
-      return fixture.nativeElement as HTMLElement;
+      return fixture;
     }
 
     beforeEach((): void => {
@@ -48,7 +52,11 @@ describe(
           15,
           12,
         ),
-        toFake: ['Date'],
+        toFake: [
+          'Date',
+          'setTimeout',
+          'clearTimeout',
+        ],
       });
     });
 
@@ -303,6 +311,67 @@ describe(
 
         expect(navigate).not.toHaveBeenCalled();
         expect(events.some((event: MouseEvent): boolean => event.defaultPrevented)).toBe(false);
+      },
+    );
+
+    describe(
+      'a slide the strip chose',
+      (): void => {
+        const announcements: Announcement[] = [
+          { ...base, title: 'First made-up special' },
+          { ...base, title: 'Second made-up special' },
+        ];
+
+        function chooseSecondSlide(): ComponentFixture<AnnouncementsCarousel> {
+          const fixture: ComponentFixture<AnnouncementsCarousel> = renderFixture(announcements, 0);
+          TestBed.inject(Store).dispatch(AnnouncementsActions.AnnouncementShown({ index: 1 }));
+          fixture.detectChanges();
+          return fixture;
+        }
+
+        function carouselReports(fixture: ComponentFixture<AnnouncementsCarousel>, index: number): void {
+          (fixture.componentInstance as unknown as { showSlide(index: number): void; }).showSlide(index);
+        }
+
+        function shownIndex(): number {
+          return TestBed.inject(Store).selectSignal(announcementsFeature.selectShownIndex)();
+        }
+
+        it(
+          'ignores the slides the carousel reports on its way there',
+          (): void => {
+            const fixture: ComponentFixture<AnnouncementsCarousel> = chooseSecondSlide();
+
+            carouselReports(fixture, 0);
+
+            expect(shownIndex()).toBe(1);
+          },
+        );
+
+        it(
+          'is followed again once the carousel finishes scrolling',
+          (): void => {
+            const fixture: ComponentFixture<AnnouncementsCarousel> = chooseSecondSlide();
+            const slide: Element = query(fixture.nativeElement as HTMLElement, '[data-testid="announcement"]');
+
+            slide.dispatchEvent(new Event('scrollend'));
+            carouselReports(fixture, 0);
+
+            expect(shownIndex()).toBe(0);
+          },
+        );
+
+        it(
+          'is followed again after the backstop when the browser never says the scroll ended',
+          (): void => {
+            const fixture: ComponentFixture<AnnouncementsCarousel> = chooseSecondSlide();
+
+            vi.advanceTimersByTime(3000);
+            carouselReports(fixture, 0);
+
+            expect(shownIndex()).toBe(0);
+          },
+        );
       },
     );
   },
