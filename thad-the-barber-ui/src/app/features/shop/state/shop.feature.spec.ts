@@ -132,5 +132,24 @@ describe(
         );
       },
     );
+
+    describe(
+      'selectIsLoading',
+      (): void => {
+        it.each([
+          [RequestStatus.Idle, true],
+          [RequestStatus.Pending, true],
+          [RequestStatus.Success, false],
+          [RequestStatus.Error, false],
+        ])(
+          'for the %s status is %s',
+          (loadStatus: RequestStatus, isLoading: boolean): void => {
+            const state: Record<string, ShopState> = { [shopFeature.name]: { ...initialShopState, loadStatus } };
+
+            expect(shopFeature.selectIsLoading(state)).toBe(isLoading);
+          },
+        );
+      },
+    );
   },
 );

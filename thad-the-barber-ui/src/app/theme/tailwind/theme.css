@@ -265,11 +265,11 @@
 }
 
 /*
- * Side padding of the header, the hero and every home section: the mock's 4vw gutter (16px to 48px), or more once the
- * screen is wider than 80rem, which centres their content in one column so all their edges line up.
+ * Side padding of the header, the hero and every home section: a 3vw gutter (16px to 24px, the page gutter's width),
+ * or more once the screen is wider than 110rem, which centres their content in one column so all their edges line up.
  */
 @utility site-gutter {
-  padding-inline: max(clamp(1rem, 4vw, 3rem), calc((100% - 80rem) / 2));
+  padding-inline: max(clamp(1rem, 3vw, var(--p-brand-page-gutter)), calc((100% - 110rem) / 2));
 }
 
 /*

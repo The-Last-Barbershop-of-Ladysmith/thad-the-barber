@@ -8,6 +8,7 @@ import { ShopOpeningHours } from '../models/shop-opening-hours.model';
 import { SocialLink } from '../models/social-link.model';
 import { FeatureSelectors } from '../../../shared/models/ngrx.models';
 import { toPhoneLinks } from '../../../shared/utils/phone.utils';
+import { isLoading } from '../../../shared/utils/request.utils';
 import { shopReducer } from './shop.reducer';
 import { ShopState } from './shop.state';
 
@@ -24,6 +25,7 @@ export type ShopExtraSelectors = {
   selectOpeningHours: MemoizedSelector<object, ShopOpeningHours[]>;
   selectSocialLinks: MemoizedSelector<object, SocialLink[]>;
   selectBookingSettings: MemoizedSelector<object, BookingSettings | null>;
+  selectIsLoading: MemoizedSelector<object, boolean>;
 };
 
 /** Store key for this slice; also names its localStorage entry (`ttb-shop`). */
@@ -37,7 +39,7 @@ export const shopFeatureKey: 'shop' = 'shop' as const;
 export const shopFeature = createFeature({
   name: shopFeatureKey,
   reducer: shopReducer,
-  extraSelectors: ({ selectShopInfo }: FeatureSelectors<ShopState>): ShopExtraSelectors => ({
+  extraSelectors: ({ selectShopInfo, selectLoadStatus }: FeatureSelectors<ShopState>): ShopExtraSelectors => ({
     selectShopName: createSelector(
       selectShopInfo,
       (shopInfo: ShopInfo | null): string => (shopInfo ?? SHOP_FALLBACK).name,
@@ -77,6 +79,10 @@ export const shopFeature = createFeature({
     selectBookingSettings: createSelector(
       selectShopInfo,
       (shopInfo: ShopInfo | null): BookingSettings | null => shopInfo?.bookingSettings ?? null,
+    ),
+    selectIsLoading: createSelector(
+      selectLoadStatus,
+      isLoading,
     ),
   }),
 });

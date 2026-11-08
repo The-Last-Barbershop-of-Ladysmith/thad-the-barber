@@ -238,6 +238,7 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 | SSR / prerender | Not set up | Add `@angular/ssr` when hosting is decided |
 | Gallery images | The wireframe's 720–960px photos, served as uploaded, cropped to a fixed 4:5 ratio in staggered columns (#168) | Thad uploads his own in the portal |
 | Visit section (card with hours, "Questions? Text this number.", map iframe) | Shopfront redo (#54): no card, address as the heading, themed static map image linking to directions, "Get directions" and "Call / Text (number)" buttons; hours live only in the Hours section and footer, and the "Questions?" line is dropped | Client-approved mockups (Shopfront boards); remove the unused `stacked` hours layout in the pre-prod unused audit |
+| Hero (shop-name wordmark, tagline, "Book a cut") | Shopfront redo (#51): an open-now pill ("Open now · closes 7 PM", from the shop's hours on its own clock), the heading "Precision cuts. Timeless craft." and one line of copy (fixed UI wording, not the shop name or a store tagline), "Book a cut" and "Call / Text (number)" buttons (the phone number is hidden below `md`), and a "Next open chair" fact. While the shop and open times load, the pill reads "Loading hours" (red dot) and the fact is a skeleton of the same size, so the heading doesn't move | Client-approved mockups. The mock's Google rating fact waits for #37 (needs #36); the mobile mock's sticky call/book bar isn't built, so phones keep both buttons in the hero |
 
 ---
 

@@ -43,7 +43,68 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 1.25rem;
-    max-width: 40rem;
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+      margin: 0;
+      padding: 0.4375rem 0.875rem;
+      border: 1px solid color-mix(in srgb, var(--p-primary-color) 30%, transparent);
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--p-ink) 80%, transparent);
+
+      .status-dot {
+        width: 0.5rem;
+        height: 0.5rem;
+        border-radius: 50%;
+        background: currentColor;
+      }
+
+      &.open .status-dot {
+        background: var(--p-brand-success);
+      }
+
+      &.loading {
+        border-color: color-mix(in srgb, var(--p-brand-error) 45%, transparent);
+
+        .status-dot {
+          background: var(--p-brand-error);
+        }
+      }
+    }
+
+    // "PRECISION" is about 9.4em wide, so below about 370px (9.4 x 2.25rem plus the 1rem gutters)
+    // the heading shrinks to fit.
+    h1 {
+      font-size: min(clamp(2.25rem, 5.4vw, 5.25rem), (100vw - 2rem) / 9.4);
+    }
+
+    .line {
+      display: block;
+    }
+
+    .lead {
+      max-width: 32em;
+    }
+
+    .actions {
+      display: flex;
+      flex-direction: column;
+      align-self: stretch;
+      gap: 0.875rem;
+
+      .phone-number {
+        display: none;
+      }
+    }
+
+    .facts-loading {
+      width: 100%;
+      max-width: 27.5rem;
+      height: 4.59375rem;
+      margin-top: 0.5rem;
+    }
 
     .facts {
       width: 100%;
@@ -61,7 +122,25 @@
       }
     }
 
+    @media (min-width: 40rem) {
+      .actions {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-self: flex-start;
+      }
+    }
+
+    @media (min-width: 48rem) {
+      .actions .phone-number {
+        display: inline;
+      }
+    }
+
     @media (min-width: 64rem) {
+      .facts-loading {
+        height: 5.90625rem;
+      }
+
       .facts {
         padding-top: 1.25rem;
 

@@ -1,5 +1,26 @@
 import { RequestStatus } from '../models/request.models';
-import { isSettledEmpty } from './request.utils';
+import { isLoading, isSettledEmpty } from './request.utils';
+
+describe(
+  'isLoading',
+  (): void => {
+    it(
+      'is true before a load starts and while it runs',
+      (): void => {
+        expect(isLoading(RequestStatus.Idle)).toBe(true);
+        expect(isLoading(RequestStatus.Pending)).toBe(true);
+      },
+    );
+
+    it(
+      'is false once a load has succeeded or failed',
+      (): void => {
+        expect(isLoading(RequestStatus.Success)).toBe(false);
+        expect(isLoading(RequestStatus.Error)).toBe(false);
+      },
+    );
+  },
+);
 
 describe(
   'isSettledEmpty',
