@@ -86,6 +86,37 @@ describe(
     );
 
     it(
+      'holds the place of the pill with a loading pill while the shop loads',
+      (): void => {
+        vi.useFakeTimers({ now: new Date(SATURDAY_NOON_AT_SHOP), toFake: ['Date'] });
+        TestBed.configureTestingModule({
+          providers: [
+            provideRouter([]),
+            provideStore({
+              [homeFeature.name]: homeFeature.reducer,
+              [shopFeature.name]: shopFeature.reducer,
+            }),
+          ],
+        });
+        const fixture: ComponentFixture<Hero> = TestBed.createComponent(Hero);
+        fixture.detectChanges();
+        const heroElement: HTMLElement = fixture.nativeElement as HTMLElement;
+
+        expect(heroElement.querySelector('[data-testid="open-status-loading"]')).not.toBeNull();
+        expect(heroElement.querySelector('[data-testid="open-status"]')).toBeNull();
+      },
+    );
+
+    it(
+      'swaps the loading pill for the status once the shop has loaded',
+      (): void => {
+        const heroElement: HTMLElement = render(SATURDAY_NOON_AT_SHOP);
+
+        expect(heroElement.querySelector('[data-testid="open-status-loading"]')).toBeNull();
+      },
+    );
+
+    it(
       'shows the first open time',
       (): void => {
         const heroElement: HTMLElement = render(SATURDAY_NOON_AT_SHOP, (store: Store<AppState>): void => {
@@ -93,6 +124,38 @@ describe(
         });
 
         expect(heroElement.querySelector('[data-testid="next-open-chair"]')?.textContent).toMatch(/\d/);
+      },
+    );
+
+    it(
+      'holds the place of the open time with a skeleton until the open times load',
+      (): void => {
+        const heroElement: HTMLElement = render(SATURDAY_NOON_AT_SHOP);
+
+        expect(heroElement.querySelector('[data-testid="next-open-chair-loading"]')).not.toBeNull();
+      },
+    );
+
+    it(
+      'drops the skeleton once the open times have loaded',
+      (): void => {
+        const heroElement: HTMLElement = render(SATURDAY_NOON_AT_SHOP, (store: Store<AppState>): void => {
+          store.dispatch(HomeActions.NextTimesRequestSuccess({ startAts: ['2026-09-27T20:00:00Z'] }));
+        });
+
+        expect(heroElement.querySelector('[data-testid="next-open-chair-loading"]')).toBeNull();
+      },
+    );
+
+    it(
+      'drops the skeleton and shows no open time when loading them fails',
+      (): void => {
+        const heroElement: HTMLElement = render(SATURDAY_NOON_AT_SHOP, (store: Store<AppState>): void => {
+          store.dispatch(HomeActions.NextTimesRequestFailure());
+        });
+
+        expect(heroElement.querySelector('[data-testid="next-open-chair-loading"]')).toBeNull();
+        expect(heroElement.querySelector('[data-testid="next-open-chair"]')).toBeNull();
       },
     );
 
