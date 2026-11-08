@@ -5,6 +5,8 @@ using ThadTheBarber.Api.Features.Booking.Configuration;
 using ThadTheBarber.Api.Features.Booking.Endpoints;
 using ThadTheBarber.Api.Features.Health.Configuration;
 using ThadTheBarber.Api.Features.Health.Endpoints;
+using ThadTheBarber.Api.Features.Reviews.Configuration;
+using ThadTheBarber.Api.Features.Reviews.Endpoints;
 using ThadTheBarber.Api.Features.Session.Configuration;
 using ThadTheBarber.Api.Features.Session.Endpoints;
 using ThadTheBarber.Api.Features.Shop.Endpoints;
@@ -44,6 +46,7 @@ builder.Services.AddSessionTokens(builder.Configuration);
 builder.Services.AddSessionBearerAuth();
 builder.Services.AddHealth();
 builder.Services.AddBooking(builder.Configuration);
+builder.Services.AddReviews(builder.Configuration);
 builder.Services.AddOpenApi(options =>
 {
     options.AddDocumentTransformer<BearerSecurityTransformer>();
@@ -76,6 +79,7 @@ RouteGroupBuilder api = app.MapGroup("/api").RequireAuthorization();
 api.MapSessionEndpoints();
 api.MapHealthEndpoints();
 api.MapShopEndpoints();
+api.MapReviewsEndpoints();
 api.MapBookingEndpoints();
 api.MapSquareWebhookEndpoints();
 
