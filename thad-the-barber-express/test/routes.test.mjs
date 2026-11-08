@@ -5,8 +5,10 @@ import { createFakeDist } from './fake-dist.mjs';
 var fakeDist;
 var app;
 
+var LEGACY_FONT_PRELOAD = '<link rel="preload" as="font" crossorigin="anonymous" href="/media/icons-ABCD1234.eot?#iefix">';
+
 function page(name) {
-  return '<html><body><app-root ngcspnonce="CSP_NONCE"></app-root><script nonce="CSP_NONCE"></script>' + name + '</body></html>';
+  return '<html><head>' + LEGACY_FONT_PRELOAD + '</head><body><app-root ngcspnonce="CSP_NONCE"></app-root><script nonce="CSP_NONCE"></script>' + name + '</body></html>';
 }
 
 function headerNonce(response) {
@@ -73,6 +75,15 @@ describe('pages', function() {
       expect(response.status, path).toBe(404);
       expect(response.text, path).not.toContain('CSP_NONCE');
     }
+  });
+});
+
+describe('font preloads', function() {
+  it.each(['/', '/book', '/nope'])('preloads the fonts and not the legacy file on %s', async function(path) {
+    var response = await request(app).get(path);
+    expect(response.text).toContain('href="/media/display-latin-ABCD1234.woff2"');
+    expect(response.text).toContain('href="/media/body-latin-EFGH5678.woff2"');
+    expect(response.text).not.toContain('.eot');
   });
 });
 

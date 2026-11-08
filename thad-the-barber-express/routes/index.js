@@ -3,10 +3,12 @@ var fs = require('fs');
 var path = require('path');
 var angularDist = require('../lib/angular-dist');
 var csp = require('../lib/content-security-policy');
+var fontPreload = require('../lib/font-preload');
 
 var router = express.Router();
 
 var cspSources = JSON.parse(fs.readFileSync(path.join(angularDist, 'csp-sources.json'), 'utf8'));
+var fontHrefs = JSON.parse(fs.readFileSync(path.join(angularDist, 'font-preloads.json'), 'utf8'));
 var cspHeader = process.env.CSP_REPORT_ONLY === 'true' ? 'Content-Security-Policy-Report-Only' : 'Content-Security-Policy';
 
 // Client-rendered routes, served the app shell with a 200, from the app's CLIENT_ROUTES (client-routes.json, written by
@@ -54,7 +56,7 @@ router.use(function(req, res, next) {
 });
 
 function loadPage(file) {
-  var html = fs.readFileSync(path.join(angularDist, file), 'utf8');
+  var html = fontPreload.applyFontPreloads(fs.readFileSync(path.join(angularDist, file), 'utf8'), fontHrefs);
   return { html: html, styleHashes: csp.styleAttributeHashes(html) };
 }
 
