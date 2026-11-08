@@ -58,7 +58,7 @@ public sealed partial class ReviewsService(
             JsonElement file = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken);
             return file.ToReviewsContent();
         }
-        catch (Exception exception) when (exception is HttpRequestException or JsonException
+        catch (Exception exception) when (exception is HttpRequestException or JsonException or NotSupportedException
             || (exception is TaskCanceledException && !cancellationToken.IsCancellationRequested))
         {
             LogFileUnreadable(logger, exception);
