@@ -148,14 +148,70 @@ describe(
     );
 
     it(
+      'keeps the skeleton while the reviews load, even once the open times are known to be none',
+      (): void => {
+        const heroElement: HTMLElement = render(SATURDAY_NOON_AT_SHOP, (store: Store<AppState>): void => {
+          store.dispatch(HomeActions.NextTimesRequestSuccess({ startAts: [] }));
+        });
+
+        expect(heroElement.querySelector('[data-testid="next-open-chair-loading"]')).not.toBeNull();
+      },
+    );
+
+    it(
+      'keeps the skeleton while the open times load, even once the reviews have answered',
+      (): void => {
+        const heroElement: HTMLElement = render(SATURDAY_NOON_AT_SHOP, (store: Store<AppState>): void => {
+          store.dispatch(HomeActions.HomeContentRequestFailure({ error: 'Could not load the reviews.' }));
+        });
+
+        expect(heroElement.querySelector('[data-testid="next-open-chair-loading"]')).not.toBeNull();
+      },
+    );
+
+    it(
       'drops the skeleton and shows no open time when loading them fails',
       (): void => {
         const heroElement: HTMLElement = render(SATURDAY_NOON_AT_SHOP, (store: Store<AppState>): void => {
           store.dispatch(HomeActions.NextTimesRequestFailure());
+          store.dispatch(HomeActions.HomeContentRequestFailure({ error: 'Could not load the reviews.' }));
         });
 
         expect(heroElement.querySelector('[data-testid="next-open-chair-loading"]')).toBeNull();
         expect(heroElement.querySelector('[data-testid="next-open-chair"]')).toBeNull();
+      },
+    );
+
+    it(
+      'shows the listing rating once the reviews load, even when no time is open',
+      (): void => {
+        const heroElement: HTMLElement = render(SATURDAY_NOON_AT_SHOP, (store: Store<AppState>): void => {
+          store.dispatch(HomeActions.NextTimesRequestSuccess({ startAts: [] }));
+          store.dispatch(HomeActions.HomeContentRequestSuccess({
+            content: {
+              testimonials: [],
+              rating: {
+                score: 4.5,
+                count: 12,
+                url: null,
+              },
+            },
+          }));
+        });
+
+        const rating: string = heroElement.querySelector('[data-testid="hero-rating"]')?.textContent.replace(/\s+/g, ' ') ?? '';
+        expect(rating).toContain('4.5');
+        expect(rating).toContain('12');
+        expect(heroElement.querySelector('[data-testid="next-open-chair"]')).toBeNull();
+      },
+    );
+
+    it(
+      'shows no rating fact when the reviews file has none',
+      (): void => {
+        const heroElement: HTMLElement = render(SATURDAY_NOON_AT_SHOP);
+
+        expect(heroElement.querySelector('[data-testid="hero-rating"]')).toBeNull();
       },
     );
 

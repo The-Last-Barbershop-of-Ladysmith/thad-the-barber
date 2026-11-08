@@ -6,11 +6,7 @@
   position: relative;
   isolation: isolate;
   // Fades into the tint the sections below start with, so the hero's bottom edge has no seam.
-  background: linear-gradient(
-    180deg,
-    rgb(12 8 6 / 0) 55%,
-    var(--p-brand-page-tint)
-  );
+  background: linear-gradient(180deg, rgb(12 8 6 / 0) 55%, var(--p-brand-page-tint));
 
   // The photo shows through from the right as the screen widens: the fade ends at the right edge on a phone (25rem)
   // and 75% across from 75rem, with no jump between. Its stops follow an eased curve, so there is no visible edge, and
@@ -31,11 +27,7 @@
       rgb(12 8 6 / 0.2) calc(var(--fade-end) * 0.85),
       rgb(12 8 6 / 0) var(--fade-end)
     );
-    mask-image: linear-gradient(
-      180deg,
-      #000 55%,
-      transparent
-    );
+    mask-image: linear-gradient(180deg, #000 55%, transparent);
   }
 
   .content {
@@ -101,17 +93,20 @@
 
     .facts-loading {
       width: 100%;
-      max-width: 27.5rem;
+      max-width: 34rem;
       height: 4.59375rem;
       margin-top: 0.5rem;
     }
 
     .facts {
       width: 100%;
-      max-width: 27.5rem;
+      max-width: 34rem;
       margin: 0.5rem 0 0;
       padding-top: 0.875rem;
       border-top: 1px solid var(--p-brand-hairline);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 2rem;
 
       dt {
         font-family: var(--p-font-family-display);
