@@ -79,10 +79,10 @@ export class ShopHoursService {
 
   getShopCurrentStatus({ day, minutes }: WeekTime): OpenStatus {
     const today: ShopOpeningHours[] = this.fetchShopHoursForDay(day);
-    const isOpenNow: boolean = today.some((period: ShopOpeningHours): boolean =>
+    const openPeriod: ShopOpeningHours | undefined = today.find((period: ShopOpeningHours): boolean =>
       minutes >= fromTimeOfDay(period.opens) && minutes < fromTimeOfDay(period.closes));
-    if (isOpenNow) {
-      return { isOpen: true, label: 'Open now' };
+    if (openPeriod) {
+      return { isOpen: true, label: `Open now · closes ${formatMinutes(fromTimeOfDay(openPeriod.closes), true)}` };
     }
     const laterToday: ShopOpeningHours | undefined = today.find((period: ShopOpeningHours): boolean =>
       minutes < fromTimeOfDay(period.opens));
