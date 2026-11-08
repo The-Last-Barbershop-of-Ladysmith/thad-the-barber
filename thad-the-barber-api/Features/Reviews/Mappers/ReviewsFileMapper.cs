@@ -56,9 +56,7 @@ public static class ReviewsFileMapper
 
     private static ReviewRating? ToRating(this JsonElement file)
     {
-        double? score = file.TryGetProperty("score", out JsonElement scoreValue) && scoreValue.ValueKind == JsonValueKind.Number
-            ? scoreValue.GetDouble()
-            : null;
+        double? score = file.ReadDouble("score");
         int? count = file.ReadInt("count");
         if (score is null or < 0 or > MaxStars || count is null or < 0)
         {
@@ -94,5 +92,17 @@ public static class ReviewsFileMapper
         }
 
         return number;
+    }
+
+    private static double? ReadDouble(this JsonElement entry, string name)
+    {
+        if (entry.ValueKind != JsonValueKind.Object
+            || !entry.TryGetProperty(name, out JsonElement value)
+            || value.ValueKind != JsonValueKind.Number)
+        {
+            return null;
+        }
+
+        return value.GetDouble();
     }
 }

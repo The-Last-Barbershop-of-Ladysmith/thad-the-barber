@@ -256,20 +256,16 @@
   }
 }
 
-/* ---- Layout -------------------------------------------------------------- */
-
-/* Vertical flex column. Pair with a gap: `stack gap-3` */
-@utility stack {
-  display: flex;
-  flex-direction: column;
+/* ---- Layout ---------------------------------------------------- * or more once the screen is wider than 110rem, which centres their content in one column so all their edges line up.
+x-direction: column;
 }
 
-/*
- * Side padding of the header, the hero and every home section: a 3vw gutter (16px to 24px, the page gutter's width),
+/* * Side padding of the header, the hero and every home section: a 3vw gutter (16px to 24px, the page gutter's width),
  * or more once the screen is wider than 110rem, which centres their content in one column so all their edges line up.
  */
 @utility site-gutter {
   padding-inline: max(clamp(1rem, 3vw, var(--p-brand-page-gutter)), calc((100% - 110rem) / 2));
+
 }
 
 /*

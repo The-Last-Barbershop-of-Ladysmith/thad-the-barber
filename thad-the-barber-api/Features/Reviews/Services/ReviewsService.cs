@@ -31,10 +31,11 @@ public sealed partial class ReviewsService(
         await _readLock.WaitAsync(cancellationToken);
         try
         {
-            if (time.GetUtcNow() >= _expiresAt)
+            DateTimeOffset now = time.GetUtcNow();
+            if (now >= _expiresAt)
             {
                 _content = await ReadFileAsync(cancellationToken);
-                _expiresAt = time.GetUtcNow() + settings.Value.CacheFor;
+                _expiresAt = now + settings.Value.CacheFor;
             }
 
             return _content;
