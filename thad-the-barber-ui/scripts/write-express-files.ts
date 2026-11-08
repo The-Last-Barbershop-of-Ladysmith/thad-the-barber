@@ -62,6 +62,7 @@ interface AngularJson { projects: Record<string, AngularProject>; }
  * - brand.css: the theme's CSS variables for the error pages (src/app/theme/brand-css.ts).
  * - fonts.css: the @font-face rules of the app's display and body fonts, copied from the built stylesheet (its file
  *   name is hashed) so the error pages load the same files from /media.
+ * - font-preloads.json: the Latin files of those fonts and PrimeIcons' woff2, which Express preloads on each page.
  * - shop.json: the shop name, phone and Square booking URL for the error page, from src/app/core/config/shop-info.ts.
  * - client-routes.json: the routes Express serves the app shell for, from src/app/app.routes.server.ts.
  */
@@ -121,6 +122,24 @@ if (fontRules.length === 0) {
   throw new Error(`${stylesheetName} has no @font-face rules for the Syne or Plus Jakarta Sans fonts`);
 }
 
+const LATIN_RANGE: RegExp = /unicode-range:\s*U\+0000-00FF/;
+const FONT_FILE: RegExp = /url\("?\.?(\/media\/[^")]+\.woff2)"?\)/;
+const fontPreloads: string[] = fontRules
+  .filter((rule: string): boolean => LATIN_RANGE.test(rule))
+  .map((rule: string): string => {
+    const fontFile: string | undefined = FONT_FILE.exec(rule)?.[1];
+    if (!fontFile) {
+      throw new Error(`The Latin font rule has no woff2 file: ${rule}`);
+    }
+    return fontFile;
+  });
+const iconFontName: string | undefined = readdirSync(join(outDir, 'media'))
+  .find((name: string): boolean => /^primeicons-.*\.woff2$/.test(name));
+if (fontPreloads.length === 0 || !iconFontName) {
+  throw new Error(`${outDir} has no Latin font file or PrimeIcons woff2 to preload`);
+}
+fontPreloads.push(`/media/${iconFontName}`);
+
 const ingestionEndpoint: string | undefined = /IngestionEndpoint=([^;]+)/.exec(environment.appInsightsConnectionString)?.[1];
 const mediaOrigin: string = new URL(environment.mediaBaseUrl).origin;
 const sources: Record<string, string[]> = {
@@ -143,6 +162,11 @@ writeFileSync(join(outDir, 'csp-sources.json'), `${JSON.stringify(
 )}\n`);
 writeFileSync(join(outDir, 'brand.css'), brandCss());
 writeFileSync(join(outDir, 'fonts.css'), `${fontRules.join('\n')}\n`);
+writeFileSync(join(outDir, 'font-preloads.json'), `${JSON.stringify(
+  fontPreloads,
+  null,
+  2,
+)}\n`);
 writeFileSync(join(outDir, 'shop.json'), `${JSON.stringify(
   shop,
   null,
@@ -154,5 +178,5 @@ writeFileSync(join(outDir, 'client-routes.json'), `${JSON.stringify(
   2,
 )}\n`);
 process.stdout.write(
-  `Wrote csp-sources.json from ${environmentFile}, brand.css, fonts.css, shop.json and client-routes.json to ${outDir}\n`,
+  `Wrote csp-sources.json from ${environmentFile}, brand.css, fonts.css, font-preloads.json, shop.json and client-routes.json to ${outDir}\n`,
 );
