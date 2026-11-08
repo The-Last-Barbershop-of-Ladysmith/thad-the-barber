@@ -4,6 +4,7 @@ import { TEST_SHOP } from '../../../../testing/test-shop';
 import * as ShopActions from '../state/shop.actions';
 import { shopFeature } from '../state/shop.feature';
 import { HoursRow } from '../models/hours-row.model';
+import { OpenStatus } from '../models/open-status.model';
 import { ShopInfo } from '../models/shop-info.model';
 import { Weekday } from '../../../shared/models/weekday.model';
 import { ShopHoursService } from './shop-hours.service';
@@ -51,7 +52,24 @@ describe(
         it(
           'is open during Saturday hours',
           (): void => {
-            expect(service.getShopCurrentStatus({ day: Weekday.Saturday, minutes: 12 * 60 })).toEqual({ isOpen: true, label: 'Open now' });
+            expect(service.getShopCurrentStatus({ day: Weekday.Saturday, minutes: 12 * 60 })).toEqual({
+              isOpen: true,
+              label: 'Open now · closes 7:30 PM',
+            });
+          },
+        );
+
+        it(
+          'is closed at the minute the shop closes',
+          (): void => {
+            expect(service.getShopCurrentStatus({ day: Weekday.Saturday, minutes: 19 * 60 + 30 }).isOpen).toBe(false);
+          },
+        );
+
+        it(
+          'is open at the minute the shop opens',
+          (): void => {
+            expect(service.getShopCurrentStatus({ day: Weekday.Sunday, minutes: 10 * 60 }).isOpen).toBe(true);
           },
         );
 
@@ -88,7 +106,10 @@ describe(
               (): ShopHoursService => new ShopHoursService(),
             );
 
-            expect(fresh.currentOpenStatus()).toEqual({ isOpen: true, label: 'Open now' });
+            expect(fresh.currentOpenStatus()).toEqual({
+              isOpen: true,
+              label: 'Open now · closes 7:30 PM',
+            });
           },
         );
 
@@ -141,6 +162,14 @@ describe(
         });
 
         it(
+          'names the closing time of the period it is in',
+          (): void => {
+            expect(service.getShopCurrentStatus({ day: Weekday.Saturday, minutes: 10 * 60 }).label)
+              .toBe('Open now · closes 12 PM');
+          },
+        );
+
+        it(
           'is open during the second period',
           (): void => {
             expect(service.getShopCurrentStatus({ day: Weekday.Saturday, minutes: 14 * 60 }).isOpen).toBe(true);
@@ -163,6 +192,66 @@ describe(
               'Sunday: 10:00 AM – 4:00 PM',
               'Monday – Friday: closed',
             ]);
+          },
+        );
+      },
+    );
+
+    describe(
+      'in a time zone that changes its clocks',
+      (): void => {
+        const newYorkShop: ShopInfo = {
+          ...TEST_SHOP,
+          timeZone: 'America/New_York',
+        };
+
+        function statusAt(instant: string): OpenStatus | null {
+          vi.useFakeTimers({ now: new Date(instant), toFake: ['Date'] });
+          return TestBed.runInInjectionContext((): ShopHoursService => new ShopHoursService()).currentOpenStatus();
+        }
+
+        beforeEach((): void => {
+          TestBed.inject(Store).dispatch(ShopActions.ShopInfoRequestSuccess({ shopInfo: newYorkShop }));
+        });
+
+        it(
+          'is still closed at 9:30 AM on the Sunday the clocks go back',
+          (): void => {
+            expect(statusAt('2026-11-01T14:30:00Z')?.label).toBe('Opens today at 10 AM');
+          },
+        );
+
+        it(
+          'is already open at 10:30 AM on the Sunday the clocks go forward',
+          (): void => {
+            expect(statusAt('2026-03-08T14:30:00Z')?.label).toBe('Open now · closes 4 PM');
+          },
+        );
+      },
+    );
+
+    describe(
+      'with a period that runs past midnight',
+      (): void => {
+        const lateShop: ShopInfo = {
+          ...TEST_SHOP,
+          hours: [
+            {
+              day: Weekday.Friday,
+              opens: '18:00:00',
+              closes: '02:00:00',
+            },
+          ],
+        };
+
+        beforeEach((): void => {
+          TestBed.inject(Store).dispatch(ShopActions.ShopInfoRequestSuccess({ shopInfo: lateShop }));
+        });
+
+        it(
+          'never counts as open, because the shop is expected to close the same day',
+          (): void => {
+            expect(service.getShopCurrentStatus({ day: Weekday.Friday, minutes: 20 * 60 }).isOpen).toBe(false);
           },
         );
       },
