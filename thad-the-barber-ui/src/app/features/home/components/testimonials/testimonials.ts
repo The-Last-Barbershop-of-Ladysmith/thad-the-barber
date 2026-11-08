@@ -29,6 +29,9 @@ export class Testimonials {
 
   protected readonly testimonials: Signal<Testimonial[]> = this.store.selectSignal(homeFeature.selectTestimonials);
   protected readonly rating: Signal<ReviewRating | null> = this.store.selectSignal(homeFeature.selectRating);
+  protected readonly summaryStars: Signal<number> = computed(
+    (): number => Math.round((this.rating()?.score ?? 0) * 2) / 2,
+  );
   protected readonly rotation: Rotation = createRotation({
     count: computed((): number => this.testimonials().length),
     intervalMs: 7000,
