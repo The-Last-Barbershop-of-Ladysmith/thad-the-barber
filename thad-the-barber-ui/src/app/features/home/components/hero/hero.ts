@@ -8,6 +8,7 @@ import { AppState } from '../../../../store/app.state';
 import { OpenStatus } from '../../../shop/models/open-status.model';
 import { ShopHoursService } from '../../../shop/services/shop-hours.service';
 import { shopFeature } from '../../../shop/state/shop.feature';
+import { ReviewRating } from '../../models/home.models';
 import { NextTimeSlot } from '../../models/next-time-slot.model';
 import { homeFeature } from '../../state/home.feature';
 
@@ -27,8 +28,9 @@ export class Hero {
 
   protected readonly openStatus: Signal<OpenStatus | null> = inject(ShopHoursService).currentOpenStatus;
   protected readonly isShopLoading: Signal<boolean> = this.store.selectSignal(shopFeature.selectIsLoading);
-  protected readonly areNextTimesLoading: Signal<boolean> =
-    this.store.selectSignal(homeFeature.selectAreNextTimesLoading);
+  protected readonly areFactsLoading: Signal<boolean> =
+    this.store.selectSignal(homeFeature.selectAreHeroFactsLoading);
   protected readonly phone: Signal<PhoneLinks> = this.store.selectSignal(shopFeature.selectPhoneLinks);
+  protected readonly rating: Signal<ReviewRating | null> = this.store.selectSignal(homeFeature.selectRating);
   protected readonly nextTimeSlots: Signal<NextTimeSlot[]> = this.store.selectSignal(homeFeature.selectNextTimeSlots);
 }

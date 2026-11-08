@@ -9,6 +9,7 @@ import {
 } from './booking';
 import { fulfillStaticMap, isStaticMap } from './map';
 import { fulfillMedia, isMedia } from './media';
+import { fulfillReviews, isReviewsRequest } from './reviews';
 import { fulfillRecaptcha, fulfillSession, isRecaptchaScript, isSessionRequest } from './session';
 import { fulfillShop, isShopRequest } from './shop';
 
@@ -46,6 +47,7 @@ export const test: typeof base = base.extend({
     await page.route(isRecaptchaScript, fulfillRecaptcha);
     await page.route(isSessionRequest, fulfillSession);
     await page.route(isShopRequest, fulfillShop);
+    await page.route(isReviewsRequest, fulfillReviews);
     await page.route(isAvailabilityRequest, fulfillAvailability);
     await page.route(isNextTimesRequest, fulfillNextTimes);
     await page.route(isManagedBookingRequest, fulfillManagedBooking);

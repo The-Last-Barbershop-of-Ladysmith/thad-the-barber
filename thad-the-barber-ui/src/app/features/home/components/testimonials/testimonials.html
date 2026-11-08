@@ -2,7 +2,11 @@
   <section class="testimonials site-gutter site-section" data-testid="testimonials">
     <div class="inner" (pointerenter)="rotation.hold()" (pointerleave)="rotation.release()">
       <span class="eyebrow">From the chair</span>
-      <span class="score">{{ reviews.score }} from {{ reviews.count }} {{ reviews.source }} reviews</span>
+      @if (rating(); as listingRating) {
+        <span class="score" data-testid="reviews-rating">
+          {{ listingRating.score }} from {{ listingRating.count }} Google reviews
+        </span>
+      }
       <div class="stage crossfade-stack">
         @for (testimonial of testimonials(); track testimonial.id; let i = $index) {
           @let isShown = i === rotation.shownIndex();

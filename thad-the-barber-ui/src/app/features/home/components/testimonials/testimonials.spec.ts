@@ -2,7 +2,7 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Store, provideStore } from '@ngrx/store';
-import { Testimonial } from '../../models/home.models';
+import { ReviewRating, Testimonial } from '../../models/home.models';
 import * as HomeActions from '../../state/home.actions';
 import { homeFeature } from '../../state/home.feature';
 import { Testimonials } from './testimonials';
@@ -43,9 +43,14 @@ describe(
       vi.useRealTimers();
     });
 
-    function render(listed: Testimonial[]): ComponentFixture<Testimonials> {
+    function render(listed: Testimonial[], rating: ReviewRating | null = null): ComponentFixture<Testimonials> {
       TestBed.configureTestingModule({ providers: [provideStore({ [homeFeature.name]: homeFeature.reducer })] });
-      TestBed.inject(Store).dispatch(HomeActions.HomeContentRequestSuccess({ content: { testimonials: listed } }));
+      TestBed.inject(Store).dispatch(HomeActions.HomeContentRequestSuccess({
+        content: {
+          testimonials: listed,
+          rating,
+        },
+      }));
       const fixture: ComponentFixture<Testimonials> = TestBed.createComponent(Testimonials);
       fixture.detectChanges();
       return fixture;
@@ -149,6 +154,31 @@ describe(
         waitOneInterval(fixture);
 
         expect(shownAuthors(fixture)).toEqual(['Avery Testwell']);
+      },
+    );
+
+    it(
+      'shows the listing rating when the reviews file has one',
+      (): void => {
+        const fixture: ComponentFixture<Testimonials> = render(testimonials, {
+          score: 4.5,
+          count: 12,
+          url: null,
+        });
+
+        const rating: string = (fixture.nativeElement as HTMLElement)
+          .querySelector('[data-testid="reviews-rating"]')?.textContent.replace(/\s+/g, ' ').trim() ?? '';
+        expect(rating).toContain('4.5');
+        expect(rating).toContain('12');
+      },
+    );
+
+    it(
+      'shows no rating line when the reviews file has none',
+      (): void => {
+        const fixture: ComponentFixture<Testimonials> = render(testimonials);
+
+        expect((fixture.nativeElement as HTMLElement).querySelector('[data-testid="reviews-rating"]')).toBeNull();
       },
     );
 

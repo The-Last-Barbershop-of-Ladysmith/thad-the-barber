@@ -12,18 +12,21 @@ import { NextTimesService } from '../services/next-times.service';
 import { SmsSignupService } from '../services/sms-signup.service';
 import * as HomeActions from './home.actions';
 
+/** Browser only: prerendered reviews would wait for the next deploy to change. */
 export const loadHomeContent: FunctionalEffect = createEffect(
   (
     actions$: Actions = inject<Actions>(Actions),
     content: HomeContentService = inject(HomeContentService),
+    platformId: object = inject(PLATFORM_ID),
   ): Observable<Action> =>
     actions$.pipe(
       ofType(HomeActions.HomePageOpen),
+      filter((): boolean => isPlatformBrowser(platformId)),
       switchMap((): Observable<Action> =>
         content.getContent().pipe(
           map((result: HomeContent): Action => HomeActions.HomeContentRequestSuccess({ content: result })),
           catchError((): Observable<Action> =>
-            of(HomeActions.HomeContentRequestFailure({ error: 'Could not load the latest news.' }))),
+            of(HomeActions.HomeContentRequestFailure({ error: 'Could not load the reviews.' }))),
         )),
     ),
   { functional: true },

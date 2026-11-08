@@ -68,6 +68,37 @@ describe(
       },
     );
 
+    it.each([
+      [RequestStatus.Success],
+      [RequestStatus.Error],
+    ])(
+      'leaves out the reviews once they settle with nothing to show (%s)',
+      (contentStatus: RequestStatus): void => {
+        expect(fragments({ ...initialHomeState, contentStatus }, initialAnnouncementsState)).not.toContain('reviews');
+      },
+    );
+
+    it(
+      'links the reviews once there are some',
+      (): void => {
+        const home: HomeState = {
+          ...initialHomeState,
+          contentStatus: RequestStatus.Success,
+          testimonials: [
+            {
+              id: 'review-0',
+              quote: 'Made-up text',
+              author: 'Avery Testwell',
+              source: 'Customer review',
+              rating: 5,
+            },
+          ],
+        };
+
+        expect(fragments(home, initialAnnouncementsState)).toContain('reviews');
+      },
+    );
+
     it(
       'links every section while the content loads',
       (): void => {
@@ -120,25 +151,40 @@ describe(
 );
 
 describe(
-  'selectAreNextTimesLoading',
+  'selectAreHeroFactsLoading',
   (): void => {
-    function isLoadingFor(nextTimesStatus: RequestStatus): boolean {
-      return homeFeature.selectAreNextTimesLoading({ [homeFeatureKey]: { ...initialHomeState, nextTimesStatus } });
+    function isLoadingFor(nextTimesStatus: RequestStatus, contentStatus: RequestStatus): boolean {
+      return homeFeature.selectAreHeroFactsLoading({
+        [homeFeatureKey]: {
+          ...initialHomeState,
+          nextTimesStatus,
+          contentStatus,
+        },
+      });
     }
 
-    it(
-      'is true before the open times are asked for and while they load',
-      (): void => {
-        expect(isLoadingFor(RequestStatus.Idle)).toBe(true);
-        expect(isLoadingFor(RequestStatus.Pending)).toBe(true);
+    it.each([
+      [RequestStatus.Idle, RequestStatus.Success],
+      [RequestStatus.Pending, RequestStatus.Success],
+      [RequestStatus.Success, RequestStatus.Idle],
+      [RequestStatus.Success, RequestStatus.Pending],
+      [RequestStatus.Idle, RequestStatus.Idle],
+    ])(
+      'is true while the open times (%s) or the reviews (%s) have not answered',
+      (nextTimesStatus: RequestStatus, contentStatus: RequestStatus): void => {
+        expect(isLoadingFor(nextTimesStatus, contentStatus)).toBe(true);
       },
     );
 
-    it(
-      'is false once they have loaded or failed',
-      (): void => {
-        expect(isLoadingFor(RequestStatus.Success)).toBe(false);
-        expect(isLoadingFor(RequestStatus.Error)).toBe(false);
+    it.each([
+      [RequestStatus.Success, RequestStatus.Success],
+      [RequestStatus.Error, RequestStatus.Success],
+      [RequestStatus.Success, RequestStatus.Error],
+      [RequestStatus.Error, RequestStatus.Error],
+    ])(
+      'is false once both have loaded or failed (%s, %s)',
+      (nextTimesStatus: RequestStatus, contentStatus: RequestStatus): void => {
+        expect(isLoadingFor(nextTimesStatus, contentStatus)).toBe(false);
       },
     );
   },

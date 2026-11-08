@@ -1,16 +1,22 @@
-import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
-import { HOME_CONTENT } from '../data/home-content.data';
+import { HttpClient } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { Observable } from 'rxjs';
+import { environment } from '../../../../environments/environment';
+import { anonymousRequest } from '../../../core/interceptors/anonymous-request.token';
 import { HomeContent } from '../models/home.models';
 
-/**
- * Testimonials.
- * Returns the bundled seed data for now; swap the body for an HttpClient call
- * (`${environment.apiBaseUrl}/reviews`) when the reviews API exists (#37).
- */
+export const REVIEWS_URL: string = `${environment.apiBaseUrl}/reviews`;
+
 @Injectable({ providedIn: 'root' })
 export class HomeContentService {
+  private readonly http: HttpClient = inject(HttpClient);
+
+  /**
+   * The testimonials and the Google listing's rating. The API reads them from `content/reviews.json` in the media
+   * container, which Thad edits in the Azure portal (#245); Google's reviews API replaces that file in #37.
+   * Anonymous on the API, so loading them never asks reCAPTCHA for a session token.
+   */
   getContent(): Observable<HomeContent> {
-    return of(HOME_CONTENT);
+    return this.http.get<HomeContent>(REVIEWS_URL, { context: anonymousRequest() });
   }
 }

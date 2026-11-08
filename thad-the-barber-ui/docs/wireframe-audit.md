@@ -180,7 +180,7 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 | Hours rows repeated in schedule, visit, footer | `shopFeature.selectOpeningHours` + `ShopHoursService.businessHours` | Rows are built from Square's hours |
 | `openLabel` / `openColor` (`index.html` `renderVals`) | `ShopHoursService.getShopCurrentStatus()` / `currentOpenStatus` signal, on the shop's clock | Refreshes every minute; unit tested, including Pacific-browser, DST-Sunday and split-shift cases. The open label names the closing time ("Open now · closes 7 PM", the Shopfront mock's wording); a shift that closes at or before it opens never counts as open (#49) |
 | `ANNS` | `content/announcements.json` in the media container via `AnnouncementsService` (#30) | The seed announcements and the text-alerts slide are dropped (BR-35) |
-| Testimonials markup | `features/home/data/home-content.data.ts` via `HomeContentService` | Ready to swap for `GET /api/reviews` (#37) |
+| Testimonials and rating | `GET /api/reviews` via `HomeContentService` (#245); the API reads `content/reviews.json` from the media container | Google's reviews API replaces the file as the API's source in #37 |
 | `subscribe` / `setPhone` / `phoneErr` | `SmsSignup` component + `HomeActions.SmsSignupRequest` → `subscribeToSms` effect → `SmsSignupService` | Mocked 400ms |
 | `slots()`, `available()`, `hash()`, `daysAhead`, `slotMinutes` (`book.html`) | `AvailabilityService` → `GET /api/bookings/availability` (#41); window from `shopFeature.selectBookingSettings` | Real Square availability; the mock pattern and `BOOKING_RULES` are gone |
 | Month nav, `canPrev` / `canNext` | `DateStep` view picker and arrows → `BookingActions.SetAvailabilityView` → `loadAvailability` effect (`?from=&to=`) | The view is the next 31 days or a month, limited to Square's booking window (#205) |
@@ -197,7 +197,7 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 | --- | --- | --- |
 | `layout` (root) | `store/app.*.ts` | `menuOpen` |
 | `announcements` (root) | `features/announcements/state/announcements.{state,actions,reducer,feature,effects}.ts` | Announcements from the media container and their load status, loaded on the first navigation (#40); `selectActive` (BR-30, shop's clock), `selectIsHidden` (BR-32) |
-| `home` | `features/home/state/home.{state,actions,reducer,feature,effects}.ts` | Testimonials, gallery, content status, SMS sign-up status |
+| `home` | `features/home/state/home.{state,actions,reducer,feature,effects}.ts` | Testimonials, listing rating, gallery, content status, SMS sign-up status |
 | `booking` | `features/booking/state/booking.{state,actions,reducer,feature,effects}.ts` The days in view (`availabilityView`: the next 31 days or a month, as `firstDay`/`lastDay`), their open days, load status (the availability notice is derived from it), the bookings made on this device, each kept until it starts (the picks and the booking in progress live in the `Booking` page) |
 
 - Each reducer lives in its own `*.reducer.ts`. Each `*.feature.ts` holds the feature key and uses `createFeature` for a scoped feature selector, with `extraSelectors` for derived values such as `selectOpenSlotCount`, `selectSelectedSlot` and `selectHomeSections`.

@@ -70,7 +70,7 @@ Endpoints (each replaces a mocked Angular service without changing its NgRx effe
 | `POST /api/bookings/{id}/cancel` / `reschedule` | `CancelBooking` / `UpdateBooking` | New |
 | None: the UI reads `media-<env>/content/announcements.json` ([#30](https://github.com/The-Last-Barbershop-of-Ladysmith/thad-the-barber/issues/30)) | None | `HOME_CONTENT.announcements` |
 | None: the UI lists `media-<env>/gallery/` (#168) | None | `HOME_CONTENT.gallery` |
-| `GET /api/content/reviews` | Google Business Profile reviews (fallback `content/reviews.json`) | `HOME_CONTENT.testimonials`, `SHOP_FALLBACK.reviews` |
+| `GET /api/content/reviews` (#37, waits on prod); until then `GET /api/reviews` (#245) serves the owner's `media-<env>/content/reviews.json` | Google Business Profile reviews (fallback `content/reviews.json`) | `HOME_CONTENT.testimonials`, `SHOP_CONTENT.reviews` (both deleted in #245) |
 | `POST /api/webhooks/square` | Signature-verified webhooks: `location.updated` and `catalog.version.updated` mark the cached shop details or service stale, so the next read refetches them (the old copy still covers a Square outage); a repeated event id is skipped for 24 hours, Square's retry window. Both live in the instance's memory, which is right while the API runs as one App Service instance; scaling out would need a shared cache. Bodies over 32 K characters get 413 before they're read in full. Booking events aren't subscribed until the admin feed needs them (#31) | New |
 | `GET /api/health` | None | New |
 | `POST /api/session` | None (Google reCAPTCHA v3 check) | New: issues the session JWT (see [M](#m-security)) |
@@ -210,7 +210,7 @@ Every change ships with its tests:
 | PrimeUI license, theme tokens, frame counts, validator patterns | Code (not business data) | Unchanged |
 
 - The API caches Square reads for 15–60 minutes with `IMemoryCache`, and Square's `catalog.version.updated`/`location.updated` webhooks mark the affected entry stale.
-- `SHOP_FALLBACK`, `BOOKING_RULES`, and `HOME_CONTENT` are deleted once nothing uses them. `OPENING_HOURS` and `SOCIAL_LINKS` went with #39 and `BOOKING_RULES` with #41; `SHOP_FALLBACK` keeps only the fallback name, phone and Square booking URL (shown until `/api/shop` answers, and on Express's error page); site content Square doesn't hold is in `SHOP_CONTENT` (reviews, until #37). The tagline, venue and area text were dropped in #39.
+- `SHOP_FALLBACK`, `BOOKING_RULES`, and `HOME_CONTENT` are deleted once nothing uses them. `OPENING_HOURS` and `SOCIAL_LINKS` went with #39 and `BOOKING_RULES` with #41; `SHOP_FALLBACK` keeps only the fallback name, phone and Square booking URL (shown until `/api/shop` answers, and on Express's error page); reviews and the listing rating come from `GET /api/reviews` (#245), which reads `content/reviews.json` from the media container (`SHOP_CONTENT` is gone). The tagline, venue and area text were dropped in #39.
 - Every audit issue carries a **Hardcoded values inventory** for its component.
 
 **Announcements:**

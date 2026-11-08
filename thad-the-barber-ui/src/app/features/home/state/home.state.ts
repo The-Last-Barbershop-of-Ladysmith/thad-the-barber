@@ -1,4 +1,4 @@
-import { GalleryPhoto, Testimonial } from '../models/home.models';
+import { GalleryPhoto, ReviewRating, Testimonial } from '../models/home.models';
 import { RequestStatus } from '../../../shared/models/request.models';
 
 export interface SmsSignupState {
@@ -9,6 +9,7 @@ export interface SmsSignupState {
 
 export interface HomeState {
   testimonials: Testimonial[];
+  rating: ReviewRating | null;
   gallery: GalleryPhoto[];
   galleryStatus: RequestStatus;
   contentStatus: RequestStatus;
@@ -20,6 +21,7 @@ export interface HomeState {
 
 export const initialHomeState: HomeState = {
   testimonials: [],
+  rating: null,
   gallery: [],
   galleryStatus: RequestStatus.Idle,
   contentStatus: RequestStatus.Idle,

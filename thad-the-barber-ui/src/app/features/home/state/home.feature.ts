@@ -7,7 +7,7 @@ import { RequestStatus } from '../../../shared/models/request.models';
 import { isLoading, isSettledEmpty } from '../../../shared/utils/request.utils';
 import { announcementsFeature } from '../../announcements/state/announcements.feature';
 import { shopFeature } from '../../shop/state/shop.feature';
-import { GalleryPhoto } from '../models/home.models';
+import { GalleryPhoto, Testimonial } from '../models/home.models';
 import { NextTimeSlot } from '../models/next-time-slot.model';
 import { toAreNextTimesMissing, toNextTimeSlots } from '../utils/next-times.utils';
 import { homeReducer } from './home.reducer';
@@ -22,7 +22,7 @@ export type HomeExtraSelectors = {
   selectHomeSections: MemoizedSelector<object, readonly NavItem[]>;
   selectNextTimeSlots: MemoizedSelector<object, NextTimeSlot[]>;
   selectAreNextTimesMissing: MemoizedSelector<object, boolean>;
-  selectAreNextTimesLoading: MemoizedSelector<object, boolean>;
+  selectAreHeroFactsLoading: MemoizedSelector<object, boolean>;
 };
 
 /** Store key for this slice; also names its localStorage entry (`ttb-home`). */
@@ -39,6 +39,7 @@ export const homeFeature = createFeature({
   extraSelectors: ({
     selectSmsSignup,
     selectContentStatus,
+    selectTestimonials,
     selectGallery,
     selectGalleryStatus,
     selectNextTimes,
@@ -60,6 +61,8 @@ export const homeFeature = createFeature({
       announcementsFeature.selectIsHidden,
       selectGalleryStatus,
       selectGallery,
+      selectContentStatus,
+      selectTestimonials,
       toHomeSections,
     ),
     selectNextTimeSlots: createSelector(
@@ -72,21 +75,24 @@ export const homeFeature = createFeature({
       selectNextTimes,
       toAreNextTimesMissing,
     ),
-    selectAreNextTimesLoading: createSelector(
+    selectAreHeroFactsLoading: createSelector(
       selectNextTimesStatus,
-      isLoading,
+      selectContentStatus,
+      toAreHeroFactsLoading,
     ),
   }),
 });
 
 /**
  * The home sections the header and footer link to, without the ones whose content turned out empty or failed to load
- * (BR-32 and the gallery).
+ * (BR-32, the gallery and the reviews).
  */
 function toHomeSections(
   isAnnouncementsHidden: boolean,
   galleryStatus: RequestStatus,
   gallery: GalleryPhoto[],
+  contentStatus: RequestStatus,
+  testimonials: Testimonial[],
 ): readonly NavItem[] {
   const hidesGallery: boolean = isSettledEmpty(galleryStatus, gallery.length);
   const hiddenFragments: string[] = [];
@@ -96,5 +102,14 @@ function toHomeSections(
   if (hidesGallery) {
     hiddenFragments.push(HomeSection.Gallery);
   }
+  const hidesReviews: boolean = isSettledEmpty(contentStatus, testimonials.length);
+  if (hidesReviews) {
+    hiddenFragments.push(HomeSection.Reviews);
+  }
   return HOME_SECTIONS.filter((section: NavItem): boolean => !hiddenFragments.includes(section.fragment));
+}
+
+/** The hero's facts row shows the next open time and the rating, so a placeholder holds it until both have answered. */
+function toAreHeroFactsLoading(nextTimesStatus: RequestStatus, contentStatus: RequestStatus): boolean {
+  return isLoading(nextTimesStatus) || isLoading(contentStatus);
 }
