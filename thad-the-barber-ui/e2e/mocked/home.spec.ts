@@ -109,6 +109,17 @@ test.describe(
     );
 
     test(
+      'takes the hero button to the booking page',
+      async ({ page }: { page: Page; }): Promise<void> => {
+        await page.goto('/');
+
+        await page.getByTestId('hero-book').click();
+
+        await expect(page).toHaveURL(/\/book$/);
+      },
+    );
+
+    test(
       'highlights a time and the calendar link on hover',
       async ({ page, isMobile }: { page: Page; isMobile: boolean; }): Promise<void> => {
         test.skip(isMobile, 'Touch screens have no hover.');
