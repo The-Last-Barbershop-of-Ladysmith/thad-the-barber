@@ -66,7 +66,12 @@ test.describe(
           page.evaluate((): boolean =>
             window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 1);
         while (!(await reachedBottom())) {
-          await page.mouse.wheel(0, viewportHeight * SCROLL_STEP_VIEWPORTS);
+          await page.evaluate(
+            (distance: number): void => {
+              window.scrollBy(0, distance);
+            },
+            viewportHeight * SCROLL_STEP_VIEWPORTS,
+          );
           // The backdrop reacts to a scroll in the next animation frame, so let that pass before counting.
           await waitAnimationFrames(page, 2);
           await expect.poll((): number => pendingRequests, { timeout: DRAIN_TIMEOUT_MILLISECONDS }).toBe(0);
