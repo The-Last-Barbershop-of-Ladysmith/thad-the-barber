@@ -11,3 +11,4 @@ tools/*/bin
 tools/*/obj
 tools/*/TestResults
 __pycache__/
+tools/backdrop-frames/replacements/
