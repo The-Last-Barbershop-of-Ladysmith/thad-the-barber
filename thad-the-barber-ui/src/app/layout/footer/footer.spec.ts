@@ -58,16 +58,16 @@ describe(
     );
 
     it(
-      'offers booking and managing a booking in the Bookings column, and calling and texting in a Contact column',
+      'offers booking and managing a booking in the Bookings column, and calling and texting in the Shop info column',
       (): void => {
         const hrefsIn: (columnIndex: number) => (string | null)[] = (columnIndex: number): (string | null)[] =>
           Array.from(footer.querySelectorAll('.column').item(columnIndex).querySelectorAll<HTMLAnchorElement>('a'))
             .map((link: HTMLAnchorElement): string | null => link.getAttribute('href'));
 
         expect(hrefsIn(1)).toEqual(['/book', '/book/manage']);
-        const contact: (string | null)[] = hrefsIn(4);
-        expect(contact[0]).toMatch(/^tel:/u);
-        expect(contact[1]).toMatch(/^sms:/u);
+        const shopInfo: (string | null)[] = hrefsIn(2);
+        expect(shopInfo[0]).toMatch(/^tel:/u);
+        expect(shopInfo[1]).toMatch(/^sms:/u);
       },
     );
 
