@@ -36,7 +36,7 @@ export class Home implements OnInit, OnDestroy {
 
   protected readonly sections: typeof HomeSection = HomeSection;
 
-  /** Where each backdrop keyframe lands, as in the wireframe; `#chair` is in the slot of its removed "services". */
+  /** The section whose title switches the backdrop to each keyframe, in page order: one more than there are clips. */
   protected readonly backdropAnchors: readonly BackdropAnchor[] = [
     'app-hero',
     `#${HomeSection.OpenTimes}`,
@@ -45,7 +45,6 @@ export class Home implements OnInit, OnDestroy {
     `#${HomeSection.Gallery}`,
     `#${HomeSection.Reviews}`,
     `#${HomeSection.Visit}`,
-    'app-footer',
   ];
 
   ngOnInit(): void {

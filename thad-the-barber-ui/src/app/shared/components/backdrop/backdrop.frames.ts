@@ -1,34 +1,40 @@
 /**
  * Frame data for the scroll-scrubbed backdrop, ported from the wireframe (`index.html` / `mobile.html`).
- * Frames are the wireframe's `frames3/` re-encoded as AVIF q50 (24 MB instead of 49 MB, no visible change).
+ * Frames are every second frame of the wireframe's `frames3/` clips (see `tools/backdrop-frames`), in a landscape
+ * set for desktop and a portrait crop for phones.
  */
+import { BackdropVariant } from './backdrop-variant';
 
-/** 7 clips, each played between two neighbouring keyframes. */
-export const CLIP_COUNT: number = 7;
+/** 6 clips, each played between two neighbouring keyframes; the last keyframe holds through the footer. */
+export const CLIP_COUNT: number = 6;
 
-/** Frames extracted per clip (24 fps). */
-export const FRAMES_PER_CLIP: number = 121;
+/** Frames per clip: 60 steps, one per `FRAME_STRIDE` source frames. */
+export const FRAMES_PER_CLIP: number = 61;
 
-/** Clip 0-6, frame 0-120 → "assets/frames3/c1/000.avif". */
-export function frameUrl(clip: number, frame: number): string {
-  return `assets/frames3/c${clip + 1}/${String(frame).padStart(3, '0')}.avif`;
+/** Source frames (24 fps, 121 per clip) between two stored frames; the `MOTION` tables below are in source frames. */
+const FRAME_STRIDE: number = 2;
+
+/** Clip 0-6, frame 0-60 → "assets/backdrop/desktop/frames/c1/000.avif". */
+export function frameUrl(
+  variant: BackdropVariant,
+  clip: number,
+  frame: number,
+): string {
+  return `assets/backdrop/${variant}/frames/c${clip + 1}/${String(frame).padStart(3, '0')}.avif`;
 }
 
-/** High-res stills at each clip boundary: keyframes 1 → 7, then back to 1 so the footer loops to the opening shot. */
-export const KEYFRAME_URLS: readonly string[] = [
-  1,
-  2,
-  3,
-  4,
-  5,
-  6,
-  7,
-  1,
-].map((key: number): string => `assets/keys/k${key}.avif`);
+/** High-res stills at each clip boundary: keyframes 1 → 7. */
+export function keyframeUrls(variant: BackdropVariant): string[] {
+  return Array.from(
+    { length: CLIP_COUNT + 1 },
+    (_: unknown, index: number): string => `assets/backdrop/${variant}/keys/k${index + 1}.avif`,
+  );
+}
 
 /**
- * Measured frame-to-frame motion (mean absolute pixel difference) for the clips that stutter. These clips are
- * retimed so equal scrolling gives equal visual motion; clips not listed play linearly. Values from the wireframe.
+ * Measured frame-to-frame motion (mean absolute pixel difference) for the clips that stutter, one value per source
+ * frame. These clips are retimed so equal scrolling gives equal visual motion; clips not listed play linearly.
+ * Values from the wireframe.
  */
 /* eslint-disable @stylistic/array-element-newline -- measured data table; one value per line would be 240 lines. */
 const MOTION: Readonly<Record<number, readonly number[]>> = {
@@ -75,7 +81,7 @@ const WARP_TABLES: ReadonlyMap<number, number[]> = new Map(Object.entries(MOTION
   ([clip, motion]: [string, readonly number[]]): [number, number[]] => [Number(clip), buildWarpTable(motion)],
 ));
 
-/** Progress 0-1 through a clip → fractional frame index 0-120, retimed for clips with measured motion. */
+/** Progress 0-1 through a clip → fractional frame index 0-60, retimed for clips with measured motion. */
 export function frameInClip(clip: number, progress: number): number {
   const table: number[] | undefined = WARP_TABLES.get(clip);
   if (!table) {
@@ -93,5 +99,6 @@ export function frameInClip(clip: number, progress: number): number {
     }
   }
   const span: number = at(high) - at(low);
-  return Math.min(FRAMES_PER_CLIP - 1, low + (span > 0 ? (progress - at(low)) / span : 0));
+  const sourceFrame: number = low + (span > 0 ? (progress - at(low)) / span : 0);
+  return Math.min(FRAMES_PER_CLIP - 1, sourceFrame / FRAME_STRIDE);
 }
