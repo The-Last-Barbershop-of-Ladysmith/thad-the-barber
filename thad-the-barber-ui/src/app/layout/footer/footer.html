@@ -3,7 +3,7 @@
     <img src="assets/logo.png" [alt]="shopName()" class="logo" />
 
     <div class="columns">
-      <div class="column">
+      <div class="column column-site">
         <span class="heading eyebrow">Site</span>
         <div class="column-links is-split">
           @for (section of sections(); track section.fragment) {
@@ -12,7 +12,7 @@
         </div>
       </div>
 
-      <div class="column">
+      <div class="column column-bookings">
         <span class="heading eyebrow">Bookings</span>
         <div class="column-links">
           <a class="nav-link" routerLink="/book">Book a cut</a>
@@ -20,34 +20,29 @@
         </div>
       </div>
 
-      <div class="column">
-        <span class="heading eyebrow">Visit</span>
+      <div class="column column-shop-info">
+        <span class="heading eyebrow">Shop info</span>
         @if (address(); as address) {
-          <span class="address"
-            >{{ address.street }}<br />{{ address.city }}, {{ address.state }}
-            {{ address.postalCode }}</span
+          <a class="nav-link address" [href]="directionsUrl()" target="_blank" rel="noopener"
+            ><span class="sr-only">Directions to </span>{{ address.street }}<br />{{
+              address.city
+            }}, {{ address.state }} {{ address.postalCode
+            }}<span class="sr-only"> (opens in a new tab)</span></a
           >
-          <a class="nav-link directions" [href]="directionsUrl()" target="_blank" rel="noopener">
-            Get directions →<span class="sr-only"> (opens in a new tab)</span>
-          </a>
         }
-      </div>
-
-      <div class="column">
-        <span class="heading eyebrow">Hours</span>
-        <app-hours-list [variant]="hoursVariant" />
-      </div>
-
-      <div class="column">
-        <span class="heading eyebrow">Contact</span>
         <div class="column-links">
           <a class="nav-link" [href]="phone().tel">{{ phone().display }}</a>
           <a class="nav-link" [href]="phone().sms">Text a question</a>
         </div>
       </div>
 
+      <div class="column column-hours">
+        <span class="heading eyebrow">Hours</span>
+        <app-hours-list [variant]="hoursVariant" />
+      </div>
+
       @if (social().length > 0) {
-        <div class="column">
+        <div class="column column-follow">
           <span class="heading eyebrow">Follow</span>
           <div class="column-links">
             @for (link of social(); track link.href) {

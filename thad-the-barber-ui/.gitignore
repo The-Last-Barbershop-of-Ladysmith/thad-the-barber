@@ -48,5 +48,6 @@ Thumbs.db
 /test-results/
 /playwright-report/
 /blob-report/
+/blob-reports/
 /playwright/.cache/
 /lighthouse-results/

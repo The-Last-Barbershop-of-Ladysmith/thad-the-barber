@@ -33,10 +33,31 @@
     align-items: flex-start;
     gap: 0.75rem;
     min-width: 0;
+  }
 
-    &:first-child {
-      grid-column: span 2;
-    }
+  // On phones: Site beside Shop info, then Bookings beside Hours, then Follow across the full width.
+  .column-site {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .column-shop-info {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .column-bookings {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .column-hours {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .column-follow {
+    grid-column: 1 / -1;
   }
 
   .heading {
@@ -48,34 +69,14 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 0.75rem;
-
-    &.is-split {
-      display: block;
-      column-gap: 2rem;
-      columns: 2;
-      width: max-content;
-
-      .nav-link {
-        display: block;
-        margin-bottom: 0.75rem;
-        break-inside: avoid;
-      }
-    }
   }
 
   .address {
     line-height: 1.5;
-    color: var(--p-text-muted-color);
-  }
-
-  .directions {
-    --link-color: var(--p-primary-color);
-
-    font-weight: 700;
   }
 
   .bottom {
-    padding-top: 2rem;
+    padding-top: 1.5rem;
     font-size: 0.75rem;
     color: var(--p-text-muted-color);
     display: flex;
@@ -112,27 +113,39 @@
   }
 
   @media (min-width: 48rem) {
-    padding-block: 5.5rem 2.5rem;
-
     .top {
       padding-bottom: 3rem;
       flex-direction: row;
       align-items: start;
-      gap: 2rem 8rem;
+      justify-content: space-between;
+      gap: 2rem 4rem;
     }
 
+    // Tablets: a two-by-two grid with the phone's pairing; four columns only fit beside the logo from 80rem.
+    .columns {
+      grid-template-columns: repeat(2, max-content);
+      gap: 2.5rem 5rem;
+    }
+
+    .column-links.is-split {
+      display: block;
+      column-gap: 2rem;
+      columns: 2;
+      width: max-content;
+
+      .nav-link {
+        display: block;
+        margin-bottom: 0.75rem;
+        break-inside: avoid;
+      }
+    }
+  }
+
+  @media (min-width: 80rem) {
     .columns {
       display: flex;
       flex-wrap: wrap;
       gap: 2.5rem clamp(2rem, 5vw, 5rem);
-    }
-
-    .column:first-child {
-      grid-column: auto;
-    }
-
-    .bottom {
-      padding-top: 2.5rem;
     }
   }
 }
