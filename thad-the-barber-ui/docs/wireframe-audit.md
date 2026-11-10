@@ -152,7 +152,7 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 | --- | --- | --- |
 | `SectionHeading` | `shared/components/section-heading` | Eyebrow + title pair used in 4 sections |
 | `HoursList` | `features/shop/components/hours-list` | One data source, 3 layouts: `table` (hours section: every weekday, today marked), `stacked` (unused since the Visit redo, #54), `compact` (footer: open days, then runs of closed days) |
-| `Backdrop` | `shared/components/backdrop` | Fixed photo background: the scroll-scrubbed keyframes on the home page |
+| `Backdrop` | `shared/components/backdrop` | Fixed photo background: on the home page, frames play toward each section's keyframe once its title passes 70% of the screen (#166) |
 | `Header`, `Footer` | `layout/` | App shell |
 | Section components | `features/home/components/*` | Page composition only |
 
@@ -189,7 +189,7 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 | `ann`, `touchStart` / `touchEnd`, `goAnn` | Built into `p-carousel` | Removed |
 | `lb`, `stepLb`, `onKey` | Built into `p-galleria` | Removed |
 | `menu` / `toggleMenu` (mobile) | Root `layout` slice + `closeMenuOnNavigation` effect | |
-| Frame preloader, `MOTION` retiming, `warp()`, canvas `draw()` | Not ported (see §8) | `Backdrop` crossfades keyframes instead |
+| Frame preloader, `MOTION` retiming, `warp()`, canvas `draw()` | Replaced (see §8) | `FrameScrubber` plays frames toward the keyframe of the section on screen; scroll position does not set the frame |
 
 ### State slices
 
@@ -224,8 +224,9 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 
 | Item | Status | Next step |
 | --- | --- | --- |
-| Scroll-scrubbed video background (canvas, 847 frames, motion retiming) | Replaced by a keyframe crossfade | Port into `Backdrop` and host the frames on a CDN (the mobile wireframe already streamed them remotely) |
-| Background "loading…%" overlay | Dropped (not needed for the stills) | Bring back with the frame scrubber |
+| Scroll-scrubbed video background (canvas, 847 frames, motion retiming) | Scroll-triggered frame playback (#166, #47): 6 clips of 61 frames, a smaller portrait set on phones, served by Express. A full scroll transfers 6.83 MB on desktop and 3.46 MB on phones | Intentional: the video approach was not built. The footer has no clip, so its keyframe holds |
+| Background "loading…%" overlay | Dropped (keyframes show at once; frames stream after the first scroll) | Intentional (#47) |
+| Backdrop Save-Data / 2G keyframes-only fallback | Not built | Dropped on purpose (#47) |
 | Announcement controls | Under the image in the right column on desktop; full width under the slide on phones, no card around the slide | Confirm with design |
 | Lightbox arrows | Inside the photo edges (Galleria default) rather than at the viewport sides | Adjust `galleria.ts` if needed |
 | Instagram / Facebook URLs (`href="#"`) | From Square's location profile (#39) | Unset ones are hidden (BR-40) |
