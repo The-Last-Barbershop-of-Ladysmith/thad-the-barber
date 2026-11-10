@@ -5,7 +5,7 @@ import { carousel } from './carousel';
 import { datepicker } from './datepicker';
 import { dialog } from './dialog';
 import { drawer } from './drawer';
-import { galleria } from './galleria';
+import { gallery } from './gallery';
 import { message } from './message';
 import { progressbar } from './progressbar';
 import { progressspinner } from './progressspinner';
@@ -22,7 +22,7 @@ export const components: ComponentsDesignTokens = {
   datepicker,
   dialog,
   drawer,
-  galleria,
+  gallery,
   message,
   progressbar,
   progressspinner,

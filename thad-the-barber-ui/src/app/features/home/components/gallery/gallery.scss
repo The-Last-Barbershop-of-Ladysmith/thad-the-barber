@@ -67,23 +67,24 @@
     object-fit: cover;
     border-radius: 0.375rem;
   }
-
 }
 
-// Lightbox templates render inside Galleria's full-screen overlay, outside the section above,
-// so these stay top-level rather than nested under .gallery.
-.lightbox-img {
-  display: block;
-  width: auto;
-  height: auto;
-  max-width: 100%;
-  max-height: calc(100svh - 200px);
-}
+.lightbox {
+  .lightbox-header {
+    justify-content: flex-end;
+  }
 
-.lightbox-count {
-  padding-top: 1.25rem;
-  text-align: center;
-  font-size: 0.8125rem;
-  letter-spacing: 0.16em;
-  color: var(--p-surface-300);
+  .lightbox-img {
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: 90vw;
+    max-height: calc(100svh - 12rem);
+  }
+
+  .lightbox-count {
+    font-size: 0.8125rem;
+    letter-spacing: 0.16em;
+    color: var(--p-surface-300);
+  }
 }
