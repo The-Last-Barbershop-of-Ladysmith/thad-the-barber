@@ -41,6 +41,7 @@ export class App {
     { initialValue: false },
   );
 
+  // A bare #fragment link would be resolved against the base href and navigate to the home page.
   protected skipToContent(click: MouseEvent, main: HTMLElement): void {
     click.preventDefault();
     main.focus();
