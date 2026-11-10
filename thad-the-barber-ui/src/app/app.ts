@@ -41,6 +41,11 @@ export class App {
     { initialValue: false },
   );
 
+  protected skipToContent(click: MouseEvent, main: HTMLElement): void {
+    click.preventDefault();
+    main.focus();
+  }
+
   /** Full width along the bottom on phones, clear of the fixed header and the menu drawer. */
   protected readonly toastBreakpoints: Record<string, Record<string, string>> = {
     '40rem': {

@@ -1,3 +1,25 @@
+// The skip link sits off screen until it is focused, then shows above the fixed header.
+.skip-link {
+  position: fixed;
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: 40;
+  padding: 0.5rem 1rem;
+  border-radius: var(--p-border-radius-md);
+  background: var(--p-brand-header-background);
+  color: var(--p-text-color);
+  transform: translateY(-200%);
+
+  &:focus-visible {
+    transform: none;
+  }
+}
+
+// Focused only by the skip link, so no ring around the whole page.
+main:focus {
+  outline: none;
+}
+
 // Above the fixed header, along the top of the screen.
 .page-loading {
   position: fixed;
