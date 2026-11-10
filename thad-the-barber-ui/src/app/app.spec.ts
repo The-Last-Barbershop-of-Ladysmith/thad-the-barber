@@ -43,6 +43,20 @@ describe(
     );
 
     it(
+      'offers a skip link before everything else, and moves focus to the main content when it is used',
+      (): void => {
+        const element: HTMLElement = fixture.nativeElement as HTMLElement;
+        const skipLink: HTMLElement = fixture.debugElement.query(By.css('[data-testid="skip-link"]')).nativeElement as HTMLElement;
+        const main: HTMLElement = fixture.debugElement.query(By.css('main')).nativeElement as HTMLElement;
+
+        skipLink.click();
+
+        expect(element.firstElementChild).toBe(skipLink);
+        expect(document.activeElement).toBe(main);
+      },
+    );
+
+    it(
       'shows the loading bar while a page loads, and hides it once the navigation ends',
       async (): Promise<void> => {
         let finishLoading: () => void = (): void => undefined;
