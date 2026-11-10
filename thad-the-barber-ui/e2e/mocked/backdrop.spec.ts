@@ -1,5 +1,6 @@
 import { Page, Request, Response } from '@playwright/test';
 import { expect, test } from '../support/fixtures';
+import { NO_AVIF_REASON, canDecodeAvif } from '../support/avif';
 import { waitAnimationFrames } from '../support/frames';
 
 const BYTES_PER_MEGABYTE: number = 1024 * 1024;
@@ -58,6 +59,7 @@ test.describe(
 
         await page.goto('/');
         await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+        test.skip(!(await canDecodeAvif(page)), NO_AVIF_REASON);
 
         const viewportHeight: number = page.viewportSize()?.height ?? 0;
         const reachedBottom: () => Promise<boolean> = (): Promise<boolean> =>

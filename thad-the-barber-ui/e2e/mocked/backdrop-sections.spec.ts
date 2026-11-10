@@ -1,5 +1,6 @@
 import { Page } from '@playwright/test';
 import { expect, test } from '../support/fixtures';
+import { NO_AVIF_REASON, canDecodeAvif } from '../support/avif';
 import { waitAnimationFrames } from '../support/frames';
 
 interface SectionKeyframe {
@@ -91,6 +92,7 @@ test.describe(
       await page.addInitScript(watchCanvasDraws);
       await page.goto('/');
       await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+      test.skip(!(await canDecodeAvif(page)), NO_AVIF_REASON);
     });
 
     for (const section of SECTION_KEYFRAMES) {
