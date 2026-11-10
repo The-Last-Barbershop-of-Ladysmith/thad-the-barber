@@ -41,12 +41,6 @@ export class App {
     { initialValue: false },
   );
 
-  // A bare #fragment link would be resolved against the base href and navigate to the home page.
-  protected skipToContent(click: MouseEvent, main: HTMLElement): void {
-    click.preventDefault();
-    main.focus();
-  }
-
   /** Full width along the bottom on phones, clear of the fixed header and the menu drawer. */
   protected readonly toastBreakpoints: Record<string, Record<string, string>> = {
     '40rem': {
@@ -55,4 +49,10 @@ export class App {
       bottom: '0',
     },
   };
+
+  // A bare #fragment link would be resolved against the base href and navigate to the home page.
+  protected skipToContent(click: MouseEvent, main: HTMLElement): void {
+    click.preventDefault();
+    main.focus();
+  }
 }

@@ -9,7 +9,7 @@
   color: var(--p-text-color);
   transform: translateY(-200%);
 
-  &:focus-visible {
+  &:focus {
     transform: none;
   }
 }
