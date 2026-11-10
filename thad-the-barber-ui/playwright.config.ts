@@ -2,6 +2,7 @@ import { PlaywrightTestConfig, Project, defineConfig } from '@playwright/test';
 import { environment } from './src/environments/environment.development';
 
 const isCi: boolean = !!process.env['CI'];
+const isGithubActions: boolean = !!process.env['GITHUB_ACTIONS'];
 const baseURL: string = environment.siteUrl;
 
 const desktop: Project['use'] = { viewport: { width: 1280, height: 800 } };
@@ -23,12 +24,15 @@ const config: PlaywrightTestConfig = defineConfig({
   // can pass 30 s on WebKit, and a lazy route can take over 5 s.
   timeout: 60_000,
   expect: { timeout: 10_000 },
-  reporter: [
-    [isCi ? 'github' : 'list'],
-    ['html', { open: 'never' }],
-    // Read by `npm run e2e:summary` for the CI job summary and PR comment.
-    ['json', { outputFile: 'test-results/results.json' }],
-  ],
+  // GitHub Actions shards the suite; each shard writes a blob that the e2e job merges into the HTML and JSON reports.
+  reporter: isGithubActions
+    ? [['github'], ['blob']]
+    : [
+      ['list'],
+      ['html', { open: 'never' }],
+      // Read by `npm run e2e:summary` for the PR comment; CI gets it from `npm run e2e:merge`.
+      ['json', { outputFile: 'test-results/results.json' }],
+    ],
   use: {
     baseURL,
     trace: 'retain-on-failure',

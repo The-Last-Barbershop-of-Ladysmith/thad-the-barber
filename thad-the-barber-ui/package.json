@@ -14,6 +14,7 @@
     "e2e": "playwright test",
     "e2e:smoke": "playwright test --config playwright.smoke.config.ts",
     "lighthouse:check": "node ci/lighthouse-check.ts",
+    "e2e:merge": "playwright merge-reports --reporter=html,json blob-reports",
     "e2e:summary": "node ci/e2e-summary.ts",
     "lint": "ng lint",
     "lint:fix": "ng lint --fix",
