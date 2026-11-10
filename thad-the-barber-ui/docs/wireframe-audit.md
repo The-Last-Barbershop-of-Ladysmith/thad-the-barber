@@ -214,9 +214,9 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 | --- | --- | --- |
 | `assets/logo-1c.png` | `public/assets/logo.png` | Copied |
 | `assets/gallery/cut-01…15.webp` (1.3 MB) | `gallery/haircut-1…15.webp` in the media container, listed by the UI (#168) | Moved |
-| `assets/keys/k1…k7.webp` (2.9 MB) | `public/assets/keys/` | Copied; used by `Backdrop` |
+| `assets/keys/k1…k7.webp` (2.9 MB) | `public/assets/backdrop/<desktop\|phone>/keys/` | Re-encoded by `tools/backdrop-frames`; used by `Backdrop` |
 | `assets/icon-instagram.svg`, `icon-facebook.svg` | Replaced by `pi pi-instagram` / `pi pi-facebook` | Not copied |
-| `assets/frames3/c1…c7` (847 frames, 52 MB) | none | Not copied (see §8) |
+| `assets/frames3/c1…c6` (every 2nd frame of 6 clips) | `public/assets/backdrop/<desktop\|phone>/frames/` | Re-encoded by `tools/backdrop-frames` (see §8); `c7` (the footer loop) is not used; `c4`, `c5` and `k5` (gallery) are new Higgsfield renders, not the wireframe's |
 
 ---
 
