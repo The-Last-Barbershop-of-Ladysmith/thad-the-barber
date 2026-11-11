@@ -20,7 +20,7 @@ public sealed class FakeMediaStorage : IMediaStorage
 
     public Exception? Failure { get; set; }
 
-    public int Calls { get; private set; }
+    public int Calls { get; set; }
 
     public Task<List<StoredBlob>> ListAsync(string container, string prefix, CancellationToken cancellationToken)
     {
