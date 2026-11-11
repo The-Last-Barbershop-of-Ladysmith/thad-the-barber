@@ -9,7 +9,7 @@ import { Hero } from './components/hero/hero';
 import { NextTimes } from './components/next-times/next-times';
 import { Hours } from './components/hours/hours';
 import { ScrollRail } from './components/scroll-rail/scroll-rail';
-import { Testimonials } from './components/testimonials/testimonials';
+import { Testimonials } from '../reviews/components/testimonials/testimonials';
 import { Visit } from './components/visit/visit';
 import * as HomeActions from './state/home.actions';
 

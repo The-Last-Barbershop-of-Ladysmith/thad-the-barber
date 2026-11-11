@@ -9,8 +9,7 @@ import { shopFeatureKey } from '../../features/shop/state/shop.feature';
  * Reset` action.
  */
 const keys: Keys = [
-  // Only the signup: home's content and load statuses reload on every visit, and a saved status (reviews that
-  // failed last time) would hide that section's nav link on other pages.
+  // Only the signup: the open times reload on every visit, so their saved copy would only show stale ones.
   {
     [homeFeatureKey]: {
       encrypt: encodeBase64,

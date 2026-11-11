@@ -1,4 +1,6 @@
 import { TEST_ANNOUNCEMENT } from '../../../../testing/test-announcement';
+import { HOME_SECTIONS } from '../../../core/config/shop-info';
+import { NavItem } from '../../../shared/models/nav-item.model';
 import { Announcement } from '../models/announcement.model';
 import { RequestStatus } from '../../../shared/models/request.models';
 import { shopFeatureKey } from '../../shop/state/shop.feature';
@@ -292,6 +294,68 @@ describe(
         });
 
         expect(titlesOf(selected)).toEqual(['Active', 'Active but older']);
+      },
+    );
+  },
+);
+
+describe(
+  'selectHomeSections',
+  (): void => {
+    const allFragments: string[] = HOME_SECTIONS.map((section: NavItem): string => section.fragment);
+
+    function fragmentsFor(announcements: AnnouncementsState): string[] {
+      return announcementsFeature.selectHomeSections({
+        [announcementsFeatureKey]: announcements,
+        [shopFeatureKey]: initialShopState,
+      })
+        .map((section: NavItem): string => section.fragment);
+    }
+
+    beforeEach((): void => {
+      vi.useFakeTimers({
+        now: new Date(
+          2026,
+          9,
+          15,
+          12,
+          0,
+        ),
+      });
+    });
+
+    afterEach((): void => {
+      vi.useRealTimers();
+    });
+
+    it(
+      'links every section, the gallery and reviews included, before the announcements load',
+      (): void => {
+        expect(fragmentsFor(initialAnnouncementsState)).toEqual(allFragments);
+      },
+    );
+
+    it.each([
+      [RequestStatus.Success],
+      [RequestStatus.Error],
+    ])(
+      'leaves out only the announcements once they settle with nothing active (%s, BR-32)',
+      (loadStatus: RequestStatus): void => {
+        expect(fragmentsFor({ ...initialAnnouncementsState, loadStatus }))
+          .toEqual(allFragments.filter((fragment: string): boolean => fragment !== 'announcements'));
+      },
+    );
+
+    it(
+      'links every section with an active announcement',
+      (): void => {
+        const active: AnnouncementsState = {
+          announcements: [TEST_ANNOUNCEMENT],
+          loadStatus: RequestStatus.Success,
+          shownIndex: 0,
+        };
+
+        expect(fragmentsFor(active)).toEqual(allFragments);
       },
     );
   },

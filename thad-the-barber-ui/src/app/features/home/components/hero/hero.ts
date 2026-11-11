@@ -8,7 +8,8 @@ import { AppState } from '../../../../store/app.state';
 import { OpenStatus } from '../../../shop/models/open-status.model';
 import { ShopHoursService } from '../../../shop/services/shop-hours.service';
 import { shopFeature } from '../../../shop/state/shop.feature';
-import { ReviewRating } from '../../models/home.models';
+import { ReviewRating } from '../../../reviews/models/review-rating.model';
+import { reviewsFeature } from '../../../reviews/state/reviews.feature';
 import { NextTimeSlot } from '../../models/next-time-slot.model';
 import { homeFeature } from '../../state/home.feature';
 
@@ -31,6 +32,6 @@ export class Hero {
   protected readonly areFactsLoading: Signal<boolean> =
     this.store.selectSignal(homeFeature.selectAreHeroFactsLoading);
   protected readonly phone: Signal<PhoneLinks> = this.store.selectSignal(shopFeature.selectPhoneLinks);
-  protected readonly rating: Signal<ReviewRating | null> = this.store.selectSignal(homeFeature.selectRating);
+  protected readonly rating: Signal<ReviewRating | null> = this.store.selectSignal(reviewsFeature.selectRating);
   protected readonly nextTimeSlots: Signal<NextTimeSlot[]> = this.store.selectSignal(homeFeature.selectNextTimeSlots);
 }

@@ -5,6 +5,8 @@ import { TEST_SHOP } from '../../../../../testing/test-shop';
 import { AppState } from '../../../../store/app.state';
 import * as ShopActions from '../../../shop/state/shop.actions';
 import { shopFeature } from '../../../shop/state/shop.feature';
+import * as ReviewsActions from '../../../reviews/state/reviews.actions';
+import { reviewsFeature } from '../../../reviews/state/reviews.feature';
 import * as HomeActions from '../../state/home.actions';
 import { homeFeature } from '../../state/home.feature';
 import { Hero } from './hero';
@@ -22,6 +24,7 @@ describe(
           provideRouter([]),
           provideStore({
             [homeFeature.name]: homeFeature.reducer,
+            [reviewsFeature.name]: reviewsFeature.reducer,
             [shopFeature.name]: shopFeature.reducer,
           }),
         ],
@@ -94,6 +97,7 @@ describe(
             provideRouter([]),
             provideStore({
               [homeFeature.name]: homeFeature.reducer,
+              [reviewsFeature.name]: reviewsFeature.reducer,
               [shopFeature.name]: shopFeature.reducer,
             }),
           ],
@@ -162,7 +166,7 @@ describe(
       'keeps the skeleton while the open times load, even once the reviews have answered',
       (): void => {
         const heroElement: HTMLElement = render(SATURDAY_NOON_AT_SHOP, (store: Store<AppState>): void => {
-          store.dispatch(HomeActions.HomeContentRequestFailure({ error: 'Could not load the reviews.' }));
+          store.dispatch(ReviewsActions.ReviewsRequestFailure());
         });
 
         expect(heroElement.querySelector('[data-testid="next-open-chair-loading"]')).not.toBeNull();
@@ -174,7 +178,7 @@ describe(
       (): void => {
         const heroElement: HTMLElement = render(SATURDAY_NOON_AT_SHOP, (store: Store<AppState>): void => {
           store.dispatch(HomeActions.NextTimesRequestFailure());
-          store.dispatch(HomeActions.HomeContentRequestFailure({ error: 'Could not load the reviews.' }));
+          store.dispatch(ReviewsActions.ReviewsRequestFailure());
         });
 
         expect(heroElement.querySelector('[data-testid="next-open-chair-loading"]')).toBeNull();
@@ -187,14 +191,12 @@ describe(
       (): void => {
         const heroElement: HTMLElement = render(SATURDAY_NOON_AT_SHOP, (store: Store<AppState>): void => {
           store.dispatch(HomeActions.NextTimesRequestSuccess({ startAts: [] }));
-          store.dispatch(HomeActions.HomeContentRequestSuccess({
-            content: {
-              testimonials: [],
-              rating: {
-                score: 4.5,
-                count: 12,
-                url: null,
-              },
+          store.dispatch(ReviewsActions.ReviewsRequestSuccess({
+            testimonials: [],
+            rating: {
+              score: 4.5,
+              count: 12,
+              url: null,
             },
           }));
         });

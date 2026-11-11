@@ -15,7 +15,7 @@ import { Store } from '@ngrx/store';
 import { NavItem } from '../../../../shared/models/nav-item.model';
 import { AppState } from '../../../../store/app.state';
 import { SCROLL_RAIL_CURRENT_LINE } from '../../config/scroll-rail';
-import { homeFeature } from '../../state/home.feature';
+import { announcementsFeature } from '../../../announcements/state/announcements.feature';
 import { toCurrentIndex, toShownRailSections } from '../../utils/scroll-rail.utils';
 
 /** A thin comb on the right edge: one tooth per home section, the current one longer, each a link to its section. */
@@ -29,7 +29,7 @@ import { toCurrentIndex, toShownRailSections } from '../../utils/scroll-rail.uti
 export class ScrollRail {
   private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
   private readonly shownHomeSections: Signal<readonly NavItem[]> =
-    this.store.selectSignal(homeFeature.selectHomeSections);
+    this.store.selectSignal(announcementsFeature.selectHomeSections);
   protected readonly sections: Signal<NavItem[]> = computed((): NavItem[] =>
     toShownRailSections(this.shownHomeSections()));
 

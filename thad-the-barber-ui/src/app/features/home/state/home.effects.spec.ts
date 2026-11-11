@@ -5,77 +5,10 @@ import { Actions } from '@ngrx/effects';
 import { Action } from '@ngrx/store';
 import { Observable, Subject, of, throwError } from 'rxjs';
 import { Mock } from 'vitest';
-import { HomeContent } from '../models/home.models';
 import { NEXT_TIMES_POLL_INTERVAL_MS } from '../config/next-times';
-import { HomeContentService } from '../services/home-content.service';
 import { NextTimesService } from '../services/next-times.service';
 import * as HomeActions from './home.actions';
-import { loadHomeContent, pollNextTimes } from './home.effects';
-
-describe(
-  'loadHomeContent',
-  (): void => {
-    const content: HomeContent = {
-      testimonials: [
-        {
-          id: 'review-0',
-          quote: 'Made-up text',
-          author: 'Avery Testwell',
-          source: 'Customer review',
-          rating: 5,
-        },
-      ],
-      rating: null,
-    };
-
-    function run(platform: string, getContent: () => Observable<HomeContent>): Action[] {
-      const actions$: Subject<Action> = new Subject<Action>();
-      TestBed.configureTestingModule({
-        providers: [
-          { provide: Actions, useValue: new Actions(actions$) },
-          { provide: HomeContentService, useValue: { getContent } },
-          { provide: PLATFORM_ID, useValue: platform },
-        ],
-      });
-      const emitted: Action[] = [];
-      TestBed.runInInjectionContext((): Observable<Action> => loadHomeContent() as Observable<Action>)
-        .subscribe((action: Action): void => {
-          emitted.push(action);
-        });
-      actions$.next(HomeActions.HomePageOpen());
-      return emitted;
-    }
-
-    it(
-      'loads the reviews when the home page opens in the browser',
-      (): void => {
-        expect(run('browser', (): Observable<HomeContent> => of(content)))
-          .toEqual([HomeActions.HomeContentRequestSuccess({ content })]);
-      },
-    );
-
-    it(
-      'reports a failed load',
-      (): void => {
-        const failing: () => Observable<HomeContent> = (): Observable<HomeContent> =>
-          throwError((): Error => new Error('404'));
-
-        expect(run('browser', failing))
-          .toEqual([HomeActions.HomeContentRequestFailure({ error: 'Could not load the reviews.' })]);
-      },
-    );
-
-    it(
-      'does nothing while prerendering, so the reviews are never baked into the page',
-      (): void => {
-        const getContent: () => Observable<HomeContent> = vi.fn((): Observable<HomeContent> => of(content));
-
-        expect(run('server', getContent)).toEqual([]);
-        expect(getContent).not.toHaveBeenCalled();
-      },
-    );
-  },
-);
+import { pollNextTimes } from './home.effects';
 
 describe(
   'pollNextTimes',

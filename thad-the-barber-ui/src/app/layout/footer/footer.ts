@@ -6,7 +6,7 @@ import { PhoneLinks } from '../../shared/models/phone-links.model';
 import { HoursListVariant } from '../../features/shop/models/hours-list-variant.model';
 import { ShopAddress } from '../../features/shop/models/shop-address.model';
 import { SocialLink } from '../../features/shop/models/social-link.model';
-import { homeFeature } from '../../features/home/state/home.feature';
+import { announcementsFeature } from '../../features/announcements/state/announcements.feature';
 import { HoursList } from '../../features/shop/components/hours-list/hours-list';
 import { AppState } from '../../store/app.state';
 import { shopFeature } from '../../features/shop/state/shop.feature';
@@ -28,7 +28,8 @@ export class Footer {
   protected readonly shopName: Signal<string> = this.store.selectSignal(shopFeature.selectShopName);
   protected readonly address: Signal<ShopAddress | null> = this.store.selectSignal(shopFeature.selectAddress);
   protected readonly directionsUrl: Signal<string | null> = this.store.selectSignal(shopFeature.selectDirectionsUrl);
-  protected readonly sections: Signal<readonly NavItem[]> = this.store.selectSignal(homeFeature.selectHomeSections);
+  protected readonly sections: Signal<readonly NavItem[]> =
+    this.store.selectSignal(announcementsFeature.selectHomeSections);
   protected readonly phone: Signal<PhoneLinks> = this.store.selectSignal(shopFeature.selectPhoneLinks);
   protected readonly social: Signal<SocialLink[]> = this.store.selectSignal(shopFeature.selectSocialLinks);
   protected readonly year: number = new Date().getFullYear();
