@@ -158,7 +158,7 @@ test.describe(
     );
 
     test(
-      'hides the announcements and the gallery when the media container is down',
+      'hides the announcements and says the gallery is empty when the media container is down',
       async ({ page }: { page: Page; }): Promise<void> => {
         const pageErrors: Error[] = collectPageErrors(page);
         const mediaFiles: string[] = [ANNOUNCEMENTS_URL, GALLERY_LISTING_URL];
@@ -174,7 +174,7 @@ test.describe(
 
         await expect(page.locator('#visit')).toBeVisible();
         await expect(page.getByTestId('announcements')).toHaveCount(0);
-        await expect(page.getByTestId('gallery')).toHaveCount(0);
+        await expect(page.getByTestId('gallery-empty')).toBeVisible();
         expect(pageErrors).toEqual([]);
       },
     );

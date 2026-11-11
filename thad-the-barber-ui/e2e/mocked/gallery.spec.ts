@@ -1,9 +1,9 @@
-import { Locator, Page, Route } from '@playwright/test';
+import { Locator, Page, Request, Route } from '@playwright/test';
 import { expect, test } from '../support/fixtures';
 import { GALLERY_LISTING_URL, TEST_GALLERY, galleryListing } from '../support/media';
 import { collectPageErrors } from '../support/page-errors';
 
-const HIDING_RESPONSES: Record<string, Parameters<Route['fulfill']>[0]> = {
+const EMPTY_RESPONSES: Record<string, Parameters<Route['fulfill']>[0]> = {
   'an empty gallery folder': { body: galleryListing([]), contentType: 'application/xml' },
   'a failed listing': { status: 503 },
 };
@@ -57,9 +57,50 @@ test.describe(
       },
     );
 
-    for (const [outage, response] of Object.entries(HIDING_RESPONSES)) {
+    test(
+      'holds the section with a placeholder while the listing loads',
+      async ({ page }: { page: Page; }): Promise<void> => {
+        let releaseListing: () => void = (): void => undefined;
+        const listingHeld: Promise<void> = new Promise<void>((resolve: () => void): void => {
+          releaseListing = resolve;
+        });
+        await page.route(GALLERY_LISTING_URL, async (route: Route): Promise<void> => {
+          await listingHeld;
+          await route.fulfill({ body: galleryListing([]), contentType: 'application/xml' });
+        });
+
+        await page.goto('/');
+
+        await expect(page.getByTestId('gallery-loading')).toBeVisible();
+
+        releaseListing();
+
+        await expect(page.getByTestId('gallery-loading')).toHaveCount(0);
+      },
+    );
+
+    for (const [path, expectedRequests] of [['/', 1], ['/book', 0]] as const) {
       test(
-        `hides the gallery for ${outage}, and the rest of the page still works`,
+        `makes ${expectedRequests} gallery listing request(s) on ${path}`,
+        async ({ page }: { page: Page; }): Promise<void> => {
+          const listingRequests: string[] = [];
+          page.on('request', (request: Request): void => {
+            if (request.url() === GALLERY_LISTING_URL) {
+              listingRequests.push(request.url());
+            }
+          });
+
+          await page.goto(path);
+          await page.waitForLoadState('networkidle');
+
+          expect(listingRequests).toHaveLength(expectedRequests);
+        },
+      );
+    }
+
+    for (const [outage, response] of Object.entries(EMPTY_RESPONSES)) {
+      test(
+        `says there are no photos for ${outage}, and the rest of the page still works`,
         async ({ page }: { page: Page; }): Promise<void> => {
           const pageErrors: Error[] = collectPageErrors(page);
           await page.route(GALLERY_LISTING_URL, (route: Route): Promise<void> => route.fulfill(response));
@@ -69,7 +110,8 @@ test.describe(
           await listingResponse;
 
           await expect(page.locator('#visit')).toBeVisible();
-          await expect(page.getByTestId('gallery')).toHaveCount(0);
+          await expect(page.getByTestId('gallery-empty')).toBeVisible();
+          await expect(page.getByTestId('gallery').getByRole('img')).toHaveCount(0);
           expect(pageErrors).toEqual([]);
         },
       );
