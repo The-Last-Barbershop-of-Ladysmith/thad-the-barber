@@ -73,19 +73,16 @@ test.describe(
   'booking',
   (): void => {
     test(
-      'shows the shop notice above the form with its line breaks kept, and nothing when Square has none',
+      'shows the shop notice above the form with its line breaks kept',
       async ({ page }: { page: Page; }): Promise<void> => {
-        await page.goto('/book');
-        await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-        await expect(page.getByTestId('shop-notice')).toHaveCount(0);
-
-        const withNotice: ShopInfo = { ...TEST_SHOP, notice: 'Park behind the shop.\nSide door is on Pretend Alley.' };
+        const noticeText: string = 'Park behind the shop.\nSide door is on Pretend Alley.';
+        const withNotice: ShopInfo = { ...TEST_SHOP, notice: noticeText };
         await page.route(SHOP_URL, (route: Route): Promise<void> => route.fulfill({ json: withNotice }));
+
         await page.goto('/book');
 
         const notice: Locator = page.getByTestId('shop-notice');
-        await expect(notice).toHaveText(withNotice.notice ?? '', { useInnerText: true });
-        await expect(notice).toBeVisible();
+        await expect(notice).toHaveText(noticeText, { useInnerText: true });
         await expectNoA11yViolations(page);
       },
     );

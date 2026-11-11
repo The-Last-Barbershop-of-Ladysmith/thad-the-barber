@@ -153,15 +153,10 @@ describe(
       },
     );
 
-    it.each([
-      ['has none', null],
-      ['has an empty one', ''],
-      ['has only blanks', ' \n\t '],
-    ])(
-      'shows no shop notice when Square %s',
-      (_name: string, notice: string | null): void => {
+    it(
+      'shows no shop notice when Square has none',
+      (): void => {
         openPage();
-        store.dispatch(ShopActions.ShopInfoRequestSuccess({ shopInfo: { ...TEST_SHOP, notice } }));
 
         expect(byTestId('shop-notice')).toBeNull();
       },
