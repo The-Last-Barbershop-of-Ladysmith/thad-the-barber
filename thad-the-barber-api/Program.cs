@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using ThadTheBarber.Api.Common.Exceptions;
+using ThadTheBarber.Api.Common.Extensions;
 using ThadTheBarber.Api.Features.Booking.Configuration;
 using ThadTheBarber.Api.Features.Booking.Endpoints;
 using ThadTheBarber.Api.Features.Announcements.Configuration;
@@ -34,8 +35,8 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.AddKeyVaultIfConfigured(SquareSecrets.All);
 
 builder.AddTelemetry();
-// The largest body is a Square or media webhook (both capped at the same length), capped in characters; UTF-8 takes up to 4 bytes per character.
-builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = SquareWebhookEndpoints.MaxBodyLength * 4);
+// The largest body is a webhook, capped in characters; UTF-8 takes up to 4 bytes per character.
+builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = HttpRequestExtensions.MaxWebhookBodyLength * 4);
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));

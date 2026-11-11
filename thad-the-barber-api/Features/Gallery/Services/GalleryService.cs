@@ -10,29 +10,18 @@ namespace ThadTheBarber.Api.Features.Gallery.Services;
 
 /// <summary>
 /// The photos in the media container, kept by <see cref="StaleCache"/> until a change in the container marks them stale
-/// (<see cref="MarkStale"/>). When storage can't be read and there is no copy yet, it's logged and served as no photos,
+/// (<see cref="MarkStale"/>). When storage can't be read and there is no copy yet, it's served as no photos,
 /// so the page just shows its empty state.
 /// </summary>
-public sealed partial class GalleryService(
+public sealed class GalleryService(
     IMediaStorage storage,
     StaleCache cache,
-    IOptions<MediaStorageSettings> settings,
-    ILogger<GalleryService> logger)
+    IOptions<MediaStorageSettings> settings)
 {
     public const string CacheKey = "media:gallery";
 
-    public async Task<List<GalleryPhoto>> GetAsync(CancellationToken cancellationToken)
-    {
-        try
-        {
-            return await cache.GetOrRefreshAsync(CacheKey, () => FetchAsync(cancellationToken), cancellationToken);
-        }
-        catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
-        {
-            LogUnreadable(logger, exception);
-            return [];
-        }
-    }
+    public Task<List<GalleryPhoto>> GetAsync(CancellationToken cancellationToken) =>
+        cache.GetOrRefreshAsync(CacheKey, () => FetchAsync(cancellationToken), [], cancellationToken);
 
     public void MarkStale() => cache.MarkStale<List<GalleryPhoto>>(CacheKey);
 
@@ -42,7 +31,4 @@ public sealed partial class GalleryService(
         List<StoredBlob> blobs = await storage.ListAsync(media.MediaContainerName, GalleryMapper.FolderPrefix, cancellationToken);
         return blobs.ToGalleryPhotos(media);
     }
-
-    [LoggerMessage(EventName = "GalleryUnreadable", Level = LogLevel.Warning, Message = "Couldn't list the gallery folder; serving no photos.")]
-    private static partial void LogUnreadable(ILogger logger, Exception exception);
 }

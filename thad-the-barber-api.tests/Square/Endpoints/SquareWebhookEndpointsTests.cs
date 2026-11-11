@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text;
 using Microsoft.AspNetCore.Http;
+using ThadTheBarber.Api.Common.Extensions;
 using ThadTheBarber.Api.Square.Endpoints;
 using ThadTheBarber.Api.Tests.TestSupport;
 
@@ -43,7 +44,7 @@ public sealed class SquareWebhookEndpointsTests(ApiFactory factory) : IClassFixt
     [Fact]
     public async Task ABodyOverTheCapIs413PayloadTooLarge()
     {
-        string body = new('x', SquareWebhookEndpoints.MaxBodyLength + 1);
+        string body = new('x', HttpRequestExtensions.MaxWebhookBodyLength + 1);
 
         using HttpResponseMessage response = await PostAsync(body, SquareWebhooks.Sign(body));
 

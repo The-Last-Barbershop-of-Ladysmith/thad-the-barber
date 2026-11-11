@@ -55,6 +55,33 @@ public sealed partial class StaleCache(IMemoryCache cache, TimeProvider time, IL
         }
     }
 
+    /// <summary>
+    /// As <see cref="GetOrRefreshAsync{T}(string, Func{Task{T}}, CancellationToken)"/>, but when there is no copy to serve
+    /// yet it caches <paramref name="fallback"/> for <see cref="RetryAfter"/> instead of throwing, so an outage from the
+    /// first read doesn't make each request wait for the service's timeout.
+    /// </summary>
+    public async Task<T> GetOrRefreshAsync<T>(string key, Func<Task<T>> fetch, T fallback, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await GetOrRefreshAsync(key, fetch, cancellationToken);
+        }
+        catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
+        {
+            LogServingFallback(logger, exception, key);
+            DateTimeOffset now = time.GetUtcNow();
+            cache.Set(key, new CachedValue<T>(
+                fallback,
+                now,
+                now + RetryAfter
+            ));
+            return fallback;
+        }
+    }
+
+    [LoggerMessage(EventName = "ServingFallback", Level = LogLevel.Warning, Message = "{CacheKey} couldn't be read and there is no earlier copy, so its fallback is served.")]
+    private static partial void LogServingFallback(ILogger logger, Exception exception, string cacheKey);
+
     [LoggerMessage(EventName = "ServingStale", Level = LogLevel.Warning, Message = "A refresh failed, so {CacheKey} is served from the copy fetched {FetchedAt}.")]
     private static partial void LogServingStale(ILogger logger, Exception exception, string cacheKey, DateTimeOffset fetchedAt);
 

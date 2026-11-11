@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
-using ThadTheBarber.Api.Features.Media.Exceptions;
+using ThadTheBarber.Api.Common.Extensions;
 using ThadTheBarber.Api.Features.Media.Models;
 using ThadTheBarber.Api.Features.Media.Services;
 
@@ -10,13 +10,6 @@ public static class MediaWebhookEndpoints
 {
     /// <summary>The Event Grid subscription's delivery header, whose secret value is the <c>MediaWebhook--Key</c> secret.</summary>
     public const string KeyHeader = "x-media-webhook-key";
-
-    /// <summary>
-    /// An Event Grid batch about this account's two containers is a few KB. The same length as Square's cap keeps one
-    /// request limit for both webhooks, stops anonymous callers making the API buffer large bodies, and keeps the read
-    /// buffer off the large object heap.
-    /// </summary>
-    public const int MaxBodyLength = 32 * 1024;
 
     /// <summary>Event Grid calls this without a session token; its secret header stands in for one.</summary>
     public static IEndpointRouteBuilder MapMediaWebhookEndpoints(this IEndpointRouteBuilder api)
@@ -39,15 +32,7 @@ public static class MediaWebhookEndpoints
         MediaWebhookService webhooks,
         CancellationToken cancellationToken)
     {
-        using StreamReader reader = new(request.Body);
-        char[] buffer = new char[MaxBodyLength + 1];
-        int length = await reader.ReadBlockAsync(buffer, cancellationToken);
-        if (length > MaxBodyLength)
-        {
-            throw new MediaWebhookBodyTooLargeException();
-        }
-
-        string? validationCode = webhooks.Handle(new string(buffer, 0, length), key);
+        string? validationCode = webhooks.Handle(await request.ReadWebhookBodyAsync(cancellationToken), key);
         if (validationCode is null)
         {
             return TypedResults.Ok();

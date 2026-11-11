@@ -35,7 +35,7 @@ public sealed class MediaWebhookServiceTests
             ContentContainerName = "content-fake",
         });
         StaleCache cache = new(new MemoryCache(new MemoryCacheOptions()), time, NullLogger<StaleCache>.Instance);
-        _gallery = new GalleryService(_storage, cache, storageSettings, NullLogger<GalleryService>.Instance);
+        _gallery = new GalleryService(_storage, cache, storageSettings);
         _announcements = new AnnouncementsService(_storage, cache, new FakeSquareService(), time, storageSettings, NullLogger<AnnouncementsService>.Instance);
         _webhooks = new MediaWebhookService(
             _gallery,

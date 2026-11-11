@@ -178,6 +178,18 @@ public sealed class StaleCacheTests
         Assert.Equal(1, value);
     }
 
+    [Fact]
+    public async Task AFailedFirstReadServesTheFallbackAndIsNotRetriedBeforeTheRetryTime()
+    {
+        _fetchFailure = new HttpRequestException("Storage is down.");
+
+        int first = await _cache.GetOrRefreshAsync(Key, FetchAsync, -1, Cancellation);
+        _time.Advance(StaleCache.RetryAfter - TimeSpan.FromSeconds(1));
+        int second = await _cache.GetOrRefreshAsync(Key, FetchAsync, -1, Cancellation);
+
+        Assert.Equal([-1, -1, 1], [first, second, _fetches]);
+    }
+
     private Task<int> ReadAsync(string key) => _cache.GetOrRefreshAsync(key, FetchAsync, Cancellation);
 
     /// <summary>A fetch that sees a change land while Square is answering it.</summary>

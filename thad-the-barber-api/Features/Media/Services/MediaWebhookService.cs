@@ -29,7 +29,6 @@ public sealed partial class MediaWebhookService(
     private const string BlobDeletedEventType = "Microsoft.Storage.BlobDeleted";
     private const string ContainerSubjectPrefix = "/blobServices/default/containers/";
     private const string BlobSubjectSeparator = "/blobs/";
-    private const string AnnouncementsFileName = "announcements.json";
 
     /// <summary>
     /// Handles one delivery. Returns the code to echo when it's Event Grid's subscription handshake, otherwise null.
@@ -111,7 +110,7 @@ public sealed partial class MediaWebhookService(
             gallery.MarkStale();
             LogMarkedStale(logger, "gallery", eventType);
         }
-        else if (container == media.ContentContainerName && blobName == AnnouncementsFileName)
+        else if (container == media.ContentContainerName && blobName == AnnouncementsService.FileName)
         {
             announcements.MarkStale();
             LogMarkedStale(logger, "announcements", eventType);

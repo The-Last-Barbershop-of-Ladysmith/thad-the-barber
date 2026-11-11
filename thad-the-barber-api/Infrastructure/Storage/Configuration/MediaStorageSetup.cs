@@ -1,8 +1,7 @@
 using Azure.Identity;
 using Azure.Storage.Blobs;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
-using ThadTheBarber.Api.Common.Services;
+using ThadTheBarber.Api.Common.Configuration;
 using ThadTheBarber.Api.Infrastructure.Storage.Services;
 
 namespace ThadTheBarber.Api.Infrastructure.Storage.Configuration;
@@ -24,8 +23,7 @@ public static class MediaStorageSetup
             );
         });
         services.AddSingleton<IMediaStorage, AzureMediaStorage>();
-        services.AddMemoryCache();
-        services.TryAddSingleton<StaleCache>();
+        services.AddStaleCache();
         return services;
     }
 }

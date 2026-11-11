@@ -30,7 +30,7 @@ public sealed partial class AnnouncementsService(
 {
     public const string CacheKey = "media:announcements";
 
-    private const string FileName = "announcements.json";
+    public const string FileName = "announcements.json";
 
     public async Task<List<Announcement>> GetActiveAsync(CancellationToken cancellationToken)
     {
@@ -59,18 +59,8 @@ public sealed partial class AnnouncementsService(
 
     public void MarkStale() => cache.MarkStale<List<Announcement>>(CacheKey);
 
-    private async Task<List<Announcement>> GetAllAsync(CancellationToken cancellationToken)
-    {
-        try
-        {
-            return await cache.GetOrRefreshAsync(CacheKey, () => FetchAsync(cancellationToken), cancellationToken);
-        }
-        catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
-        {
-            LogUnreadable(logger, exception);
-            return [];
-        }
-    }
+    private Task<List<Announcement>> GetAllAsync(CancellationToken cancellationToken) =>
+        cache.GetOrRefreshAsync(CacheKey, () => FetchAsync(cancellationToken), [], cancellationToken);
 
     private async Task<List<Announcement>> FetchAsync(CancellationToken cancellationToken)
     {
@@ -84,9 +74,6 @@ public sealed partial class AnnouncementsService(
         using JsonDocument file = JsonDocument.Parse(text);
         return file.RootElement.ToAnnouncements(media);
     }
-
-    [LoggerMessage(EventName = "AnnouncementsUnreadable", Level = LogLevel.Warning, Message = "Couldn't read or parse announcements.json; serving the last good copy, or none.")]
-    private static partial void LogUnreadable(ILogger logger, Exception exception);
 
     [LoggerMessage(EventName = "AnnouncementsShopClockUnavailable", Level = LogLevel.Warning, Message = "Couldn't get the shop's timezone; serving no announcements.")]
     private static partial void LogShopClockUnavailable(ILogger logger, Exception exception);

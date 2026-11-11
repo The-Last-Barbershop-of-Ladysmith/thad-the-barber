@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using ThadTheBarber.Api.Common.Extensions;
 using ThadTheBarber.Api.Features.Media.Endpoints;
 using ThadTheBarber.Api.Tests.TestSupport;
 using ThadTheBarber.Api.Tests.TestSupport.Fakes;
@@ -98,7 +99,7 @@ public sealed class MediaWebhookEndpointsTests
     public async Task ABodyOverTheCapIs413()
     {
         using ApiFactory api = new();
-        using HttpRequestMessage request = Delivery(new string('x', MediaWebhookEndpoints.MaxBodyLength + 1));
+        using HttpRequestMessage request = Delivery(new string('x', HttpRequestExtensions.MaxWebhookBodyLength + 1));
 
         using HttpResponseMessage response = await api.CreateClientWithoutToken().SendAsync(request, Cancellation);
 

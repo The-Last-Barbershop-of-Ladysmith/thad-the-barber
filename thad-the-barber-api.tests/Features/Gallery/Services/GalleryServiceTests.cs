@@ -27,8 +27,7 @@ public sealed class GalleryServiceTests
                 AccountName = "fakeaccount",
                 MediaContainerName = "media-fake",
                 ContentContainerName = "content-fake",
-            }),
-            NullLogger<GalleryService>.Instance
+            })
         );
     }
 
