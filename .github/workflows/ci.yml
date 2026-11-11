@@ -352,12 +352,24 @@ jobs:
         run: |
           mkdir -p lighthouse-results
           for page in home:/ book:/book; do
-            npx lighthouse "http://localhost:4200${page#*:}" \
-              --quiet \
-              --chrome-flags="--headless=new --no-sandbox" \
-              --only-categories=performance,accessibility,best-practices,seo \
-              --output=json --output=html \
-              --output-path="lighthouse-results/${page%%:*}"
+            name="${page%%:*}"
+            echo "Lighthouse: $name"
+            # Chrome sometimes fails to record the page-load trace (NO_NAVSTART); Lighthouse says to run it again.
+            # One retry, with a warning that names the page, so a flake shows up in the run instead of passing silently.
+            for attempt in 1 2; do
+              if npx lighthouse "http://localhost:4200${page#*:}" \
+                --quiet \
+                --chrome-flags="--headless=new --no-sandbox" \
+                --only-categories=performance,accessibility,best-practices,seo \
+                --output=json --output=html \
+                --output-path="lighthouse-results/$name"; then
+                break
+              fi
+              if [ "$attempt" = 2 ]; then
+                exit 1
+              fi
+              echo "::warning::Lighthouse failed on $name; trying it once more"
+            done
           done
 
       - run: npm run lighthouse:check
