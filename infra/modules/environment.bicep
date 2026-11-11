@@ -33,8 +33,11 @@ param squareAlerts bool
 @description('Gives adminPrincipalId Key Vault Crypto User on the session-JWT key, for local runs (dev only).')
 param canAdminSignSessions bool
 
-@description('Gives adminPrincipalId Storage Blob Data Contributor on the media container (gallery and content edits in the portal); otherwise Reader.')
+@description('Gives adminPrincipalId Storage Blob Data Contributor on the media and content containers (gallery and announcement edits in the portal); otherwise Reader.')
 param canAdminWriteMedia bool
+
+@description('Stop anonymous listing of the media container (publicAccess Blob). Turn on only after the UI that reads /api/gallery is live: the older UI lists the container directly.')
+param restrictMediaListing bool
 
 param actionGroupId string
 param tags object
@@ -165,8 +168,16 @@ resource sessionJwtKey 'Microsoft.KeyVault/vaults/keys@2024-11-01' = {
 resource mediaContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2024-01-01' = {
   name: '${storageName}/default/media-${envName}'
   properties: {
-    // The UI lists gallery/ anonymously (#168). Every blob here is public already, so listing exposes nothing new.
-    publicAccess: 'Container'
+    // 'Container' lets the older UI list gallery/ anonymously (#168). 'Blob' serves a file by its exact URL only; the API lists it (#204).
+    publicAccess: restrictMediaListing ? 'Blob' : 'Container'
+  }
+}
+
+// Holds announcements.json. Private, so scheduled and expired announcements are only ever read by the API.
+resource contentContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2024-01-01' = {
+  name: '${storageName}/default/content-${envName}'
+  properties: {
+    publicAccess: 'None'
   }
 }
 
@@ -267,6 +278,36 @@ resource adminSecretsOfficer 'Microsoft.Authorization/roleAssignments@2022-04-01
 resource adminMedia 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(adminPrincipalId)) {
   name: guid(mediaContainer.id, 'admin', adminMediaRole)
   scope: mediaContainer
+  properties: {
+    principalId: adminPrincipalId
+    principalType: 'User'
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', adminMediaRole)
+  }
+}
+
+resource apiMediaReader 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(mediaContainer.id, apiAppName, storageBlobDataReader)
+  scope: mediaContainer
+  properties: {
+    principalId: api.outputs.principalId
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageBlobDataReader)
+  }
+}
+
+resource apiContentReader 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(contentContainer.id, apiAppName, storageBlobDataReader)
+  scope: contentContainer
+  properties: {
+    principalId: api.outputs.principalId
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageBlobDataReader)
+  }
+}
+
+resource adminContent 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(adminPrincipalId)) {
+  name: guid(contentContainer.id, 'admin', adminMediaRole)
+  scope: contentContainer
   properties: {
     principalId: adminPrincipalId
     principalType: 'User'

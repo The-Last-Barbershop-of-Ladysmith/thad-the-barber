@@ -25,7 +25,7 @@ type environmentConfig = {
   @description('Lets the admin (adminPrincipalId) sign with this environment\'s session-JWT key, so local runs under az login can issue session tokens. Dev only.')
   canAdminSignSessions: bool?
 
-  @description('Gives the admin Storage Blob Data Contributor on this environment\'s media container, for gallery and content edits in the portal. Otherwise Reader.')
+  @description('Gives the admin Storage Blob Data Contributor on this environment\'s media and content containers, for gallery and announcement edits in the portal. Otherwise Reader.')
   canAdminWriteMedia: bool?
 }
 
@@ -85,6 +85,9 @@ param restrictAppAccess bool
 @description('Your public IPs or CIDRs. Allowed through the app restrictions and the Key Vault firewall.')
 param allowedIpRanges string[] = []
 
+@description('Stop anonymous listing of the media containers. Deploy with true only after the UI that reads /api/gallery is live (#204).')
+param restrictMediaListing bool = false
+
 param tags object = {
   app: 'thad-the-barber'
   stage: stage
@@ -140,6 +143,7 @@ module env 'modules/environment.bicep' = [
       squareAlerts: e.?squareAlerts ?? false
       canAdminSignSessions: e.?canAdminSignSessions ?? false
       canAdminWriteMedia: e.?canAdminWriteMedia ?? false
+      restrictMediaListing: restrictMediaListing
       actionGroupId: shared.outputs.actionGroupId
       tags: tags
     }
