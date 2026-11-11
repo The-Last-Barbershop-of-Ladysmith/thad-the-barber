@@ -48,6 +48,7 @@ import { BookingState } from './state/booking.state';
 import { BOOKING_NOT_FOUND_NOTICE, BOT_CHECK_FAILED_NOTICE } from './config/booking-notices';
 import { toLongDateTime, toTimeLabel } from './utils/booking-time.utils';
 import { toManagePath } from './utils/manage-link.utils';
+import { NAME_VALIDATORS, PHONE_VALIDATORS } from '../../shared/validators/form.validators';
 
 interface BookingFormValue {
   name: string;
@@ -114,11 +115,11 @@ export class Booking implements LeaveConfirmable {
   protected readonly bookingForm: BookingForm = new FormGroup({
     name: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.pattern(/\S.*\S/)],
+      validators: NAME_VALIDATORS,
     }),
     phone: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.pattern(/^\(\d{3}\) \d{3}-\d{4}$/)],
+      validators: PHONE_VALIDATORS,
     }),
     date: new FormControl<string | null>(null, [Validators.required]),
     startAt: new FormControl<string | null>(null, [Validators.required]),

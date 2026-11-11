@@ -1,0 +1,14 @@
+<div class="stack gap-3.5">
+  <span class="eyebrow">{{ eyebrow() }}</span>
+  @switch (level()) {
+    @case (headingLevel.H3) {
+      <h3 class="section-title">{{ title() }}</h3>
+    }
+    @case (headingLevel.H4) {
+      <h4 class="section-title">{{ title() }}</h4>
+    }
+    @default {
+      <h2 class="section-title">{{ title() }}</h2>
+    }
+  }
+</div>

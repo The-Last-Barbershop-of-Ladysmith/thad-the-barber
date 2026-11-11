@@ -1,17 +1,16 @@
 import { ChangeDetectionStrategy, Component, InputSignal, input } from '@angular/core';
+import { HeadingLevel } from '../../models/heading-level.model';
 
 /** Eyebrow label + uppercase section title, repeated at the top of every home section. */
 @Component({
   selector: 'app-section-heading',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <div class="stack gap-3.5">
-      <span class="eyebrow">{{ eyebrow() }}</span>
-      <h2 class="section-title">{{ title() }}</h2>
-    </div>
-  `,
+  templateUrl: './section-heading.html',
 })
 export class SectionHeading {
+  protected readonly headingLevel: typeof HeadingLevel = HeadingLevel;
+
   readonly eyebrow: InputSignal<string> = input.required<string>();
   readonly title: InputSignal<string> = input.required<string>();
+  readonly level: InputSignal<HeadingLevel> = input<HeadingLevel>(HeadingLevel.H2);
 }
