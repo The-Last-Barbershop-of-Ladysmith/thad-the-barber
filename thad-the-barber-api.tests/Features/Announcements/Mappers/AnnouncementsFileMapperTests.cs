@@ -2,17 +2,13 @@ using System.Text.Json;
 using ThadTheBarber.Api.Features.Announcements.Mappers;
 using ThadTheBarber.Api.Features.Announcements.Models;
 using ThadTheBarber.Api.Infrastructure.Storage.Configuration;
+using ThadTheBarber.Api.Tests.TestSupport.Fakes;
 
 namespace ThadTheBarber.Api.Tests.Features.Announcements.Mappers;
 
 public sealed class AnnouncementsFileMapperTests
 {
-    private static readonly MediaStorageSettings storage = new()
-    {
-        AccountName = "fakeaccount",
-        MediaContainerName = "media-fake",
-        ContentContainerName = "content-fake",
-    };
+    private static readonly MediaStorageSettings storage = FakeMediaStorageSettings.Create();
 
     private static List<Announcement> Map(string json) => JsonDocument.Parse(json).RootElement.ToAnnouncements(storage);
 

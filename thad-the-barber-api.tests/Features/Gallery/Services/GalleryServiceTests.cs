@@ -1,11 +1,7 @@
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
-using ThadTheBarber.Api.Common.Services;
 using ThadTheBarber.Api.Features.Gallery.Models;
 using ThadTheBarber.Api.Features.Gallery.Services;
-using ThadTheBarber.Api.Infrastructure.Storage.Configuration;
 using ThadTheBarber.Api.Infrastructure.Storage.Models;
 using ThadTheBarber.Api.Tests.TestSupport.Fakes;
 
@@ -21,13 +17,8 @@ public sealed class GalleryServiceTests
     {
         _gallery = new GalleryService(
             _storage,
-            new StaleCache(new MemoryCache(new MemoryCacheOptions()), _time, NullLogger<StaleCache>.Instance),
-            Options.Create(new MediaStorageSettings
-            {
-                AccountName = "fakeaccount",
-                MediaContainerName = "media-fake",
-                ContentContainerName = "content-fake",
-            })
+            FakeStaleCache.Create(_time),
+            Options.Create(FakeMediaStorageSettings.Create())
         );
     }
 

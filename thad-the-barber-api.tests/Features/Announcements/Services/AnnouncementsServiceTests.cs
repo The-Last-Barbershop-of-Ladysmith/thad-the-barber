@@ -1,11 +1,8 @@
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
-using ThadTheBarber.Api.Common.Services;
 using ThadTheBarber.Api.Features.Announcements.Models;
 using ThadTheBarber.Api.Features.Announcements.Services;
-using ThadTheBarber.Api.Infrastructure.Storage.Configuration;
 using ThadTheBarber.Api.Tests.TestSupport.Fakes;
 
 namespace ThadTheBarber.Api.Tests.Features.Announcements.Services;
@@ -28,15 +25,10 @@ public sealed class AnnouncementsServiceTests
         };
         _announcements = new AnnouncementsService(
             _storage,
-            new StaleCache(new MemoryCache(new MemoryCacheOptions()), _time, NullLogger<StaleCache>.Instance),
+            FakeStaleCache.Create(_time),
             _square,
             _time,
-            Options.Create(new MediaStorageSettings
-            {
-                AccountName = "fakeaccount",
-                MediaContainerName = "media-fake",
-                ContentContainerName = "content-fake",
-            }),
+            Options.Create(FakeMediaStorageSettings.Create()),
             NullLogger<AnnouncementsService>.Instance
         );
     }

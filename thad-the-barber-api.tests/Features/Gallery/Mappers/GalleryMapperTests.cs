@@ -2,17 +2,13 @@ using ThadTheBarber.Api.Features.Gallery.Mappers;
 using ThadTheBarber.Api.Features.Gallery.Models;
 using ThadTheBarber.Api.Infrastructure.Storage.Configuration;
 using ThadTheBarber.Api.Infrastructure.Storage.Models;
+using ThadTheBarber.Api.Tests.TestSupport.Fakes;
 
 namespace ThadTheBarber.Api.Tests.Features.Gallery.Mappers;
 
 public sealed class GalleryMapperTests
 {
-    private static readonly MediaStorageSettings storage = new()
-    {
-        AccountName = "fakeaccount",
-        MediaContainerName = "media-fake",
-        ContentContainerName = "content-fake",
-    };
+    private static readonly MediaStorageSettings storage = FakeMediaStorageSettings.Create();
 
     private static StoredBlob Blob(string name, int day) => new(name, new DateTimeOffset(2026, 10, day, 9, 0, 0, TimeSpan.Zero));
 

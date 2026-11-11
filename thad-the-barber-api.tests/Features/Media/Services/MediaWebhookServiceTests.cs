@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
@@ -28,15 +27,17 @@ public sealed class MediaWebhookServiceTests
     public MediaWebhookServiceTests()
     {
         FakeTimeProvider time = new(new DateTimeOffset(2026, 10, 15, 16, 0, 0, TimeSpan.Zero));
-        IOptions<MediaStorageSettings> storageSettings = Options.Create(new MediaStorageSettings
-        {
-            AccountName = "fakeaccount",
-            MediaContainerName = "media-fake",
-            ContentContainerName = "content-fake",
-        });
-        StaleCache cache = new(new MemoryCache(new MemoryCacheOptions()), time, NullLogger<StaleCache>.Instance);
+        IOptions<MediaStorageSettings> storageSettings = Options.Create(FakeMediaStorageSettings.Create());
+        StaleCache cache = FakeStaleCache.Create(time);
         _gallery = new GalleryService(_storage, cache, storageSettings);
-        _announcements = new AnnouncementsService(_storage, cache, new FakeSquareService(), time, storageSettings, NullLogger<AnnouncementsService>.Instance);
+        _announcements = new AnnouncementsService(
+            _storage,
+            cache,
+            new FakeSquareService(),
+            time,
+            storageSettings,
+            NullLogger<AnnouncementsService>.Instance
+        );
         _webhooks = new MediaWebhookService(
             _gallery,
             _announcements,
@@ -219,7 +220,7 @@ public sealed class MediaWebhookServiceTests
         MediaWebhookService unconfigured = new(
             _gallery,
             _announcements,
-            Options.Create(new MediaStorageSettings { AccountName = "a", MediaContainerName = "m", ContentContainerName = "c" }),
+            Options.Create(FakeMediaStorageSettings.Create()),
             Options.Create(new MediaWebhookSettings { Key = configuredKey }),
             NullLogger<MediaWebhookService>.Instance
         );
