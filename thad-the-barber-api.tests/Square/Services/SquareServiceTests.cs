@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http;
+using ThadTheBarber.Api.Common.Services;
 using ThadTheBarber.Api.Square.Models;
 using ThadTheBarber.Api.Square.Services;
 using ThadTheBarber.Api.Tests.TestSupport;
@@ -75,7 +76,7 @@ public sealed class SquareServiceTests
         using SquareHarness harness = new SquareHarness().WithShopResponses();
 
         await ReadShopAsync(harness);
-        harness.Time.Advance(SquareCache.CacheFor - TimeSpan.FromSeconds(1));
+        harness.Time.Advance(StaleCache.CacheFor - TimeSpan.FromSeconds(1));
         await ReadShopAsync(harness);
 
         Assert.Equal(
@@ -93,7 +94,7 @@ public sealed class SquareServiceTests
     {
         using SquareHarness harness = new SquareHarness().WithShopResponses();
         ShopDetails fetched = await harness.Square.GetShopDetailsAsync(Cancellation);
-        harness.Time.Advance(SquareCache.CacheFor);
+        harness.Time.Advance(StaleCache.CacheFor);
         harness.Http.Down = true;
 
         ShopDetails served = await harness.Square.GetShopDetailsAsync(Cancellation);

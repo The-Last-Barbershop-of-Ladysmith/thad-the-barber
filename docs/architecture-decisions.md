@@ -216,7 +216,7 @@ Every change ships with its tests:
 **Announcements:**
 - An announcement is *active* when `startDate ≤ today ≤ endDate`, by the visitor's local date (BR-30).
 - With no active announcements, or a missing or broken file, the Announcements section and its menu items (header, drawer, footer) are hidden (BR-32).
-- `bodyHtml` renders through `[innerHTML]` with Angular's sanitizer only; links to `/…` route in the app (BR-33).
+- `bodyHtml` is cleaned by the API (HtmlSanitizer, https/tel/mailto links only) and again by Angular's sanitizer through `[innerHTML]`; links to `/…` route in the app (BR-33).
 - The ticker is deferred (BR-31).
 
 ## L. Text alerts

@@ -1,10 +1,17 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using ThadTheBarber.Api.Common.Exceptions;
+using ThadTheBarber.Api.Common.Extensions;
 using ThadTheBarber.Api.Features.Booking.Configuration;
 using ThadTheBarber.Api.Features.Booking.Endpoints;
+using ThadTheBarber.Api.Features.Announcements.Configuration;
+using ThadTheBarber.Api.Features.Announcements.Endpoints;
+using ThadTheBarber.Api.Features.Gallery.Configuration;
+using ThadTheBarber.Api.Features.Gallery.Endpoints;
 using ThadTheBarber.Api.Features.Health.Configuration;
 using ThadTheBarber.Api.Features.Health.Endpoints;
+using ThadTheBarber.Api.Features.Media.Configuration;
+using ThadTheBarber.Api.Features.Media.Endpoints;
 using ThadTheBarber.Api.Features.Reviews.Configuration;
 using ThadTheBarber.Api.Features.Reviews.Endpoints;
 using ThadTheBarber.Api.Features.Session.Configuration;
@@ -17,6 +24,7 @@ using ThadTheBarber.Api.Infrastructure.KeyVault.Configuration;
 using ThadTheBarber.Api.Infrastructure.OpenApi.Transformers;
 using ThadTheBarber.Api.Infrastructure.Problems.Configuration;
 using ThadTheBarber.Api.Infrastructure.RateLimiting.Configuration;
+using ThadTheBarber.Api.Infrastructure.Storage.Configuration;
 using ThadTheBarber.Api.Infrastructure.Telemetry.Configuration;
 using ThadTheBarber.Api.Recaptcha.Configuration;
 using ThadTheBarber.Api.Square.Configuration;
@@ -27,8 +35,8 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.AddKeyVaultIfConfigured(SquareSecrets.All);
 
 builder.AddTelemetry();
-// The largest body is a Square webhook, capped in characters; UTF-8 takes up to 4 bytes per character.
-builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = SquareWebhookEndpoints.MaxBodyLength * 4);
+// The largest body is a webhook, capped in characters; UTF-8 takes up to 4 bytes per character.
+builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = HttpRequestExtensions.MaxWebhookBodyLength * 4);
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
@@ -47,6 +55,10 @@ builder.Services.AddSessionBearerAuth();
 builder.Services.AddHealth();
 builder.Services.AddBooking(builder.Configuration);
 builder.Services.AddReviews(builder.Configuration);
+builder.Services.AddMediaStorage(builder.Configuration);
+builder.Services.AddGallery();
+builder.Services.AddAnnouncements();
+builder.Services.AddMediaWebhook(builder.Configuration);
 builder.Services.AddOpenApi(options =>
 {
     options.AddDocumentTransformer<BearerSecurityTransformer>();
@@ -80,8 +92,11 @@ api.MapSessionEndpoints();
 api.MapHealthEndpoints();
 api.MapShopEndpoints();
 api.MapReviewsEndpoints();
+api.MapGalleryEndpoints();
+api.MapAnnouncementsEndpoints();
 api.MapBookingEndpoints();
 api.MapSquareWebhookEndpoints();
+api.MapMediaWebhookEndpoints();
 
 if (app.Environment.IsDevelopment())
 {

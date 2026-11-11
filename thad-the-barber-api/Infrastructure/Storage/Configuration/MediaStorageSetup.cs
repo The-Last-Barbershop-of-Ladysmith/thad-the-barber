@@ -1,0 +1,26 @@
+using Azure.Identity;
+using Azure.Storage.Blobs;
+using Microsoft.Extensions.Options;
+using ThadTheBarber.Api.Common.Configuration;
+using ThadTheBarber.Api.Infrastructure.Storage.Services;
+
+namespace ThadTheBarber.Api.Infrastructure.Storage.Configuration;
+
+public static class MediaStorageSetup
+{
+    public static IServiceCollection AddMediaStorage(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddOptions<MediaStorageSettings>()
+            .Bind(configuration.GetSection(MediaStorageSettings.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+        services.AddSingleton(provider =>
+        {
+            MediaStorageSettings storage = provider.GetRequiredService<IOptions<MediaStorageSettings>>().Value;
+            return new BlobServiceClient(new Uri(storage.BlobServiceUrl), new DefaultAzureCredential());
+        });
+        services.AddSingleton<IMediaStorage, AzureMediaStorage>();
+        services.AddStaleCache();
+        return services;
+    }
+}

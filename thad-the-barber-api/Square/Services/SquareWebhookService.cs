@@ -2,6 +2,7 @@ using System.Text.Json;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using Square;
+using ThadTheBarber.Api.Common.Services;
 using ThadTheBarber.Api.Square.Configuration;
 using ThadTheBarber.Api.Square.Exceptions;
 using ThadTheBarber.Api.Square.Models;
@@ -10,11 +11,11 @@ namespace ThadTheBarber.Api.Square.Services;
 
 /// <summary>
 /// Square's change notifications: each marks the cached copy of what changed stale, so the next read refetches it
-/// instead of waiting out <see cref="SquareCache.CacheFor"/>. Square retries a notification for up to 24 hours, so an
+/// instead of waiting out <see cref="StaleCache.CacheFor"/>. Square retries a notification for up to 24 hours, so an
 /// event id is remembered that long and a repeat is skipped.
 /// </summary>
 public sealed partial class SquareWebhookService(
-    SquareCache squareCache,
+    StaleCache staleCache,
     IMemoryCache cache,
     IOptions<SquareSettings> settings,
     ILogger<SquareWebhookService> logger)
@@ -50,10 +51,10 @@ public sealed partial class SquareWebhookService(
         switch (webhookEvent.Type)
         {
             case LocationUpdated:
-                squareCache.MarkStale<ShopDetails>(SquareService.ShopDetailsKey);
+                staleCache.MarkStale<ShopDetails>(SquareService.ShopDetailsKey);
                 break;
             case CatalogVersionUpdated:
-                squareCache.MarkStale<List<BookableService>>(SquareService.BookableServicesKey);
+                staleCache.MarkStale<List<BookableService>>(SquareService.BookableServicesKey);
                 break;
         }
 
