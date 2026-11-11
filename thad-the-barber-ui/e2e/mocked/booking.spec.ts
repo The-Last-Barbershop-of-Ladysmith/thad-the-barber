@@ -1,12 +1,14 @@
 import { Locator, Page, Request, Route } from '@playwright/test';
 import { BookingConfirmation } from '../../src/app/features/booking/dtos/booking-confirmation.dto';
 import { BookingRequest } from '../../src/app/features/booking/dtos/booking-request.dto';
+import { ShopInfo } from '../../src/app/features/shop/models/shop-info.model';
 import { ProblemCode } from '../../src/app/shared/models/problem-code.model';
 import { TEST_SHOP } from '../../src/testing/test-shop';
 import { expectNoA11yViolations } from '../support/axe';
 import { fulfillAvailability, isAvailabilityRequest, isBookingRequest } from '../support/booking';
 import { expect, test } from '../support/fixtures';
 import { fulfillSession, isSessionRequest } from '../support/session';
+import { SHOP_URL } from '../support/shop';
 
 const CUSTOMER_PHONE: string = '5405550123';
 
@@ -70,6 +72,21 @@ async function book(page: Page): Promise<void> {
 test.describe(
   'booking',
   (): void => {
+    test(
+      'shows the shop notice above the form with its line breaks kept',
+      async ({ page }: { page: Page; }): Promise<void> => {
+        const noticeText: string = 'Park behind the shop.\nSide door is on Pretend Alley.';
+        const withNotice: ShopInfo = { ...TEST_SHOP, notice: noticeText };
+        await page.route(SHOP_URL, (route: Route): Promise<void> => route.fulfill({ json: withNotice }));
+
+        await page.goto('/book');
+
+        const notice: Locator = page.getByTestId('shop-notice');
+        await expect(notice).toHaveText(noticeText, { useInnerText: true });
+        await expectNoA11yViolations(page);
+      },
+    );
+
     test(
       'books the first open time with the session token and an E.164 phone',
       async ({ page }: { page: Page; }): Promise<void> => {

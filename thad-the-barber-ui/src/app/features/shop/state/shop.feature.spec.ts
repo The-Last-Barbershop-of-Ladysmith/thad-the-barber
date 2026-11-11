@@ -41,6 +41,7 @@ describe(
           (): void => {
             expect(shopFeature.selectAddress(state)).toBeNull();
             expect(shopFeature.selectAddressLine(state)).toBeNull();
+            expect(shopFeature.selectNotice(state)).toBeNull();
             expect(shopFeature.selectDirectionsUrl(state)).toBeNull();
             expect(shopFeature.selectTimeZone(state)).toBeNull();
             expect(shopFeature.selectOpeningHours(state)).toEqual([]);
@@ -120,6 +121,45 @@ describe(
 
             expect(shopFeature.selectSocialLinks(instagramOnly).map((link: { label: string; }): string => link.label))
               .toEqual(['Instagram']);
+          },
+        );
+
+        it.each([
+          [
+            'trims the description Square sends',
+            '  Park behind the shop.  ',
+            'Park behind the shop.',
+          ],
+          [
+            'keeps its line breaks',
+            'Side door on Pretend Alley.\nRing twice.',
+            'Side door on Pretend Alley.\nRing twice.',
+          ],
+          [
+            'treats an empty one as none',
+            '',
+            null,
+          ],
+          [
+            'treats a blank one as none',
+            ' \n\t ',
+            null,
+          ],
+          [
+            'treats a missing one as none',
+            null,
+            null,
+          ],
+        ])(
+          'selectNotice %s',
+          (
+            _name: string,
+            description: string | null,
+            expected: string | null,
+          ): void => {
+            const withNotice: Record<string, ShopState> = root({ ...TEST_SHOP, notice: description });
+
+            expect(shopFeature.selectNotice(withNotice)).toBe(expected);
           },
         );
 

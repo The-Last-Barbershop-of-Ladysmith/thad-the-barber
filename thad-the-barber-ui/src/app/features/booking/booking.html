@@ -41,6 +41,17 @@
     </p>
   }
 
+  @if (shopNotice(); as notice) {
+    <p-message
+      severity="info"
+      icon="pi pi-info-circle"
+      styleClass="w-full"
+      data-testid="shop-notice"
+    >
+      <span class="whitespace-pre-line">{{ notice }}</span>
+    </p-message>
+  }
+
   @if (isBotCheckFailed()) {
     <app-notice-message data-testid="bot-check-failed" [notice]="botCheckFailedNotice" />
   }
