@@ -18,6 +18,7 @@ import { ButtonModule } from 'primeng/button';
 import { StepPassThrough, StepperPassThrough } from 'primeng/types/stepper';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { SpinnerIcon } from 'primeng/icons/spinner';
+import { MessageModule } from 'primeng/message';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { StepperModule } from 'primeng/stepper';
 import { distinctUntilChanged, map } from 'rxjs';
@@ -63,6 +64,7 @@ interface BookingFormValue {
     ReactiveFormsModule,
     ButtonModule,
     ConfirmDialogModule,
+    MessageModule,
     ProgressBarModule,
     SpinnerIcon,
     StepperModule,
@@ -107,6 +109,7 @@ export class Booking implements LeaveConfirmable {
   protected readonly bookingNotFoundNotice: Notice = BOOKING_NOT_FOUND_NOTICE;
   protected readonly submitNotice: Signal<Notice | null> = this.store.selectSignal(bookingFeature.selectSubmitNotice);
   protected readonly squareBookingUrl: Signal<string> = this.store.selectSignal(shopFeature.selectBookingUrl);
+  protected readonly shopNotice: Signal<string | null> = this.store.selectSignal(shopFeature.selectNotice);
 
   protected readonly bookingForm: BookingForm = new FormGroup({
     name: new FormControl('', {

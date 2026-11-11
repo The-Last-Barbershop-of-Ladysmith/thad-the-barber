@@ -135,6 +135,39 @@ describe(
     }
 
     it(
+      'shows the shop notice above the form as plain text, keeping its line breaks',
+      (): void => {
+        const notice: string = 'Park behind the shop.\n<b>Side door</b> on Pretend Alley.';
+        openPage();
+        store.dispatch(ShopActions.ShopInfoRequestSuccess({ shopInfo: { ...TEST_SHOP, notice } }));
+
+        const shown: HTMLElement | null = byTestId('shop-notice');
+        const documentOrder: string[] = Array.from(
+          (fixture.nativeElement as HTMLElement).querySelectorAll('[data-testid="shop-notice"], form'),
+          (element: Element): string => element.tagName,
+        );
+
+        expect(shown?.textContent.trim()).toBe(notice);
+        expect(shown?.querySelector('b')).toBeNull();
+        expect(documentOrder).toEqual(['P-MESSAGE', 'FORM']);
+      },
+    );
+
+    it.each([
+      ['has none', null],
+      ['has an empty one', ''],
+      ['has only blanks', ' \n\t '],
+    ])(
+      'shows no shop notice when Square %s',
+      (_name: string, notice: string | null): void => {
+        openPage();
+        store.dispatch(ShopActions.ShopInfoRequestSuccess({ shopInfo: { ...TEST_SHOP, notice } }));
+
+        expect(byTestId('shop-notice')).toBeNull();
+      },
+    );
+
+    it(
       'starts the booking over each time it opens, and loads the next 31 days once the shop is known',
       (): void => {
         store.dispatch(BookingActions.BookingRequestFailure({ notice: failedNotice, takenStartAt: null }));
