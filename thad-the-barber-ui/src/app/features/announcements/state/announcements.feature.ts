@@ -82,9 +82,9 @@ export function toNewestFirst(announcements: Announcement[]): Announcement[] {
  * there are none (BR-32).
  */
 export function toHomeSections(isAnnouncementsHidden: boolean): readonly NavItem[] {
-  const hiddenFragments: string[] = [];
-  if (isAnnouncementsHidden) {
-    hiddenFragments.push(HomeSection.Announcements);
+  if (!isAnnouncementsHidden) {
+    return HOME_SECTIONS;
   }
-  return HOME_SECTIONS.filter((section: NavItem): boolean => !hiddenFragments.includes(section.fragment));
+  const announcementsFragment: string = HomeSection.Announcements;
+  return HOME_SECTIONS.filter((section: NavItem): boolean => section.fragment !== announcementsFragment);
 }

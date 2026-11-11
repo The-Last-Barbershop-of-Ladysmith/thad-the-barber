@@ -200,7 +200,7 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 | `home` | `features/home/state/home.{state,actions,reducer,feature,effects}.ts` | Testimonials, listing rating, gallery, content status, SMS sign-up status |
 | `booking` | `features/booking/state/booking.{state,actions,reducer,feature,effects}.ts` The days in view (`availabilityView`: the next 31 days or a month, as `firstDay`/`lastDay`), their open days, load status (the availability notice is derived from it), the bookings made on this device, each kept until it starts (the picks and the booking in progress live in the `Booking` page) |
 
-- Each reducer lives in its own `*.reducer.ts`. Each `*.feature.ts` holds the feature key and uses `createFeature` for a scoped feature selector, with `extraSelectors` for derived values such as `selectOpenSlotCount`, `selectSelectedSlot` and `selectHomeSections`.
+- Each reducer lives in its own `*.reducer.ts`. Each `*.feature.ts` holds the feature key and uses `createFeature` for a scoped feature selector, with `extraSelectors` for derived values such as `selectOpenSlotCount`, `selectSelectedSlot` and `selectHomeSections` (on `announcementsFeature`).
 - `home` and `shop` persist to localStorage through `ngrx-store-localstorage` (`store/meta/meta.reducers.ts`), base64-encoded as `ttb-home` and `ttb-shop`. `booking` isn't persisted (BR-22): availability must be fresh, and the booking page keeps the picks and details itself. `home` clears its slice, and the saved copy, with its own `State Reset` action.
 - Dates are stored as ISO strings to keep state serializable.
 - Stale responses (a month or date the user has already moved past) are ignored by the reducer, and unit tested.

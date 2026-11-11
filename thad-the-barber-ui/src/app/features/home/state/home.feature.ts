@@ -1,8 +1,6 @@
 import { MemoizedSelector, createFeature, createSelector } from '@ngrx/store';
 import { FeatureSelectors } from '../../../shared/models/ngrx.models';
 import { RequestStatus } from '../../../shared/models/request.models';
-import { isLoading } from '../../../shared/utils/request.utils';
-import { reviewsFeature } from '../../reviews/state/reviews.feature';
 import { shopFeature } from '../../shop/state/shop.feature';
 import { NextTimeSlot } from '../models/next-time-slot.model';
 import { toAreNextTimesMissing, toNextTimeSlots } from '../utils/next-times.utils';
@@ -16,7 +14,6 @@ export type HomeExtraSelectors = {
   selectIsSubscribingSms: MemoizedSelector<object, boolean>;
   selectNextTimeSlots: MemoizedSelector<object, NextTimeSlot[]>;
   selectAreNextTimesMissing: MemoizedSelector<object, boolean>;
-  selectAreHeroFactsLoading: MemoizedSelector<object, boolean>;
 };
 
 /** Store key for this slice; also names its localStorage entry (`ttb-home`). */
@@ -54,16 +51,5 @@ export const homeFeature = createFeature({
       selectNextTimes,
       toAreNextTimesMissing,
     ),
-    // Reads the lazy reviews slice, so only components on the home route may use it.
-    selectAreHeroFactsLoading: createSelector(
-      selectNextTimesStatus,
-      reviewsFeature.selectIsLoading,
-      toAreHeroFactsLoading,
-    ),
   }),
 });
-
-/** The hero's facts row shows the next open time and the rating, so a placeholder holds it until both have answered. */
-function toAreHeroFactsLoading(nextTimesStatus: RequestStatus, isReviewsLoading: boolean): boolean {
-  return isLoading(nextTimesStatus) || isReviewsLoading;
-}

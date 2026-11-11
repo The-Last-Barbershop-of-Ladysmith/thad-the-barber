@@ -174,6 +174,17 @@ describe(
     );
 
     it(
+      'keeps the skeleton while the reviews load, even once the open times have answered',
+      (): void => {
+        const heroElement: HTMLElement = render(SATURDAY_NOON_AT_SHOP, (store: Store<AppState>): void => {
+          store.dispatch(HomeActions.NextTimesRequestSuccess({ startAts: [] }));
+        });
+
+        expect(heroElement.querySelector('[data-testid="next-open-chair-loading"]')).not.toBeNull();
+      },
+    );
+
+    it(
       'drops the skeleton and shows no open time when loading them fails',
       (): void => {
         const heroElement: HTMLElement = render(SATURDAY_NOON_AT_SHOP, (store: Store<AppState>): void => {
