@@ -1,11 +1,11 @@
 import { Route } from '@playwright/test';
-import { HomeContent } from '../../src/app/features/home/models/home.models';
+import { ReviewsResponse } from '../../src/app/features/reviews/dtos/reviews-response.dto';
 import { servedEnvironment } from './served-environment';
 
 export const REVIEWS_URL: string = `${servedEnvironment.apiBaseUrl}/reviews`;
 
 /** What the API makes of a made-up reviews file: two testimonials and a listing rating. */
-export const TEST_REVIEWS: HomeContent = {
+export const TEST_REVIEWS: ReviewsResponse = {
   testimonials: [
     {
       id: 'review-0',

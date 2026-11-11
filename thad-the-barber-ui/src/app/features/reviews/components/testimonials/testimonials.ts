@@ -3,11 +3,13 @@ import { Store } from '@ngrx/store';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { RatingModule } from 'primeng/rating';
+import { SkeletonModule } from 'primeng/skeleton';
 import { Rotation } from '../../../../shared/models/rotation.model';
 import { createRotation } from '../../../../shared/utils/rotation.utils';
 import { AppState } from '../../../../store/app.state';
-import { ReviewRating, Testimonial } from '../../models/home.models';
-import { homeFeature } from '../../state/home.feature';
+import { ReviewRating } from '../../models/review-rating.model';
+import { Testimonial } from '../../models/testimonial.model';
+import { reviewsFeature } from '../../state/reviews.feature';
 
 /**
  * One review at a time, crossfading with a soft rise on a slow timer. Every review stays in the page, stacked, so the
@@ -19,6 +21,7 @@ import { homeFeature } from '../../state/home.feature';
     FormsModule,
     ButtonModule,
     RatingModule,
+    SkeletonModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './testimonials.html',
@@ -27,8 +30,9 @@ import { homeFeature } from '../../state/home.feature';
 export class Testimonials {
   private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
 
-  protected readonly testimonials: Signal<Testimonial[]> = this.store.selectSignal(homeFeature.selectTestimonials);
-  protected readonly rating: Signal<ReviewRating | null> = this.store.selectSignal(homeFeature.selectRating);
+  protected readonly testimonials: Signal<Testimonial[]> = this.store.selectSignal(reviewsFeature.selectTestimonials);
+  protected readonly rating: Signal<ReviewRating | null> = this.store.selectSignal(reviewsFeature.selectRating);
+  protected readonly isLoading: Signal<boolean> = this.store.selectSignal(reviewsFeature.selectIsLoading);
   protected readonly summaryStars: Signal<number> = computed(
     (): number => Math.round((this.rating()?.score ?? 0) * 2) / 2,
   );

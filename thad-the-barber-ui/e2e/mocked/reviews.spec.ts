@@ -1,11 +1,11 @@
 import { Locator, Page, Request, Route } from '@playwright/test';
-import { Testimonial } from '../../src/app/features/home/models/home.models';
+import { Testimonial } from '../../src/app/features/reviews/models/testimonial.model';
 import { expectNoA11yViolations } from '../support/axe';
 import { expect, test } from '../support/fixtures';
 import { collectPageErrors } from '../support/page-errors';
 import { REVIEWS_URL, TEST_REVIEWS, isReviewsRequest } from '../support/reviews';
 
-const HIDING_RESPONSES: Record<string, Parameters<Route['fulfill']>[0]> = {
+const EMPTY_RESPONSES: Record<string, Parameters<Route['fulfill']>[0]> = {
   'a failed request': { status: 503 },
   'nothing to show': { json: { testimonials: [], rating: null } },
   'a body that does not parse': { body: '{ "testimonials": [', contentType: 'application/json' },
@@ -88,9 +88,32 @@ test.describe(
       );
     }
 
-    for (const [outage, response] of Object.entries(HIDING_RESPONSES)) {
+    test(
+      'holds the section with a placeholder while the reviews load',
+      async ({ page }: { page: Page; }): Promise<void> => {
+        let releaseReviews: () => void = (): void => undefined;
+        const reviewsHeld: Promise<void> = new Promise<void>((resolve: () => void): void => {
+          releaseReviews = resolve;
+        });
+        await page.route(REVIEWS_URL, async (route: Route): Promise<void> => {
+          await reviewsHeld;
+          await route.fulfill({ json: TEST_REVIEWS });
+        });
+
+        await page.goto('/');
+
+        await expect(page.getByTestId('testimonials-loading')).toBeVisible();
+
+        releaseReviews();
+
+        await expect(page.getByTestId('testimonials-loading')).toHaveCount(0);
+        await expect(page.getByTestId('testimonials')).toBeVisible();
+      },
+    );
+
+    for (const [outage, response] of Object.entries(EMPTY_RESPONSES)) {
       test(
-        `hides the reviews section and its nav link for ${outage}, and the rest of the page still works`,
+        `says there are no reviews and keeps the nav link for ${outage}, and the rest of the page still works`,
         async ({ page, isMobile }: { page: Page; isMobile: boolean; }): Promise<void> => {
           const pageErrors: Error[] = collectPageErrors(page);
           await page.route(REVIEWS_URL, (route: Route): Promise<void> => route.fulfill(response));
@@ -100,13 +123,14 @@ test.describe(
           await reviewsResponse;
 
           await expect(page.locator('#visit')).toBeVisible();
-          await expect(page.getByTestId('testimonials')).toHaveCount(0);
+          await expect(page.getByTestId('testimonials-empty')).toBeVisible();
+          await expectNoA11yViolations(page);
           if (isMobile) {
             await page.getByTestId('menu-toggle').click();
           }
           const nav: Locator = page.getByTestId(isMobile ? 'drawer-nav' : 'header-nav');
           await expect(nav.locator('a[href="/#visit"]')).toBeVisible();
-          await expect(nav.locator('a[href="/#reviews"]')).toHaveCount(0);
+          await expect(nav.locator('a[href="/#reviews"]')).toBeVisible();
           expect(pageErrors).toEqual([]);
         },
       );

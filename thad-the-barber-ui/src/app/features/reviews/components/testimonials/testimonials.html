@@ -1,7 +1,7 @@
-@if (testimonials().length > 0) {
-  <section class="testimonials site-gutter site-section" data-testid="testimonials">
-    <div class="inner" (pointerenter)="rotation.hold()" (pointerleave)="rotation.release()">
-      <span class="eyebrow">From the chair</span>
+<section class="testimonials site-gutter site-section" data-testid="testimonials">
+  <div class="inner" (pointerenter)="rotation.hold()" (pointerleave)="rotation.release()">
+    <span class="eyebrow">From the chair</span>
+    @if (testimonials().length > 0) {
       @if (rating(); as listingRating) {
         <span class="score" data-testid="reviews-rating">
           <span class="stars" role="img" [attr.aria-label]="listingRating.score + ' out of 5 stars'" data-testid="reviews-rating-stars">
@@ -47,6 +47,12 @@
           <i class="pi" [class.pi-pause]="!rotation.isPaused()" [class.pi-play]="rotation.isPaused()"></i>
         </button>
       }
-    </div>
-  </section>
-}
+    } @else if (isLoading()) {
+      <div class="reviews-loading" data-testid="testimonials-loading">
+        <p-skeleton width="100%" height="100%" />
+      </div>
+    } @else {
+      <p class="empty body-copy" data-testid="testimonials-empty">No reviews to show right now. Check back soon.</p>
+    }
+  </div>
+</section>

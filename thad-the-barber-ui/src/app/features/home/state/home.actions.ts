@@ -1,5 +1,4 @@
 import { createAction, props } from '@ngrx/store';
-import { HomeContent } from '../models/home.models';
 
 export enum HomeActionTypes {
   /** Clears the slice back to its initial state (also overwrites its saved copy). */
@@ -7,8 +6,6 @@ export enum HomeActionTypes {
   HomePageOpen = '[Home Page] Opened',
   HomePageClose = '[Home Page] Closed',
   SmsSignupRequest = '[Home Page] Sms Signup Submitted',
-  HomeContentRequestSuccess = '[Home API] Content Loaded',
-  HomeContentRequestFailure = '[Home API] Content Load Failed',
   NextTimesRequestSuccess = '[Home API] Next Times Loaded',
   NextTimesRequestFailure = '[Home API] Next Times Load Failed',
   SmsSignupRequestSuccess = '[Home API] Sms Signup Succeeded',
@@ -45,18 +42,6 @@ export const NextTimesRequestFailure = createAction(
 export const SmsSignupRequest = createAction(
   HomeActionTypes.SmsSignupRequest,
   props<{ phone: string; }>(),
-);
-
-// eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
-export const HomeContentRequestSuccess = createAction(
-  HomeActionTypes.HomeContentRequestSuccess,
-  props<{ content: HomeContent; }>(),
-);
-
-// eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
-export const HomeContentRequestFailure = createAction(
-  HomeActionTypes.HomeContentRequestFailure,
-  props<{ error: string; }>(),
 );
 
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.

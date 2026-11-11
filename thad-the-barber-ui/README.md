@@ -103,7 +103,7 @@ src/
     └── features/
         ├── home/
         │   ├── home.ts / home.html / home.routes.ts
-        │   ├── components/         # hero, sms-signup, hours, announcements, testimonials, visit (the gallery is `features/gallery/`)
+        │   ├── components/         # hero, sms-signup, hours, announcements, visit (gallery and testimonials are `features/gallery/` and `features/reviews/`)
         │   ├── data/  models/  services/
         │   └── state/              # home.state, home.actions, home.feature, home.effects
         └── booking/
@@ -174,7 +174,7 @@ Success, warning and error messages look and behave the same everywhere (#110):
 - Wording is written where the message is raised, never raw error text or an HTTP status.
 - `p-message` takes a severity and its icon, so color is never the only cue: success `pi pi-check`, info `pi pi-info-circle`, warn `pi pi-exclamation-triangle`, error `pi pi-times-circle`. Field errors use `variant="simple" size="small"`. Errors the customer must fix aren't closable.
 - Colors: `info` is copper (the app has no blue state); `success`, `warn` and `error` come from `brand.success`, `brand.warn` and `brand.error` in `semantic.ts`. `tokens/components/severity.ts` holds what `message.ts` and `toast.ts` share per severity, so the two always match. Toasts are opaque so their text keeps its contrast over the backdrop.
-- Announcements and reviews that fail to load hide silently, with no message. The gallery shows a placeholder while loading and a short "no photos" note when it is empty or fails.
+- Announcements that fail to load hide silently, with no message. The gallery and reviews show a placeholder while loading and a short note when empty or failed.
 
 ## Component conventions
 
@@ -214,7 +214,7 @@ Lint config lives in `eslint.config.js`; `npm run lint` checks and `npm run lint
 
 These return local data until a backend exists. Each has a note on the endpoint it should call:
 
-- `HomeContentService`: testimonials and the listing rating from `GET /api/reviews` (#245), which reads `content/reviews.json` from the media container until Google's reviews API replaces it (#37)
+- `ReviewsService` (`features/reviews/`): testimonials and the listing rating from `GET /api/reviews` (#245), which reads `content/reviews.json` from the media container until Google's reviews API replaces it (#37)
 - `SmsSignupService`: text-alert opt-in
 
 `AvailabilityService` (`GET /api/bookings/availability`) and `BookingService` (`POST /api/bookings`) are real since #41. `GalleryService` is real too: it lists the `gallery/` folder of the environment's media container (`environment.mediaBaseUrl`), in the browser only, so the prerendered page never holds a stale gallery. Supported images show as uploaded, newest first, with alt text from the file name. `AnnouncementsService` is real too: it reads `content/announcements.json` from the same container, in the browser only and revalidated on every load, skipping items without a title or valid dates; the home page shows the active ones (BR-30 to BR-33). The mocked Playwright suite serves a made-up listing and announcements for the media host (`e2e/support/media.ts`).

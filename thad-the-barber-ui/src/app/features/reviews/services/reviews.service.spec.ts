@@ -2,13 +2,13 @@ import { HttpRequest, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { ANONYMOUS_REQUEST } from '../../../core/interceptors/anonymous-request.token';
-import { HomeContent } from '../models/home.models';
-import { HomeContentService, REVIEWS_URL } from './home-content.service';
+import { ReviewsResponse } from '../dtos/reviews-response.dto';
+import { REVIEWS_URL, ReviewsService } from './reviews.service';
 
 describe(
-  'HomeContentService',
+  'ReviewsService',
   (): void => {
-    const content: HomeContent = {
+    const content: ReviewsResponse = {
       testimonials: [
         {
           id: 'review-0',
@@ -36,8 +36,8 @@ describe(
     it(
       'gets the reviews from the API without a session token',
       (): void => {
-        let loaded: HomeContent | undefined;
-        TestBed.inject(HomeContentService).getContent().subscribe((result: HomeContent): void => {
+        let loaded: ReviewsResponse | undefined;
+        TestBed.inject(ReviewsService).getReviews().subscribe((result: ReviewsResponse): void => {
           loaded = result;
         });
 

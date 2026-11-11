@@ -1,5 +1,4 @@
 import { ActionReducer, createReducer, on } from '@ngrx/store';
-import { HomeContent } from '../models/home.models';
 import * as HomeActions from './home.actions';
 import { HomeState, initialHomeState } from './home.state';
 import { RequestStatus } from '../../../shared/models/request.models';
@@ -7,22 +6,6 @@ import { RequestStatus } from '../../../shared/models/request.models';
 export const homeReducer: ActionReducer<HomeState> = createReducer(
   initialHomeState,
   on(HomeActions.HomeStateReset, (): HomeState => initialHomeState),
-  on(
-    HomeActions.HomePageOpen,
-    (state: HomeState): HomeState => ({ ...state, contentStatus: RequestStatus.Pending }),
-  ),
-  on(
-    HomeActions.HomeContentRequestSuccess,
-    (state: HomeState, { content }: { content: HomeContent; }): HomeState => ({
-      ...state,
-      ...content,
-      contentStatus: RequestStatus.Success,
-    }),
-  ),
-  on(
-    HomeActions.HomeContentRequestFailure,
-    (state: HomeState): HomeState => ({ ...state, contentStatus: RequestStatus.Error }),
-  ),
   on(
     HomeActions.NextTimesRequestSuccess,
     (state: HomeState, { startAts }: { startAts: string[]; }): HomeState => ({

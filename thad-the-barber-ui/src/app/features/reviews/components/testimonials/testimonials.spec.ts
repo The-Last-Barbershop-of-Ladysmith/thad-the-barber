@@ -3,9 +3,10 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Store, provideStore } from '@ngrx/store';
 import { Rating } from 'primeng/rating';
-import { ReviewRating, Testimonial } from '../../models/home.models';
-import * as HomeActions from '../../state/home.actions';
-import { homeFeature } from '../../state/home.feature';
+import { ReviewRating } from '../../models/review-rating.model';
+import { Testimonial } from '../../models/testimonial.model';
+import * as ReviewsActions from '../../state/reviews.actions';
+import { reviewsFeature } from '../../state/reviews.feature';
 import { Testimonials } from './testimonials';
 
 describe(
@@ -45,12 +46,12 @@ describe(
     });
 
     function render(listed: Testimonial[], rating: ReviewRating | null = null): ComponentFixture<Testimonials> {
-      TestBed.configureTestingModule({ providers: [provideStore({ [homeFeature.name]: homeFeature.reducer })] });
-      TestBed.inject(Store).dispatch(HomeActions.HomeContentRequestSuccess({
-        content: {
-          testimonials: listed,
-          rating,
-        },
+      TestBed.configureTestingModule({
+        providers: [provideStore({ [reviewsFeature.name]: reviewsFeature.reducer })],
+      });
+      TestBed.inject(Store).dispatch(ReviewsActions.ReviewsRequestSuccess({
+        testimonials: listed,
+        rating,
       }));
       const fixture: ComponentFixture<Testimonials> = TestBed.createComponent(Testimonials);
       fixture.detectChanges();
@@ -214,11 +215,28 @@ describe(
     );
 
     it(
-      'hides the section when there are no testimonials',
+      'says there are no reviews instead of hiding the section',
       (): void => {
-        const fixture: ComponentFixture<Testimonials> = render([]);
+        const element: HTMLElement = render([]).nativeElement as HTMLElement;
 
-        expect((fixture.nativeElement as HTMLElement).querySelector('[data-testid="testimonials"]')).toBeNull();
+        expect(element.querySelector('[data-testid="testimonials-empty"]')).not.toBeNull();
+        expect(element.querySelector('.review')).toBeNull();
+      },
+    );
+
+    it(
+      'holds the section with a placeholder until the reviews load',
+      (): void => {
+        TestBed.configureTestingModule({
+          providers: [provideStore({ [reviewsFeature.name]: reviewsFeature.reducer })],
+        });
+        TestBed.inject(Store).dispatch(ReviewsActions.ReviewsRequest());
+        const fixture: ComponentFixture<Testimonials> = TestBed.createComponent(Testimonials);
+        fixture.detectChanges();
+
+        const element: HTMLElement = fixture.nativeElement as HTMLElement;
+        expect(element.querySelector('[data-testid="testimonials-loading"]')).not.toBeNull();
+        expect(element.querySelector('[data-testid="testimonials-empty"]')).toBeNull();
       },
     );
   },

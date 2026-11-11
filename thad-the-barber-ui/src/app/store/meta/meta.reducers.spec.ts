@@ -32,14 +32,11 @@ describe(
     });
 
     it(
-      "saves only home's SMS signup, so an old load status never hides a nav link on another page",
+      "saves only home's SMS signup, so an old load status never comes back from storage",
       (): void => {
         const reducer: ActionReducer<AppState> = createSyncedReducer();
-        const failedContent: AppState = reducer(
-          undefined,
-          HomeActions.HomeContentRequestFailure({ error: 'Could not load the reviews.' }),
-        );
-        reducer(failedContent, HomeActions.SmsSignupRequestSuccess({ phone: '(555) 010-0199' }));
+        const failedTimes: AppState = reducer(undefined, HomeActions.NextTimesRequestFailure());
+        reducer(failedTimes, HomeActions.SmsSignupRequestSuccess({ phone: '(555) 010-0199' }));
 
         expect(saved('ttb-home')).toEqual({
           smsSignup: {

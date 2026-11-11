@@ -5,31 +5,9 @@ import { Action } from '@ngrx/store';
 import { Observable, catchError, exhaustMap, filter, map, of, switchMap, takeUntil } from 'rxjs';
 import { pollWhileVisible } from '../../../shared/utils/poll-while-visible.utils';
 import { NEXT_TIMES_POLL_INTERVAL_MS } from '../config/next-times';
-import { HomeContent } from '../models/home.models';
-import { HomeContentService } from '../services/home-content.service';
 import { NextTimesService } from '../services/next-times.service';
 import { SmsSignupService } from '../services/sms-signup.service';
 import * as HomeActions from './home.actions';
-
-/** Browser only: prerendered reviews would wait for the next deploy to change. */
-export const loadHomeContent: FunctionalEffect = createEffect(
-  (
-    actions$: Actions = inject<Actions>(Actions),
-    content: HomeContentService = inject(HomeContentService),
-    platformId: object = inject(PLATFORM_ID),
-  ): Observable<Action> =>
-    actions$.pipe(
-      ofType(HomeActions.HomePageOpen),
-      filter((): boolean => isPlatformBrowser(platformId)),
-      switchMap((): Observable<Action> =>
-        content.getContent().pipe(
-          map((result: HomeContent): Action => HomeActions.HomeContentRequestSuccess({ content: result })),
-          catchError((): Observable<Action> =>
-            of(HomeActions.HomeContentRequestFailure({ error: 'Could not load the reviews.' }))),
-        )),
-    ),
-  { functional: true },
-);
 
 /**
  * Browser only, while the home page is open: loads the next open times when the tab is visible, again every minute,
