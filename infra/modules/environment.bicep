@@ -39,6 +39,15 @@ param canAdminWriteMedia bool
 @description('Stop anonymous listing of the media container (publicAccess Blob). Turn on only after the UI that reads /api/gallery is live: the older UI lists the container directly.')
 param restrictMediaListing bool
 
+@description('Subscribe the API to blob changes (needs the API with /api/webhooks/media running, and mediaWebhookKey).')
+param deployMediaSubscription bool
+
+param storageEventsTopicName string
+
+@secure()
+@description('Same value as Key Vault secret MediaWebhook--Key. Used only when deployMediaSubscription is on.')
+param mediaWebhookKey string
+
 param actionGroupId string
 param tags object
 
@@ -179,6 +188,20 @@ resource contentContainer 'Microsoft.Storage/storageAccounts/blobServices/contai
   properties: {
     publicAccess: 'None'
   }
+}
+
+module mediaEvents 'media-events.bicep' = if (deployMediaSubscription) {
+  name: 'media-events-${envName}'
+  params: {
+    envName: envName
+    topicName: storageEventsTopicName
+    apiUrl: api.outputs.url
+    webhookKey: mediaWebhookKey
+  }
+  dependsOn: [
+    contentContainer
+    mediaContainer
+  ]
 }
 
 module web 'app-service.bicep' = {

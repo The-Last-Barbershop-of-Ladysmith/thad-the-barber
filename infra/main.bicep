@@ -88,6 +88,13 @@ param allowedIpRanges string[] = []
 @description('Stop anonymous listing of the media containers. Deploy with true only after the UI that reads /api/gallery is live (#204).')
 param restrictMediaListing bool = false
 
+@description('Subscribe each API to blob changes through Event Grid. Deploy with true only after the API with /api/webhooks/media is running (#204).')
+param deployMediaSubscription bool = false
+
+@secure()
+@description('Per-environment webhook keys by environment name, equal to Key Vault secret MediaWebhook--Key. Needed only with deployMediaSubscription.')
+param mediaWebhookKeys object = {}
+
 param tags object = {
   app: 'thad-the-barber'
   stage: stage
@@ -144,6 +151,9 @@ module env 'modules/environment.bicep' = [
       canAdminSignSessions: e.?canAdminSignSessions ?? false
       canAdminWriteMedia: e.?canAdminWriteMedia ?? false
       restrictMediaListing: restrictMediaListing
+      deployMediaSubscription: deployMediaSubscription
+      storageEventsTopicName: shared.outputs.storageEventsTopicName
+      mediaWebhookKey: mediaWebhookKeys[?e.name] ?? ''
       actionGroupId: shared.outputs.actionGroupId
       tags: tags
     }

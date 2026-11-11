@@ -92,6 +92,18 @@ resource storage 'Microsoft.Storage/storageAccounts@2024-01-01' = {
   }
 }
 
+// A storage account has one system topic per event type, so the topic lives here and each environment adds its own
+// subscription (modules/media-events.bicep). The topic is free; events are billed per operation after 100,000 a month.
+resource storageEvents 'Microsoft.EventGrid/systemTopics@2025-02-15' = {
+  name: 'evgt-ttb-${stage}-${location}'
+  location: location
+  tags: tags
+  properties: {
+    source: storage.id
+    topicType: 'Microsoft.Storage.StorageAccounts'
+  }
+}
+
 // Pull-request what-if (issue #10). Its subscription roles are assigned in main.bicep.
 // Any pull request from a branch in this repo can use it; fork PRs get no OIDC token.
 resource previewIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2024-11-30' = if (createPreviewIdentity) {
@@ -149,6 +161,7 @@ output planId string = plan.id
 output workspaceId string = workspace.id
 output actionGroupId string = alerts.id
 output storageName string = storage.name
+output storageEventsTopicName string = storageEvents.name
 output blobEndpoint string = storage.properties.primaryEndpoints.blob
 output previewPrincipalId string = createPreviewIdentity ? previewIdentity!.properties.principalId : ''
 output previewClientId string = createPreviewIdentity ? previewIdentity!.properties.clientId : ''

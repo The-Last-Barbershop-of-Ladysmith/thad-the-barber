@@ -3,6 +3,7 @@
 //   TTB_ALERT_EMAIL          (required) who gets every alert (the $5 budget, Square)
 //   TTB_ALERT_PHONE          (optional) US mobile number, 10 digits, for the same alerts by SMS
 //   TTB_ADMIN_OBJECT_ID      (optional) your Entra object ID, for Key Vault Secrets Officer and media container access
+//   TTB_MEDIA_WEBHOOK_KEY_DEV / _TEST  (only with deployMediaSubscription) the MediaWebhook--Key value of that vault
 //   TTB_ALLOWED_IPS          your public IP(s), comma-separated. Without it the dev/test apps and vaults refuse you.
 using 'main.bicep'
 
@@ -52,3 +53,9 @@ param adminPrincipalId = readEnvironmentVariable('TTB_ADMIN_OBJECT_ID', '')
 
 // Pull requests run what-if on the subscription with this stage's preview identity.
 param createPreviewIdentity = true
+
+// Event Grid delivers the same key the API reads from Key Vault (MediaWebhook--Key). Empty unless subscribing.
+param mediaWebhookKeys = {
+  dev: readEnvironmentVariable('TTB_MEDIA_WEBHOOK_KEY_DEV', '')
+  test: readEnvironmentVariable('TTB_MEDIA_WEBHOOK_KEY_TEST', '')
+}
