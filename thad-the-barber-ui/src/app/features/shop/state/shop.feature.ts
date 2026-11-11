@@ -20,6 +20,7 @@ export type ShopExtraSelectors = {
   selectBookingUrl: MemoizedSelector<object, string>;
   selectAddress: MemoizedSelector<object, ShopAddress | null>;
   selectAddressLine: MemoizedSelector<object, string | null>;
+  selectNotice: MemoizedSelector<object, string | null>;
   selectDirectionsUrl: MemoizedSelector<object, string | null>;
   selectTimeZone: MemoizedSelector<object, string | null>;
   selectOpeningHours: MemoizedSelector<object, ShopOpeningHours[]>;
@@ -59,6 +60,10 @@ export const shopFeature = createFeature({
     selectAddressLine: createSelector(
       selectShopInfo,
       toShopAddressLine,
+    ),
+    selectNotice: createSelector(
+      selectShopInfo,
+      toShopNotice,
     ),
     selectDirectionsUrl: createSelector(
       selectShopInfo,
@@ -106,6 +111,15 @@ function toAddressLine({
 
 function toShopAddressLine(shopInfo: ShopInfo | null): string | null {
   return shopInfo ? toAddressLine(shopInfo.address) : null;
+}
+
+/** Square's location description; a blank one counts as none. */
+function toShopNotice(shopInfo: ShopInfo | null): string | null {
+  const notice: string = shopInfo?.notice?.trim() ?? '';
+  if (notice === '') {
+    return null;
+  }
+  return notice;
 }
 
 /** The address line, encoded for a Google Maps query. */
