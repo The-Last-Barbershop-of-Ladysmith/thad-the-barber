@@ -10,7 +10,7 @@ import { InputMaskModule } from 'primeng/inputmask';
 import { MessageModule } from 'primeng/message';
 import * as HomeActions from '../../state/home.actions';
 import { homeFeature } from '../../state/home.feature';
-import { PHONE_VALIDATORS } from '../../../../shared/validators/form.validators';
+import { PHONE_MASK, PHONE_VALIDATORS } from '../../../../shared/validators/form.validators';
 
 /** Phone number opt-in for text alerts, shown inside the first announcement. */
 @Component({
@@ -29,6 +29,7 @@ import { PHONE_VALIDATORS } from '../../../../shared/validators/form.validators'
 export class SmsSignup {
   private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
 
+  protected readonly phoneMask: string = PHONE_MASK;
   protected readonly requestStatus: typeof RequestStatus = RequestStatus;
   protected readonly signup: Signal<SmsSignupState> = this.store.selectSignal(homeFeature.selectSmsSignup);
   protected readonly submitting: Signal<boolean> = this.store.selectSignal(homeFeature.selectIsSubscribingSms);

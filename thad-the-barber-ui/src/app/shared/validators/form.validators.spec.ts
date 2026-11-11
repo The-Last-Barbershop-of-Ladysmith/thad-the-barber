@@ -1,5 +1,5 @@
 import { FormControl } from '@angular/forms';
-import { NAME_VALIDATORS, PHONE_VALIDATORS } from './form.validators';
+import { NAME_VALIDATORS, PHONE_MASK, PHONE_VALIDATORS } from './form.validators';
 
 describe(
   'PHONE_VALIDATORS',
@@ -12,6 +12,14 @@ describe(
       'accepts the p-inputmask output',
       (): void => {
         expect(isValid('(555) 010-0142')).toBe(true);
+      },
+    );
+
+    it(
+      'accepts a number typed through the mask',
+      (): void => {
+        const typedThroughMask: string = PHONE_MASK.replace(/9/g, '7');
+        expect(isValid(typedThroughMask)).toBe(true);
       },
     );
 

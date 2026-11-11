@@ -3,6 +3,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { InputMaskModule } from 'primeng/inputmask';
 import { InputTextModule } from 'primeng/inputtext';
+import { PHONE_MASK } from '../../../../shared/validators/form.validators';
 
 @Component({
   selector: 'app-details-step',
@@ -16,6 +17,8 @@ import { InputTextModule } from 'primeng/inputtext';
   templateUrl: './details-step.html',
 })
 export class DetailsStep {
+  protected readonly phoneMask: string = PHONE_MASK;
+
   readonly nameControl: InputSignal<FormControl<string>> = input.required<FormControl<string>>();
   readonly phoneControl: InputSignal<FormControl<string>> = input.required<FormControl<string>>();
 

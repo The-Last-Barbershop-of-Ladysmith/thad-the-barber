@@ -16,7 +16,7 @@
       <p-inputmask
         inputId="booking-phone"
         [formControl]="phoneControl()"
-        mask="(999) 999-9999"
+        [mask]="phoneMask"
         placeholder="(555) 555-5555"
         type="tel"
         autocomplete="tel"
