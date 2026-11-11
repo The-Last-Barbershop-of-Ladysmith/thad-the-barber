@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using ThadTheBarber.Api.Features.Reviews.Services;
+using ThadTheBarber.Api.Infrastructure.Storage.Services;
 using ThadTheBarber.Api.Features.Session.Services;
 using ThadTheBarber.Api.Recaptcha.Services;
 using ThadTheBarber.Api.Square.Services;
@@ -33,9 +34,10 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
     private readonly TimeProvider _time;
     private readonly FakeRecaptchaService _recaptcha;
     private readonly FakeReviewsHttp _reviews;
+    private readonly FakeMediaStorage _media;
 
     public ApiFactory()
-        : this(null, null, null, null, null)
+        : this(null, null, null, null, null, null)
     {
     }
 
@@ -46,18 +48,21 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
     /// <param name="time">Replaces the clock; defaults to the real one.</param>
     /// <param name="recaptcha">Replaces reCAPTCHA; defaults to a <see cref="FakeRecaptchaService"/> that passes everyone.</param>
     /// <param name="reviews">Replaces the media container's reviews file; defaults to a valid one.</param>
+    /// <param name="media">Replaces the storage account's gallery folder and content container; defaults to two photos.</param>
     internal ApiFactory(
         string[]? origins = null,
         ISquareService? square = null,
         TimeProvider? time = null,
         FakeRecaptchaService? recaptcha = null,
-        FakeReviewsHttp? reviews = null)
+        FakeReviewsHttp? reviews = null,
+        FakeMediaStorage? media = null)
     {
         _origins = origins ?? [FrontendOrigin, CustomDomainOrigin];
         _square = square ?? new FakeSquareService();
         _time = time ?? TimeProvider.System;
         _recaptcha = recaptcha ?? new FakeRecaptchaService();
         _reviews = reviews ?? new FakeReviewsHttp();
+        _media = media ?? new FakeMediaStorage();
     }
 
     public FakeSessionSigningKey SigningKey { get; } = new();
@@ -94,6 +99,9 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
         builder.UseSetting("ManageLink:HmacKey", ManageLinkHmacKey);
         builder.UseSetting("Reviews:MediaAccountName", "fake-media");
         builder.UseSetting("Reviews:MediaContainerName", "fake-container");
+        builder.UseSetting("MediaStorage:AccountName", "fakeaccount");
+        builder.UseSetting("MediaStorage:MediaContainerName", "media-fake");
+        builder.UseSetting("MediaStorage:ContentContainerName", "content-fake");
         for (int i = 0; i < _origins.Length; i++)
         {
             builder.UseSetting($"Cors:AllowedOrigins:{i}", _origins[i]);
@@ -105,6 +113,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
             services.AddSingleton(_time);
             services.AddSingleton<IRecaptchaService>(_recaptcha);
             services.AddSingleton<ISessionSigningKey>(SigningKey);
+            services.AddSingleton<IMediaStorage>(_media);
             services.AddHttpClient(ReviewsService.HttpClientName).ConfigurePrimaryHttpMessageHandler(() => _reviews);
         });
     }
