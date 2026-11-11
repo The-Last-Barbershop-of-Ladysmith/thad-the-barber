@@ -5,13 +5,12 @@ import { Actions } from '@ngrx/effects';
 import { Action } from '@ngrx/store';
 import { Observable, Subject, of, throwError } from 'rxjs';
 import { Mock } from 'vitest';
-import { GalleryPhoto, HomeContent } from '../models/home.models';
+import { HomeContent } from '../models/home.models';
 import { NEXT_TIMES_POLL_INTERVAL_MS } from '../config/next-times';
-import { GalleryService } from '../services/gallery.service';
 import { HomeContentService } from '../services/home-content.service';
 import { NextTimesService } from '../services/next-times.service';
 import * as HomeActions from './home.actions';
-import { loadGallery, loadHomeContent, pollNextTimes } from './home.effects';
+import { loadHomeContent, pollNextTimes } from './home.effects';
 
 describe(
   'loadHomeContent',
@@ -73,58 +72,6 @@ describe(
 
         expect(run('server', getContent)).toEqual([]);
         expect(getContent).not.toHaveBeenCalled();
-      },
-    );
-  },
-);
-
-describe(
-  'loadGallery',
-  (): void => {
-    const photos: GalleryPhoto[] = [{ src: 'https://media.test/gallery/textured-crop.jpg', alt: 'Textured crop' }];
-
-    function run(platform: string, getPhotos: () => Observable<GalleryPhoto[]>): Action[] {
-      const actions$: Subject<Action> = new Subject<Action>();
-      TestBed.configureTestingModule({
-        providers: [
-          { provide: Actions, useValue: new Actions(actions$) },
-          { provide: GalleryService, useValue: { getPhotos } },
-          { provide: PLATFORM_ID, useValue: platform },
-        ],
-      });
-      const emitted: Action[] = [];
-      TestBed.runInInjectionContext((): Observable<Action> => loadGallery() as Observable<Action>)
-        .subscribe((action: Action): void => {
-          emitted.push(action);
-        });
-      actions$.next(HomeActions.HomePageOpen());
-      return emitted;
-    }
-
-    it(
-      'loads the photos when the home page opens in the browser',
-      (): void => {
-        expect(run('browser', (): Observable<GalleryPhoto[]> => of(photos))).toEqual([HomeActions.GalleryRequestSuccess({ photos })]);
-      },
-    );
-
-    it(
-      'reports a failed load',
-      (): void => {
-        const failing: () => Observable<GalleryPhoto[]> = (): Observable<GalleryPhoto[]> =>
-          throwError((): Error => new Error('503'));
-
-        expect(run('browser', failing)).toEqual([HomeActions.GalleryRequestFailure()]);
-      },
-    );
-
-    it(
-      'does nothing while prerendering, so the gallery is never baked into the page',
-      (): void => {
-        const getPhotos: () => Observable<GalleryPhoto[]> = vi.fn((): Observable<GalleryPhoto[]> => of(photos));
-
-        expect(run('server', getPhotos)).toEqual([]);
-        expect(getPhotos).not.toHaveBeenCalled();
       },
     );
   },

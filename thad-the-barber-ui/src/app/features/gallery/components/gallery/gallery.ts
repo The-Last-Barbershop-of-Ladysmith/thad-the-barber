@@ -13,14 +13,16 @@ import {
 import { Store } from '@ngrx/store';
 import { FocusTrapModule } from 'primeng/focustrap';
 import { GalleryModule } from 'primeng/gallery';
+import { SkeletonModule } from 'primeng/skeleton';
 import { SectionHeading } from '../../../../shared/components/section-heading/section-heading';
 import { AppState } from '../../../../store/app.state';
-import { GalleryPhoto } from '../../models/home.models';
-import { homeFeature } from '../../state/home.feature';
+import { GalleryPhoto } from '../../models/gallery-photo.model';
+import { galleryFeature } from '../../state/gallery.feature';
 
 /**
  * Lookbook of staggered prints; clicking one opens the PrimeNG Gallery full-screen lightbox.
- * Photos load as uploaded, lazily. With no photos the section is hidden.
+ * Photos load as uploaded, lazily. A placeholder holds the section while they load, and a note replaces them when there
+ * are none.
  */
 @Component({
   selector: 'app-gallery',
@@ -28,6 +30,7 @@ import { homeFeature } from '../../state/home.feature';
     FocusTrapModule,
     GalleryModule,
     SectionHeading,
+    SkeletonModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './gallery.html',
@@ -36,7 +39,8 @@ import { homeFeature } from '../../state/home.feature';
 export class Gallery {
   private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
 
-  protected readonly photos: Signal<GalleryPhoto[]> = this.store.selectSignal(homeFeature.selectGallery);
+  protected readonly photos: Signal<GalleryPhoto[]> = this.store.selectSignal(galleryFeature.selectPhotos);
+  protected readonly isLoading: Signal<boolean> = this.store.selectSignal(galleryFeature.selectIsLoading);
 
   protected readonly lightboxOpen: WritableSignal<boolean> = signal(false);
   protected readonly activeIndex: WritableSignal<number> = signal(0);

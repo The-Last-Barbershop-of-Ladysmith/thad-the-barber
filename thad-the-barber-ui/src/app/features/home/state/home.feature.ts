@@ -7,7 +7,7 @@ import { RequestStatus } from '../../../shared/models/request.models';
 import { isLoading, isSettledEmpty } from '../../../shared/utils/request.utils';
 import { announcementsFeature } from '../../announcements/state/announcements.feature';
 import { shopFeature } from '../../shop/state/shop.feature';
-import { GalleryPhoto, Testimonial } from '../models/home.models';
+import { Testimonial } from '../models/home.models';
 import { NextTimeSlot } from '../models/next-time-slot.model';
 import { toAreNextTimesMissing, toNextTimeSlots } from '../utils/next-times.utils';
 import { homeReducer } from './home.reducer';
@@ -29,7 +29,7 @@ export type HomeExtraSelectors = {
 export const homeFeatureKey: 'home' = 'home' as const;
 
 /**
- * The home page's content (testimonials, gallery) and the SMS signup, registered at bootstrap because the header and
+ * The home page's reviews and the SMS signup, registered at bootstrap because the header and
  * footer link to its sections on every page. Its effects still register with the home route.
  */
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the Feature type.
@@ -40,8 +40,6 @@ export const homeFeature = createFeature({
     selectSmsSignup,
     selectContentStatus,
     selectTestimonials,
-    selectGallery,
-    selectGalleryStatus,
     selectNextTimes,
     selectNextTimesStatus,
   }: FeatureSelectors<HomeState>): HomeExtraSelectors => ({
@@ -59,8 +57,6 @@ export const homeFeature = createFeature({
     ),
     selectHomeSections: createSelector(
       announcementsFeature.selectIsHidden,
-      selectGalleryStatus,
-      selectGallery,
       selectContentStatus,
       selectTestimonials,
       toHomeSections,
@@ -85,22 +81,16 @@ export const homeFeature = createFeature({
 
 /**
  * The home sections the header and footer link to, without the ones whose content turned out empty or failed to load
- * (BR-32, the gallery and the reviews).
+ * (BR-32, the reviews).
  */
 function toHomeSections(
   isAnnouncementsHidden: boolean,
-  galleryStatus: RequestStatus,
-  gallery: GalleryPhoto[],
   contentStatus: RequestStatus,
   testimonials: Testimonial[],
 ): readonly NavItem[] {
-  const hidesGallery: boolean = isSettledEmpty(galleryStatus, gallery.length);
   const hiddenFragments: string[] = [];
   if (isAnnouncementsHidden) {
     hiddenFragments.push(HomeSection.Announcements);
-  }
-  if (hidesGallery) {
-    hiddenFragments.push(HomeSection.Gallery);
   }
   const hidesReviews: boolean = isSettledEmpty(contentStatus, testimonials.length);
   if (hidesReviews) {

@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { GalleryPhoto } from '../models/home.models';
+import { GalleryPhoto } from '../models/gallery-photo.model';
 
 const SUPPORTED_EXTENSION: RegExp = /\.(jpe?g|png|webp|avif)$/i;
 

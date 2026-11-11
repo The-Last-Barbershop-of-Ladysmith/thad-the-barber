@@ -17,7 +17,7 @@ export function toCurrentIndex(
   return current;
 }
 
-/** The rail's sections without those the header's links left out (BR-32 and the gallery). */
+/** The rail's sections without those the header's links left out (BR-32). */
 export function toShownRailSections(shownHomeSections: readonly NavItem[]): NavItem[] {
   const shownFragments: string[] = shownHomeSections.map((shown: NavItem): string => shown.fragment);
   const headerFragments: string[] = HOME_SECTIONS.map((section: NavItem): string => section.fragment);
