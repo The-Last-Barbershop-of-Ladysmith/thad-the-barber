@@ -4,6 +4,18 @@
     gap: 2rem;
   }
 
+  .prints-loading {
+    height: 24rem;
+
+    @media (min-width: 64rem) {
+      height: 18rem;
+    }
+  }
+
+  .empty {
+    margin: 0;
+  }
+
   // Photos are cropped to one ratio, so shifting a column down with a transform gives the mock's staggered columns
   // without changing the row heights; the extra bottom padding leaves room for the lowest column.
   .prints {

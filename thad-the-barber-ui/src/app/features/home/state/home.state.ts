@@ -1,4 +1,4 @@
-import { GalleryPhoto, ReviewRating, Testimonial } from '../models/home.models';
+import { ReviewRating, Testimonial } from '../models/home.models';
 import { RequestStatus } from '../../../shared/models/request.models';
 
 export interface SmsSignupState {
@@ -10,8 +10,6 @@ export interface SmsSignupState {
 export interface HomeState {
   testimonials: Testimonial[];
   rating: ReviewRating | null;
-  gallery: GalleryPhoto[];
-  galleryStatus: RequestStatus;
   contentStatus: RequestStatus;
   /** The next open times as UTC instants; a failed refresh keeps the last ones. */
   nextTimes: string[];
@@ -22,8 +20,6 @@ export interface HomeState {
 export const initialHomeState: HomeState = {
   testimonials: [],
   rating: null,
-  gallery: [],
-  galleryStatus: RequestStatus.Idle,
   contentStatus: RequestStatus.Idle,
   nextTimes: [],
   nextTimesStatus: RequestStatus.Idle,

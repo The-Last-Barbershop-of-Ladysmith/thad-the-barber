@@ -6,12 +6,6 @@ export interface Testimonial {
   rating: number;
 }
 
-/** An image in the media container's `gallery/` folder, with alt text from its file name. */
-export interface GalleryPhoto {
-  src: string;
-  alt: string;
-}
-
 /** The Google listing's rating and review count, shown only when the reviews file carries them. */
 export interface ReviewRating {
   score: number;

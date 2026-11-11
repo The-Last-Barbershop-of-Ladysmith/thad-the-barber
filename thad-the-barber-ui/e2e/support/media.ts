@@ -1,5 +1,5 @@
 import { Route } from '@playwright/test';
-import { GalleryPhoto } from '../../src/app/features/home/models/home.models';
+import { GalleryPhoto } from '../../src/app/features/gallery/models/gallery-photo.model';
 import { servedEnvironment } from './served-environment';
 
 export const MEDIA_BASE_URL: string = servedEnvironment.mediaBaseUrl;

@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Store, provideStore } from '@ngrx/store';
-import { GalleryPhoto } from '../../models/home.models';
-import * as HomeActions from '../../state/home.actions';
-import { homeFeature } from '../../state/home.feature';
+import { GalleryPhoto } from '../../models/gallery-photo.model';
+import * as GalleryActions from '../../state/gallery.actions';
+import { galleryFeature } from '../../state/gallery.feature';
 import { Gallery } from './gallery';
 
 describe(
@@ -11,8 +11,8 @@ describe(
     const photos: GalleryPhoto[] = [{ src: 'https://media.test/gallery/flat-top.jpg', alt: 'Flat top' }, { src: 'https://media.test/gallery/burst-fade%20mohawk.png', alt: 'Burst fade mohawk' }];
 
     function render(listed: GalleryPhoto[]): ComponentFixture<Gallery> {
-      TestBed.configureTestingModule({ providers: [provideStore({ [homeFeature.name]: homeFeature.reducer })] });
-      TestBed.inject(Store).dispatch(HomeActions.GalleryRequestSuccess({ photos: listed }));
+      TestBed.configureTestingModule({ providers: [provideStore({ [galleryFeature.name]: galleryFeature.reducer })] });
+      TestBed.inject(Store).dispatch(GalleryActions.GalleryRequestSuccess({ photos: listed }));
       const fixture: ComponentFixture<Gallery> = TestBed.createComponent(Gallery);
       fixture.detectChanges();
       return fixture;
@@ -82,9 +82,28 @@ describe(
     );
 
     it(
-      'hides the section when there are no photos',
+      'says there are no photos instead of hiding the section',
       (): void => {
-        expect((render([]).nativeElement as HTMLElement).querySelector('[data-testid="gallery"]')).toBeNull();
+        const element: HTMLElement = render([]).nativeElement as HTMLElement;
+
+        expect(element.querySelector('[data-testid="gallery-empty"]')).not.toBeNull();
+        expect(element.querySelector('.print')).toBeNull();
+      },
+    );
+
+    it(
+      'holds the section with a placeholder until the photos load',
+      (): void => {
+        TestBed.configureTestingModule({
+          providers: [provideStore({ [galleryFeature.name]: galleryFeature.reducer })],
+        });
+        TestBed.inject(Store).dispatch(GalleryActions.GalleryRequest());
+        const fixture: ComponentFixture<Gallery> = TestBed.createComponent(Gallery);
+        fixture.detectChanges();
+
+        const element: HTMLElement = fixture.nativeElement as HTMLElement;
+        expect(element.querySelector('[data-testid="gallery-loading"]')).not.toBeNull();
+        expect(element.querySelector('[data-testid="gallery-empty"]')).toBeNull();
       },
     );
   },

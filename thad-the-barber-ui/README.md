@@ -103,7 +103,7 @@ src/
     └── features/
         ├── home/
         │   ├── home.ts / home.html / home.routes.ts
-        │   ├── components/         # hero, sms-signup, hours, announcements, gallery, testimonials, visit
+        │   ├── components/         # hero, sms-signup, hours, announcements, testimonials, visit (the gallery is `features/gallery/`)
         │   ├── data/  models/  services/
         │   └── state/              # home.state, home.actions, home.feature, home.effects
         └── booking/
@@ -174,7 +174,7 @@ Success, warning and error messages look and behave the same everywhere (#110):
 - Wording is written where the message is raised, never raw error text or an HTTP status.
 - `p-message` takes a severity and its icon, so color is never the only cue: success `pi pi-check`, info `pi pi-info-circle`, warn `pi pi-exclamation-triangle`, error `pi pi-times-circle`. Field errors use `variant="simple" size="small"`. Errors the customer must fix aren't closable.
 - Colors: `info` is copper (the app has no blue state); `success`, `warn` and `error` come from `brand.success`, `brand.warn` and `brand.error` in `semantic.ts`. `tokens/components/severity.ts` holds what `message.ts` and `toast.ts` share per severity, so the two always match. Toasts are opaque so their text keeps its contrast over the backdrop.
-- Content sections that fail to load (gallery, reviews, announcements) hide silently; no message.
+- Announcements and reviews that fail to load hide silently, with no message. The gallery shows a placeholder while loading and a short "no photos" note when it is empty or fails.
 
 ## Component conventions
 

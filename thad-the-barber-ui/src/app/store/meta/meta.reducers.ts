@@ -9,7 +9,7 @@ import { shopFeatureKey } from '../../features/shop/state/shop.feature';
  * Reset` action.
  */
 const keys: Keys = [
-  // Only the signup: home's content and load statuses reload on every visit, and a saved status (a gallery that
+  // Only the signup: home's content and load statuses reload on every visit, and a saved status (reviews that
   // failed last time) would hide that section's nav link on other pages.
   {
     [homeFeatureKey]: {

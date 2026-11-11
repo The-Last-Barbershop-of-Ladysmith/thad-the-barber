@@ -11,12 +11,7 @@ import { HomeState, initialHomeState } from './home.state';
 
 const ALL_SECTIONS: string[] = HOME_SECTIONS.map((section: NavItem): string => section.fragment);
 
-const WITHOUT_STORAGE_CONTENT: string[] = [
-  'chair',
-  'hours',
-  'reviews',
-  'visit',
-];
+const WITHOUT_ANNOUNCEMENTS: string[] = ALL_SECTIONS.filter((fragment: string): boolean => fragment !== 'announcements');
 
 describe(
   'selectHomeSections',
@@ -102,17 +97,15 @@ describe(
     it(
       'links every section while the content loads',
       (): void => {
-        const loading: HomeState = { ...initialHomeState, galleryStatus: RequestStatus.Pending };
+        const loading: AnnouncementsState = { ...initialAnnouncementsState, loadStatus: RequestStatus.Pending };
 
-        expect(fragments(loading, { ...initialAnnouncementsState, loadStatus: RequestStatus.Pending }))
-          .toEqual(ALL_SECTIONS);
+        expect(fragments(initialHomeState, loading)).toEqual(ALL_SECTIONS);
       },
     );
 
     it(
-      'leaves out the announcements and gallery once they load with nothing to show',
+      'leaves out the announcements once they load with nothing to show',
       (): void => {
-        const loaded: HomeState = { ...initialHomeState, galleryStatus: RequestStatus.Success };
         const expired: AnnouncementsState = {
           ...withAnnouncement,
           announcements: withAnnouncement.announcements.map((announcement: Announcement): Announcement => ({
@@ -121,30 +114,23 @@ describe(
           })),
         };
 
-        expect(fragments(loaded, expired)).toEqual(WITHOUT_STORAGE_CONTENT);
+        expect(fragments(initialHomeState, expired)).toEqual(WITHOUT_ANNOUNCEMENTS);
       },
     );
 
     it(
-      'leaves out the announcements and gallery when they fail to load',
+      'leaves out the announcements when they fail to load',
       (): void => {
-        const failed: HomeState = { ...initialHomeState, galleryStatus: RequestStatus.Error };
+        const failed: AnnouncementsState = { ...initialAnnouncementsState, loadStatus: RequestStatus.Error };
 
-        expect(fragments(failed, { ...initialAnnouncementsState, loadStatus: RequestStatus.Error }))
-          .toEqual(WITHOUT_STORAGE_CONTENT);
+        expect(fragments(initialHomeState, failed)).toEqual(WITHOUT_ANNOUNCEMENTS);
       },
     );
 
     it(
-      'links the announcements and gallery once they have content',
+      'links every section once the announcements have content',
       (): void => {
-        const home: HomeState = {
-          ...initialHomeState,
-          gallery: [{ src: 'https://media.test/gallery/taper.webp', alt: 'Taper' }],
-          galleryStatus: RequestStatus.Success,
-        };
-
-        expect(fragments(home, withAnnouncement)).toEqual(ALL_SECTIONS);
+        expect(fragments(initialHomeState, withAnnouncement)).toEqual(ALL_SECTIONS);
       },
     );
   },

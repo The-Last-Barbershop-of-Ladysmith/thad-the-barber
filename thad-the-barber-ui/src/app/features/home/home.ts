@@ -4,7 +4,7 @@ import { Store } from '@ngrx/store';
 import { Backdrop, BackdropAnchor } from '../../shared/components/backdrop/backdrop';
 import { HomeSection } from '../../shared/models/home-section.model';
 import { AnnouncementsCarousel } from '../announcements/components/announcements-carousel/announcements-carousel';
-import { Gallery } from './components/gallery/gallery';
+import { Gallery } from '../gallery/components/gallery/gallery';
 import { Hero } from './components/hero/hero';
 import { NextTimes } from './components/next-times/next-times';
 import { Hours } from './components/hours/hours';
