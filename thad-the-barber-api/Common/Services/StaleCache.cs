@@ -1,16 +1,16 @@
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Caching.Memory;
-using ThadTheBarber.Api.Square.Models;
+using ThadTheBarber.Api.Common.Models;
 
-namespace ThadTheBarber.Api.Square.Services;
+namespace ThadTheBarber.Api.Common.Services;
 
 /// <summary>
-/// Keeps what Square returned for <see cref="CacheFor"/>. Entries never expire: when a refresh fails, the last value is
-/// served (stale-while-error) and a warning logged, so the shop's details stay up while Square is down; Square is tried
-/// again after <see cref="RetryAfter"/> rather than on every request, so an outage doesn't make each request wait for
-/// Square's timeout.
+/// Keeps what an outside service (Square, Azure Storage) returned for <see cref="CacheFor"/>. Entries never expire:
+/// when a refresh fails, the last value is served (stale-while-error) and a warning logged, so the site stays up
+/// while the service is down; it is tried again after <see cref="RetryAfter"/> rather than on every request, so an
+/// outage doesn't make each request wait for the service's timeout.
 /// </summary>
-public sealed partial class SquareCache(IMemoryCache cache, TimeProvider time, ILogger<SquareCache> logger)
+public sealed partial class StaleCache(IMemoryCache cache, TimeProvider time, ILogger<StaleCache> logger)
 {
     public static readonly TimeSpan CacheFor = TimeSpan.FromMinutes(60);
     public static readonly TimeSpan RetryAfter = TimeSpan.FromMinutes(1);
@@ -55,11 +55,11 @@ public sealed partial class SquareCache(IMemoryCache cache, TimeProvider time, I
         }
     }
 
-    [LoggerMessage(EventName = "SquareServingStale", Level = LogLevel.Warning, Message = "Square failed, so {CacheKey} is served from the copy fetched {FetchedAt}.")]
+    [LoggerMessage(EventName = "ServingStale", Level = LogLevel.Warning, Message = "A refresh failed, so {CacheKey} is served from the copy fetched {FetchedAt}.")]
     private static partial void LogServingStale(ILogger logger, Exception exception, string cacheKey, DateTimeOffset fetchedAt);
 
     /// <summary>
-    /// Makes the next read of <paramref name="key"/> refetch, keeping the value to serve if Square fails then. A fetch
+    /// Makes the next read of <paramref name="key"/> refetch, keeping the value to serve if the refresh fails then. A fetch
     /// already running stores its value stale too. <typeparamref name="T"/> must be the type the entry was cached as,
     /// or the cached entry isn't marked.
     /// </summary>

@@ -1,4 +1,4 @@
-namespace ThadTheBarber.Api.Square.Models;
+namespace ThadTheBarber.Api.Common.Models;
 
 public sealed record CachedValue<T>(
     T Value,

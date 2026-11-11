@@ -8,6 +8,7 @@ using Square.Catalog;
 using Square.Core;
 using Square.Customers;
 using Square.Locations;
+using ThadTheBarber.Api.Common.Services;
 using ThadTheBarber.Api.Common.Extensions;
 using ThadTheBarber.Api.Common.Models;
 using ThadTheBarber.Api.Square.Exceptions;
@@ -17,7 +18,7 @@ using ThadTheBarber.Api.Square.Models;
 namespace ThadTheBarber.Api.Square.Services;
 
 /// <summary>
-/// The shop's details, booking profile and bookable services go through <see cref="SquareCache"/>; availability and
+/// The shop's details, booking profile and bookable services go through <see cref="StaleCache"/>; availability and
 /// booking calls always reach Square.
 /// </summary>
 public sealed class SquareService : ISquareService
@@ -30,12 +31,12 @@ public sealed class SquareService : ISquareService
     private static readonly TimeSpan maximumBookingListLength = TimeSpan.FromDays(31);
 
     private readonly SquareClient squareClient;
-    private readonly SquareCache squareCache;
+    private readonly StaleCache staleCache;
 
-    public SquareService(SquareClient squareClient, SquareCache squareCache)
+    public SquareService(SquareClient squareClient, StaleCache staleCache)
     {
         this.squareClient = squareClient;
-        this.squareCache = squareCache;
+        this.staleCache = staleCache;
     }
 
     public async Task<SquareConnection> CheckConnectionAsync(CancellationToken cancellationToken)
@@ -58,16 +59,16 @@ public sealed class SquareService : ISquareService
     }
 
     public Task<ShopDetails> GetShopDetailsAsync(CancellationToken cancellationToken) =>
-        squareCache.GetOrRefreshAsync(ShopDetailsKey, () => FetchShopDetailsAsync(cancellationToken), cancellationToken);
+        staleCache.GetOrRefreshAsync(ShopDetailsKey, () => FetchShopDetailsAsync(cancellationToken), cancellationToken);
 
     public Task<BookingProfile> GetBookingProfileAsync(string locationId, CancellationToken cancellationToken) =>
-        squareCache.GetOrRefreshAsync(
+        staleCache.GetOrRefreshAsync(
             BookingProfileKeyPrefix + locationId,
             () => FetchBookingProfileAsync(locationId, cancellationToken),
             cancellationToken);
 
     public Task<List<BookableService>> GetBookableServicesAsync(CancellationToken cancellationToken) =>
-        squareCache.GetOrRefreshAsync(BookableServicesKey, () => FetchBookableServicesAsync(cancellationToken), cancellationToken);
+        staleCache.GetOrRefreshAsync(BookableServicesKey, () => FetchBookableServicesAsync(cancellationToken), cancellationToken);
 
     /// <summary>
     /// Square rejects ranges shorter than 24 hours, and a day with a DST jump has 23, so the search covers at least 24

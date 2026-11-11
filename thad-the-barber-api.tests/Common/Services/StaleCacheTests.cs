@@ -2,23 +2,23 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
 using Microsoft.Extensions.Time.Testing;
-using ThadTheBarber.Api.Square.Services;
+using ThadTheBarber.Api.Common.Services;
 
-namespace ThadTheBarber.Api.Tests.Square.Services;
+namespace ThadTheBarber.Api.Tests.Common.Services;
 
-public sealed class SquareCacheTests
+public sealed class StaleCacheTests
 {
     private const string Key = "square:test";
 
     private readonly FakeTimeProvider _time = new(new DateTimeOffset(2026, 10, 4, 12, 0, 0, TimeSpan.Zero));
-    private readonly FakeLogger<SquareCache> _logger = new();
-    private readonly SquareCache _cache;
+    private readonly FakeLogger<StaleCache> _logger = new();
+    private readonly StaleCache _cache;
     private Exception? _fetchFailure;
     private int _fetches;
 
-    public SquareCacheTests()
+    public StaleCacheTests()
     {
-        _cache = new SquareCache(
+        _cache = new StaleCache(
             new MemoryCache(new MemoryCacheOptions()),
             _time,
             _logger
@@ -31,7 +31,7 @@ public sealed class SquareCacheTests
     public async Task ASecondReadWithinTheHourIsServedFromTheCache()
     {
         await ReadAsync(Key);
-        _time.Advance(SquareCache.CacheFor - TimeSpan.FromSeconds(1));
+        _time.Advance(StaleCache.CacheFor - TimeSpan.FromSeconds(1));
 
         await ReadAsync(Key);
 
@@ -42,7 +42,7 @@ public sealed class SquareCacheTests
     public async Task AReadAfterTheHourFetchesAgain()
     {
         await ReadAsync(Key);
-        _time.Advance(SquareCache.CacheFor);
+        _time.Advance(StaleCache.CacheFor);
 
         int value = await ReadAsync(Key);
 
@@ -62,7 +62,7 @@ public sealed class SquareCacheTests
     public async Task WhenAFetchFailsTheLastCopyIsServedAndAWarningLogged()
     {
         int fetched = await ReadAsync(Key);
-        _time.Advance(SquareCache.CacheFor);
+        _time.Advance(StaleCache.CacheFor);
         _fetchFailure = new HttpRequestException("Square is down.");
 
         int served = await ReadAsync(Key);
@@ -77,11 +77,11 @@ public sealed class SquareCacheTests
     public async Task WhileFetchesFailTheyAreRetriedOnlyAfterTheRetryWait()
     {
         await ReadAsync(Key);
-        _time.Advance(SquareCache.CacheFor);
+        _time.Advance(StaleCache.CacheFor);
         _fetchFailure = new HttpRequestException("Square is down.");
         await ReadAsync(Key);
 
-        _time.Advance(SquareCache.RetryAfter - TimeSpan.FromSeconds(1));
+        _time.Advance(StaleCache.RetryAfter - TimeSpan.FromSeconds(1));
         await ReadAsync(Key);
         Assert.Equal(2, _fetches);
 
@@ -102,7 +102,7 @@ public sealed class SquareCacheTests
     public async Task ACancelledReadIsntAnsweredWithTheLastCopy()
     {
         await ReadAsync(Key);
-        _time.Advance(SquareCache.CacheFor);
+        _time.Advance(StaleCache.CacheFor);
         _fetchFailure = new TaskCanceledException();
         using CancellationTokenSource cancelled = new();
         await cancelled.CancelAsync();
@@ -150,7 +150,7 @@ public sealed class SquareCacheTests
     public async Task AFetchRunningWhenMarkedStaleIsStoredStale()
     {
         await ReadAsync(Key);
-        _time.Advance(SquareCache.CacheFor);
+        _time.Advance(StaleCache.CacheFor);
         await _cache.GetOrRefreshAsync(Key, FetchThenMarkStaleAsync, Cancellation);
 
         int value = await ReadAsync(Key);

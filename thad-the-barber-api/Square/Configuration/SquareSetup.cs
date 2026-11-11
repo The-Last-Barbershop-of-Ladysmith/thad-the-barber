@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Options;
 using Square;
+using ThadTheBarber.Api.Common.Services;
 using ThadTheBarber.Api.Square.Handlers;
 using ThadTheBarber.Api.Square.Services;
 
@@ -35,7 +36,7 @@ public static class SquareSetup
         services.AddSingleton(provider => CreateClient(provider, HttpClientName));
         services.AddKeyedSingleton(OAuthHttpClientName, (provider, _) => CreateClient(provider, OAuthHttpClientName));
         services.AddMemoryCache();
-        services.AddSingleton<SquareCache>();
+        services.AddSingleton<StaleCache>();
         services.AddSingleton<ISquareService, SquareService>();
         services.AddSingleton<BookableServiceResolver>();
         services.AddSingleton<SquareWebhookService>();
