@@ -15,9 +15,10 @@ namespace ThadTheBarber.Api.Features.Announcements.Services;
 /// The announcements in the private content container's <c>announcements.json</c>. The valid items are kept by
 /// <see cref="StaleCache"/> until a change in the container marks them stale (<see cref="MarkStale"/>); which ones show
 /// is decided on every request, because the day changes (BR-30): from the start day through the end day, on the shop's
-/// calendar from Square's timezone, so a post that starts tomorrow is never sent to the browser. A missing or broken
-/// file, or storage that can't be read before any copy exists, is logged where it's unexpected and served as no
-/// announcements, so the page hides the section (BR-32).
+/// calendar from Square's timezone, so a post that starts tomorrow is never sent to the browser. A missing file has no
+/// announcements. A file that can't be read or isn't valid JSON keeps serving the last good copy, and is logged and
+/// served as no announcements when there is none yet, as is a shop clock Square can't give, so the page hides the
+/// section (BR-32).
 /// </summary>
 public sealed partial class AnnouncementsService(
     IMediaStorage storage,
@@ -39,8 +40,18 @@ public sealed partial class AnnouncementsService(
             return announcements;
         }
 
-        ShopDetails shop = await square.GetShopDetailsAsync(cancellationToken);
-        DateOnly today = TimeZoneInfo.FindSystemTimeZoneById(shop.TimeZone).ToLocalDate(time.GetUtcNow());
+        DateOnly today;
+        try
+        {
+            ShopDetails shop = await square.GetShopDetailsAsync(cancellationToken);
+            today = TimeZoneInfo.FindSystemTimeZoneById(shop.TimeZone).ToLocalDate(time.GetUtcNow());
+        }
+        catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
+        {
+            LogShopClockUnavailable(logger, exception);
+            return [];
+        }
+
         return announcements
             .Where(announcement => announcement.StartDate <= today && today <= announcement.EndDate)
             .ToList();
@@ -70,21 +81,13 @@ public sealed partial class AnnouncementsService(
             return [];
         }
 
-        try
-        {
-            using JsonDocument file = JsonDocument.Parse(text);
-            return file.RootElement.ToAnnouncements(media);
-        }
-        catch (JsonException exception)
-        {
-            LogBrokenFile(logger, exception);
-            return [];
-        }
+        using JsonDocument file = JsonDocument.Parse(text);
+        return file.RootElement.ToAnnouncements(media);
     }
 
-    [LoggerMessage(EventName = "AnnouncementsUnreadable", Level = LogLevel.Warning, Message = "Couldn't read announcements.json; serving no announcements.")]
+    [LoggerMessage(EventName = "AnnouncementsUnreadable", Level = LogLevel.Warning, Message = "Couldn't read or parse announcements.json; serving the last good copy, or none.")]
     private static partial void LogUnreadable(ILogger logger, Exception exception);
 
-    [LoggerMessage(EventName = "AnnouncementsFileBroken", Level = LogLevel.Warning, Message = "announcements.json isn't valid JSON; serving no announcements.")]
-    private static partial void LogBrokenFile(ILogger logger, Exception exception);
+    [LoggerMessage(EventName = "AnnouncementsShopClockUnavailable", Level = LogLevel.Warning, Message = "Couldn't get the shop's timezone; serving no announcements.")]
+    private static partial void LogShopClockUnavailable(ILogger logger, Exception exception);
 }

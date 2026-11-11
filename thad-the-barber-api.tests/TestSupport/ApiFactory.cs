@@ -26,10 +26,10 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
     public const string FrontendOrigin = "https://app.example.com";
     public const string CustomDomainOrigin = "https://www.example.com";
 
-    /// <summary>32 made-up bytes, base64; the shortest key <c>ManageLinkSettingsValidator</c> accepts.</summary>
     /// <summary>A made-up Event Grid delivery key, accepted by <c>POST /api/webhooks/media</c>.</summary>
     public const string MediaWebhookKey = "made-up-media-webhook-key";
 
+    /// <summary>32 made-up bytes, base64; the shortest key <c>ManageLinkSettingsValidator</c> accepts.</summary>
     public const string ManageLinkHmacKey = "dGVzdC1vbmx5LW1hbmFnZS1saW5rLWtleS0zMmJ5dGU=";
 
     private readonly string[] _origins;

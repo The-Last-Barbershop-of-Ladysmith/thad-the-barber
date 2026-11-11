@@ -16,20 +16,20 @@ public sealed class AnnouncementsServiceTests
     private const string File = "announcements.json";
 
     private readonly FakeMediaStorage _storage = new();
+    private readonly FakeSquareService _square;
     private readonly FakeTimeProvider _time = new(new DateTimeOffset(2026, 10, 15, 16, 0, 0, TimeSpan.Zero));
     private readonly AnnouncementsService _announcements;
 
     public AnnouncementsServiceTests()
     {
-        FakeSquareService square = new();
-        square = new FakeSquareService
+        _square = new FakeSquareService
         {
-            ShopDetails = square.ShopDetails with { TimeZone = NewYork },
+            ShopDetails = new FakeSquareService().ShopDetails with { TimeZone = NewYork },
         };
         _announcements = new AnnouncementsService(
             _storage,
             new StaleCache(new MemoryCache(new MemoryCacheOptions()), _time, NullLogger<StaleCache>.Instance),
-            square,
+            _square,
             _time,
             Options.Create(new MediaStorageSettings
             {
@@ -124,6 +124,26 @@ public sealed class AnnouncementsServiceTests
     public async Task AFileThatIsNotJsonHasNoAnnouncements()
     {
         _storage.ContentFiles[File] = "{ not json";
+
+        Assert.Empty(await ActiveTitlesAsync());
+    }
+
+    [Fact]
+    public async Task ABrokenEditKeepsServingTheLastGoodCopy()
+    {
+        Publish(Post("Last good", "2026-10-01", "2026-10-31"));
+        await ActiveTitlesAsync();
+        _storage.ContentFiles[File] = "{ not json";
+        _announcements.MarkStale();
+
+        Assert.Equal(["Last good"], await ActiveTitlesAsync());
+    }
+
+    [Fact]
+    public async Task AShopClockSquareCannotGiveHasNoAnnouncementsInsteadOfAnError()
+    {
+        Publish(Post("Showing", "2026-10-01", "2026-10-31"));
+        _square.ReadFailure = new HttpRequestException("Square is down.");
 
         Assert.Empty(await ActiveTitlesAsync());
     }

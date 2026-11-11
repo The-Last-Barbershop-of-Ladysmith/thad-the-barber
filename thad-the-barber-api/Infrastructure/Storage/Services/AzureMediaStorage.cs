@@ -37,7 +37,8 @@ public sealed class AzureMediaStorage(BlobServiceClient blobService) : IMediaSto
         try
         {
             BlobDownloadResult download = await blob.DownloadContentAsync(cancellationToken);
-            return download.Content.ToString();
+            // Files saved from Windows tools often start with a byte order mark, which JSON parsing rejects.
+            return download.Content.ToString().TrimStart('\uFEFF');
         }
         catch (RequestFailedException exception) when (exception.Status == StatusCodes.Status404NotFound)
         {
