@@ -3,6 +3,8 @@ using System.Text.Json.Serialization;
 using ThadTheBarber.Api.Common.Exceptions;
 using ThadTheBarber.Api.Features.Booking.Configuration;
 using ThadTheBarber.Api.Features.Booking.Endpoints;
+using ThadTheBarber.Api.Features.Announcements.Configuration;
+using ThadTheBarber.Api.Features.Announcements.Endpoints;
 using ThadTheBarber.Api.Features.Gallery.Configuration;
 using ThadTheBarber.Api.Features.Gallery.Endpoints;
 using ThadTheBarber.Api.Features.Health.Configuration;
@@ -52,6 +54,7 @@ builder.Services.AddBooking(builder.Configuration);
 builder.Services.AddReviews(builder.Configuration);
 builder.Services.AddMediaStorage(builder.Configuration);
 builder.Services.AddGallery();
+builder.Services.AddAnnouncements();
 builder.Services.AddOpenApi(options =>
 {
     options.AddDocumentTransformer<BearerSecurityTransformer>();
@@ -86,6 +89,7 @@ api.MapHealthEndpoints();
 api.MapShopEndpoints();
 api.MapReviewsEndpoints();
 api.MapGalleryEndpoints();
+api.MapAnnouncementsEndpoints();
 api.MapBookingEndpoints();
 api.MapSquareWebhookEndpoints();
 
