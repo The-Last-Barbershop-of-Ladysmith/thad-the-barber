@@ -1,4 +1,5 @@
 import { Locator, Page, Request, Route } from '@playwright/test';
+import { expectNoA11yViolations } from '../support/axe';
 import { expect, test } from '../support/fixtures';
 import { GALLERY_LISTING_URL, TEST_GALLERY, galleryListing } from '../support/media';
 import { collectPageErrors } from '../support/page-errors';
@@ -27,6 +28,7 @@ test.describe(
             image.evaluate((element: HTMLImageElement): number => element.naturalWidth);
           await expect.poll(naturalWidth).toBeGreaterThan(0);
         }
+        await expectNoA11yViolations(page);
       },
     );
 
@@ -112,6 +114,7 @@ test.describe(
           await expect(page.locator('#visit')).toBeVisible();
           await expect(page.getByTestId('gallery-empty')).toBeVisible();
           await expect(page.getByTestId('gallery').getByRole('img')).toHaveCount(0);
+          await expectNoA11yViolations(page);
           expect(pageErrors).toEqual([]);
         },
       );
