@@ -23,8 +23,9 @@ export type HomeExtraSelectors = {
 export const homeFeatureKey: 'home' = 'home' as const;
 
 /**
- * The home page's open times and the SMS signup, registered at bootstrap because the header and
- * footer link to its sections on every page. Its effects still register with the home route.
+ * The home page's open times and the SMS signup, registered at bootstrap because the signup is saved to
+ * localStorage and needs its initial state in place before the saved copy merges over it. Its effects register with
+ * the home route.
  */
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the Feature type.
 export const homeFeature = createFeature({
@@ -53,6 +54,7 @@ export const homeFeature = createFeature({
       selectNextTimes,
       toAreNextTimesMissing,
     ),
+    // Reads the lazy reviews slice, so only components on the home route may use it.
     selectAreHeroFactsLoading: createSelector(
       selectNextTimesStatus,
       reviewsFeature.selectIsLoading,

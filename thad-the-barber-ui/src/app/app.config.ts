@@ -38,10 +38,10 @@ export const appConfig: ApplicationConfig = {
       withComponentInputBinding(),
       withInMemoryScrolling({ anchorScrolling: 'enabled', scrollPositionRestoration: 'enabled' }),
     ),
-    // Shop, home and announcements are root reducers, not `provideState`, because the header and footer read them on
-    // every page.
-    // Shop also saves only part of its slice (`shopInfo`), and a partial saved copy merged before `provideState` would
-    // drop the rest.
+    // Shop and announcements are root reducers, not `provideState`, because the header and footer read them on every
+    // page.
+    // Shop and home also save only part of their slice (`shopInfo`, `smsSignup`), and a partial saved copy merged
+    // before `provideState` would drop the rest.
     provideStore(
       {
         [layoutFeature.name]: layoutFeature.reducer,

@@ -10,7 +10,7 @@ import { Home } from './home';
 
 /**
  * The gallery and reviews slices and their effects register only when this route activates, so no other page loads
- * them. The `home` slice is a root reducer (`app.config.ts`) because the header and footer read it.
+ * them. The `home` slice is a root reducer (`app.config.ts`) because its SMS signup is saved to localStorage.
  */
 export const HOME_ROUTES: Routes = [
   {
