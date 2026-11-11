@@ -17,10 +17,7 @@ public static class MediaStorageSetup
         services.AddSingleton(provider =>
         {
             MediaStorageSettings storage = provider.GetRequiredService<IOptions<MediaStorageSettings>>().Value;
-            return new BlobServiceClient(
-                new Uri($"https://{storage.AccountName}.blob.core.windows.net/"),
-                new DefaultAzureCredential()
-            );
+            return new BlobServiceClient(new Uri(storage.BlobServiceUrl), new DefaultAzureCredential());
         });
         services.AddSingleton<IMediaStorage, AzureMediaStorage>();
         services.AddStaleCache();

@@ -21,7 +21,8 @@ public sealed class MediaStorageSettings
     [Required]
     public string ContentContainerName { get; set; } = null!;
 
+    public string BlobServiceUrl => $"https://{AccountName}.blob.core.windows.net/";
+
     /// <summary>Where a file in the media container is served from; the browser loads photos straight from storage.</summary>
-    public string GetMediaUrl(string blobName) =>
-        $"https://{AccountName}.blob.core.windows.net/{MediaContainerName}/{blobName}";
+    public string GetMediaUrl(string blobName) => $"{BlobServiceUrl}{MediaContainerName}/{blobName}";
 }

@@ -23,8 +23,7 @@ public static class MediaWebhookEndpoints
 
     /// <summary>
     /// 200 once the notification is handled (echoing the code when it's Event Grid's subscription handshake), 400
-    /// <c>invalid_body</c>, 401 <c>invalid_webhook_key</c>, or 413 <c>payload_too_large</c>. Reading one character past
-    /// the cap tells a body that's too long, with or without a <c>Content-Length</c>.
+    /// <c>invalid_body</c>, 401 <c>invalid_webhook_key</c>, or 413 <c>payload_too_large</c>.
     /// </summary>
     internal static async Task<Results<Ok, Ok<EventGridValidationResponse>>> ReceiveAsync(
         HttpRequest request,
