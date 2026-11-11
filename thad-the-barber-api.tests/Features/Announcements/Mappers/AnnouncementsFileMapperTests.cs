@@ -36,6 +36,17 @@ public sealed class AnnouncementsFileMapperTests
     }
 
     [Fact]
+    public void ABodyKeepsItsFormattingAndLosesScriptAndUnsafeLinks()
+    {
+        Announcement announcement = Assert.Single(Map(Items("""
+            { "title": "Made-up post", "startDate": "2026-10-01", "endDate": "2026-10-31",
+              "bodyHtml": "<p onclick=\"steal()\"><b>Open</b> <a href=\"javascript:steal()\">bad</a> <a href=\"https://example.test\">good</a><script>steal()</script><iframe src=\"https://example.test\"></iframe></p>" }
+            """)));
+
+        Assert.Equal("<p><b>Open</b> <a>bad</a> <a href=\"https://example.test\">good</a></p>", announcement.BodyHtml);
+    }
+
+    [Fact]
     public void ABodyIsOptional()
     {
         Assert.Equal(string.Empty, Assert.Single(Map(Items(ValidItem))).BodyHtml);
@@ -166,6 +177,9 @@ public sealed class AnnouncementsFileMapperTests
     [InlineData("tel:+15550100", true)]
     [InlineData("mailto:hi@example.test", true)]
     [InlineData("//evil.test", false)]
+    [InlineData("/\t/evil.test", false)]
+    [InlineData("/\n/evil.test", false)]
+    [InlineData("/\r/evil.test", false)]
     [InlineData("/\\evil.test", false)]
     [InlineData("http://example.test", false)]
     [InlineData("javascript:alert(1)", false)]

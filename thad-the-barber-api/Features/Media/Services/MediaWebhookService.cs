@@ -14,8 +14,8 @@ namespace ThadTheBarber.Api.Features.Media.Services;
 /// <summary>
 /// Event Grid's notifications about the storage account: a photo added to or removed from <c>gallery/</c>, or
 /// <c>announcements.json</c> written or deleted, marks that cached copy stale so the next read lists it again instead of
-/// waiting out the cache time. Every call must carry the subscription's secret header, which also covers Event Grid's
-/// subscription handshake.
+/// waiting out the cache time. Every call but Event Grid's subscription handshake must carry the subscription's secret
+/// header.
 /// </summary>
 public sealed partial class MediaWebhookService(
     GalleryService gallery,
@@ -32,44 +32,64 @@ public sealed partial class MediaWebhookService(
 
     /// <summary>
     /// Handles one delivery. Returns the code to echo when it's Event Grid's subscription handshake, otherwise null.
-    /// Throws <see cref="InvalidMediaWebhookKeyException"/>, changing nothing, unless <paramref name="key"/> is the
-    /// subscription's secret, and <see cref="InvalidMediaWebhookBodyException"/> for a body that isn't an array of events.
+    /// The handshake is answered without the key (Event Grid may not send its delivery header then, and the code is
+    /// worth nothing to anyone else). Anything else throws <see cref="InvalidMediaWebhookKeyException"/>, changing
+    /// nothing, unless <paramref name="key"/> is the subscription's secret, and
+    /// <see cref="InvalidMediaWebhookBodyException"/> for a body that isn't an array of events.
     /// </summary>
     public string? Handle(string body, string? key)
     {
-        VerifyKey(key);
+        bool isKeyValid = IsKeyValid(key);
         try
         {
             using JsonDocument deliveredEvents = JsonDocument.Parse(body);
             if (deliveredEvents.RootElement.ValueKind != JsonValueKind.Array)
             {
-                throw new InvalidMediaWebhookBodyException(null);
+                throw Refuse(isKeyValid, null);
             }
 
-            string? validationCode = null;
             foreach (JsonElement deliveredEvent in deliveredEvents.RootElement.EnumerateArray())
             {
-                validationCode ??= ReadValidationCode(deliveredEvent);
+                if (ReadValidationCode(deliveredEvent) is string validationCode)
+                {
+                    return validationCode;
+                }
+            }
+
+            if (!isKeyValid)
+            {
+                throw new InvalidMediaWebhookKeyException();
+            }
+
+            foreach (JsonElement deliveredEvent in deliveredEvents.RootElement.EnumerateArray())
+            {
                 HandleBlobChange(deliveredEvent);
             }
 
-            return validationCode;
+            return null;
         }
         catch (JsonException exception)
         {
-            throw new InvalidMediaWebhookBodyException(exception);
+            throw Refuse(isKeyValid, exception);
         }
     }
 
-    private void VerifyKey(string? key)
+    private static Exception Refuse(bool isKeyValid, JsonException? bodyProblem)
+    {
+        if (!isKeyValid)
+        {
+            return new InvalidMediaWebhookKeyException();
+        }
+
+        return new InvalidMediaWebhookBodyException(bodyProblem);
+    }
+
+    private bool IsKeyValid(string? key)
     {
         string? expected = settings.Value.Key;
-        if (string.IsNullOrEmpty(expected)
-            || key is null
-            || !CryptographicOperations.FixedTimeEquals(Encoding.UTF8.GetBytes(key), Encoding.UTF8.GetBytes(expected)))
-        {
-            throw new InvalidMediaWebhookKeyException();
-        }
+        return !string.IsNullOrEmpty(expected)
+            && key is not null
+            && CryptographicOperations.FixedTimeEquals(Encoding.UTF8.GetBytes(key), Encoding.UTF8.GetBytes(expected));
     }
 
     private static string? ReadValidationCode(JsonElement deliveredEvent)

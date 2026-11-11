@@ -35,9 +35,17 @@ public static class AnnouncementsFileMapper
         return announcements;
     }
 
-    /// <summary>The same rule as the UI's link kinds: a site path, https, tel: or mailto:. A path starting <c>//</c> or <c>/\</c> is another site.</summary>
+    /// <summary>
+    /// The same rule as the UI's link kinds: a site path, https, tel: or mailto:. A path starting <c>//</c> or <c>/\</c> is
+    /// another site, and a link with a control character (a tab or line break inside <c>//</c> is ignored by browsers) is refused.
+    /// </summary>
     public static bool IsAllowedLink(string url)
     {
+        if (url.Any(char.IsControl))
+        {
+            return false;
+        }
+
         if (url.StartsWith('/'))
         {
             return url.Length == 1 || (url[1] != '/' && url[1] != '\\');
@@ -60,7 +68,7 @@ public static class AnnouncementsFileMapper
 
         return new Announcement(
             title,
-            Text(item, "bodyHtml") ?? string.Empty,
+            AnnouncementBodySanitizer.Clean(Text(item, "bodyHtml") ?? string.Empty),
             startDate.Value,
             endDate.Value,
             ToImage(item, storage),

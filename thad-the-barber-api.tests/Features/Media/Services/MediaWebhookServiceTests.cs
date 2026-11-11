@@ -146,6 +146,39 @@ public sealed class MediaWebhookServiceTests
     }
 
     [Fact]
+    public void TheSubscriptionHandshakeIsEchoedWithoutTheKey()
+    {
+        string handshake = """
+            [{ "id": "2", "eventType": "Microsoft.EventGrid.SubscriptionValidationEvent",
+               "data": { "validationCode": "code-123" } }]
+            """;
+
+        Assert.Equal("code-123", _webhooks.Handle(handshake, null));
+    }
+
+    [Fact]
+    public async Task AHandshakeBatchCarryingABlobEventWithoutTheKeyChangesNothing()
+    {
+        await WarmCachesAsync();
+        string body = Batch(
+            Event(Created, GallerySubject("gallery/new.jpg")),
+            """{ "eventType": "Microsoft.EventGrid.SubscriptionValidationEvent", "data": { "validationCode": "code-123" } }""");
+
+        _webhooks.Handle(body, null);
+        await _gallery.GetAsync(Cancellation);
+
+        Assert.Equal(0, _storage.Calls);
+    }
+
+    [Theory]
+    [InlineData("{ not json")]
+    [InlineData("\"text\"")]
+    public void ABadBodyWithoutTheKeyIsRefusedForItsKey(string body)
+    {
+        Assert.Throws<InvalidMediaWebhookKeyException>(() => _webhooks.Handle(body, null));
+    }
+
+    [Fact]
     public void ANotificationHasNothingToEcho()
     {
         Assert.Null(_webhooks.Handle(Batch(Event(Created, GallerySubject("gallery/new.jpg"))), Key));

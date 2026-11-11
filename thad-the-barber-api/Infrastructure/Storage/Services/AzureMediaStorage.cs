@@ -5,7 +5,10 @@ using ThadTheBarber.Api.Infrastructure.Storage.Models;
 
 namespace ThadTheBarber.Api.Infrastructure.Storage.Services;
 
-/// <summary>The Azure Blob Storage side of <see cref="IMediaStorage"/>; too thin to test without Azure.</summary>
+/// <summary>
+/// The Azure Blob Storage side of <see cref="IMediaStorage"/>; too thin to test without Azure. A blob's upload time is
+/// when it was created, which an edit to its metadata doesn't change.
+/// </summary>
 public sealed class AzureMediaStorage(BlobServiceClient blobService) : IMediaStorage
 {
     public async Task<List<StoredBlob>> ListAsync(string container, string prefix, CancellationToken cancellationToken)
@@ -23,7 +26,7 @@ public sealed class AzureMediaStorage(BlobServiceClient blobService) : IMediaSto
             {
                 blobs.Add(new StoredBlob(
                     item.Blob.Name,
-                    item.Blob.Properties.LastModified ?? DateTimeOffset.MinValue
+                    item.Blob.Properties.CreatedOn ?? item.Blob.Properties.LastModified ?? DateTimeOffset.MinValue
                 ));
             }
         }

@@ -1,3 +1,4 @@
+using System.Buffers;
 using ThadTheBarber.Api.Common.Exceptions;
 
 namespace ThadTheBarber.Api.Common.Extensions;
@@ -17,13 +18,20 @@ public static class HttpRequestExtensions
     public static async Task<string> ReadWebhookBodyAsync(this HttpRequest request, CancellationToken cancellationToken)
     {
         using StreamReader reader = new(request.Body);
-        char[] buffer = new char[MaxWebhookBodyLength + 1];
-        int length = await reader.ReadBlockAsync(buffer, cancellationToken);
-        if (length > MaxWebhookBodyLength)
+        char[] buffer = ArrayPool<char>.Shared.Rent(MaxWebhookBodyLength + 1);
+        try
         {
-            throw new WebhookBodyTooLargeException();
-        }
+            int length = await reader.ReadBlockAsync(buffer.AsMemory(0, MaxWebhookBodyLength + 1), cancellationToken);
+            if (length > MaxWebhookBodyLength)
+            {
+                throw new WebhookBodyTooLargeException();
+            }
 
-        return new string(buffer, 0, length);
+            return new string(buffer, 0, length);
+        }
+        finally
+        {
+            ArrayPool<char>.Shared.Return(buffer);
+        }
     }
 }
