@@ -135,11 +135,12 @@ The gallery and announcements move behind the API, so the order matters: the dep
    ```powershell
    $env:TTB_MEDIA_WEBHOOK_KEY_DEV  = az keyvault secret show --vault-name kv-ttb-dev-centralus  --name MediaWebhook--Key --query value -o tsv
    $env:TTB_MEDIA_WEBHOOK_KEY_TEST = az keyvault secret show --vault-name kv-ttb-test-centralus --name MediaWebhook--Key --query value -o tsv
-   az deployment sub create --location centralus --parameters infra/nonprod.bicepparam --parameters deployMediaSubscription=true
+   $env:TTB_DEPLOY_MEDIA_SUBSCRIPTION = 'true'
+   az deployment sub create --location centralus --parameters infra/nonprod.bicepparam
    ```
 
-   Upload a photo to `media-dev/gallery/`; it should show on the home page within seconds. Keep `deployMediaSubscription=true` on every later deploy, or the subscription is left as is (an incremental deploy doesn't delete it).
-5. **Stop anonymous listing**, after the UI that reads `/api/gallery` is live: delete the old `media-<env>/content/announcements.json`, then deploy with `--parameters restrictMediaListing=true` (add `deployMediaSubscription=true` as well). Check that `https://storttbnonprodcentralus.blob.core.windows.net/media-dev?restype=container&comp=list` now answers 404/403 anonymously while a direct image URL still loads.
+   Upload a photo to `media-dev/gallery/`; it should show on the home page within seconds. Keep `TTB_DEPLOY_MEDIA_SUBSCRIPTION` set on later deploys too (an incremental deploy leaves an existing subscription alone either way, but a deploy without the key can't change it).
+5. **Stop anonymous listing**, after the UI that reads `/api/gallery` is live: delete the old `media-<env>/content/announcements.json`, then set `$env:TTB_RESTRICT_MEDIA_LISTING = 'true'` (keep the other `TTB_*` values set) and deploy again. Check that `https://storttbnonprodcentralus.blob.core.windows.net/media-dev?restype=container&comp=list` now answers 404/403 anonymously while a direct image URL still loads.
 
 The storage CORS rule is unchanged: the UI no longer needs it for the gallery, but the backdrop frames may still be fetched cross-origin, so trim it as a separate change.
 
