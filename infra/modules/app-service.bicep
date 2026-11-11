@@ -18,6 +18,9 @@ param restrictAccess bool
 
 param allowedIpRanges string[]
 
+@description('Also allow the AzureEventGrid service tag when access is restricted (the API, which receives blob-change webhooks; the Event Grid key is the real gate).')
+param allowEventGrid bool = false
+
 @description('Resource ID of a user-assigned identity to add beside the system-assigned one. Empty adds none.')
 param userAssignedIdentityId string = ''
 
@@ -41,6 +44,18 @@ var azureCloudRule = [
     ipAddress: 'AzureCloud'
   }
 ]
+
+var eventGridRule = allowEventGrid
+  ? [
+      {
+        name: 'azure-event-grid'
+        action: 'Allow'
+        priority: 310
+        tag: 'ServiceTag'
+        ipAddress: 'AzureEventGrid'
+      }
+    ]
+  : []
 
 resource app 'Microsoft.Web/sites@2024-11-01' = {
   name: name
@@ -70,7 +85,7 @@ resource app 'Microsoft.Web/sites@2024-11-01' = {
       scmMinTlsVersion: '1.2'
       http20Enabled: true
       ipSecurityRestrictionsDefaultAction: restrictAccess ? 'Deny' : 'Allow'
-      ipSecurityRestrictions: restrictAccess ? concat(allowedIpRules, azureCloudRule) : []
+      ipSecurityRestrictions: restrictAccess ? concat(allowedIpRules, azureCloudRule, eventGridRule) : []
       scmIpSecurityRestrictionsUseMain: false
       scmIpSecurityRestrictionsDefaultAction: 'Allow'
       appSettings: [

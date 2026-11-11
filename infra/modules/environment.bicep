@@ -236,6 +236,7 @@ module api 'app-service.bicep' = {
     alwaysOn: alwaysOn
     restrictAccess: restrictAppAccess
     allowedIpRanges: concat(allowedIpRanges, squareSandboxWebhookIps)
+    allowEventGrid: true
     tags: tags
     appSettings: {
       APPLICATIONINSIGHTS_CONNECTION_STRING: appInsights.properties.ConnectionString
