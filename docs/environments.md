@@ -33,7 +33,8 @@ How code moves from a topic branch to production. The decisions behind this are 
 | API apps (.NET) | `as-ttb-api-dev-centralus`, `as-ttb-api-test-centralus` | .NET 10 LTS |
 | Key Vaults | `kv-ttb-dev-centralus`, `kv-ttb-test-centralus` | One per environment, because the secret names are the same in each. Standard, RBAC, soft delete + purge protection |
 | Application Insights | `ai-ttb-dev-centralus`, `ai-ttb-test-centralus` | Workspace-based, on `log-ttb-nonprod-centralus` (30-day retention, 0.15 GB/day cap ≈ 4.5 GB/month, under the 5 GB free allowance) |
-| Storage | `storttbnonprodcentralus` | Standard LRS, hot. Public-read containers `media-dev` and `media-test`. HTTPS only, TLS 1.2, **shared-key access off** (uploads use Entra ID). Blob CORS allows GET from the web origins |
+| Storage | `storttbnonprodcentralus` | Standard LRS, hot. Containers `media-dev`/`media-test` (image files, public read: `Container` until `restrictMediaListing` is on, then `Blob`, so a file loads by its exact URL but nobody can list it) and private `content-dev`/`content-test` (`announcements.json`, read only by the API). HTTPS only, TLS 1.2, **shared-key access off** (uploads use Entra ID). Blob CORS allows GET from the web origins |
+| Event Grid | `evgt-ttb-nonprod-centralus` (system topic on the storage account), `evgs-ttb-media-dev`, `evgs-ttb-media-test` | One topic per stage, one subscription per environment (only with `deployMediaSubscription`). `BlobCreated`/`BlobDeleted` for `media-<env>/gallery/` and `content-<env>/announcements.json` go to `POST /api/webhooks/media` with the secret header `x-media-webhook-key`, so the API refetches within seconds (#204). Free under 100,000 operations a month |
 | Budget | `budget-ttb-monthly` | $5/month on the subscription; alerts at 80% and 100% actual and 100% forecast through the action group |
 | Action group | `ag-ttb-<stage>` | Every alert (budget, Square): email to `TTB_ALERT_EMAIL`, plus SMS to `TTB_ALERT_PHONE` when set. US SMS: first 100/month free |
 | Key Vault audit logs | `audit-to-log-analytics` on each vault | Every vault operation to Log Analytics, so reads of the Square secrets can be checked (#23) |
@@ -58,6 +59,7 @@ The API reads all its secrets through the Key Vault configuration provider, so t
 | `session-jwt-signing` | EC P-256 key (ES256) | Bicep. Generated in the vault and never exported; re-runs don't rotate it |
 | `Square--RefreshToken` | secret | `tools/square-connect` (one-time connect, #23), under your `az login`. The API only reads it: Square's code flow never rotates it |
 | `ManageLink--HmacKey` | secret | You, with `infra/scripts/Set-TtbSecrets.ps1 -Generate` (64 random bytes; it never replaces an existing key). Signs manage links (#29), and the API won't start without it. Replacing it breaks every manage link already sent |
+| `MediaWebhook--Key` | secret | You, with `Set-TtbSecrets.ps1 -Generate` (never replaces an existing key). The API checks it on `POST /api/webhooks/media`; Event Grid sends the same value in the `x-media-webhook-key` delivery header (secret attribute), so the subscription deploy needs it as `TTB_MEDIA_WEBHOOK_KEY_<ENV>` (below). Rotate: set the new value in the vault, redeploy the API, then redeploy the subscription |
 | `Square--ApplicationSecret`, `Square--WebhookSignatureKey`, `Recaptcha--ApiKey`, `Google--ClientSecret`, `Google--RefreshToken` | secrets | You, with `infra/scripts/Set-TtbSecrets.ps1`. Bicep never writes them, so a re-run can't overwrite a real value |
 
 **Role assignments:**
@@ -70,6 +72,8 @@ The API reads all its secrets through the Key Vault configuration provider, so t
 | you (`TTB_ADMIN_OBJECT_ID`) | Key Vault Secrets Officer | each vault |
 | `id-ttb-deploy-<env>-<region>` (GitHub, #10) | Website Contributor | its environment's web and API apps only |
 | `id-ttb-deploy-<env>-<region>` (GitHub, #10) | Storage Blob Data Contributor | its environment's media container only |
+| api identity | Storage Blob Data Reader | its environment's `media-<env>` and `content-<env>` containers (#204) |
+| you (`TTB_ADMIN_OBJECT_ID`) | Storage Blob Data Contributor (`canAdminWriteMedia`, else Reader) | the media and content containers |
 | `id-ttb-preview-nonprod-<region>` (GitHub PRs, #10) | Reader + `TTB What-If Previewer` (custom: what-if and validate only) | the subscription |
 
 No app can write to Key Vault (#23). Bicep doesn't delete role assignments it no longer declares, so after redeploying, remove the old API write grant by hand: `az role assignment list --scope <vault id> --assignee <api principal id>` shows it as Key Vault Secrets Officer; delete it with `az role assignment delete --ids <id>`.
@@ -79,7 +83,7 @@ No app can write to Key Vault (#23). Bicep doesn't delete role assignments it no
 | Control | Nonprod | Prod (M5) |
 | --- | --- | --- |
 | `CanNotDelete` lock on the resource group (`lock-ttb-<stage>-<region>`) | On | On |
-| App access restrictions: deny by default, allow `TTB_ALLOWED_IPS` + the `AzureCloud` service tag (GitHub runners, for smoke tests); the API also allows Square's sandbox webhook IPs (#31) | On (`restrictAppAccess = true`) | Off: the site is public. Geo-filtering to DC/MD/VA is a separate M5 decision |
+| App access restrictions: deny by default, allow `TTB_ALLOWED_IPS` + the `AzureCloud` service tag (GitHub runners, for smoke tests); the API also allows Square's sandbox webhook IPs (#31) and the `AzureEventGrid` service tag (#204; the UI app doesn't get it) | On (`restrictAppAccess = true`) | Off: the site is public. Geo-filtering to DC/MD/VA is a separate M5 decision |
 | Key Vault firewall: deny by default, allow the apps' outbound IPs + `TTB_ALLOWED_IPS` | On | On |
 
 - The **lock** blocks deletes, not changes. To tear nonprod down, delete the lock first (`az lock delete --name lock-ttb-nonprod-centralus --resource-group rg-ttb-nonprod-centralus`).
@@ -109,6 +113,35 @@ az deployment sub create --name reports --location centralus --parameters infra/
 Personal values come from environment variables, so they never land in this public repo. A second `create` should report no changes in `what-if`. `budgetStartDate` is fixed in the param file; Azure rejects a monthly budget whose start date is before the current month, so if the first deploy happens after October 2026, move it to the first of that month.
 
 CI (`.github/workflows/infra.yml`) builds and lints the Bicep on every PR that touches `infra/`, then runs what-if as the read-only preview identity (below). It never deploys: `create` is still run by hand.
+
+### Media rollout (#204)
+
+The gallery and announcements move behind the API, so the order matters: the deployed UI still lists `media-<env>` anonymously and reads `content/announcements.json` from it, and Event Grid validates the webhook against the running API. Do dev first, then test. Prod follows the same steps once it exists.
+
+1. **Key and API.** `./infra/scripts/Set-TtbSecrets.ps1 -Environment dev -Generate` creates `MediaWebhook--Key`. Merge the API half (#262) and let CD deploy it to dev.
+2. **Containers, roles and secret access** (subscription still off): run `create` as in [Deploying](#deploying). This adds `content-<env>`, the API's Reader roles and the admin's Contributor role on it, the Event Grid system topic and the `AzureEventGrid` access rule. Nothing user-visible changes.
+3. **Move `announcements.json`** (the old copy keeps the current UI working until the new UI ships, so delete it only then):
+
+   ```powershell
+   az storage blob copy start --auth-mode login --account-name storttbnonprodcentralus `
+     --source-container media-dev --source-blob content/announcements.json `
+     --destination-container content-dev --destination-blob announcements.json
+   az storage blob show --auth-mode login --account-name storttbnonprodcentralus --container-name content-dev --name announcements.json --query properties.copy.status
+   curl https://as-ttb-api-dev-centralus.azurewebsites.net/api/announcements   # from an allowed IP
+   ```
+
+4. **Subscription.** Put each vault's key in the environment and deploy again with the switch on (the API must be running, or Event Grid's handshake fails and the deploy errors):
+
+   ```powershell
+   $env:TTB_MEDIA_WEBHOOK_KEY_DEV  = az keyvault secret show --vault-name kv-ttb-dev-centralus  --name MediaWebhook--Key --query value -o tsv
+   $env:TTB_MEDIA_WEBHOOK_KEY_TEST = az keyvault secret show --vault-name kv-ttb-test-centralus --name MediaWebhook--Key --query value -o tsv
+   az deployment sub create --location centralus --parameters infra/nonprod.bicepparam --parameters deployMediaSubscription=true
+   ```
+
+   Upload a photo to `media-dev/gallery/`; it should show on the home page within seconds. Keep `deployMediaSubscription=true` on every later deploy, or the subscription is left as is (an incremental deploy doesn't delete it).
+5. **Stop anonymous listing**, after the UI that reads `/api/gallery` is live: delete the old `media-<env>/content/announcements.json`, then deploy with `--parameters restrictMediaListing=true` (add `deployMediaSubscription=true` as well). Check that `https://storttbnonprodcentralus.blob.core.windows.net/media-dev?restype=container&comp=list` now answers 404/403 anonymously while a direct image URL still loads.
+
+The storage CORS rule is unchanged: the UI no longer needs it for the gallery, but the backdrop frames may still be fetched cross-origin, so trim it as a separate change.
 
 ### Google reCAPTCHA (#34)
 
