@@ -30,6 +30,33 @@ test.describe(
       },
     );
 
+    test(
+      'opens a print in the lightbox, steps through the photos around the end, and Escape closes it and returns focus',
+      async ({ page }: { page: Page; }): Promise<void> => {
+        await page.goto('/#gallery');
+        const opener: Locator = page.getByTestId('gallery').getByRole('button').first();
+        const count: Locator = page.getByTestId('lightbox-count');
+        const next: Locator = page.getByTestId('lightbox-next');
+
+        await opener.click();
+
+        await expect(count).toHaveText(`1 / ${TEST_GALLERY.length}`);
+
+        await next.click();
+
+        await expect(count).toHaveText(`2 / ${TEST_GALLERY.length}`);
+
+        await next.click();
+
+        await expect(count).toHaveText(`1 / ${TEST_GALLERY.length}`);
+
+        await page.keyboard.press('Escape');
+
+        await expect(count).toHaveCount(0);
+        await expect(opener).toBeFocused();
+      },
+    );
+
     for (const [outage, response] of Object.entries(HIDING_RESPONSES)) {
       test(
         `hides the gallery for ${outage}, and the rest of the page still works`,
