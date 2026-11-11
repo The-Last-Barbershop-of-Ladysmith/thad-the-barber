@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, Signal, inject } from '@angular/cor
 import { AppState } from '../../../../store/app.state';
 import { SmsSignupState } from '../../state/home.state';
 import { RequestStatus } from '../../../../shared/models/request.models';
-import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { ButtonModule } from 'primeng/button';
 import { SpinnerIcon } from 'primeng/icons/spinner';
@@ -10,6 +10,7 @@ import { InputMaskModule } from 'primeng/inputmask';
 import { MessageModule } from 'primeng/message';
 import * as HomeActions from '../../state/home.actions';
 import { homeFeature } from '../../state/home.feature';
+import { PHONE_VALIDATORS } from '../../../../shared/validators/form.validators';
 
 /** Phone number opt-in for text alerts, shown inside the first announcement. */
 @Component({
@@ -33,7 +34,7 @@ export class SmsSignup {
   protected readonly submitting: Signal<boolean> = this.store.selectSignal(homeFeature.selectIsSubscribingSms);
   protected readonly phone: FormControl<string> = new FormControl(
     '',
-    { nonNullable: true, validators: [Validators.required, Validators.pattern(/^\(\d{3}\) \d{3}-\d{4}$/)] },
+    { nonNullable: true, validators: PHONE_VALIDATORS },
   );
 
   protected submit(): void {
