@@ -44,10 +44,7 @@ public sealed class ReviewsEndpointsTests
     [Fact]
     public async Task ReviewsIs200WithNothingWhenTheFileIsMissing()
     {
-        using ApiFactory api = new(reviews: new FakeReviewsHttp
-        {
-            Status = HttpStatusCode.NotFound,
-        });
+        using ApiFactory api = new(media: new FakeMediaStorage());
 
         using HttpResponseMessage response = await api.CreateClient().GetAsync("/api/reviews", Cancellation);
 

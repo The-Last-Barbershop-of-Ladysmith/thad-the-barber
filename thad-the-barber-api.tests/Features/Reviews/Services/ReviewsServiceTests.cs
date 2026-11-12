@@ -1,8 +1,6 @@
-using System.Net;
-using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
-using ThadTheBarber.Api.Features.Reviews.Configuration;
+using ThadTheBarber.Api.Common.Services;
 using ThadTheBarber.Api.Features.Reviews.Models;
 using ThadTheBarber.Api.Features.Reviews.Services;
 using ThadTheBarber.Api.Tests.TestSupport.Fakes;
@@ -11,66 +9,65 @@ namespace ThadTheBarber.Api.Tests.Features.Reviews.Services;
 
 public sealed class ReviewsServiceTests
 {
-    private static readonly TimeSpan CacheFor = TimeSpan.FromMinutes(5);
+    private const string File = "reviews.json";
+
+    private readonly FakeMediaStorage _storage = new();
+    private readonly FakeTimeProvider _time = new();
+    private readonly ReviewsService _reviews;
+
+    public ReviewsServiceTests()
+    {
+        _storage.ContentFiles[File] = FakeReviewsFile.ValidBody;
+        _reviews = new ReviewsService(
+            _storage,
+            FakeStaleCache.Create(_time),
+            Options.Create(FakeMediaStorageSettings.Create())
+        );
+    }
 
     private static CancellationToken Cancellation => TestContext.Current.CancellationToken;
 
     [Fact]
-    public async Task ReadsTheReviewsFileFromTheMediaContainer()
+    public async Task ReadsTheReviewsFileFromTheContentContainer()
     {
-        FakeReviewsHttp blob = new();
+        ReviewsContent content = await _reviews.GetAsync(Cancellation);
 
-        ReviewsContent content = await CreateService(blob, new FakeTimeProvider()).GetAsync(Cancellation);
-
-        Assert.Equal("https://media.example/media-test/content/reviews.json", blob.RequestUri!.AbsoluteUri);
         Assert.Equal(2, content.Testimonials.Count);
         Assert.Equal(new ReviewRating(4.5, 12, "https://maps.example.test/listing"), content.Rating);
     }
 
     [Fact]
-    public async Task KeepsTheFileForTheCacheTimeAndReadsItAgainAfterwards()
+    public async Task KeepsTheFileUntilTheCacheTimeEndsAndReadsItAgainAfterwards()
     {
-        FakeReviewsHttp blob = new();
-        FakeTimeProvider time = new();
-        using ReviewsService service = CreateService(blob, time);
+        await _reviews.GetAsync(Cancellation);
+        _time.Advance(StaleCache.CacheFor - TimeSpan.FromSeconds(1));
+        await _reviews.GetAsync(Cancellation);
+        Assert.Equal(1, _storage.Calls);
 
-        await service.GetAsync(Cancellation);
-        time.Advance(CacheFor - TimeSpan.FromSeconds(1));
-        await service.GetAsync(Cancellation);
-        Assert.Equal(1, blob.RequestCount);
-
-        time.Advance(TimeSpan.FromSeconds(1));
-        await service.GetAsync(Cancellation);
-        Assert.Equal(2, blob.RequestCount);
+        _time.Advance(TimeSpan.FromSeconds(1));
+        await _reviews.GetAsync(Cancellation);
+        Assert.Equal(2, _storage.Calls);
     }
 
     [Fact]
-    public async Task AnEditToTheFileShowsOnceTheCacheExpires()
+    public async Task AnEditShowsOnTheNextLoadOnceTheFileIsMarkedStale()
     {
-        FakeReviewsHttp blob = new();
-        FakeTimeProvider time = new();
-        using ReviewsService service = CreateService(blob, time);
-        await service.GetAsync(Cancellation);
+        await _reviews.GetAsync(Cancellation);
 
-        blob.Body = """{ "testimonials": [{ "author": "Sam Placeholder", "text": "Edited" }] }""";
-        time.Advance(CacheFor);
-        ReviewsContent content = await service.GetAsync(Cancellation);
+        _storage.ContentFiles[File] = """{ "testimonials": [{ "author": "Sam Placeholder", "text": "Edited" }] }""";
+        _reviews.MarkStale();
+        ReviewsContent content = await _reviews.GetAsync(Cancellation);
 
         Assert.Equal("Sam Placeholder", Assert.Single(content.Testimonials).Author);
         Assert.Null(content.Rating);
     }
 
-    [Theory]
-    [InlineData(HttpStatusCode.NotFound)]
-    [InlineData(HttpStatusCode.ServiceUnavailable)]
-    public async Task AMissingOrFailingFileServesNoReviews(HttpStatusCode status)
+    [Fact]
+    public async Task AMissingFileServesNoReviews()
     {
-        FakeReviewsHttp blob = new()
-        {
-            Status = status,
-        };
+        _storage.ContentFiles.Remove(File);
 
-        ReviewsContent content = await CreateService(blob, new FakeTimeProvider()).GetAsync(Cancellation);
+        ReviewsContent content = await _reviews.GetAsync(Cancellation);
 
         Assert.Empty(content.Testimonials);
         Assert.Null(content.Rating);
@@ -79,52 +76,46 @@ public sealed class ReviewsServiceTests
     [Theory]
     [InlineData("not json")]
     [InlineData("""{ "items": [] }""")]
-    public async Task AFileThatIsNotAReviewsFileServesNoReviews(string body)
+    public async Task AFileThatIsNotAReviewsFileServesNoReviewsWhenThereIsNoEarlierCopy(string body)
     {
-        FakeReviewsHttp blob = new()
-        {
-            Body = body,
-        };
+        _storage.ContentFiles[File] = body;
 
-        ReviewsContent content = await CreateService(blob, new FakeTimeProvider()).GetAsync(Cancellation);
-
-        Assert.Empty(content.Testimonials);
-    }
-
-    public static TheoryData<Exception> SendFailures() =>
-    [
-        new HttpRequestException("The media container is unreachable."),
-        new TaskCanceledException("The HttpClient timed out."),
-    ];
-
-    [Theory]
-    [MemberData(nameof(SendFailures))]
-    public async Task AnUnreachableOrSlowContainerServesNoReviews(Exception failure)
-    {
-        FakeReviewsHttp blob = new()
-        {
-            Failure = failure,
-        };
-
-        ReviewsContent content = await CreateService(blob, new FakeTimeProvider()).GetAsync(Cancellation);
+        ReviewsContent content = await _reviews.GetAsync(Cancellation);
 
         Assert.Empty(content.Testimonials);
     }
 
     [Fact]
-    public async Task AFailedReadIsKeptForTheCacheTimeToo()
+    public async Task ABrokenEditKeepsServingTheLastGoodReviews()
     {
-        FakeReviewsHttp blob = new()
-        {
-            Status = HttpStatusCode.NotFound,
-        };
-        FakeTimeProvider time = new();
-        using ReviewsService service = CreateService(blob, time);
+        await _reviews.GetAsync(Cancellation);
 
-        await service.GetAsync(Cancellation);
-        await service.GetAsync(Cancellation);
+        _storage.ContentFiles[File] = "not json";
+        _reviews.MarkStale();
+        ReviewsContent content = await _reviews.GetAsync(Cancellation);
 
-        Assert.Equal(1, blob.RequestCount);
+        Assert.Equal(2, content.Testimonials.Count);
+    }
+
+    [Fact]
+    public async Task UnreachableStorageServesNoReviewsWhenThereIsNoEarlierCopy()
+    {
+        _storage.Failure = new HttpRequestException("The content container is unreachable.");
+
+        ReviewsContent content = await _reviews.GetAsync(Cancellation);
+
+        Assert.Empty(content.Testimonials);
+    }
+
+    [Fact]
+    public async Task AFailedFirstReadIsNotRetriedOnEveryRequest()
+    {
+        _storage.Failure = new HttpRequestException("The content container is unreachable.");
+
+        await _reviews.GetAsync(Cancellation);
+        await _reviews.GetAsync(Cancellation);
+
+        Assert.Equal(1, _storage.Calls);
     }
 
     [Fact]
@@ -132,24 +123,8 @@ public sealed class ReviewsServiceTests
     {
         using CancellationTokenSource cancelled = new();
         await cancelled.CancelAsync();
-        FakeReviewsHttp blob = new()
-        {
-            Failure = new TaskCanceledException("Cancelled."),
-        };
+        _storage.Failure = new TaskCanceledException("Cancelled.");
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => CreateService(blob, new FakeTimeProvider()).GetAsync(cancelled.Token));
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => _reviews.GetAsync(cancelled.Token));
     }
-
-    private static ReviewsService CreateService(FakeReviewsHttp blob, FakeTimeProvider time) =>
-        new(
-            new FakeHttpClientFactory(blob, new Uri("https://media.example/media-test/")),
-            time,
-            Options.Create(new ReviewsSettings
-            {
-                MediaAccountName = "media",
-                MediaContainerName = "media-test",
-                CacheFor = CacheFor,
-            }),
-            NullLogger<ReviewsService>.Instance
-        );
 }

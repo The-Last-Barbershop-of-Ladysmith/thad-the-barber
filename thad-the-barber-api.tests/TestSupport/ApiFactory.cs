@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using ThadTheBarber.Api.Features.Reviews.Services;
 using ThadTheBarber.Api.Infrastructure.Storage.Services;
 using ThadTheBarber.Api.Features.Session.Services;
 using ThadTheBarber.Api.Recaptcha.Services;
@@ -36,11 +35,10 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
     private readonly ISquareService _square;
     private readonly TimeProvider _time;
     private readonly FakeRecaptchaService _recaptcha;
-    private readonly FakeReviewsHttp _reviews;
     private readonly FakeMediaStorage _media;
 
     public ApiFactory()
-        : this(null, null, null, null, null, null)
+        : this(null, null, null, null, null)
     {
     }
 
@@ -50,22 +48,22 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
     /// </param>
     /// <param name="time">Replaces the clock; defaults to the real one.</param>
     /// <param name="recaptcha">Replaces reCAPTCHA; defaults to a <see cref="FakeRecaptchaService"/> that passes everyone.</param>
-    /// <param name="reviews">Replaces the media container's reviews file; defaults to a valid one.</param>
-    /// <param name="media">Replaces the storage account's gallery folder and content container; defaults to two photos.</param>
+    /// <param name="media">
+    /// Replaces the storage account's gallery folder and content container; defaults to two photos and a valid
+    /// reviews file.
+    /// </param>
     internal ApiFactory(
         string[]? origins = null,
         ISquareService? square = null,
         TimeProvider? time = null,
         FakeRecaptchaService? recaptcha = null,
-        FakeReviewsHttp? reviews = null,
         FakeMediaStorage? media = null)
     {
         _origins = origins ?? [FrontendOrigin, CustomDomainOrigin];
         _square = square ?? new FakeSquareService();
         _time = time ?? TimeProvider.System;
         _recaptcha = recaptcha ?? new FakeRecaptchaService();
-        _reviews = reviews ?? new FakeReviewsHttp();
-        _media = media ?? new FakeMediaStorage();
+        _media = media ?? CreateMediaWithReviews();
     }
 
     public FakeSessionSigningKey SigningKey { get; } = new();
@@ -100,8 +98,6 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
         builder.UseSetting("Recaptcha:SiteKey", "fake-site-key");
         builder.UseSetting("Recaptcha:ApiKey", "fake-api-key");
         builder.UseSetting("ManageLink:HmacKey", ManageLinkHmacKey);
-        builder.UseSetting("Reviews:MediaAccountName", "fake-media");
-        builder.UseSetting("Reviews:MediaContainerName", "fake-container");
         builder.UseSetting("MediaWebhook:Key", MediaWebhookKey);
         builder.UseSetting("MediaStorage:AccountName", "fakeaccount");
         builder.UseSetting("MediaStorage:MediaContainerName", "media-fake");
@@ -118,7 +114,13 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
             services.AddSingleton<IRecaptchaService>(_recaptcha);
             services.AddSingleton<ISessionSigningKey>(SigningKey);
             services.AddSingleton<IMediaStorage>(_media);
-            services.AddHttpClient(ReviewsService.HttpClientName).ConfigurePrimaryHttpMessageHandler(() => _reviews);
         });
+    }
+
+    private static FakeMediaStorage CreateMediaWithReviews()
+    {
+        FakeMediaStorage media = new();
+        media.ContentFiles["reviews.json"] = FakeReviewsFile.ValidBody;
+        return media;
     }
 }
