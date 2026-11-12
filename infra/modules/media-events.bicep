@@ -1,4 +1,4 @@
-// Tells the environment's API when a gallery photo or announcements.json changes, so it refetches (#204).
+// Tells the environment's API when a gallery photo, announcements.json or reviews.json changes, so it refetches (#204).
 
 param envName string
 param topicName string
@@ -32,6 +32,7 @@ resource mediaChanges 'Microsoft.EventGrid/systemTopics/eventSubscriptions@2025-
           values: [
             '/blobServices/default/containers/media-${envName}/blobs/gallery/'
             '/blobServices/default/containers/content-${envName}/blobs/announcements.json'
+            '/blobServices/default/containers/content-${envName}/blobs/reviews.json'
           ]
         }
       ]

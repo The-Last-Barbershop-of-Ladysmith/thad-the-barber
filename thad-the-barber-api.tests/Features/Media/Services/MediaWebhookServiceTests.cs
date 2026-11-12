@@ -7,6 +7,7 @@ using ThadTheBarber.Api.Features.Gallery.Services;
 using ThadTheBarber.Api.Features.Media.Configuration;
 using ThadTheBarber.Api.Features.Media.Exceptions;
 using ThadTheBarber.Api.Features.Media.Services;
+using ThadTheBarber.Api.Features.Reviews.Services;
 using ThadTheBarber.Api.Infrastructure.Storage.Configuration;
 using ThadTheBarber.Api.Infrastructure.Storage.Models;
 using ThadTheBarber.Api.Tests.TestSupport.Fakes;
@@ -22,6 +23,7 @@ public sealed class MediaWebhookServiceTests
     private readonly FakeMediaStorage _storage = new();
     private readonly GalleryService _gallery;
     private readonly AnnouncementsService _announcements;
+    private readonly ReviewsService _reviews;
     private readonly MediaWebhookService _webhooks;
 
     public MediaWebhookServiceTests()
@@ -38,9 +40,11 @@ public sealed class MediaWebhookServiceTests
             storageSettings,
             NullLogger<AnnouncementsService>.Instance
         );
+        _reviews = new ReviewsService(_storage, cache, storageSettings);
         _webhooks = new MediaWebhookService(
             _gallery,
             _announcements,
+            _reviews,
             storageSettings,
             Options.Create(new MediaWebhookSettings { Key = Key }),
             NullLogger<MediaWebhookService>.Instance
@@ -56,12 +60,14 @@ public sealed class MediaWebhookServiceTests
 
     private static string GallerySubject(string blob) => $"/blobServices/default/containers/media-fake/blobs/{blob}";
 
-    /// <summary>Loads both caches once, so a later call to storage means the webhook marked one stale.</summary>
+    /// <summary>Loads all three caches once, so a later call to storage means the webhook marked one stale.</summary>
     private async Task WarmCachesAsync()
     {
         _storage.ContentFiles["announcements.json"] = """{ "items": [] }""";
+        _storage.ContentFiles["reviews.json"] = """{ "testimonials": [] }""";
         await _gallery.GetAsync(Cancellation);
         await _announcements.GetActiveAsync(Cancellation);
+        await _reviews.GetAsync(Cancellation);
         _storage.Calls = 0;
     }
 
@@ -98,22 +104,35 @@ public sealed class MediaWebhookServiceTests
         Assert.Equal(1, _storage.Calls);
     }
 
+    [Fact]
+    public async Task AChangeToTheReviewsFileMakesTheNextReviewsLoadReadItAgain()
+    {
+        await WarmCachesAsync();
+
+        _webhooks.Handle(Batch(Event(Created, "/blobServices/default/containers/content-fake/blobs/reviews.json")), Key);
+        await _reviews.GetAsync(Cancellation);
+
+        Assert.Equal(1, _storage.Calls);
+    }
+
     [Theory]
     [InlineData(Created, "/blobServices/default/containers/media-fake/blobs/announcements/spring.webp")]
     [InlineData(Created, "/blobServices/default/containers/media-fake/blobs/content/other.json")]
+    [InlineData(Created, "/blobServices/default/containers/media-fake/blobs/content/reviews.json")]
     [InlineData(Created, "/blobServices/default/containers/content-fake/blobs/notes.txt")]
     [InlineData(Created, "/blobServices/default/containers/content-fake/blobs/gallery/new.jpg")]
     [InlineData(Created, "/blobServices/default/containers/other-container/blobs/gallery/new.jpg")]
     [InlineData(Created, "/blobServices/default/containers/media-fake")]
     [InlineData(Created, "/somewhere/else")]
     [InlineData("Microsoft.Storage.BlobTierChanged", "/blobServices/default/containers/media-fake/blobs/gallery/new.jpg")]
-    public async Task AChangeToAnythingElseLeavesBothCachesAlone(string eventType, string subject)
+    public async Task AChangeToAnythingElseLeavesEveryCacheAlone(string eventType, string subject)
     {
         await WarmCachesAsync();
 
         _webhooks.Handle(Batch(Event(eventType, subject)), Key);
         await _gallery.GetAsync(Cancellation);
         await _announcements.GetActiveAsync(Cancellation);
+        await _reviews.GetAsync(Cancellation);
 
         Assert.Equal(0, _storage.Calls);
     }
@@ -220,6 +239,7 @@ public sealed class MediaWebhookServiceTests
         MediaWebhookService unconfigured = new(
             _gallery,
             _announcements,
+            _reviews,
             Options.Create(FakeMediaStorageSettings.Create()),
             Options.Create(new MediaWebhookSettings { Key = configuredKey }),
             NullLogger<MediaWebhookService>.Instance

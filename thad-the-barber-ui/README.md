@@ -214,7 +214,7 @@ Lint config lives in `eslint.config.js`; `npm run lint` checks and `npm run lint
 
 These return local data until a backend exists. Each has a note on the endpoint it should call:
 
-- `ReviewsService` (`features/reviews/`): testimonials and the listing rating from `GET /api/reviews` (#245), which reads `content/reviews.json` from the media container until Google's reviews API replaces it (#37)
+- `ReviewsService` (`features/reviews/`): testimonials and the listing rating from `GET /api/reviews` (#245), which reads `reviews.json` from the content container until Google's reviews API replaces it (#37)
 - `SmsSignupService`: text-alert opt-in
 
 `AvailabilityService` (`GET /api/bookings/availability`) and `BookingService` (`POST /api/bookings`) are real since #41. `GalleryService` is real too: it calls the anonymous `GET /api/gallery` (#204), in the browser only, so the prerendered page never holds a stale gallery. The API lists the media container's `gallery/` folder, so supported images show as uploaded, newest first, with alt text from the file name (BR-34). `AnnouncementsService` is real too: it calls the anonymous `GET /api/announcements`, in the browser only, and the API returns only the announcements active today on the shop's clock with checked fields and sanitized `bodyHtml` (BR-30 to BR-33), so the UI does no date filtering; the service only gives each button its link kind. A failed request hides the section (BR-32). The browser reads storage only for the images, which is why the CSP keeps the media origin in `img-src` and not in `connect-src`. The mocked Playwright suite answers both endpoints with made-up lists and serves a small WebP for the image URLs (`e2e/support/gallery.ts`, `announcements.ts` and `media.ts`).

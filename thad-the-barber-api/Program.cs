@@ -54,7 +54,7 @@ builder.Services.AddSessionTokens(builder.Configuration);
 builder.Services.AddSessionBearerAuth();
 builder.Services.AddHealth();
 builder.Services.AddBooking(builder.Configuration);
-builder.Services.AddReviews(builder.Configuration);
+builder.Services.AddReviews();
 builder.Services.AddMediaStorage(builder.Configuration);
 builder.Services.AddGallery();
 builder.Services.AddAnnouncements();
