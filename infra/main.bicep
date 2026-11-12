@@ -27,6 +27,9 @@ type environmentConfig = {
 
   @description('Gives the admin Storage Blob Data Contributor on this environment\'s media and content containers, for gallery and announcement edits in the portal. Otherwise Reader.')
   canAdminWriteMedia: bool?
+
+  @description('Stops anonymous listing of the media container of this environment (publicAccess Blob). Turn on only after the UI that reads /api/gallery is live there (#204).')
+  restrictMediaListing: bool?
 }
 
 @description('Stage used in shared resource names.')
@@ -85,14 +88,8 @@ param restrictAppAccess bool
 @description('Your public IPs or CIDRs. Allowed through the app restrictions and the Key Vault firewall.')
 param allowedIpRanges string[] = []
 
-@description('Stop anonymous listing of the media containers. Deploy with true only after the UI that reads /api/gallery is live (#204).')
-param restrictMediaListing bool = false
-
-@description('Subscribe each API to blob changes through Event Grid. Deploy with true only after the API with /api/webhooks/media is running (#204).')
-param deployMediaSubscription bool = false
-
 @secure()
-@description('Per-environment webhook keys by environment name, equal to Key Vault secret MediaWebhook--Key. Needed only with deployMediaSubscription.')
+@description('Per-environment webhook keys by environment name, equal to Key Vault secret MediaWebhook--Key. An environment with a key gets its Event Grid subscription, so provide it only once the API of that environment with /api/webhooks/media is running (#204).')
 param mediaWebhookKeys object = {}
 
 param tags object = {
@@ -150,8 +147,7 @@ module env 'modules/environment.bicep' = [
       squareAlerts: e.?squareAlerts ?? false
       canAdminSignSessions: e.?canAdminSignSessions ?? false
       canAdminWriteMedia: e.?canAdminWriteMedia ?? false
-      restrictMediaListing: restrictMediaListing
-      deployMediaSubscription: deployMediaSubscription
+      restrictMediaListing: e.?restrictMediaListing ?? false
       storageEventsTopicName: shared.outputs.storageEventsTopicName
       mediaWebhookKey: mediaWebhookKeys[?e.name] ?? ''
       actionGroupId: shared.outputs.actionGroupId

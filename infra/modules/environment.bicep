@@ -39,14 +39,11 @@ param canAdminWriteMedia bool
 @description('Stop anonymous listing of the media container (publicAccess Blob).')
 param restrictMediaListing bool
 
-@description('Subscribe the API to blob changes; needs mediaWebhookKey.')
-param deployMediaSubscription bool
-
 @description('The shared storage system topic this subscription attaches to.')
 param storageEventsTopicName string
 
 @secure()
-@description('Same value as Key Vault secret MediaWebhook--Key. Used only when deployMediaSubscription is on.')
+@description('Same value as Key Vault secret MediaWebhook--Key. Empty leaves the API unsubscribed from blob changes.')
 param mediaWebhookKey string
 
 param actionGroupId string
@@ -191,7 +188,7 @@ resource contentContainer 'Microsoft.Storage/storageAccounts/blobServices/contai
   }
 }
 
-module mediaEvents 'media-events.bicep' = if (deployMediaSubscription) {
+module mediaEvents 'media-events.bicep' = if (!empty(mediaWebhookKey)) {
   name: 'media-events-${envName}'
   params: {
     envName: envName

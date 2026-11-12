@@ -3,7 +3,7 @@
 //   TTB_ALERT_EMAIL          (required) who gets every alert (the $5 budget, Square)
 //   TTB_ALERT_PHONE          (optional) US mobile number, 10 digits, for the same alerts by SMS
 //   TTB_ADMIN_OBJECT_ID      (optional) your Entra object ID, for Key Vault Secrets Officer and media container access
-//   TTB_MEDIA_WEBHOOK_KEY_DEV / _TEST  (only with deployMediaSubscription) the MediaWebhook--Key value of that vault
+//   TTB_MEDIA_WEBHOOK_KEY_DEV / _TEST  (optional) the MediaWebhook--Key value of that vault; an environment with one gets its Event Grid subscription
 //   TTB_ALLOWED_IPS          your public IP(s), comma-separated. Without it the dev/test apps and vaults refuse you.
 using 'main.bicep'
 
@@ -33,6 +33,8 @@ param environments = [
     canAdminSignSessions: true
     // Lets you edit the gallery and content in the portal, as Thad will.
     canAdminWriteMedia: true
+    // Step 5 of the media rollout (docs/environments.md): set true in the PR that ships the UI reading /api/gallery.
+    restrictMediaListing: false
   }
   {
     name: 'test'
@@ -40,6 +42,7 @@ param environments = [
     githubEnvironment: 'test'
     extraCorsOrigins: []
     canAdminWriteMedia: true
+    restrictMediaListing: false
   }
 ]
 
@@ -54,13 +57,8 @@ param adminPrincipalId = readEnvironmentVariable('TTB_ADMIN_OBJECT_ID', '')
 // Pull requests run what-if on the subscription with this stage's preview identity.
 param createPreviewIdentity = true
 
-// Event Grid delivers the same key the API reads from Key Vault (MediaWebhook--Key). Empty unless subscribing.
+// Event Grid delivers the same key the API reads from Key Vault (MediaWebhook--Key).
 param mediaWebhookKeys = {
   dev: readEnvironmentVariable('TTB_MEDIA_WEBHOOK_KEY_DEV', '')
   test: readEnvironmentVariable('TTB_MEDIA_WEBHOOK_KEY_TEST', '')
 }
-
-// Steps 4 and 5 of the media rollout in docs/environments.md: the PR that ships each step flips its switch, so a deploy never reopens a closed one.
-param deployMediaSubscription = false
-
-param restrictMediaListing = false

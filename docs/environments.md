@@ -34,7 +34,7 @@ How code moves from a topic branch to production. The decisions behind this are 
 | Key Vaults | `kv-ttb-dev-centralus`, `kv-ttb-test-centralus` | One per environment, because the secret names are the same in each. Standard, RBAC, soft delete + purge protection |
 | Application Insights | `ai-ttb-dev-centralus`, `ai-ttb-test-centralus` | Workspace-based, on `log-ttb-nonprod-centralus` (30-day retention, 0.15 GB/day cap ≈ 4.5 GB/month, under the 5 GB free allowance) |
 | Storage | `storttbnonprodcentralus` | Standard LRS, hot. Containers `media-dev`/`media-test` (image files, public read: `Container` until `restrictMediaListing` is on, then `Blob`, so a file loads by its exact URL but nobody can list it) and private `content-dev`/`content-test` (`announcements.json`, read only by the API). HTTPS only, TLS 1.2, **shared-key access off** (uploads use Entra ID). Blob CORS allows GET from the web origins |
-| Event Grid | `evgt-ttb-nonprod-centralus` (system topic on the storage account), `evgs-ttb-media-dev`, `evgs-ttb-media-test` | One topic per stage, one subscription per environment (only with `deployMediaSubscription`). `BlobCreated`/`BlobDeleted` for `media-<env>/gallery/` and `content-<env>/announcements.json` go to `POST /api/webhooks/media` with the secret header `x-media-webhook-key`, so the API refetches within seconds (#204). Free under 100,000 operations a month |
+| Event Grid | `evgt-ttb-nonprod-centralus` (system topic on the storage account), `evgs-ttb-media-dev`, `evgs-ttb-media-test` | One topic per stage, one subscription per environment (only once that environment's webhook key is provided, see the rollout). `BlobCreated`/`BlobDeleted` for `media-<env>/gallery/` and `content-<env>/announcements.json` go to `POST /api/webhooks/media` with the secret header `x-media-webhook-key`, so the API refetches within seconds (#204). Free under 100,000 operations a month |
 | Budget | `budget-ttb-monthly` | $5/month on the subscription; alerts at 80% and 100% actual and 100% forecast through the action group |
 | Action group | `ag-ttb-<stage>` | Every alert (budget, Square): email to `TTB_ALERT_EMAIL`, plus SMS to `TTB_ALERT_PHONE` when set. US SMS: first 100/month free |
 | Key Vault audit logs | `audit-to-log-analytics` on each vault | Every vault operation to Log Analytics, so reads of the Square secrets can be checked (#23) |
@@ -130,16 +130,15 @@ The gallery and announcements move behind the API, so the order matters: the dep
    curl https://as-ttb-api-dev-centralus.azurewebsites.net/api/announcements   # from an allowed IP
    ```
 
-4. **Subscription.** Set `deployMediaSubscription` to `true` in `infra/nonprod.bicepparam`, put each vault's key in the environment and deploy again (the API must be running, or Event Grid's handshake fails and the deploy errors):
+4. **Subscription.** Put the environment's vault key in the environment and deploy again; an environment without its key gets no subscription, so dev can go first. The API must be running, or Event Grid's handshake fails and the deploy errors:
 
    ```powershell
    $env:TTB_MEDIA_WEBHOOK_KEY_DEV  = az keyvault secret show --vault-name kv-ttb-dev-centralus  --name MediaWebhook--Key --query value -o tsv
-   $env:TTB_MEDIA_WEBHOOK_KEY_TEST = az keyvault secret show --vault-name kv-ttb-test-centralus --name MediaWebhook--Key --query value -o tsv
    az deployment sub create --location centralus --parameters infra/nonprod.bicepparam
    ```
 
-   Upload a photo to `media-dev/gallery/`; it should show on the home page within seconds. Leave the switch on in later deploys.
-5. **Stop anonymous listing**, after the UI that reads `/api/gallery` is live: delete the old `media-<env>/content/announcements.json`, then set `restrictMediaListing` to `true` in `infra/nonprod.bicepparam` and deploy again. Check that `https://storttbnonprodcentralus.blob.core.windows.net/media-dev?restype=container&comp=list` now answers 404/403 anonymously while a direct image URL still loads.
+   Upload a photo to `media-dev/gallery/`; it should show on the home page within seconds. For test, repeat with `TTB_MEDIA_WEBHOOK_KEY_TEST` and `kv-ttb-test-centralus` once its API runs.
+5. **Stop anonymous listing**, after the UI that reads `/api/gallery` is live: delete the old `media-<env>/content/announcements.json`, then set that environment's `restrictMediaListing` to `true` in `infra/nonprod.bicepparam` and deploy again. Check that `https://storttbnonprodcentralus.blob.core.windows.net/media-dev?restype=container&comp=list` now answers 404/403 anonymously while a direct image URL still loads.
 
 The storage CORS rule is unchanged: the UI no longer needs it for the gallery, but the backdrop frames may still be fetched cross-origin, so trim it as a separate change.
 
