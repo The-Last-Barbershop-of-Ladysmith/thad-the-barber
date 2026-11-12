@@ -43,7 +43,7 @@ param restrictMediaListing bool
 param storageEventsTopicName string
 
 @secure()
-@description('Same value as Key Vault secret MediaWebhook--Key. Empty leaves the API unsubscribed from blob changes.')
+@description('Same value as Key Vault secret MediaWebhook--Key. Empty skips the subscription and leaves an existing one untouched.')
 param mediaWebhookKey string
 
 param actionGroupId string
