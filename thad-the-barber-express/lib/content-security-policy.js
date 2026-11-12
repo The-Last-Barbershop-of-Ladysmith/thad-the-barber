@@ -28,7 +28,7 @@ function styleAttributeHashes(html) {
   });
 }
 
-// sources is the build's csp-sources.json: the environment's API and App Insights origins (connect-src), and the media and Static Maps image origins (img-src).
+// sources is the build's csp-sources.json.
 function contentSecurityPolicy(nonce, sources, styleHashes = []) {
   var directives = {
     'default-src': ["'self'"],

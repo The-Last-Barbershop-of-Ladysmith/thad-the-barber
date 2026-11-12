@@ -16,10 +16,6 @@ export const ANNOUNCEMENTS_URL: string = `${environment.apiBaseUrl}/announcement
 export class AnnouncementsService {
   private readonly http: HttpClient = inject(HttpClient);
 
-  /**
-   * The announcements showing today on the shop's calendar (BR-30, #204). The API reads and checks the private
-   * `announcements.json`, so a scheduled one never reaches the browser. Anonymous on the API.
-   */
   getAnnouncements(): Observable<Announcement[]> {
     return this.http
       .get<AnnouncementDto[]>(ANNOUNCEMENTS_URL, { context: anonymousRequest() })
@@ -36,7 +32,6 @@ export class AnnouncementsService {
     };
   }
 
-  /** The API only lets through links `linkKind` knows; one it doesn't is dropped rather than rendered. */
   private toButton(button: AnnouncementButtonDto): Button | null {
     const kind: LinkKind | null = linkKind(button.url);
     if (kind === null) {

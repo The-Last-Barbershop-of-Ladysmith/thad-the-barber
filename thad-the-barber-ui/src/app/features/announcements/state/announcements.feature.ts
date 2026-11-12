@@ -20,9 +20,8 @@ export type AnnouncementsExtraSelectors = {
 export const announcementsFeatureKey: 'announcements' = 'announcements' as const;
 
 /**
- * The announcements `GET /api/announcements` says are showing today (#30, #204), registered at bootstrap because the
- * header and footer hide their link on every page when there are none (BR-32). Not saved, so a deleted announcement
- * never comes back from storage; it goes on the next home visit or reload.
+ * Registered at bootstrap because the header and footer hide their link on every page when there are none (BR-32).
+ * Not saved, so a deleted announcement never comes back from storage.
  */
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the Feature type.
 export const announcementsFeature = createFeature({
