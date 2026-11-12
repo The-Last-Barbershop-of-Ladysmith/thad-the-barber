@@ -7,7 +7,6 @@ import { TEST_ANNOUNCEMENT } from '../../../testing/test-announcement';
 import { Announcement } from '../../features/announcements/models/announcement.model';
 import * as AnnouncementsActions from '../../features/announcements/state/announcements.actions';
 import { announcementsFeature } from '../../features/announcements/state/announcements.feature';
-import { shopFeature } from '../../features/shop/state/shop.feature';
 import { AnnouncementStrip } from './announcement-strip';
 
 describe(
@@ -34,7 +33,6 @@ describe(
           provideRouter([]),
           provideStore({
             [announcementsFeature.name]: announcementsFeature.reducer,
-            [shopFeature.name]: shopFeature.reducer,
           }),
         ],
       });
@@ -80,13 +78,7 @@ describe(
     it(
       'starts on the newest active announcement, keeping the others stacked and hidden from assistive tech',
       (): void => {
-        const fixture: ComponentFixture<AnnouncementStrip> = render([
-          ...threeAnnouncements,
-          {
-            ...announcement('Ended but newer', '2026-10-14'),
-            endDate: '2026-10-14',
-          },
-        ]);
+        const fixture: ComponentFixture<AnnouncementStrip> = render(threeAnnouncements);
         const items: HTMLElement[] = Array.from(hostOf(fixture).querySelectorAll<HTMLElement>('.item'));
 
         expect(items.map((item: HTMLElement): string => item.querySelector('.title')?.textContent.trim() ?? '')).toEqual([
@@ -197,14 +189,9 @@ describe(
     );
 
     it(
-      'renders nothing when no announcement is active',
+      'renders nothing when there are no announcements',
       (): void => {
-        const fixture: ComponentFixture<AnnouncementStrip> = render([
-          {
-            ...TEST_ANNOUNCEMENT,
-            endDate: '2026-10-14',
-          },
-        ]);
+        const fixture: ComponentFixture<AnnouncementStrip> = render([]);
 
         expect(hostOf(fixture).querySelector('[data-testid="announcement-strip"]')).toBeNull();
       },

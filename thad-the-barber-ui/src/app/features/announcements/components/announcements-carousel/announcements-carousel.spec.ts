@@ -7,7 +7,6 @@ import { Announcement } from '../../models/announcement.model';
 import { AnnouncementImagePosition } from '../../models/announcement-image-position.model';
 import * as AnnouncementsActions from '../../state/announcements.actions';
 import { announcementsFeature } from '../../state/announcements.feature';
-import { shopFeature } from '../../../shop/state/shop.feature';
 import { AnnouncementsCarousel } from './announcements-carousel';
 import { LinkKind } from '../../../../shared/models/link.models';
 
@@ -33,7 +32,6 @@ describe(
           provideRouter([]),
           provideStore({
             [announcementsFeature.name]: announcementsFeature.reducer,
-            [shopFeature.name]: shopFeature.reducer,
           }),
         ],
       });

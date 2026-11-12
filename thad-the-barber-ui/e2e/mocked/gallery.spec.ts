@@ -1,19 +1,19 @@
 import { Locator, Page, Request, Route } from '@playwright/test';
 import { expectNoA11yViolations } from '../support/axe';
 import { expect, test } from '../support/fixtures';
-import { GALLERY_LISTING_URL, TEST_GALLERY, galleryListing } from '../support/media';
+import { GALLERY_URL, TEST_GALLERY } from '../support/gallery';
 import { collectPageErrors } from '../support/page-errors';
 
 const EMPTY_RESPONSES: Record<string, Parameters<Route['fulfill']>[0]> = {
-  'an empty gallery folder': { body: galleryListing([]), contentType: 'application/xml' },
-  'a failed listing': { status: 503 },
+  'an empty gallery': { json: [] },
+  'a failed request': { status: 503 },
 };
 
 test.describe(
   'gallery',
   (): void => {
     test(
-      'shows every supported image in the container listing, newest first, with alt text from its file name',
+      'shows every supported image in the API, newest first, with alt text from its file name',
       async ({ page }: { page: Page; }): Promise<void> => {
         await page.goto('/#gallery');
 
@@ -60,22 +60,22 @@ test.describe(
     );
 
     test(
-      'holds the section with a placeholder while the listing loads',
+      'holds the section with a placeholder while the gallery loads',
       async ({ page }: { page: Page; }): Promise<void> => {
-        let releaseListing: () => void = (): void => undefined;
-        const listingHeld: Promise<void> = new Promise<void>((resolve: () => void): void => {
-          releaseListing = resolve;
+        let releaseGallery: () => void = (): void => undefined;
+        const galleryHeld: Promise<void> = new Promise<void>((resolve: () => void): void => {
+          releaseGallery = resolve;
         });
-        await page.route(GALLERY_LISTING_URL, async (route: Route): Promise<void> => {
-          await listingHeld;
-          await route.fulfill({ body: galleryListing([]), contentType: 'application/xml' });
+        await page.route(GALLERY_URL, async (route: Route): Promise<void> => {
+          await galleryHeld;
+          await route.fulfill({ json: [] });
         });
 
         await page.goto('/');
 
         await expect(page.getByTestId('gallery-loading')).toBeVisible();
 
-        releaseListing();
+        releaseGallery();
 
         await expect(page.getByTestId('gallery-loading')).toHaveCount(0);
       },
@@ -83,19 +83,19 @@ test.describe(
 
     for (const [path, expectedRequests] of [['/', 1], ['/book', 0]] as const) {
       test(
-        `makes ${expectedRequests} gallery listing request(s) on ${path}`,
+        `makes ${expectedRequests} gallery request(s) on ${path}`,
         async ({ page }: { page: Page; }): Promise<void> => {
-          const listingRequests: string[] = [];
+          const galleryRequests: string[] = [];
           page.on('request', (request: Request): void => {
-            if (request.url() === GALLERY_LISTING_URL) {
-              listingRequests.push(request.url());
+            if (request.url() === GALLERY_URL) {
+              galleryRequests.push(request.url());
             }
           });
 
           await page.goto(path);
           await page.waitForLoadState('networkidle');
 
-          expect(listingRequests).toHaveLength(expectedRequests);
+          expect(galleryRequests).toHaveLength(expectedRequests);
         },
       );
     }
@@ -105,11 +105,11 @@ test.describe(
         `says there are no photos for ${outage}, and the rest of the page still works`,
         async ({ page }: { page: Page; }): Promise<void> => {
           const pageErrors: Error[] = collectPageErrors(page);
-          await page.route(GALLERY_LISTING_URL, (route: Route): Promise<void> => route.fulfill(response));
-          const listingResponse: Promise<unknown> = page.waitForResponse(GALLERY_LISTING_URL);
+          await page.route(GALLERY_URL, (route: Route): Promise<void> => route.fulfill(response));
+          const galleryResponse: Promise<unknown> = page.waitForResponse(GALLERY_URL);
 
           await page.goto('/');
-          await listingResponse;
+          await galleryResponse;
 
           await expect(page.locator('#visit')).toBeVisible();
           await expect(page.getByTestId('gallery-empty')).toBeVisible();

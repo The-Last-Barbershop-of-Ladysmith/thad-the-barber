@@ -145,7 +145,6 @@ const mediaOrigin: string = new URL(environment.mediaBaseUrl).origin;
 const sources: Record<string, string[]> = {
   'connect-src': [
     new URL(environment.apiBaseUrl).origin,
-    mediaOrigin,
     ...(ingestionEndpoint ? [new URL(ingestionEndpoint).origin] : []),
   ],
   'img-src': [

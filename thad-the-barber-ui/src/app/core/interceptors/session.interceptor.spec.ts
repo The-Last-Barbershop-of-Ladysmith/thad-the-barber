@@ -95,7 +95,7 @@ describe(
       'sends nothing outside the API',
       (): void => {
         const outside: string[] = [
-          `${environment.mediaBaseUrl}/content/announcements.json`,
+          `${environment.mediaBaseUrl}/gallery/made-up-print.webp`,
           `${environment.apiBaseUrl}s/lookalike`,
           'https://example.test/api/bookings',
         ];

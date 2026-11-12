@@ -1,20 +1,9 @@
 import { ButtonVariant } from '../models/button.models';
-import { BUTTON_STYLES, isButtonVariant } from './button.utils';
+import { BUTTON_STYLES } from './button.utils';
 
 describe(
   'button utils',
   (): void => {
-    it(
-      'accepts only the enum values',
-      (): void => {
-        expect(isButtonVariant('outlined')).toBe(true);
-        expect(isButtonVariant(ButtonVariant.Text)).toBe(true);
-        expect(isButtonVariant('Outlined')).toBe(false);
-        expect(isButtonVariant('glowing')).toBe(false);
-        expect(isButtonVariant(undefined)).toBe(false);
-      },
-    );
-
     it(
       'maps every variant to PrimeNG inputs',
       (): void => {

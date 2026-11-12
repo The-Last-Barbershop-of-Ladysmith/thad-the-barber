@@ -25,7 +25,7 @@ export class AnnouncementStrip {
   private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
 
   protected readonly announcements: Signal<Announcement[]> = this.store.selectSignal(
-    announcementsFeature.selectActiveNewestFirst,
+    announcementsFeature.selectNewestFirst,
   );
 
   protected readonly isClosed: WritableSignal<boolean> = signal(false);
