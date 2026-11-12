@@ -1,11 +1,11 @@
 import { AnnouncementButtonDto } from './announcement-button.dto';
-import { AnnouncementImageDto } from './announcement-image.dto';
+import { AnnouncementImage } from '../models/announcement-image.model';
 
 export interface AnnouncementDto {
   title: string;
   bodyHtml: string;
   startDate: string;
   endDate: string;
-  image: AnnouncementImageDto | null;
+  image: AnnouncementImage | null;
   buttons: AnnouncementButtonDto[];
 }

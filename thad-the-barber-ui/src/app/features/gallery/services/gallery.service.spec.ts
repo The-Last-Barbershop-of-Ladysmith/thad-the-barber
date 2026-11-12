@@ -2,7 +2,6 @@ import { HttpContext, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { ANONYMOUS_REQUEST } from '../../../core/interceptors/anonymous-request.token';
-import { GalleryPhotoDto } from '../dtos/gallery-photo.dto';
 import { GalleryPhoto } from '../models/gallery-photo.model';
 import { GALLERY_URL, GalleryService } from './gallery.service';
 
@@ -38,28 +37,23 @@ describe(
     });
 
     it(
-      'keeps the API order and maps each photo to its source and alt text',
+      'keeps the API order and the source and alt text of each photo',
       (): void => {
-        const photosFromApi: GalleryPhotoDto[] = [
+        const photosFromApi: GalleryPhoto[] = [
           {
             src: 'https://media.example.test/gallery/UPPER_case.JPG',
             alt: 'UPPER case',
-            uploadedAt: '2026-10-10T09:30:00+00:00',
           },
           {
             src: 'https://media.example.test/gallery/beard%20line%20up.avif',
             alt: 'Beard line up',
-            uploadedAt: '2026-10-09T12:00:00+00:00',
           },
         ];
         const pending: ReturnType<typeof request> = request();
 
         pending.http.flush(photosFromApi);
 
-        expect(pending.result()).toEqual([
-          { src: 'https://media.example.test/gallery/UPPER_case.JPG', alt: 'UPPER case' },
-          { src: 'https://media.example.test/gallery/beard%20line%20up.avif', alt: 'Beard line up' },
-        ]);
+        expect(pending.result()).toEqual(photosFromApi);
       },
     );
 
