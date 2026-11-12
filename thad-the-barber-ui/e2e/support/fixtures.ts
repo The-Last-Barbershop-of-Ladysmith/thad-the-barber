@@ -8,7 +8,14 @@ import {
   isNextTimesRequest,
 } from './booking';
 import { fulfillStaticMap, isStaticMap } from './map';
-import { fulfillMedia, isMedia } from './media';
+import {
+  fulfillAnnouncements,
+  fulfillGallery,
+  fulfillMedia,
+  isAnnouncementsRequest,
+  isGalleryRequest,
+  isMedia,
+} from './media';
 import { fulfillReviews, isReviewsRequest } from './reviews';
 import { fulfillRecaptcha, fulfillSession, isRecaptchaScript, isSessionRequest } from './session';
 import { fulfillShop, isShopRequest } from './shop';
@@ -21,9 +28,10 @@ export function isTelemetryIngestion(url: URL): boolean {
 
 /**
  * The mocked suite's `page`: any `/api/*` call a test hasn't routed fails the test, and so does any CSP violation.
- * Telemetry is accepted and dropped, so test runs never reach App Insights, and the media container serves the
- * made-up gallery in `media.ts`. Google's reCAPTCHA script is a stub and `/api/session` issues a made-up token
- * (`session.ts`), since every API call needs a session token. `GET /api/shop` returns the made-up shop in
+ * Telemetry is accepted and dropped, so test runs never reach App Insights, and the media container serves
+ * images while `GET /api/gallery` and `/api/announcements` return the made-up lists in `media.ts`.
+ * Google's reCAPTCHA script is a stub and `/api/session` issues a made-up token (`session.ts`),
+ * since every API call needs a session token. `GET /api/shop` returns the made-up shop in
  * `src/testing/test-shop.ts` (`shop.ts`), availability opens every day from today, the next open times are six over
  * the next three days, and any booking asked for by ID is upcoming (`booking.ts`).
  * Tests mock endpoints with their own `page.route`, which takes precedence over the catch-all.
@@ -43,6 +51,8 @@ export const test: typeof base = base.extend({
 
     await page.route(isTelemetryIngestion, (route: Route): Promise<void> => route.fulfill({ status: 200, json: {} }));
     await page.route(isMedia, fulfillMedia);
+    await page.route(isGalleryRequest, fulfillGallery);
+    await page.route(isAnnouncementsRequest, fulfillAnnouncements);
     await page.route(isStaticMap, fulfillStaticMap);
     await page.route(isRecaptchaScript, fulfillRecaptcha);
     await page.route(isSessionRequest, fulfillSession);

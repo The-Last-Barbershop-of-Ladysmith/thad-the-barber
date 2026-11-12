@@ -1,26 +1,16 @@
 import { Locator, Page, Request, Response, Route } from '@playwright/test';
 import { expectNoA11yViolations } from '../support/axe';
 import { expect, test } from '../support/fixtures';
-import { ACTIVE_ANNOUNCEMENT_TITLES, ANNOUNCEMENTS_URL, GALLERY_LISTING_URL, MEDIA_BASE_URL } from '../support/media';
+import { ACTIVE_ANNOUNCEMENT_TITLES, ANNOUNCEMENTS_URL, GALLERY_URL, TEST_ANNOUNCEMENTS } from '../support/media';
 import { collectPageErrors } from '../support/page-errors';
 
 interface ReloadMarker { e2eNoReload?: boolean; }
 
 const HIDING_RESPONSES: Record<string, Parameters<Route['fulfill']>[0]> = {
-  'JSON that does not parse': { body: '{ "items": [', contentType: 'application/json' },
-  'a file without an items list': { json: [{ title: 'E2E bare array' }] },
-  'only expired announcements': {
-    json: {
-      items: [
-        {
-          title: 'E2E old',
-          startDate: '2001-01-01',
-          endDate: '2001-01-02',
-        },
-      ],
-    },
-  },
-  'a missing file': { status: 404 },
+  'none showing today': { json: [] },
+  'JSON that does not parse': { body: '[ {', contentType: 'application/json' },
+  'a server error': { status: 503 },
+  'a missing endpoint': { status: 404 },
 };
 
 /** Whether the slide with this title sits inside the carousel's own box, side to side, wherever the page is. */
@@ -72,7 +62,7 @@ test.describe(
   'announcements',
   (): void => {
     test(
-      'shows the active announcements from the media container, newest first, with image, rich text and buttons',
+      'shows the announcements from the API, newest start date first, with image, rich text and buttons',
       async ({ page }: { page: Page; }): Promise<void> => {
         await page.goto('/#announcements');
 
@@ -81,7 +71,7 @@ test.describe(
 
         const image: Locator = section.getByTestId('announcement-image');
         await expect(image).toHaveCount(1);
-        await expect(image).toHaveAttribute('src', `${MEDIA_BASE_URL}/announcements/e2e%20promo.webp`);
+        await expect(image).toHaveAttribute('src', TEST_ANNOUNCEMENTS[0]?.image?.src ?? '');
         await expect(image).toHaveAttribute('alt', 'E2E promo photo');
         const naturalWidth: () => Promise<number> = (): Promise<number> =>
           image.evaluate((element: HTMLImageElement): number => element.naturalWidth);
@@ -137,14 +127,14 @@ test.describe(
     }
 
     test(
-      'loads on the booking page too, hiding its footer link when none are active, and never lists the gallery there',
+      'loads on the booking page too, hiding its footer link when none are showing, and never asks for the gallery there',
       async ({ page }: { page: Page; }): Promise<void> => {
-        const mediaRequests: string[] = [];
+        const apiRequests: string[] = [];
         page.on('request', (request: Request): void => {
-          mediaRequests.push(request.url());
+          apiRequests.push(request.url());
         });
         await page.route(ANNOUNCEMENTS_URL, (route: Route): Promise<void> =>
-          route.fulfill(HIDING_RESPONSES['only expired announcements']));
+          route.fulfill(HIDING_RESPONSES['none showing today']));
         const loaded: Promise<Response> = page.waitForResponse(ANNOUNCEMENTS_URL);
 
         await page.goto('/book');
@@ -153,19 +143,19 @@ test.describe(
         const footer: Locator = page.locator('footer');
         await expect(footer.locator('a[href="/#visit"]')).toHaveCount(1);
         await expect(footer.locator('a[href="/#announcements"]')).toHaveCount(0);
-        expect(mediaRequests).not.toContain(GALLERY_LISTING_URL);
+        expect(apiRequests).not.toContain(GALLERY_URL);
       },
     );
 
     test(
-      'hides the announcements and says the gallery is empty when the media container is down',
+      'hides the announcements and says the gallery is empty when the API cannot read its storage',
       async ({ page }: { page: Page; }): Promise<void> => {
         const pageErrors: Error[] = collectPageErrors(page);
-        const mediaFiles: string[] = [ANNOUNCEMENTS_URL, GALLERY_LISTING_URL];
-        for (const url of mediaFiles) {
+        const mediaEndpoints: string[] = [ANNOUNCEMENTS_URL, GALLERY_URL];
+        for (const url of mediaEndpoints) {
           await page.route(url, (route: Route): Promise<void> => route.fulfill({ status: 503 }));
         }
-        const responses: Promise<Response[]> = Promise.all(mediaFiles.map(
+        const responses: Promise<Response[]> = Promise.all(mediaEndpoints.map(
           (url: string): Promise<Response> => page.waitForResponse(url),
         ));
 
