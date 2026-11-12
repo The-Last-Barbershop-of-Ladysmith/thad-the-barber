@@ -179,7 +179,7 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 | Phone number, address, map/directions URLs, socials (hard-coded in 3 places) | `GET /api/shop` → `shop` slice (`shopFeature` selectors); `SHOP_FALLBACK` keeps the fallback name/phone/booking URL and site content | Square is the source of truth (#39) |
 | Hours rows repeated in schedule, visit, footer | `shopFeature.selectOpeningHours` + `ShopHoursService.businessHours` | Rows are built from Square's hours |
 | `openLabel` / `openColor` (`index.html` `renderVals`) | `ShopHoursService.getShopCurrentStatus()` / `currentOpenStatus` signal, on the shop's clock | Refreshes every minute; unit tested, including Pacific-browser, DST-Sunday and split-shift cases. The open label names the closing time ("Open now · closes 7 PM", the Shopfront mock's wording); a shift that closes at or before it opens never counts as open (#49) |
-| `ANNS` | `content/announcements.json` in the media container via `AnnouncementsService` (#30) | The seed announcements and the text-alerts slide are dropped (BR-35) |
+| `ANNS` | `GET /api/announcements` via `AnnouncementsService` (#30, #204): the API reads the private `announcements.json` | The seed announcements and the text-alerts slide are dropped (BR-35) |
 | Testimonials and rating | `GET /api/reviews` via `ReviewsService` in `features/reviews/` (#245); the API reads `content/reviews.json` from the media container | Google's reviews API replaces the file as the API's source in #37 |
 | `subscribe` / `setPhone` / `phoneErr` | `SmsSignup` component + `HomeActions.SmsSignupRequest` → `subscribeToSms` effect → `SmsSignupService` | Mocked 400ms |
 | `slots()`, `available()`, `hash()`, `daysAhead`, `slotMinutes` (`book.html`) | `AvailabilityService` → `GET /api/bookings/availability` (#41); window from `shopFeature.selectBookingSettings` | Real Square availability; the mock pattern and `BOOKING_RULES` are gone |
@@ -196,7 +196,7 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 | Slice | Files | Holds |
 | --- | --- | --- |
 | `layout` (root) | `store/app.*.ts` | `menuOpen` |
-| `announcements` (root) | `features/announcements/state/announcements.{state,actions,reducer,feature,effects}.ts` | Announcements from the media container and their load status, loaded on the first navigation (#40); `selectActive` (BR-30, shop's clock), `selectIsHidden` (BR-32) |
+| `announcements` (root) | `features/announcements/state/announcements.{state,actions,reducer,feature,effects}.ts` | Announcements from `GET /api/announcements` (the API counts the days on the shop's clock, BR-30) and their load status, loaded on the first navigation (#40); `selectNewestFirst`, `selectIsHidden` (BR-32) |
 | `home` | `features/home/state/home.{state,actions,reducer,feature,effects}.ts` | Testimonials, listing rating, gallery, content status, SMS sign-up status |
 | `booking` | `features/booking/state/booking.{state,actions,reducer,feature,effects}.ts` The days in view (`availabilityView`: the next 31 days or a month, as `firstDay`/`lastDay`), their open days, load status (the availability notice is derived from it), the bookings made on this device, each kept until it starts (the picks and the booking in progress live in the `Booking` page) |
 
@@ -213,7 +213,7 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 | Wireframe asset | App | Status |
 | --- | --- | --- |
 | `assets/logo-1c.png` | `public/assets/logo.png` | Copied |
-| `assets/gallery/cut-01…15.webp` (1.3 MB) | `gallery/haircut-1…15.webp` in the media container, listed by the UI (#168) | Moved |
+| `assets/gallery/cut-01…15.webp` (1.3 MB) | `gallery/haircut-1…15.webp` in the media container, listed by the API (#168, #204) | Moved |
 | `assets/keys/k1…k7.webp` (2.9 MB) | `public/assets/backdrop/<desktop\|phone>/keys/` | Re-encoded by `tools/backdrop-frames`; used by `Backdrop` |
 | `assets/icon-instagram.svg`, `icon-facebook.svg` | Replaced by `pi pi-instagram` / `pi pi-facebook` | Not copied |
 | `assets/frames3/c1…c6` (every 2nd frame of 6 clips) | `public/assets/backdrop/<desktop\|phone>/frames/` | Re-encoded by `tools/backdrop-frames` (see §8); `c7` (the footer loop) is not used; `c4`, `c5` and `k5` (gallery) are new Higgsfield renders, not the wireframe's |
@@ -230,7 +230,7 @@ Rule applied: **if PrimeNG has the component, restyle it with tokens (`theme/tok
 | Announcement controls | Under the image in the right column on desktop; full width under the slide on phones, no card around the slide | Confirm with design |
 | Lightbox arrows | Inside the photo edges (Galleria default) rather than at the viewport sides | Adjust `galleria.ts` if needed |
 | Instagram / Facebook URLs (`href="#"`) | From Square's location profile (#39) | Unset ones are hidden (BR-40) |
-| Announcement photos ("kid in the chair", "hot towel") | Placeholders dropped; images come from the media container | Thad uploads to `announcements/` and names the file in `image.fileName` |
+| Announcement photos ("kid in the chair", "hot towel") | Placeholders dropped; images come from the media container | Thad uploads to `announcements/` and names the file in `image.fileName`; the API turns it into the image URL |
 | Booking page monospace styling | Replaced with the brand sans | Intentional; the wireframe mono was a placeholder style |
 | Booking month calendar | Replaced by a list of open days written in full, the next 31 days by default or a chosen month, as far ahead as Square's booking window allows (#205) | Client's request (2026-10-26); fully booked days aren't listed |
 | Booking step layout (all four panels on one page) | One step open at a time: collapsing cards with a sticky bar on phones (#207), a step rail with Back/Continue from `lg` (#208), and a Review step before Confirm (#209) | Client's request (2026-10-26) |
