@@ -3,141 +3,8 @@ import { HOME_SECTIONS } from '../../../core/config/shop-info';
 import { NavItem } from '../../../shared/models/nav-item.model';
 import { Announcement } from '../models/announcement.model';
 import { RequestStatus } from '../../../shared/models/request.models';
-import { shopFeatureKey } from '../../shop/state/shop.feature';
-import { initialShopState } from '../../shop/state/shop.state';
-import {
-  announcementsFeature,
-  announcementsFeatureKey,
-  toActiveAnnouncements,
-  toNewestFirst,
-} from './announcements.feature';
+import { announcementsFeature, announcementsFeatureKey, toNewestFirst } from './announcements.feature';
 import { AnnouncementsState, initialAnnouncementsState } from './announcements.state';
-
-describe(
-  'toActiveAnnouncements',
-  (): void => {
-    function announcement(
-      title: string,
-      startDate: string,
-      endDate: string,
-    ): Announcement {
-      return {
-        ...TEST_ANNOUNCEMENT,
-        title,
-        startDate,
-        endDate,
-      };
-    }
-
-    afterEach((): void => {
-      vi.useRealTimers();
-    });
-
-    it(
-      'keeps announcements from their first day through their last, by the local date until the shop loads',
-      (): void => {
-        vi.useFakeTimers({
-          now: new Date(
-            2026,
-            9,
-            15,
-            23,
-            59,
-          ),
-        });
-
-        const titles: string[] = toActiveAnnouncements([
-          announcement(
-            'Ended yesterday',
-            '2026-10-01',
-            '2026-10-14',
-          ),
-          announcement(
-            'Ends today',
-            '2026-10-01',
-            '2026-10-15',
-          ),
-          announcement(
-            'Only today',
-            '2026-10-15',
-            '2026-10-15',
-          ),
-          announcement(
-            'Starts today',
-            '2026-10-15',
-            '2026-12-31',
-          ),
-          announcement(
-            'Starts tomorrow',
-            '2026-10-16',
-            '2026-10-31',
-          ),
-          announcement(
-            'Spans the year',
-            '2025-12-31',
-            '2027-01-01',
-          ),
-        ], null).map((active: Announcement): string => active.title);
-
-        expect(titles).toEqual([
-          'Ends today',
-          'Only today',
-          'Starts today',
-          'Spans the year',
-        ]);
-      },
-    );
-
-    it(
-      'starts a new day at local midnight',
-      (): void => {
-        vi.useFakeTimers({
-          now: new Date(
-            2026,
-            9,
-            16,
-            0,
-            0,
-          ),
-        });
-
-        expect(toActiveAnnouncements([
-          announcement(
-            'Ended yesterday',
-            '2026-10-01',
-            '2026-10-15',
-          ),
-        ], null)).toEqual([]);
-      },
-    );
-
-    it(
-      'counts the day on the shop calendar once its timezone is known, wherever the visitor is (BR-30)',
-      (): void => {
-        // 2 a.m. on the 15th in Honolulu (UTC-10) is already 2 a.m. on the 16th in Kiritimati (UTC+14).
-        vi.useFakeTimers({ now: new Date('2026-10-15T12:00:00Z') });
-        const announcements: Announcement[] = [
-          announcement(
-            'Last day the 15th',
-            '2026-10-01',
-            '2026-10-15',
-          ),
-          announcement(
-            'First day the 16th',
-            '2026-10-16',
-            '2026-10-31',
-          ),
-        ];
-
-        const titlesIn: (timeZone: string) => string[] = (timeZone: string): string[] =>
-          toActiveAnnouncements(announcements, timeZone).map((active: Announcement): string => active.title);
-
-        expect(titlesIn('Pacific/Honolulu')).toEqual(['Last day the 15th']);
-        expect(titlesIn('Pacific/Kiritimati')).toEqual(['First day the 16th']);
-      },
-    );
-  },
-);
 
 describe(
   'selectIsHidden',
@@ -145,25 +12,8 @@ describe(
     function isHidden(announcements: AnnouncementsState): boolean {
       return announcementsFeature.selectIsHidden({
         [announcementsFeatureKey]: announcements,
-        [shopFeatureKey]: initialShopState,
       });
     }
-
-    beforeEach((): void => {
-      vi.useFakeTimers({
-        now: new Date(
-          2026,
-          9,
-          15,
-          12,
-          0,
-        ),
-      });
-    });
-
-    afterEach((): void => {
-      vi.useRealTimers();
-    });
 
     it(
       'shows the section before and while the announcements load, so the prerendered page keeps its link',
@@ -174,12 +24,10 @@ describe(
     );
 
     it(
-      'hides the section once none is active (BR-32)',
+      'hides the section once the API returns none (BR-32)',
       (): void => {
-        const expired: Announcement = { ...TEST_ANNOUNCEMENT, endDate: '2026-10-14' };
-
         expect(isHidden({
-          announcements: [expired],
+          announcements: [],
           loadStatus: RequestStatus.Success,
           shownIndex: 0,
         })).toBe(true);
@@ -266,34 +114,20 @@ describe(
     );
 
     it(
-      'is exposed on the feature for the active announcements only',
+      'is exposed on the feature',
       (): void => {
-        const expired: Announcement = {
-          ...startingOn('Expired but newer', '2026-10-25'),
-          endDate: '2026-10-26',
-        };
-        const active: Announcement = {
-          ...startingOn('Active', '2026-10-01'),
-          endDate: '2099-12-31',
-        };
-        const olderActive: Announcement = {
-          ...startingOn('Active but older', '2026-09-01'),
-          endDate: '2099-12-31',
-        };
-
-        const selected: Announcement[] = announcementsFeature.selectActiveNewestFirst({
+        const selected: Announcement[] = announcementsFeature.selectNewestFirst({
           [announcementsFeatureKey]: {
             announcements: [
-              olderActive,
-              expired,
-              active,
+              startingOn('Older', '2026-09-01'),
+              startingOn('Newer', '2026-10-01'),
             ],
             loadStatus: RequestStatus.Success,
+            shownIndex: 0,
           },
-          [shopFeatureKey]: initialShopState,
         });
 
-        expect(titlesOf(selected)).toEqual(['Active', 'Active but older']);
+        expect(titlesOf(selected)).toEqual(['Newer', 'Older']);
       },
     );
   },
@@ -307,26 +141,9 @@ describe(
     function fragmentsFor(announcements: AnnouncementsState): string[] {
       return announcementsFeature.selectHomeSections({
         [announcementsFeatureKey]: announcements,
-        [shopFeatureKey]: initialShopState,
       })
         .map((section: NavItem): string => section.fragment);
     }
-
-    beforeEach((): void => {
-      vi.useFakeTimers({
-        now: new Date(
-          2026,
-          9,
-          15,
-          12,
-          0,
-        ),
-      });
-    });
-
-    afterEach((): void => {
-      vi.useRealTimers();
-    });
 
     it(
       'links every section, the gallery and reviews included, before the announcements load',
@@ -339,7 +156,7 @@ describe(
       [RequestStatus.Success],
       [RequestStatus.Error],
     ])(
-      'leaves out only the announcements once they settle with nothing active (%s, BR-32)',
+      'leaves out only the announcements once they settle with none showing (%s, BR-32)',
       (loadStatus: RequestStatus): void => {
         expect(fragmentsFor({ ...initialAnnouncementsState, loadStatus }))
           .toEqual(allFragments.filter((fragment: string): boolean => fragment !== 'announcements'));

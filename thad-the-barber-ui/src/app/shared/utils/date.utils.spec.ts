@@ -7,9 +7,7 @@ import {
   formatShortMonth,
   fromIsoDate,
   fromTimeOfDay,
-  toIsoDate,
   toIsoDateIn,
-  currentDateForTimeZone,
   weekTimeIn,
 } from './date.utils';
 
@@ -108,18 +106,6 @@ describe(
 
         expect(toIsoDateIn('Pacific/Honolulu', instant)).toBe('2026-10-31');
         expect(toIsoDateIn('UTC', instant)).toBe('2026-11-01');
-      },
-    );
-
-    it(
-      "reads today on the timezone's clock, or the browser's while it's unknown",
-      (): void => {
-        vi.useFakeTimers({ now: new Date('2026-11-01T05:00:00Z') });
-
-        expect(currentDateForTimeZone('Pacific/Honolulu')).toBe('2026-10-31');
-        expect(currentDateForTimeZone(null)).toBe(toIsoDate(new Date()));
-
-        vi.useRealTimers();
       },
     );
   },

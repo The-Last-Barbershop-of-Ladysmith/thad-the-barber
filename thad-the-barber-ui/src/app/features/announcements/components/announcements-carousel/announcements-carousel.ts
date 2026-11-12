@@ -50,7 +50,7 @@ export class AnnouncementsCarousel {
   private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
 
   protected readonly announcements: Signal<Announcement[]> = this.store.selectSignal(
-    announcementsFeature.selectActiveNewestFirst,
+    announcementsFeature.selectNewestFirst,
   );
 
   protected readonly linkKinds: typeof LinkKind = LinkKind;
