@@ -46,7 +46,7 @@ export const TEST_ANNOUNCEMENTS: AnnouncementDto[] = [
   },
 ];
 
-export const ACTIVE_ANNOUNCEMENT_TITLES: string[] = TEST_ANNOUNCEMENTS
+export const TEST_ANNOUNCEMENT_TITLES: string[] = TEST_ANNOUNCEMENTS
   .map((announcement: AnnouncementDto): string => announcement.title);
 
 export function isAnnouncementsRequest(url: URL): boolean {

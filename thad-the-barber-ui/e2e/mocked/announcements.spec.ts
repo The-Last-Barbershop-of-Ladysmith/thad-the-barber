@@ -1,14 +1,14 @@
 import { Locator, Page, Request, Response, Route } from '@playwright/test';
 import { expectNoA11yViolations } from '../support/axe';
 import { expect, test } from '../support/fixtures';
-import { ACTIVE_ANNOUNCEMENT_TITLES, ANNOUNCEMENTS_URL, TEST_ANNOUNCEMENTS } from '../support/announcements';
+import { TEST_ANNOUNCEMENT_TITLES, ANNOUNCEMENTS_URL, TEST_ANNOUNCEMENTS } from '../support/announcements';
 import { GALLERY_URL } from '../support/gallery';
 import { collectPageErrors } from '../support/page-errors';
 
 interface ReloadMarker { e2eNoReload?: boolean; }
 
 const HIDING_RESPONSES: Record<string, Parameters<Route['fulfill']>[0]> = {
-  'none showing today': { json: [] },
+  'an empty list': { json: [] },
   'JSON that does not parse': { body: '[ {', contentType: 'application/json' },
   'a server error': { status: 503 },
   'a missing endpoint': { status: 404 },
@@ -30,7 +30,7 @@ async function isSlideShowing(page: Page, title: string): Promise<boolean> {
 }
 
 async function openStripOnOlderAnnouncement(page: Page, startPath: string): Promise<string> {
-  const olderTitle: string = ACTIVE_ANNOUNCEMENT_TITLES[0] ?? '';
+  const olderTitle: string = TEST_ANNOUNCEMENT_TITLES[0] ?? '';
   await page.goto(startPath);
   await expect(page.getByTestId('announcement-strip').locator('.item.is-shown .title')).toHaveText(olderTitle, {
     timeout: 10_000,
@@ -68,7 +68,7 @@ test.describe(
         await page.goto('/#announcements');
 
         const section: Locator = page.getByTestId('announcements');
-        await expect(section.getByRole('heading', { level: 2 })).toHaveText([...ACTIVE_ANNOUNCEMENT_TITLES].reverse());
+        await expect(section.getByRole('heading', { level: 2 })).toHaveText([...TEST_ANNOUNCEMENT_TITLES].reverse());
 
         const image: Locator = section.getByTestId('announcement-image');
         await expect(image).toHaveCount(1);
@@ -135,7 +135,7 @@ test.describe(
           apiRequests.push(request.url());
         });
         await page.route(ANNOUNCEMENTS_URL, (route: Route): Promise<void> =>
-          route.fulfill(HIDING_RESPONSES['none showing today']));
+          route.fulfill(HIDING_RESPONSES['an empty list']));
         const loaded: Promise<Response> = page.waitForResponse(ANNOUNCEMENTS_URL);
 
         await page.goto('/book');
@@ -173,7 +173,7 @@ test.describe(
     test(
       'starts the strip on the newest active announcement above the header, on the home and booking pages',
       async ({ page }: { page: Page; }): Promise<void> => {
-        const newestTitle: string = ACTIVE_ANNOUNCEMENT_TITLES[1] ?? '';
+        const newestTitle: string = TEST_ANNOUNCEMENT_TITLES[1] ?? '';
 
         for (const path of ['/', '/book']) {
           await page.goto(path);
@@ -228,7 +228,7 @@ test.describe(
     test(
       'cycles the strip through every active announcement, newest first',
       async ({ page }: { page: Page; }): Promise<void> => {
-        const [olderTitle, newestTitle]: string[] = ACTIVE_ANNOUNCEMENT_TITLES;
+        const [olderTitle, newestTitle]: string[] = TEST_ANNOUNCEMENT_TITLES;
         await page.goto('/');
         const shown: Locator = page.getByTestId('announcement-strip').locator('.item.is-shown .title');
 
