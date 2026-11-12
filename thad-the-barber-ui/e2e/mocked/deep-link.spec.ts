@@ -1,6 +1,6 @@
 import { Page, Route } from '@playwright/test';
 import { expect, test } from '../support/fixtures';
-import { ANNOUNCEMENTS_URL } from '../support/media';
+import { ANNOUNCEMENTS_URL } from '../support/announcements';
 
 async function isSectionJustBelowHeader(page: Page, sectionId: string): Promise<boolean> {
   return page.evaluate((id: string): boolean => {

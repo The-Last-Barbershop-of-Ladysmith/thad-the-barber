@@ -1,7 +1,7 @@
 import { Locator, Page, Request, Route } from '@playwright/test';
 import { expectNoA11yViolations } from '../support/axe';
 import { expect, test } from '../support/fixtures';
-import { GALLERY_URL, TEST_GALLERY } from '../support/media';
+import { GALLERY_URL, TEST_GALLERY } from '../support/gallery';
 import { collectPageErrors } from '../support/page-errors';
 
 const EMPTY_RESPONSES: Record<string, Parameters<Route['fulfill']>[0]> = {
