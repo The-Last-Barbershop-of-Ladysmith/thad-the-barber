@@ -31,7 +31,7 @@ param(
     # Region in the vault name (kv-ttb-<env>-<region>). Defaults to centralus for dev/test, eastus for prod.
     [string] $Location,
 
-    # Create the missing random keys (ManageLink--HmacKey) instead of prompting.
+    # Create the missing random keys (ManageLink--HmacKey, MediaWebhook--Key) instead of prompting.
     [switch] $Generate
 )
 
@@ -47,11 +47,12 @@ $secrets = [ordered]@{
     'Square--RefreshToken'        = 'Square OAuth refresh token (normally saved by tools/square-connect instead)'
     'Square--WebhookSignatureKey' = 'Square webhook signature key'
     'ManageLink--HmacKey'         = 'Manage-link HMAC key (64 random bytes, base64; use -Generate)'
+    'MediaWebhook--Key'           = 'Media webhook key (64 random bytes, base64; use -Generate)'
     'Recaptcha--ApiKey'           = 'reCAPTCHA API key for server-side verification'
     'Google--ClientSecret'        = 'Google OAuth client secret (reviews)'
     'Google--RefreshToken'        = 'Google OAuth refresh token (reviews)'
 }
-$generated = @('ManageLink--HmacKey')
+$generated = @('ManageLink--HmacKey', 'MediaWebhook--Key')
 
 if ($Name) {
     $unknown = $Name | Where-Object { -not $secrets.Contains($_) }

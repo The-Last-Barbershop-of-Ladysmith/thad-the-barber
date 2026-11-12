@@ -25,8 +25,11 @@ type environmentConfig = {
   @description('Lets the admin (adminPrincipalId) sign with this environment\'s session-JWT key, so local runs under az login can issue session tokens. Dev only.')
   canAdminSignSessions: bool?
 
-  @description('Gives the admin Storage Blob Data Contributor on this environment\'s media container, for gallery and content edits in the portal. Otherwise Reader.')
+  @description('Gives the admin Storage Blob Data Contributor on this environment\'s media and content containers, for gallery and announcement edits in the portal. Otherwise Reader.')
   canAdminWriteMedia: bool?
+
+  @description('Stops anonymous listing of the media container of this environment (publicAccess Blob). Turn on only after the UI that reads /api/gallery is live there (#204).')
+  restrictMediaListing: bool?
 }
 
 @description('Stage used in shared resource names.')
@@ -85,6 +88,10 @@ param restrictAppAccess bool
 @description('Your public IPs or CIDRs. Allowed through the app restrictions and the Key Vault firewall.')
 param allowedIpRanges string[] = []
 
+@secure()
+@description('Per-environment webhook keys by environment name, equal to Key Vault secret MediaWebhook--Key. An environment with a key gets its Event Grid subscription, so provide it only once the API of that environment with /api/webhooks/media is running (#204).')
+param mediaWebhookKeys object = {}
+
 param tags object = {
   app: 'thad-the-barber'
   stage: stage
@@ -140,6 +147,9 @@ module env 'modules/environment.bicep' = [
       squareAlerts: e.?squareAlerts ?? false
       canAdminSignSessions: e.?canAdminSignSessions ?? false
       canAdminWriteMedia: e.?canAdminWriteMedia ?? false
+      restrictMediaListing: e.?restrictMediaListing ?? false
+      storageEventsTopicName: shared.outputs.storageEventsTopicName
+      mediaWebhookKey: mediaWebhookKeys[?e.name] ?? ''
       actionGroupId: shared.outputs.actionGroupId
       tags: tags
     }

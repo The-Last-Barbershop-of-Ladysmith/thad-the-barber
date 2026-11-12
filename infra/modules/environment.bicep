@@ -33,8 +33,18 @@ param squareAlerts bool
 @description('Gives adminPrincipalId Key Vault Crypto User on the session-JWT key, for local runs (dev only).')
 param canAdminSignSessions bool
 
-@description('Gives adminPrincipalId Storage Blob Data Contributor on the media container (gallery and content edits in the portal); otherwise Reader.')
+@description('Gives adminPrincipalId Storage Blob Data Contributor on the media and content containers (gallery and announcement edits in the portal); otherwise Reader.')
 param canAdminWriteMedia bool
+
+@description('Stop anonymous listing of the media container (publicAccess Blob).')
+param restrictMediaListing bool
+
+@description('The shared storage system topic this subscription attaches to.')
+param storageEventsTopicName string
+
+@secure()
+@description('Same value as Key Vault secret MediaWebhook--Key. Empty skips the subscription and leaves an existing one untouched.')
+param mediaWebhookKey string
 
 param actionGroupId string
 param tags object
@@ -165,9 +175,31 @@ resource sessionJwtKey 'Microsoft.KeyVault/vaults/keys@2024-11-01' = {
 resource mediaContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2024-01-01' = {
   name: '${storageName}/default/media-${envName}'
   properties: {
-    // The UI lists gallery/ anonymously (#168). Every blob here is public already, so listing exposes nothing new.
-    publicAccess: 'Container'
+    // 'Blob' serves a file by its exact URL only, since the API does the listing (#204).
+    publicAccess: restrictMediaListing ? 'Blob' : 'Container'
   }
+}
+
+// Holds announcements.json. Private, so scheduled and expired announcements are only ever read by the API.
+resource contentContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2024-01-01' = {
+  name: '${storageName}/default/content-${envName}'
+  properties: {
+    publicAccess: 'None'
+  }
+}
+
+module mediaEvents 'media-events.bicep' = if (!empty(mediaWebhookKey)) {
+  name: 'media-events-${envName}'
+  params: {
+    envName: envName
+    topicName: storageEventsTopicName
+    apiUrl: api.outputs.url
+    webhookKey: mediaWebhookKey
+  }
+  dependsOn: [
+    contentContainer
+    mediaContainer
+  ]
 }
 
 module web 'app-service.bicep' = {
@@ -202,6 +234,7 @@ module api 'app-service.bicep' = {
     alwaysOn: alwaysOn
     restrictAccess: restrictAppAccess
     allowedIpRanges: concat(allowedIpRanges, squareSandboxWebhookIps)
+    allowEventGrid: true
     tags: tags
     appSettings: {
       APPLICATIONINSIGHTS_CONNECTION_STRING: appInsights.properties.ConnectionString
@@ -267,6 +300,36 @@ resource adminSecretsOfficer 'Microsoft.Authorization/roleAssignments@2022-04-01
 resource adminMedia 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(adminPrincipalId)) {
   name: guid(mediaContainer.id, 'admin', adminMediaRole)
   scope: mediaContainer
+  properties: {
+    principalId: adminPrincipalId
+    principalType: 'User'
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', adminMediaRole)
+  }
+}
+
+resource apiMediaReader 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(mediaContainer.id, apiAppName, storageBlobDataReader)
+  scope: mediaContainer
+  properties: {
+    principalId: api.outputs.principalId
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageBlobDataReader)
+  }
+}
+
+resource apiContentReader 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(contentContainer.id, apiAppName, storageBlobDataReader)
+  scope: contentContainer
+  properties: {
+    principalId: api.outputs.principalId
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageBlobDataReader)
+  }
+}
+
+resource adminContent 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(adminPrincipalId)) {
+  name: guid(contentContainer.id, 'admin', adminMediaRole)
+  scope: contentContainer
   properties: {
     principalId: adminPrincipalId
     principalType: 'User'
