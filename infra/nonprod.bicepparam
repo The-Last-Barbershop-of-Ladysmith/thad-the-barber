@@ -33,8 +33,8 @@ param environments = [
     canAdminSignSessions: true
     // Lets you edit the gallery and content in the portal, as Thad will.
     canAdminWriteMedia: true
-    // Step 5 of the media rollout (docs/environments.md): set true in the PR that ships the UI reading /api/gallery.
-    restrictMediaListing: false
+    // Step 5 of the media rollout (docs/environments.md): the UI reading /api/gallery is live here.
+    restrictMediaListing: true
   }
   {
     name: 'test'
