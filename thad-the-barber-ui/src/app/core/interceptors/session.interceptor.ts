@@ -8,8 +8,8 @@ import { ANONYMOUS_REQUEST } from './anonymous-request.token';
 const API_PREFIX: string = `${environment.apiBaseUrl}/`;
 
 /**
- * Sends the session token on every API call except those marked `ANONYMOUS_REQUEST` (`/session`, which issues it,
- * and `/shop`). On a 401 it gets a new token and retries once.
+ * Sends the session token on every API call except those marked `ANONYMOUS_REQUEST`: `/session`, which issues it, and
+ * the public reads (`/shop`, `/reviews`, `/gallery`, `/announcements`). On a 401 it gets a new token and retries once.
  */
 export const sessionInterceptor: HttpInterceptorFn = (
   request: HttpRequest<unknown>,
