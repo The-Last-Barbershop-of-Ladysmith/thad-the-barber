@@ -1,7 +1,7 @@
 import { Button } from '../../../shared/models/button.models';
 import { AnnouncementImage } from './announcement-image.model';
 
-/** An item of `content/announcements.json` in the media container, checked and ready to show. */
+/** An announcement from `GET /api/announcements`, which has already checked it and left out any not showing today. */
 export interface Announcement {
   title: string;
   /** Rich text from Thad (later the admin portal's editor); Angular's sanitizer cleans it when it renders. */

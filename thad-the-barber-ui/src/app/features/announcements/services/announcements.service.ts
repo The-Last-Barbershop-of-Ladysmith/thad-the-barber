@@ -2,121 +2,46 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { fromIsoDate, toIsoDate } from '../../../shared/utils/date.utils';
-import { Button, ButtonVariant } from '../../../shared/models/button.models';
+import { anonymousRequest } from '../../../core/interceptors/anonymous-request.token';
+import { Button } from '../../../shared/models/button.models';
 import { LinkKind } from '../../../shared/models/link.models';
-import { isButtonVariant } from '../../../shared/utils/button.utils';
 import { linkKind } from '../../../shared/utils/link.utils';
+import { AnnouncementButtonDto } from '../dtos/announcement-button.dto';
+import { AnnouncementDto } from '../dtos/announcement.dto';
 import { Announcement } from '../models/announcement.model';
-import { AnnouncementImage } from '../models/announcement-image.model';
-import { AnnouncementImagePosition } from '../models/announcement-image-position.model';
 
-type Entry = Record<string, unknown>;
+export const ANNOUNCEMENTS_URL: string = `${environment.apiBaseUrl}/announcements`;
 
-/**
- * The announcements in the media container's `content/announcements.json` (issue #30), which Thad edits in the Azure
- * portal. Files uploaded there carry no `Cache-Control`, so the request revalidates every time instead of letting the
- * browser keep an old copy. A file that isn't `{ items: [...] }` fails the request; an item without a title or valid
- * dates is skipped.
- */
 @Injectable({ providedIn: 'root' })
 export class AnnouncementsService {
   private readonly http: HttpClient = inject(HttpClient);
 
+  /**
+   * The announcements showing today on the shop's calendar (BR-30, #204). The API reads and checks the private
+   * `announcements.json`, so a scheduled one never reaches the browser. Anonymous on the API.
+   */
   getAnnouncements(): Observable<Announcement[]> {
     return this.http
-      .get<unknown>(`${environment.mediaBaseUrl}/content/announcements.json`, { cache: 'no-cache' })
-      .pipe(map(toAnnouncements));
+      .get<AnnouncementDto[]>(ANNOUNCEMENTS_URL, { context: anonymousRequest() })
+      .pipe(map((announcements: AnnouncementDto[]): Announcement[] =>
+        announcements.map((announcement: AnnouncementDto): Announcement => this.toAnnouncement(announcement))));
   }
-}
 
-function toAnnouncements(content: unknown): Announcement[] {
-  const items: unknown = isEntry(content) ? content['items'] : undefined;
-  if (!Array.isArray(items)) {
-    throw new Error('announcements.json has no items list.');
+  private toAnnouncement(announcement: AnnouncementDto): Announcement {
+    return {
+      ...announcement,
+      buttons: announcement.buttons
+        .map((button: AnnouncementButtonDto): Button | null => this.toButton(button))
+        .filter((button: Button | null): button is Button => button !== null),
+    };
   }
-  return items
-    .filter(isEntry)
-    .map(toAnnouncement)
-    .filter((announcement: Announcement | null): announcement is Announcement => announcement !== null);
-}
 
-function toAnnouncement(entry: Entry): Announcement | null {
-  const title: string | null = text(entry['title']);
-  const startDate: string | null = day(entry['startDate']);
-  const endDate: string | null = day(entry['endDate']);
-  if (title === null || startDate === null || endDate === null || endDate < startDate) {
-    return null;
+  /** The API only lets through links `linkKind` knows; one it doesn't is dropped rather than rendered. */
+  private toButton(button: AnnouncementButtonDto): Button | null {
+    const kind: LinkKind | null = linkKind(button.url);
+    if (kind === null) {
+      return null;
+    }
+    return { ...button, kind };
   }
-  return {
-    title,
-    bodyHtml: text(entry['bodyHtml']) ?? '',
-    startDate,
-    endDate,
-    image: toImage(entry['image']),
-    buttons: toButtons(entry['buttons']),
-  };
-}
-
-function toImage(value: unknown): AnnouncementImage | null {
-  if (!isEntry(value)) {
-    return null;
-  }
-  const fileName: string | null = text(value['fileName']);
-  if (fileName === null) {
-    return null;
-  }
-  return {
-    src: `${environment.mediaBaseUrl}/announcements/${encodeURIComponent(fileName)}`,
-    alt: text(value['altText']) ?? '',
-    position: value['position'] === AnnouncementImagePosition.Left
-      ? AnnouncementImagePosition.Left
-      : AnnouncementImagePosition.Right,
-  };
-}
-
-function toButtons(value: unknown): Button[] {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-  return value
-    .filter(isEntry)
-    .map(toButton)
-    .filter((button: Button | null): button is Button => button !== null);
-}
-
-/** A button without a label or with a link `linkKind` rejects is dropped; an unknown variant falls back to outlined. */
-function toButton(entry: Entry): Button | null {
-  const label: string | null = text(entry['label']);
-  const url: string | null = text(entry['url']);
-  if (label === null || url === null) {
-    return null;
-  }
-  const kind: LinkKind | null = linkKind(url);
-  if (kind === null) {
-    return null;
-  }
-  const variant: unknown = entry['variant'];
-  return {
-    label,
-    url,
-    kind,
-    variant: isButtonVariant(variant) ? variant : ButtonVariant.Outlined,
-  };
-}
-
-function isEntry(value: unknown): value is Entry {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
-function text(value: unknown): string | null {
-  return typeof value === 'string' && value.trim() !== '' ? value.trim() : null;
-}
-
-/** A real calendar day as `YYYY-MM-DD` (so `2026-02-30` is rejected), or null. */
-function day(value: unknown): string | null {
-  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    return null;
-  }
-  return toIsoDate(fromIsoDate(value)) === value ? value : null;
 }

@@ -1,20 +1,28 @@
-import { provideHttpClient } from '@angular/common/http';
-import { ButtonVariant } from '../../../shared/models/button.models';
+import { HttpContext, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { environment } from '../../../../environments/environment';
+import { ANONYMOUS_REQUEST } from '../../../core/interceptors/anonymous-request.token';
+import { ButtonVariant } from '../../../shared/models/button.models';
+import { LinkKind } from '../../../shared/models/link.models';
+import { AnnouncementDto } from '../dtos/announcement.dto';
 import { Announcement } from '../models/announcement.model';
 import { AnnouncementImagePosition } from '../models/announcement-image-position.model';
-import { AnnouncementsService } from './announcements.service';
-import { LinkKind } from '../../../shared/models/link.models';
+import { ANNOUNCEMENTS_URL, AnnouncementsService } from './announcements.service';
 
 describe(
   'AnnouncementsService',
   (): void => {
-    const contentUrl: string = `${environment.mediaBaseUrl}/content/announcements.json`;
+    const plainAnnouncement: AnnouncementDto = {
+      title: 'Closed today',
+      bodyHtml: '',
+      startDate: '2026-11-26',
+      endDate: '2026-11-26',
+      image: null,
+      buttons: [],
+    };
 
     function request(): {
-      result: () => Announcement[] | undefined; failed: () => boolean; request: TestRequest;
+      result: () => Announcement[] | undefined; failed: () => boolean; http: TestRequest;
     } {
       let announcements: Announcement[] | undefined;
       let hasFailed: boolean = false;
@@ -29,13 +37,13 @@ describe(
       return {
         result: (): Announcement[] | undefined => announcements,
         failed: (): boolean => hasFailed,
-        request: TestBed.inject(HttpTestingController).expectOne(contentUrl),
+        http: TestBed.inject(HttpTestingController).expectOne(ANNOUNCEMENTS_URL),
       };
     }
 
-    function announcementsFrom(content: object): Announcement[] | undefined {
+    function announcementsFrom(announcements: AnnouncementDto[]): Announcement[] | undefined {
       const pending: ReturnType<typeof request> = request();
-      pending.request.flush(content);
+      pending.http.flush(announcements);
       return pending.result();
     }
 
@@ -48,53 +56,37 @@ describe(
     });
 
     it(
-      'revalidates the file on every load, since portal uploads carry no Cache-Control',
+      'keeps the API order and fields, and gives each button its link kind',
       (): void => {
-        const pending: ReturnType<typeof request> = request();
-
-        expect(pending.request.request.cache).toBe('no-cache');
-        pending.request.flush({ items: [] });
-      },
-    );
-
-    it(
-      'reads a full announcement, building the image URL from mediaBaseUrl',
-      (): void => {
-        const announcements: Announcement[] | undefined = announcementsFrom({
-          items: [
+        const announcement: AnnouncementDto = {
+          title: 'Ünïcode & émoji ✂️ title',
+          bodyHtml: '<p>Walk-ins <strong>welcome</strong></p>',
+          startDate: '2026-02-28',
+          endDate: '2026-03-01',
+          image: {
+            src: 'https://media.example.test/announcements/chair%20photo%20%231.webp',
+            alt: 'An empty chair',
+            position: AnnouncementImagePosition.Left,
+          },
+          buttons: [
             {
-              title: '  Ünïcode & émoji ✂️ title  ',
-              bodyHtml: '<p>Walk-ins <strong>welcome</strong></p>',
-              startDate: '2026-02-28',
-              endDate: '2026-03-01',
-              image: {
-                fileName: 'chair photo #1.webp',
-                altText: 'An empty chair',
-                position: 'left',
-              },
-              buttons: [
-                {
-                  label: 'Book',
-                  url: '/book',
-                  kind: LinkKind.Internal,
-                  variant: 'primary',
-                },
-              ],
+              label: 'Book',
+              url: '/book',
+              variant: ButtonVariant.Primary,
+            },
+            {
+              label: 'Call',
+              url: 'tel:+15550100000',
+              variant: ButtonVariant.Text,
             },
           ],
-        });
+        };
+
+        const announcements: Announcement[] | undefined = announcementsFrom([announcement, plainAnnouncement]);
 
         expect(announcements).toEqual([
           {
-            title: 'Ünïcode & émoji ✂️ title',
-            bodyHtml: '<p>Walk-ins <strong>welcome</strong></p>',
-            startDate: '2026-02-28',
-            endDate: '2026-03-01',
-            image: {
-              src: `${environment.mediaBaseUrl}/announcements/chair%20photo%20%231.webp`,
-              alt: 'An empty chair',
-              position: AnnouncementImagePosition.Left,
-            },
+            ...announcement,
             buttons: [
               {
                 label: 'Book',
@@ -102,156 +94,69 @@ describe(
                 kind: LinkKind.Internal,
                 variant: ButtonVariant.Primary,
               },
+              {
+                label: 'Call',
+                url: 'tel:+15550100000',
+                kind: LinkKind.Device,
+                variant: ButtonVariant.Text,
+              },
+            ],
+          },
+          plainAnnouncement,
+        ]);
+      },
+    );
+
+    it(
+      'drops a button whose link the page cannot open',
+      (): void => {
+        const announcements: Announcement[] | undefined = announcementsFrom([
+          {
+            ...plainAnnouncement,
+            buttons: [
+              {
+                label: 'Script',
+                url: 'javascript:alert(1)',
+                variant: ButtonVariant.Outlined,
+              },
+              {
+                label: 'Menu',
+                url: 'https://example.test/menu',
+                variant: ButtonVariant.Outlined,
+              },
             ],
           },
         ]);
+
+        expect(announcements?.[0]?.buttons.map((button: { label: string; }): string => button.label)).toEqual(['Menu']);
       },
     );
 
     it(
-      'fills in a missing body, alt text and position, and allows a one-day announcement',
+      'returns no announcements for an empty list',
       (): void => {
-        const announcements: Announcement[] | undefined = announcementsFrom({
-          items: [
-            {
-              title: 'Closed today',
-              startDate: '2026-11-26',
-              endDate: '2026-11-26',
-              image: { fileName: 'closed.png', position: 'top' },
-            },
-          ],
-        });
-
-        expect(announcements).toEqual([
-          {
-            title: 'Closed today',
-            bodyHtml: '',
-            startDate: '2026-11-26',
-            endDate: '2026-11-26',
-            image: {
-              src: `${environment.mediaBaseUrl}/announcements/closed.png`,
-              alt: '',
-              position: AnnouncementImagePosition.Right,
-            },
-            buttons: [],
-          },
-        ]);
+        expect(announcementsFrom([])).toEqual([]);
       },
     );
 
     it(
-      'skips items without a title or with missing, impossible or reversed dates',
-      (): void => {
-        const valid: Record<string, string> = {
-          title: 'Kept',
-          startDate: '2026-10-01',
-          endDate: '2026-10-31',
-        };
-
-        const announcements: Announcement[] | undefined = announcementsFrom({
-          items: [
-            { ...valid, title: '   ' },
-            { ...valid, title: 42 },
-            { ...valid, startDate: undefined },
-            { ...valid, endDate: '2026-02-30' },
-            { ...valid, startDate: '10/01/2026' },
-            { ...valid, startDate: '2026-11-01' },
-            'not an object',
-            null,
-            valid,
-          ],
-        });
-
-        expect(announcements?.map((announcement: Announcement): string => announcement.title)).toEqual(['Kept']);
-      },
-    );
-
-    it(
-      'keeps very long text, since the length limits belong to the admin portal',
-      (): void => {
-        const longTitle: string = 'T'.repeat(200);
-        const longBody: string = `<p>${'b'.repeat(8000)}</p>`;
-
-        const announcements: Announcement[] | undefined = announcementsFrom({
-          items: [
-            {
-              title: longTitle,
-              bodyHtml: longBody,
-              startDate: '2026-10-01',
-              endDate: '2026-10-31',
-            },
-          ],
-        });
-
-        expect(announcements?.[0]?.title).toBe(longTitle);
-        expect(announcements?.[0]?.bodyHtml).toBe(longBody);
-      },
-    );
-
-    it(
-      'drops buttons with no label or an unsupported link, and outlines unknown variants',
-      (): void => {
-        const announcements: Announcement[] | undefined = announcementsFrom({
-          items: [
-            {
-              title: 'Buttons',
-              startDate: '2026-10-01',
-              endDate: '2026-10-31',
-              buttons: [
-                {
-                  label: 'Call',
-                  url: 'tel:+15550100000',
-                  variant: 'glowing',
-                },
-                {
-                  label: 'Menu',
-                  url: 'https://example.test/menu',
-                  variant: 'text',
-                },
-                { label: 'Write', url: 'mailto:owner@example.test' },
-                { label: '', url: '/book' },
-                { label: 'Insecure', url: 'http://example.test' },
-                { label: 'Script', url: 'javascript:alert(1)' },
-                { label: 'Elsewhere', url: '//other.test' },
-              ],
-            },
-          ],
-        });
-
-        expect(announcements?.[0]?.buttons).toEqual([
-          {
-            label: 'Call',
-            url: 'tel:+15550100000',
-            kind: LinkKind.Device,
-            variant: ButtonVariant.Outlined,
-          },
-          {
-            label: 'Menu',
-            url: 'https://example.test/menu',
-            kind: LinkKind.External,
-            variant: ButtonVariant.Text,
-          },
-          {
-            label: 'Write',
-            url: 'mailto:owner@example.test',
-            kind: LinkKind.Device,
-            variant: ButtonVariant.Outlined,
-          },
-        ]);
-      },
-    );
-
-    it(
-      'fails when the file has no items list, so the section hides',
+      'asks anonymously, so no session token is requested',
       (): void => {
         const pending: ReturnType<typeof request> = request();
-        pending.request.flush([
-          {
-            title: 'A bare array',
-            startDate: '2026-10-01',
-            endDate: '2026-10-31',
-          },
-        ]);
+        const context: HttpContext = pending.http.request.context;
+
+        pending.http.flush([]);
+
+        expect(context.get(ANONYMOUS_REQUEST)).toBe(true);
+      },
+    );
+
+    it(
+      'fails when the API does, so the section hides',
+      (): void => {
+        const pending: ReturnType<typeof request> = request();
+
+        pending.http.flush('down', { status: 503, statusText: 'Service Unavailable' });
 
         expect(pending.failed()).toBe(true);
       },
