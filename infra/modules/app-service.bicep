@@ -18,7 +18,7 @@ param restrictAccess bool
 
 param allowedIpRanges string[]
 
-@description('Also allow the AzureEventGrid service tag when access is restricted (the API, which receives blob-change webhooks; the Event Grid key is the real gate).')
+@description('Also allow the AzureEventGrid service tag when access is restricted (the API, which receives blob-change webhooks).')
 param allowEventGrid bool = false
 
 @description('Resource ID of a user-assigned identity to add beside the system-assigned one. Empty adds none.')

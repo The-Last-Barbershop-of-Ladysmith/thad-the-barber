@@ -1,5 +1,4 @@
 // Tells the environment's API when a gallery photo or announcements.json changes, so it refetches (#204).
-// Deploy only once the API with POST /api/webhooks/media is running: Event Grid validates the endpoint on creation.
 
 param envName string
 param topicName string
@@ -42,7 +41,7 @@ resource mediaChanges 'Microsoft.EventGrid/systemTopics/eventSubscriptions@2025-
       properties: {
         // The linter treats every endpointUrl as secret (SAS URLs); this one is a plain public address.
         #disable-next-line use-secure-value-for-secure-inputs
-        endpointUrl:'${apiUrl}/api/webhooks/media'
+        endpointUrl: '${apiUrl}/api/webhooks/media'
         deliveryAttributeMappings: [
           {
             name: 'x-media-webhook-key'

@@ -93,7 +93,7 @@ resource storage 'Microsoft.Storage/storageAccounts@2024-01-01' = {
 }
 
 // A storage account has one system topic per event type, so the topic lives here and each environment adds its own
-// subscription (modules/media-events.bicep). The topic is free; events are billed per operation after 100,000 a month.
+// subscription (modules/media-events.bicep).
 resource storageEvents 'Microsoft.EventGrid/systemTopics@2025-02-15' = {
   name: 'evgt-ttb-${stage}-${location}'
   location: location

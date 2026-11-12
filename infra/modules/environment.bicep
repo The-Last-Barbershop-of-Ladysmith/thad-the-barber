@@ -36,12 +36,13 @@ param canAdminSignSessions bool
 @description('Gives adminPrincipalId Storage Blob Data Contributor on the media and content containers (gallery and announcement edits in the portal); otherwise Reader.')
 param canAdminWriteMedia bool
 
-@description('Stop anonymous listing of the media container (publicAccess Blob). Turn on only after the UI that reads /api/gallery is live: the older UI lists the container directly.')
+@description('Stop anonymous listing of the media container (publicAccess Blob).')
 param restrictMediaListing bool
 
-@description('Subscribe the API to blob changes (needs the API with /api/webhooks/media running, and mediaWebhookKey).')
+@description('Subscribe the API to blob changes; needs mediaWebhookKey.')
 param deployMediaSubscription bool
 
+@description('The shared storage system topic this subscription attaches to.')
 param storageEventsTopicName string
 
 @secure()
@@ -177,7 +178,7 @@ resource sessionJwtKey 'Microsoft.KeyVault/vaults/keys@2024-11-01' = {
 resource mediaContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2024-01-01' = {
   name: '${storageName}/default/media-${envName}'
   properties: {
-    // 'Container' lets the older UI list gallery/ anonymously (#168). 'Blob' serves a file by its exact URL only; the API lists it (#204).
+    // 'Blob' serves a file by its exact URL only, since the API does the listing (#204).
     publicAccess: restrictMediaListing ? 'Blob' : 'Container'
   }
 }
