@@ -166,6 +166,7 @@ test.describe(
 
         await page.getByTestId('reschedule').click();
         await expect(page).toHaveURL(/\/book\/manage\/made-up-booking\/reschedule$/);
+        await expect(page.getByTestId('booking-consent')).toHaveCount(0);
         await page.getByTestId('date-picker')
           .locator('td:not(.p-datepicker-other-month) .p-datepicker-day:not(.p-disabled)')
           .first()
