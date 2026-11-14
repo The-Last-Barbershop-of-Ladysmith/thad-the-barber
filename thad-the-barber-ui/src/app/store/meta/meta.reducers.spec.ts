@@ -7,7 +7,6 @@ import * as ShopActions from '../../features/shop/state/shop.actions';
 import { shopReducer } from '../../features/shop/state/shop.reducer';
 import * as HomeActions from '../../features/home/state/home.actions';
 import { homeReducer } from '../../features/home/state/home.reducer';
-import { RequestStatus } from '../../shared/models/request.models';
 import * as BookingActions from '../../features/booking/state/booking.actions';
 import { bookingReducer } from '../../features/booking/state/booking.reducer';
 import { localStorageSyncReducer, sessionStorageSyncReducer } from './meta.reducers';
@@ -43,19 +42,15 @@ describe(
     });
 
     it(
-      "saves only home's SMS signup, so an old load status never comes back from storage",
+      'saves nothing from home, so no ttb-home key is left on the device',
       (): void => {
         const reducer: ActionReducer<AppState> = createSyncedReducer();
-        const failedTimes: AppState = reducer(undefined, HomeActions.NextTimesRequestFailure());
-        reducer(failedTimes, HomeActions.SmsSignupRequestSuccess({ phone: '(555) 010-0199' }));
+        reducer(
+          reducer(undefined, HomeActions.NextTimesRequestFailure()),
+          HomeActions.SmsSignupRequestSuccess({ phone: '(555) 010-0199' }),
+        );
 
-        expect(saved('ttb-home')).toEqual({
-          smsSignup: {
-            status: RequestStatus.Success,
-            phone: '(555) 010-0199',
-            error: null,
-          },
-        });
+        expect(localStorage.getItem('ttb-home')).toBeNull();
       },
     );
 

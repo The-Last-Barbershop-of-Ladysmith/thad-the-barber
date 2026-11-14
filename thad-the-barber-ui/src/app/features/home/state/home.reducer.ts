@@ -5,7 +5,6 @@ import { RequestStatus } from '../../../shared/models/request.models';
 
 export const homeReducer: ActionReducer<HomeState> = createReducer(
   initialHomeState,
-  on(HomeActions.HomeStateReset, (): HomeState => initialHomeState),
   on(
     HomeActions.NextTimesRequestSuccess,
     (state: HomeState, { startAts }: { startAts: string[]; }): HomeState => ({

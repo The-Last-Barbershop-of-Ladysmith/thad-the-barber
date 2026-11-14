@@ -1,23 +1,11 @@
 import { ActionReducer, MetaReducer } from '@ngrx/store';
 import { Keys, localStorageSync } from 'ngrx-store-localstorage';
-import { homeFeatureKey } from '../../features/home/state/home.feature';
 import { decodeBase64, encodeBase64 } from '../../shared/utils/base64.utils';
 import { shopFeatureKey } from '../../features/shop/state/shop.feature';
 import { bookingFeatureKey } from '../../features/booking/state/booking.state';
 
-/**
- * Slices persisted to localStorage, base64-encoded, each with the fields it keeps. Home clears its own with its `State
- * Reset` action.
- */
+/** Slices persisted to localStorage, base64-encoded, each with the fields it keeps. */
 const keys: Keys = [
-  // Only the signup: the open times reload on every visit, so their saved copy would only show stale ones.
-  {
-    [homeFeatureKey]: {
-      encrypt: encodeBase64,
-      decrypt: decodeBase64,
-      filter: ['smsSignup'],
-    },
-  },
   // Only the shop itself: a saved load status would stop the next visit refreshing it.
   {
     [shopFeatureKey]: {

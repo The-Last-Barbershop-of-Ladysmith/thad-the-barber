@@ -3,7 +3,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { provideStore } from '@ngrx/store';
 import { announcementsFeature } from '../../features/announcements/state/announcements.feature';
-import { homeFeature } from '../../features/home/state/home.feature';
 import { shopFeature } from '../../features/shop/state/shop.feature';
 import { layoutFeature } from '../../store/app.feature';
 import { Header } from './header';
@@ -31,7 +30,6 @@ describe(
           ]),
           provideStore({
             [announcementsFeature.name]: announcementsFeature.reducer,
-            [homeFeature.name]: homeFeature.reducer,
             [layoutFeature.name]: layoutFeature.reducer,
             [shopFeature.name]: shopFeature.reducer,
           }),
