@@ -16,6 +16,7 @@ public static class BookingSetup
             .ValidateDataAnnotations()
             .ValidateOnStart();
         services.AddSingleton<ManageTokenSigner>();
+        services.AddSingleton<LookupTokenSigner>();
         services.AddSingleton<AvailabilityService>();
         services.AddSingleton<NextTimesService>();
         services.AddSingleton<BookingService>();
