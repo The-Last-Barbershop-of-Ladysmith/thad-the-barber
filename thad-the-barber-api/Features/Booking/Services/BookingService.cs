@@ -5,7 +5,6 @@ using ThadTheBarber.Api.Features.Booking.Configuration;
 using ThadTheBarber.Api.Features.Booking.Exceptions;
 using ThadTheBarber.Api.Features.Booking.Mappers;
 using ThadTheBarber.Api.Features.Booking.Models;
-using ThadTheBarber.Api.Infrastructure.RateLimiting.Services;
 using ThadTheBarber.Api.Square.Exceptions;
 using ThadTheBarber.Api.Square.Models;
 using ThadTheBarber.Api.Square.Services;
@@ -23,13 +22,11 @@ public sealed class BookingService(
     ManageTokenSigner manageTokens,
     LookupTokenSigner lookupTokens,
     ITwilioVerifyService twilioVerify,
-    PhoneRateLimiter phoneRateLimiter,
     IOptions<BookingSettings> settings,
     TimeProvider time)
 {
     public async Task SendLookupCodeAsync(string phone, CancellationToken cancellationToken)
     {
-        phoneRateLimiter.EnforceCode(phone);
         await twilioVerify.StartAsync(phone, cancellationToken);
     }
 
@@ -39,7 +36,6 @@ public sealed class BookingService(
     /// </summary>
     public async Task<VerifiedList> GetVerifiedListAsync(VerifiedListRequest request, CancellationToken cancellationToken)
     {
-        phoneRateLimiter.EnforceVerifiedList(request.Phone);
         bool isCodeValid = await twilioVerify.CheckAsync(request.Phone, request.Code, cancellationToken);
         if (!isCodeValid)
         {

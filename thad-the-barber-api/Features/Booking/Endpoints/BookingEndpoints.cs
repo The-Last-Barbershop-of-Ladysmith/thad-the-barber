@@ -34,8 +34,7 @@ public static class BookingEndpoints
             .WithName("GetVerifiedBookingList")
             .RequireRateLimiting(RateLimitSetup.LookupVerifiedListPolicy);
         bookings.MapGet("/lookup/verified-list", GetVerifiedListByTokenAsync)
-            .WithName("GetBookingListByLookupToken")
-            .RequireRateLimiting(RateLimitSetup.LookupSessionPolicy);
+            .WithName("GetBookingListByLookupToken");
         bookings.MapGet("/{id}", GetBookingAsync)
             .WithName("GetBooking");
         bookings.MapPost("/{id}/cancel", CancelBookingAsync)

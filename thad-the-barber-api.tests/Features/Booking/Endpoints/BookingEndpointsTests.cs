@@ -512,25 +512,6 @@ public sealed class BookingEndpointsTests
     }
 
     [Fact]
-    public async Task AFourthCodeForOnePhoneIs429WithRetryAfter()
-    {
-        FakeTwilioVerifyService twilio = new();
-        using ApiFactory api = Api(twilio: twilio);
-        using HttpClient client = api.CreateClient();
-        for (int attempt = 0; attempt < 3; attempt++)
-        {
-            using HttpResponseMessage allowed = await SendLookupCodeAsync(client, LookupPhone);
-            Assert.Equal(HttpStatusCode.Accepted, allowed.StatusCode);
-        }
-
-        using HttpResponseMessage refused = await SendLookupCodeAsync(client, LookupPhone);
-
-        await ProblemAssert.IsProblemAsync(refused, StatusCodes.Status429TooManyRequests, "rate_limited");
-        Assert.InRange(refused.Headers.RetryAfter!.Delta!.Value, TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(10));
-        Assert.Equal(3, twilio.StartedPhones.Count);
-    }
-
-    [Fact]
     public async Task AFailingTwilioIs503OnSendCode()
     {
         FakeTwilioVerifyService twilio = new()

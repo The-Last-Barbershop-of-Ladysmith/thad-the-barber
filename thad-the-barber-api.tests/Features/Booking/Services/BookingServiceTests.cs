@@ -8,7 +8,6 @@ using ThadTheBarber.Api.Features.Booking.Exceptions;
 using ThadTheBarber.Api.Features.Booking.Models;
 using ThadTheBarber.Api.Features.Booking.Services;
 using ThadTheBarber.Api.Infrastructure.RateLimiting.Configuration;
-using ThadTheBarber.Api.Infrastructure.RateLimiting.Services;
 using ThadTheBarber.Api.Square.Configuration;
 using ThadTheBarber.Api.Square.Exceptions;
 using ThadTheBarber.Api.Square.Models;
@@ -28,9 +27,7 @@ public sealed class BookingServiceTests
     private static readonly DateTimeOffset now = Instant("2026-10-06T15:10:00Z");
     private static readonly DateTimeOffset openTime = Instant("2026-10-07T13:30:00Z");
     private const int MaxUpcomingPerPhone = 3;
-    private const int MaxTextCodesPerPhone = 2;
     private static readonly TimeSpan LookupSessionLifetime = TimeSpan.FromMinutes(15);
-    private const int MaxVerifiedListAttemptsPerPhone = 3;
     private const string KnownPhone = "+15555550123";
     private const string UnknownPhone = "+15555550199";
 
@@ -277,33 +274,6 @@ public sealed class BookingServiceTests
     }
 
     [Fact]
-    public async Task AThirdCodeForOnePhoneIsRateLimitedBeforeTwilioIsCalled()
-    {
-        FakeTwilioVerifyService twilio = new();
-        BookingService service = Service(new FakeSquareService(), twilio);
-        await service.SendLookupCodeAsync(KnownPhone, Cancellation);
-        await service.SendLookupCodeAsync(KnownPhone, Cancellation);
-
-        RateLimitedException limited = await Assert.ThrowsAsync<RateLimitedException>(() => service.SendLookupCodeAsync(KnownPhone, Cancellation));
-
-        Assert.True(limited.RetryAfter > TimeSpan.Zero);
-        Assert.Equal(MaxTextCodesPerPhone, twilio.StartedPhones.Count);
-    }
-
-    [Fact]
-    public async Task EachPhoneHasItsOwnTextCodeLimit()
-    {
-        FakeTwilioVerifyService twilio = new();
-        BookingService service = Service(new FakeSquareService(), twilio);
-        await service.SendLookupCodeAsync(KnownPhone, Cancellation);
-        await service.SendLookupCodeAsync(KnownPhone, Cancellation);
-
-        await service.SendLookupCodeAsync(UnknownPhone, Cancellation);
-
-        Assert.Contains(UnknownPhone, twilio.StartedPhones);
-    }
-
-    [Fact]
     public async Task ATwilioFailureOnSendCodeReachesTheCaller()
     {
         FakeTwilioVerifyService twilio = new()
@@ -408,19 +378,6 @@ public sealed class BookingServiceTests
 
         await Assert.ThrowsAsync<CodeInvalidException>(() => service.GetVerifiedListAsync(ListRequest(KnownPhone, code), Cancellation));
         Assert.Equal(0, square.AppointmentListings);
-    }
-
-    [Fact]
-    public async Task AFourthVerifiedListAttemptForOnePhoneIsRateLimitedBeforeTwilioIsAsked()
-    {
-        FakeSquareService square = new();
-        BookingService service = Service(square, await StartedTwilioAsync());
-        for (int attempt = 0; attempt < MaxVerifiedListAttemptsPerPhone; attempt++)
-        {
-            await Assert.ThrowsAsync<CodeInvalidException>(() => service.GetVerifiedListAsync(ListRequest(KnownPhone, "000000"), Cancellation));
-        }
-
-        await Assert.ThrowsAsync<RateLimitedException>(() => service.GetVerifiedListAsync(ListRequest(KnownPhone), Cancellation));
     }
 
     [Fact]
@@ -547,19 +504,6 @@ public sealed class BookingServiceTests
             ManageTokens.Signer,
             LookupTokens.CreateSigner(time),
             twilio ?? new FakeTwilioVerifyService(),
-            new PhoneRateLimiter(Options.Create(new RateLimitSettings
-            {
-                LookupCodePhone = new FixedWindowLimit
-                {
-                    PermitLimit = MaxTextCodesPerPhone,
-                    Window = TimeSpan.FromMinutes(10),
-                },
-                LookupVerifiedListPhone = new FixedWindowLimit
-                {
-                    PermitLimit = MaxVerifiedListAttemptsPerPhone,
-                    Window = TimeSpan.FromMinutes(10),
-                },
-            })),
             Options.Create(new BookingSettings
             {
                 MaxUpcomingPerPhone = MaxUpcomingPerPhone,
