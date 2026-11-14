@@ -30,6 +30,9 @@ param allowedIpRanges string[]
 @description('Deploy the Square alerts (prod only; nonprod uses the Square sandbox).')
 param squareAlerts bool
 
+@description('Deploy the alert that emails when a contact-page question or issue arrives.')
+param contactAlerts bool
+
 @description('Gives adminPrincipalId Key Vault Crypto User on the session-JWT key, for local runs (dev only).')
 param canAdminSignSessions bool
 
@@ -140,6 +143,17 @@ module squareAlert 'square-alerts.bicep' = if (squareAlerts) {
     workspaceId: workspaceId
     keyVaultName: keyVault.name
     apiPrincipalId: api.outputs.principalId
+    actionGroupId: actionGroupId
+    tags: tags
+  }
+}
+
+module contactAlert 'contact-alerts.bicep' = if (contactAlerts) {
+  name: 'contact-alerts-${envName}'
+  params: {
+    envName: envName
+    location: location
+    workspaceId: workspaceId
     actionGroupId: actionGroupId
     tags: tags
   }
@@ -317,13 +331,14 @@ resource apiMediaReader 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   }
 }
 
-resource apiContentReader 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(contentContainer.id, apiAppName, storageBlobDataReader)
+// Reads announcements.json and reviews.json, and writes one contact/ file per contact-page message (#286).
+resource apiContentWriter 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(contentContainer.id, apiAppName, storageBlobDataContributor)
   scope: contentContainer
   properties: {
     principalId: api.outputs.principalId
     principalType: 'ServicePrincipal'
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageBlobDataReader)
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageBlobDataContributor)
   }
 }
 
