@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { Title } from '@angular/platform-browser';
 import { Router, Routes, TitleStrategy, provideRouter } from '@angular/router';
 import { provideStore } from '@ngrx/store';
+import { readCanonicalHref, removeSeoTags } from '../../../testing/head-tags';
 import { shopFeature } from '../../features/shop/state/shop.feature';
 import { RouteSeo } from '../../shared/models/route-seo.model';
 import { SHOP_FALLBACK } from '../config/shop-info';
@@ -60,9 +61,7 @@ describe(
       title = TestBed.inject(Title);
     });
 
-    afterEach((): void => {
-      document.head.querySelector('link[rel="canonical"]')?.remove();
-    });
+    afterEach(removeSeoTags);
 
     it(
       'sets the title from the active route seo',
@@ -97,7 +96,7 @@ describe(
       async (): Promise<void> => {
         await router.navigateByUrl('/chairs?from=text#top');
 
-        expect(document.head.querySelector('link[rel="canonical"]')?.getAttribute('href')).toMatch(/\/chairs$/);
+        expect(readCanonicalHref()).toMatch(/\/chairs$/);
       },
     );
   },

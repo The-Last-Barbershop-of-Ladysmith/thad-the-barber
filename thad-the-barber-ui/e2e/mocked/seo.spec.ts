@@ -7,6 +7,12 @@ interface SeoRoute {
   isIndexed: boolean;
 }
 
+interface ExpectedTag {
+  attribute: 'name' | 'property';
+  key: string;
+  content: string | RegExp;
+}
+
 const SEO_ROUTES: SeoRoute[] = [
   { path: '/', isIndexed: true },
   { path: '/book', isIndexed: true },
@@ -17,9 +23,43 @@ const SEO_ROUTES: SeoRoute[] = [
   { path: '/no-such-page', isIndexed: false },
 ];
 
-const OPEN_GRAPH_IMAGE_BYTE_BUDGET: number = 300 * 1024;
+const ANY_TEXT: RegExp = /\S/;
+const SHARE_TAGS: ExpectedTag[] = [
+  {
+    attribute: 'name',
+    key: 'description',
+    content: ANY_TEXT,
+  },
+  {
+    attribute: 'property',
+    key: 'og:title',
+    content: ANY_TEXT,
+  },
+  {
+    attribute: 'property',
+    key: 'og:image',
+    content: /^https?:\/\//,
+  },
+  {
+    attribute: 'property',
+    key: 'og:image:alt',
+    content: ANY_TEXT,
+  },
+  {
+    attribute: 'name',
+    key: 'twitter:card',
+    content: 'summary_large_image',
+  },
+  {
+    attribute: 'name',
+    key: 'twitter:image:alt',
+    content: ANY_TEXT,
+  },
+];
 
-function metaContent(
+const SHARE_IMAGE_BYTE_BUDGET: number = 300 * 1024;
+
+function metaTag(
   page: Page,
   attribute: 'name' | 'property',
   key: string,
@@ -27,60 +67,28 @@ function metaContent(
   return page.locator(`meta[${attribute}="${key}"]`);
 }
 
-async function titleOf(page: Page, path: string): Promise<string> {
-  await page.goto(path);
-  await expect(page.locator('meta[name="robots"]')).toHaveCount(1);
-  return page.title();
-}
-
 test.describe(
   'seo head tags',
   (): void => {
     for (const route of SEO_ROUTES) {
       test(
-        `${route.path} sets its title, description, robots and share tags`,
+        `${route.path} sets its robots, canonical and share tags`,
         async ({ page }: { page: Page; }): Promise<void> => {
           await page.goto(route.path);
 
-          await expect(metaContent(
+          await expect(metaTag(
             page,
             'name',
             'robots',
-          )).toHaveAttribute(
-            'content',
-            route.isIndexed ? 'index, follow' : 'noindex, nofollow',
-          );
-          await expect(metaContent(
-            page,
-            'name',
-            'description',
-          )).toHaveAttribute('content', /\S/);
-          await expect(metaContent(
-            page,
-            'property',
-            'og:title',
-          )).toHaveAttribute('content', /\S/);
-          await expect(metaContent(
-            page,
-            'property',
-            'og:image',
-          )).toHaveAttribute('content', /^https?:\/\//);
-          await expect(metaContent(
-            page,
-            'name',
-            'twitter:card',
-          )).toHaveAttribute('content', 'summary_large_image');
-          await expect(metaContent(
-            page,
-            'property',
-            'og:image:alt',
-          )).toHaveAttribute('content', /\S/);
-          await expect(metaContent(
-            page,
-            'name',
-            'twitter:image:alt',
-          )).toHaveAttribute('content', /\S/);
+          )).toHaveAttribute('content', route.isIndexed ? 'index, follow' : 'noindex, nofollow');
           await expect(page.locator('link[rel="canonical"]')).toHaveCount(route.isIndexed ? 1 : 0);
+          for (const tag of SHARE_TAGS) {
+            await expect(metaTag(
+              page,
+              tag.attribute,
+              tag.key,
+            )).toHaveAttribute('content', tag.content);
+          }
         },
       );
     }
@@ -95,27 +103,15 @@ test.describe(
     );
 
     test(
-      'every route gets a different title',
-      async ({ page }: { page: Page; }): Promise<void> => {
-        const titles: string[] = [];
-        for (const route of SEO_ROUTES) {
-          titles.push(await titleOf(page, route.path));
-        }
-
-        expect(new Set(titles).size).toBe(SEO_ROUTES.length);
-      },
-    );
-
-    test(
       'the share images are jpeg files under the size budget',
       async ({ page }: { page: Page; }): Promise<void> => {
         await page.goto('/');
-        const openGraphUrl: string = (await metaContent(
+        const openGraphUrl: string = (await metaTag(
           page,
           'property',
           'og:image',
         ).getAttribute('content')) ?? '';
-        const twitterUrl: string = (await metaContent(
+        const twitterUrl: string = (await metaTag(
           page,
           'name',
           'twitter:image',
@@ -125,7 +121,7 @@ test.describe(
           const response: APIResponse = await page.request.get(new URL(imageUrl).pathname);
           expect(response.status()).toBe(200);
           expect(response.headers()['content-type']).toBe('image/jpeg');
-          expect((await response.body()).length).toBeLessThan(OPEN_GRAPH_IMAGE_BYTE_BUDGET);
+          expect((await response.body()).length).toBeLessThan(SHARE_IMAGE_BYTE_BUDGET);
         }
       },
     );

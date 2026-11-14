@@ -21,7 +21,10 @@ export class SeoTitleStrategy extends TitleStrategy {
     let found: RouteSeo | undefined;
     let route: ActivatedRouteSnapshot | null = root;
     while (route) {
-      found = (route.data['seo'] as RouteSeo | undefined) ?? found;
+      const routeSeo: RouteSeo | undefined = route.data['seo'] as RouteSeo | undefined;
+      if (routeSeo) {
+        found = routeSeo;
+      }
       route = route.firstChild;
     }
     return found;

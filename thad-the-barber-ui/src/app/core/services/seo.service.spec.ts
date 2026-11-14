@@ -1,13 +1,14 @@
 import { TestBed } from '@angular/core/testing';
-import { Meta, Title } from '@angular/platform-browser';
+import { Title } from '@angular/platform-browser';
 import { Store, provideStore } from '@ngrx/store';
-import { TEST_SHOP } from '../../../testing/test-shop';
 import { environment } from '../../../environments/environment';
+import { readCanonicalHref, readMetaContent, removeSeoTags } from '../../../testing/head-tags';
+import { TEST_SHOP } from '../../../testing/test-shop';
 import * as ShopActions from '../../features/shop/state/shop.actions';
 import { shopFeature } from '../../features/shop/state/shop.feature';
 import { RouteSeo } from '../../shared/models/route-seo.model';
 import { SHOP_FALLBACK } from '../config/shop-info';
-import { OPEN_GRAPH_IMAGE_PATH, SeoService, TWITTER_IMAGE_PATH } from './seo.service';
+import { SeoService } from './seo.service';
 
 const INDEXED_SEO: RouteSeo = {
   title: 'Chairs · {shopName} in {city}',
@@ -25,32 +26,15 @@ describe(
   'SeoService',
   (): void => {
     let seoService: SeoService;
-    let meta: Meta;
     let title: Title;
-
-    function nameContent(name: string): string | null {
-      return document.head.querySelector(`meta[name="${name}"]`)?.getAttribute('content') ?? null;
-    }
-
-    function propertyContent(property: string): string | null {
-      return document.head.querySelector(`meta[property="${property}"]`)?.getAttribute('content') ?? null;
-    }
-
-    function canonicalHref(): string | null {
-      return document.head.querySelector('link[rel="canonical"]')?.getAttribute('href') ?? null;
-    }
 
     beforeEach((): void => {
       TestBed.configureTestingModule({ providers: [provideStore({ [shopFeature.name]: shopFeature.reducer })] });
       seoService = TestBed.inject(SeoService);
-      meta = TestBed.inject(Meta);
       title = TestBed.inject(Title);
     });
 
-    afterEach((): void => {
-      document.head.querySelector('link[rel="canonical"]')?.remove();
-      meta.removeTag('name="robots"');
-    });
+    afterEach(removeSeoTags);
 
     it(
       'fills the shop name from the fallback and the city from the constant',
@@ -58,7 +42,7 @@ describe(
         seoService.apply(INDEXED_SEO, '/chairs');
 
         expect(title.getTitle()).toBe(`Chairs · ${SHOP_FALLBACK.name} in ${SHOP_FALLBACK.city}`);
-        expect(nameContent('description')).toBe(`${SHOP_FALLBACK.name} cuts hair in ${SHOP_FALLBACK.city}.`);
+        expect(readMetaContent('name', 'description')).toBe(`${SHOP_FALLBACK.name} cuts hair in ${SHOP_FALLBACK.city}.`);
       },
     );
 
@@ -70,7 +54,7 @@ describe(
         seoService.apply(INDEXED_SEO, '/chairs');
 
         expect(title.getTitle()).toBe(`Chairs · ${TEST_SHOP.name} in ${SHOP_FALLBACK.city}`);
-        expect(propertyContent('og:site_name')).toBe(TEST_SHOP.name);
+        expect(readMetaContent('property', 'og:site_name')).toBe(TEST_SHOP.name);
       },
     );
 
@@ -79,8 +63,8 @@ describe(
       (): void => {
         seoService.apply(INDEXED_SEO, '/chairs');
 
-        expect(canonicalHref()).toBe(`${environment.siteUrl}/chairs`);
-        expect(propertyContent('og:url')).toBe(`${environment.siteUrl}/chairs`);
+        expect(readCanonicalHref()).toBe(`${environment.siteUrl}/chairs`);
+        expect(readMetaContent('property', 'og:url')).toBe(`${environment.siteUrl}/chairs`);
       },
     );
 
@@ -89,7 +73,7 @@ describe(
       (): void => {
         seoService.apply(INDEXED_SEO, '/chairs');
 
-        expect(nameContent('robots')).toBe('index, follow');
+        expect(readMetaContent('name', 'robots')).toBe('index, follow');
       },
     );
 
@@ -99,8 +83,8 @@ describe(
         seoService.apply(INDEXED_SEO, '/chairs');
         seoService.apply(HIDDEN_SEO, '/private');
 
-        expect(nameContent('robots')).toBe('noindex, nofollow');
-        expect(canonicalHref()).toBeNull();
+        expect(readMetaContent('name', 'robots')).toBe('noindex, nofollow');
+        expect(readCanonicalHref()).toBeNull();
       },
     );
 
@@ -109,13 +93,13 @@ describe(
       (): void => {
         seoService.apply(INDEXED_SEO, '/chairs');
 
-        expect(propertyContent('og:image')).toBe(`${environment.siteUrl}${OPEN_GRAPH_IMAGE_PATH}`);
-        expect(nameContent('twitter:image')).toBe(`${environment.siteUrl}${TWITTER_IMAGE_PATH}`);
-        expect(nameContent('twitter:card')).toBe('summary_large_image');
-        expect(propertyContent('og:image:width')).toBe('1200');
-        expect(propertyContent('og:image:height')).toBe('630');
-        expect(propertyContent('og:image:alt')).toBeTruthy();
-        expect(nameContent('twitter:image:alt')).toBeTruthy();
+        expect(readMetaContent('property', 'og:image')).toBe(`${environment.siteUrl}/social/og-v1.jpg`);
+        expect(readMetaContent('name', 'twitter:image')).toBe(`${environment.siteUrl}/social/twitter-v1.jpg`);
+        expect(readMetaContent('name', 'twitter:card')).toBe('summary_large_image');
+        expect(readMetaContent('property', 'og:image:width')).toBe('1200');
+        expect(readMetaContent('property', 'og:image:height')).toBe('630');
+        expect(readMetaContent('property', 'og:image:alt')).toBeTruthy();
+        expect(readMetaContent('name', 'twitter:image:alt')).toBeTruthy();
       },
     );
 

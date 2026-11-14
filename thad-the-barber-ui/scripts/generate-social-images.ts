@@ -3,9 +3,9 @@ import { join } from 'node:path';
 import sharp from 'sharp';
 
 /**
- * Renders the Open Graph and Twitter share images into `public/social/` from the logo, on the espresso page color
- * with a copper glow and a "Book online" button. The output is committed; run `npm run social:images` after the
- * logo or brand colors change, and bump the `-v1` in `src/app/core/services/seo.service.ts` so crawlers refetch.
+ * Renders the share images from the logo on the espresso page color, with a copper glow and a "Book online" button.
+ * The output is committed. Rerun it after the logo or brand colors change, and bump the `-v1` here and in
+ * `src/app/core/services/seo.service.ts` so crawlers refetch (Express caches versioned files for a year).
  */
 interface SocialImage {
   fileName: string;
@@ -14,24 +14,45 @@ interface SocialImage {
 }
 
 const IMAGES: SocialImage[] = [
-  { fileName: 'og-v1.jpg', width: 1200, height: 630 },
-  { fileName: 'twitter-v1.jpg', width: 1200, height: 600 },
+  {
+    fileName: 'og-v1.jpg',
+    width: 1200,
+    height: 630,
+  },
+  {
+    fileName: 'twitter-v1.jpg',
+    width: 1200,
+    height: 600,
+  },
 ];
 
 const ESPRESSO_950: string = '#0c0806';
 const COPPER_500: string = '#e8904a';
 const BUTTON_LABEL: string = 'Book online';
-const LOGO_WIDTH_SHARE: number = 0.58;
+const BUTTON_WIDTH: number = 360;
+const BUTTON_HEIGHT: number = 84;
+const BUTTON_BOTTOM_MARGIN: number = 64;
+const LOGO_WIDTH_FRACTION: number = 0.58;
+const LOGO_LIFT_ABOVE_CENTER: number = 50;
 const JPEG_QUALITY: number = 82;
 
-const outDir: string = join(import.meta.dirname, '..', 'public', 'social');
-const logoPath: string = join(import.meta.dirname, '..', 'public', 'assets', 'logo.png');
+const outDir: string = join(
+  import.meta.dirname,
+  '..',
+  'public',
+  'social',
+);
+const logoPath: string = join(
+  import.meta.dirname,
+  '..',
+  'public',
+  'assets',
+  'logo.png',
+);
 
 function toBackgroundSvg({ width, height }: SocialImage): Buffer {
-  const buttonWidth: number = 360;
-  const buttonHeight: number = 84;
-  const buttonX: number = (width - buttonWidth) / 2;
-  const buttonY: number = height - buttonHeight - 64;
+  const buttonX: number = (width - BUTTON_WIDTH) / 2;
+  const buttonY: number = height - BUTTON_HEIGHT - BUTTON_BOTTOM_MARGIN;
   return Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
   <defs>
     <radialGradient id="glow" cx="50%" cy="38%" r="60%">
@@ -41,23 +62,25 @@ function toBackgroundSvg({ width, height }: SocialImage): Buffer {
   </defs>
   <rect width="${width}" height="${height}" fill="${ESPRESSO_950}" />
   <rect width="${width}" height="${height}" fill="url(#glow)" />
-  <rect x="${buttonX}" y="${buttonY}" width="${buttonWidth}" height="${buttonHeight}" rx="42" fill="${COPPER_500}" />
+  <rect x="${buttonX}" y="${buttonY}" width="${BUTTON_WIDTH}" height="${BUTTON_HEIGHT}" rx="${BUTTON_HEIGHT / 2}"
+    fill="${COPPER_500}" />
   <text x="${width / 2}" y="${buttonY + 55}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif"
     font-size="38" font-weight="700" letter-spacing="1" fill="${ESPRESSO_950}">${BUTTON_LABEL}</text>
 </svg>`);
 }
 
 async function render(image: SocialImage): Promise<void> {
+  const logoWidth: number = Math.round(image.width * LOGO_WIDTH_FRACTION);
   const logo: Buffer = await sharp(logoPath)
-    .resize({ width: Math.round(image.width * LOGO_WIDTH_SHARE) })
+    .resize({ width: logoWidth })
     .toBuffer();
   const logoHeight: number = (await sharp(logo).metadata()).height;
   await sharp(toBackgroundSvg(image))
     .composite([
       {
         input: logo,
-        left: Math.round((image.width - Math.round(image.width * LOGO_WIDTH_SHARE)) / 2),
-        top: Math.round((image.height - logoHeight) / 2) - 50,
+        left: Math.round((image.width - logoWidth) / 2),
+        top: Math.round((image.height - logoHeight) / 2) - LOGO_LIFT_ABOVE_CENTER,
       },
     ])
     .jpeg({ quality: JPEG_QUALITY, mozjpeg: true })

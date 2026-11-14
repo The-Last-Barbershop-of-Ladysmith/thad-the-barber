@@ -10,7 +10,6 @@ import { shopFeature } from '../../features/shop/state/shop.feature';
   imports: [TitledPage],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './accessibility.html',
-  styleUrl: './accessibility.scss',
 })
 export class Accessibility {
   private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
