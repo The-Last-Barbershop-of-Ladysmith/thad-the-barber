@@ -31,9 +31,9 @@
     font-size: 2rem;
     overflow-wrap: anywhere;
 
-    // The display font is wide: at 6.2cqi the longest city name fits its column at every width.
+    // The display font is wide: at 6cqi the longest city name fits its column at every width.
     @media (min-width: 48rem) {
-      font-size: clamp(1.25rem, 6.2cqi, 2.5rem);
+      font-size: clamp(1.25rem, 6cqi, 2.5rem);
       line-height: 1;
     }
 
