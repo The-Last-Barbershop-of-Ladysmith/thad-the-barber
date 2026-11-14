@@ -8,4 +8,5 @@ export enum ProblemCode {
   BookingNotFound = 'booking_not_found',
   BookingStarted = 'booking_started',
   BookingCancelled = 'booking_cancelled',
+  CodeInvalid = 'code_invalid',
 }
