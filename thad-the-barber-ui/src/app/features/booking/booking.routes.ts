@@ -29,7 +29,7 @@ export const BOOKING_ROUTES: Routes = [
       },
       {
         path: 'manage',
-        title: 'Find my bookings · Thad The Barber',
+        title: 'Find my bookings Â· Thad The Barber',
         loadComponent: (): Promise<typeof FindBookings> =>
           import('./pages/find-bookings/find-bookings')
             .then((m: { FindBookings: typeof FindBookings; }): typeof FindBookings => m.FindBookings),

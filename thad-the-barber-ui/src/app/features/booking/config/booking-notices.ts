@@ -132,13 +132,13 @@ export const NO_UPCOMING_BOOKINGS_NOTICE: Notice = {
 
 export const LOOKUP_FAILED_NOTICE: Notice = {
   severity: NoticeSeverity.Error,
-  text: 'We couldn’t check that. Please try again.',
+  text: 'We couldnâ€™t check that. Please try again.',
   canRetry: false,
 };
 
 export const CODE_INVALID_NOTICE: Notice = {
   severity: NoticeSeverity.Warn,
-  text: 'That code didn’t work. Check it and try again, or go back to get a new one.',
+  text: 'That code didnâ€™t work. Check it and try again, or go back to get a new one.',
   canRetry: false,
 };
 
