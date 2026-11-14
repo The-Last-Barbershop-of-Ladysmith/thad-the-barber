@@ -133,11 +133,13 @@ describe(
     it(
       'verifies the code and returns the found bookings, none of them in the URL',
       (): void => {
-        const foundBookings: FoundBooking[] = [{
-          id: 'made-up-booking',
-          startAt: '2026-10-03T20:30:00Z',
-          manageToken: 'made-up-token',
-        }];
+        const foundBookings: FoundBooking[] = [
+          {
+            id: 'made-up-booking',
+            startAt: '2026-10-03T20:30:00Z',
+            manageToken: 'made-up-token',
+          },
+        ];
         let result: FoundBooking[] | undefined;
         TestBed.inject(BookingService)
           .verifyLookup({ phone: '+15555550123', code: '0042' })

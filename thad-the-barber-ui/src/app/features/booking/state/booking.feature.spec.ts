@@ -40,5 +40,17 @@ describe(
         ]));
       },
     );
+
+    it(
+      'is looking up only while a lookup request is sent',
+      (): void => {
+        const sending: BookingState = { ...initialBookingState, lookupStatus: RequestStatus.Pending };
+        const failed: BookingState = { ...initialBookingState, lookupStatus: RequestStatus.Error };
+
+        expect(bookingFeature.selectIsLookingUp({ booking: sending })).toBe(true);
+        expect(bookingFeature.selectIsLookingUp({ booking: failed })).toBe(false);
+        expect(bookingFeature.selectIsLookingUp({ booking: initialBookingState })).toBe(false);
+      },
+    );
   },
 );

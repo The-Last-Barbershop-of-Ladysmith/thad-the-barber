@@ -3,6 +3,8 @@ import { testConfirmation } from '../../../../testing/test-booking';
 import { RequestStatus } from '../../../shared/models/request.models';
 import { AvailableDay } from '../dtos/available-day.dto';
 import { BookingConfirmation } from '../dtos/booking-confirmation.dto';
+import { FoundBooking } from '../dtos/found-booking.dto';
+import { LookupStep } from '../models/lookup-step.model';
 import { Action } from '@ngrx/store';
 import { Notice } from '../../../shared/models/notice.model';
 import { NoticeSeverity } from '../../../shared/models/notice-severity.model';
@@ -15,9 +17,23 @@ const availableDays: AvailableDay[] = [
   { date: '2026-10-04', times: ['2026-10-04T23:30:00Z'] },
 ];
 
+const foundBookings: FoundBooking[] = [
+  {
+    id: 'made-up-first',
+    startAt: '2026-10-03T20:00:00Z',
+    manageToken: 'made-up-first-token',
+  },
+  {
+    id: 'made-up-second',
+    startAt: '2026-10-04T23:30:00Z',
+    manageToken: 'made-up-second-token',
+  },
+];
+
 const saturday: BookingConfirmation = testConfirmation('2026-10-03T20:00:00Z', 'made-up-saturday');
 
 const october: BookingState = {
+  ...initialBookingState,
   dayRange: testMonthView('2026-10'),
   availableDays,
   loadStatus: RequestStatus.Error,
@@ -129,6 +145,102 @@ describe(
         const reopened: BookingState = bookingReducer(sending, BookingActions.BookingPageOpen({ pickedStartAt: null }));
 
         expect(reopened.submitStatus).toBe(RequestStatus.Pending);
+      },
+    );
+
+    describe(
+      'looking up bookings',
+      (): void => {
+        const phone: string = '+15555550123';
+        const lookupNotice: Notice = {
+          severity: NoticeSeverity.Warn,
+          text: 'Made-up lookup notice.',
+          canRetry: false,
+        };
+        const codeAsked: BookingState = { ...initialBookingState, lookupStep: LookupStep.Code };
+        const found: BookingState = {
+          ...initialBookingState,
+          lookupStep: LookupStep.Results,
+          foundBookings,
+        };
+
+        it(
+          'shows a request pending and drops the last notice, in the step it was sent from',
+          (): void => {
+            const failed: BookingState = {
+              ...codeAsked,
+              lookupStatus: RequestStatus.Error,
+              lookupNotice,
+            };
+
+            expect(bookingReducer(failed, BookingActions.LookupVerifyRequest({ phone, code: '0042' }))).toEqual({
+              ...codeAsked,
+              lookupStatus: RequestStatus.Pending,
+            });
+            expect(bookingReducer(failed, BookingActions.LookupStartRequest({ phone })).lookupStep)
+              .toBe(LookupStep.Code);
+          },
+        );
+
+        it(
+          'moves to the code step once it is sent, and to the results once it is verified',
+          (): void => {
+            const asking: BookingState = { ...initialBookingState, lookupStatus: RequestStatus.Pending };
+
+            expect(bookingReducer(asking, BookingActions.LookupStartRequestSuccess())).toEqual(codeAsked);
+            expect(bookingReducer(
+              { ...codeAsked, lookupStatus: RequestStatus.Pending },
+              BookingActions.LookupVerifyRequestSuccess({ foundBookings }),
+            )).toEqual(found);
+          },
+        );
+
+        it(
+          'keeps the step and shows the notice when a request fails, so the code can be retried',
+          (): void => {
+            const failed: BookingState = bookingReducer(
+              { ...codeAsked, lookupStatus: RequestStatus.Pending },
+              BookingActions.LookupVerifyRequestFailure({ notice: lookupNotice }),
+            );
+
+            expect(failed).toEqual({
+              ...codeAsked,
+              lookupStatus: RequestStatus.Error,
+              lookupNotice,
+            });
+            expect(bookingReducer(
+              { ...initialBookingState, lookupStatus: RequestStatus.Pending },
+              BookingActions.LookupStartRequestFailure({ notice: lookupNotice }),
+            ).lookupNotice).toBe(lookupNotice);
+          },
+        );
+
+        it(
+          'goes back to the phone step without a notice, keeping nothing but the step',
+          (): void => {
+            const failed: BookingState = {
+              ...codeAsked,
+              lookupStatus: RequestStatus.Error,
+              lookupNotice,
+            };
+
+            expect(bookingReducer(failed, BookingActions.LookupPhoneChange())).toEqual(initialBookingState);
+          },
+        );
+
+        it(
+          'forgets everything found when the page resets, and leaves the rest of the slice alone',
+          (): void => {
+            expect(bookingReducer(
+              {
+                ...october,
+                lookupStep: LookupStep.Results,
+                foundBookings,
+              },
+              BookingActions.LookupReset(),
+            )).toEqual(october);
+          },
+        );
       },
     );
   },
