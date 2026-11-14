@@ -123,6 +123,33 @@ public sealed class RateLimitSetupTests(ApiFactory factory) : IClassFixture<ApiF
     }
 
     [Fact]
+    public async Task ThirdVerifyForOnePhoneIsRateLimitedEvenFromAnotherIp()
+    {
+        using WebApplicationFactory<Program> limited = WithPhoneVerifyLimitOfTwo();
+        using HttpClient firstClient = ClientFrom(limited, FirstClientIp);
+        using HttpClient secondClient = ClientFrom(limited, SecondClientIp);
+
+        AssertNotLimited(await VerifyLookupAsync(firstClient));
+        AssertNotLimited(await VerifyLookupAsync(secondClient));
+        using HttpResponseMessage third = await VerifyLookupAsync(firstClient);
+
+        await AssertRateLimitedAsync(third);
+    }
+
+    [Fact]
+    public async Task AnotherPhoneIsNotLimitedByTheFirstPhonesVerifyAttempts()
+    {
+        using WebApplicationFactory<Program> limited = WithPhoneVerifyLimitOfTwo();
+        using HttpClient client = ClientFrom(limited, FirstClientIp);
+        AssertNotLimited(await VerifyLookupAsync(client));
+        AssertNotLimited(await VerifyLookupAsync(client));
+
+        using HttpResponseMessage otherPhone = await VerifyLookupAsync(client, "+15555550102");
+
+        AssertNotLimited(otherPhone);
+    }
+
+    [Fact]
     public async Task LookupStartAndVerifyHaveSeparateLimits()
     {
         using WebApplicationFactory<Program> limited = WithLimitOfTwo();
@@ -163,6 +190,17 @@ public sealed class RateLimitSetupTests(ApiFactory factory) : IClassFixture<ApiF
             }));
         });
 
+    private WebApplicationFactory<Program> WithPhoneVerifyLimitOfTwo() =>
+        factory.WithWebHostBuilder(builder =>
+        {
+            builder.UseSetting("FORWARDEDHEADERS_ENABLED", "true");
+            builder.ConfigureAppConfiguration((_, configuration) => configuration.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["RateLimits:LookupVerify:PermitLimit"] = "100",
+                ["RateLimits:LookupVerifyPhone:PermitLimit"] = "2",
+            }));
+        });
+
     private static HttpClient ClientFrom(WebApplicationFactory<Program> host, string clientIp)
     {
         HttpClient client = host.CreateClient();
@@ -176,8 +214,8 @@ public sealed class RateLimitSetupTests(ApiFactory factory) : IClassFixture<ApiF
     private static Task<HttpResponseMessage> StartLookupAsync(HttpClient client, string phone) =>
         client.PostAsJsonAsync("/api/bookings/lookup/start", new { phone }, TestContext.Current.CancellationToken);
 
-    private static Task<HttpResponseMessage> VerifyLookupAsync(HttpClient client) =>
-        client.PostAsJsonAsync("/api/bookings/lookup/verify", new { phone = "+15555550101", code = "000000" }, TestContext.Current.CancellationToken);
+    private static Task<HttpResponseMessage> VerifyLookupAsync(HttpClient client, string phone = "+15555550101") =>
+        client.PostAsJsonAsync("/api/bookings/lookup/verify", new { phone, code = "000000" }, TestContext.Current.CancellationToken);
 
     private static Task<HttpResponseMessage> StartSessionAsync(HttpClient client) =>
         client.PostAsJsonAsync("/api/session", new { recaptchaToken = "fake-token" }, TestContext.Current.CancellationToken);

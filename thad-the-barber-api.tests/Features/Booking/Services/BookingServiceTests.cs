@@ -29,6 +29,7 @@ public sealed class BookingServiceTests
     private static readonly DateTimeOffset openTime = Instant("2026-10-07T13:30:00Z");
     private const int MaxUpcomingPerPhone = 3;
     private const int MaxTextCodesPerPhone = 2;
+    private const int MaxVerifyAttemptsPerPhone = 3;
     private const string KnownPhone = "+15555550123";
     private const string UnknownPhone = "+15555550199";
 
@@ -409,6 +410,19 @@ public sealed class BookingServiceTests
     }
 
     [Fact]
+    public async Task AFourthVerifyAttemptForOnePhoneIsRateLimitedBeforeTwilioIsAsked()
+    {
+        FakeSquareService square = new();
+        BookingService service = Service(square, await StartedTwilioAsync());
+        for (int attempt = 0; attempt < MaxVerifyAttemptsPerPhone; attempt++)
+        {
+            await Assert.ThrowsAsync<CodeInvalidException>(() => service.VerifyLookupAsync(VerifyRequest(KnownPhone, "000000"), Cancellation));
+        }
+
+        await Assert.ThrowsAsync<RateLimitedException>(() => service.VerifyLookupAsync(VerifyRequest(KnownPhone), Cancellation));
+    }
+
+    [Fact]
     public async Task ACodeForAPhoneThatWasNeverTextedIsInvalid()
     {
         BookingService service = Service(new FakeSquareService(), new FakeTwilioVerifyService());
@@ -467,6 +481,11 @@ public sealed class BookingServiceTests
                 LookupPhone = new FixedWindowLimit
                 {
                     PermitLimit = MaxTextCodesPerPhone,
+                    Window = TimeSpan.FromMinutes(10),
+                },
+                LookupVerifyPhone = new FixedWindowLimit
+                {
+                    PermitLimit = MaxVerifyAttemptsPerPhone,
                     Window = TimeSpan.FromMinutes(10),
                 },
             })),

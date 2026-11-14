@@ -15,6 +15,7 @@ public sealed class RateLimitSettingsValidator : IValidateOptions<RateLimitSetti
         AddFailures(failures, nameof(RateLimitSettings.LookupStart), options.LookupStart);
         AddFailures(failures, nameof(RateLimitSettings.LookupVerify), options.LookupVerify);
         AddFailures(failures, nameof(RateLimitSettings.LookupPhone), options.LookupPhone);
+        AddFailures(failures, nameof(RateLimitSettings.LookupVerifyPhone), options.LookupVerifyPhone);
         if (failures.Count > 0)
         {
             return ValidateOptionsResult.Fail(failures);
