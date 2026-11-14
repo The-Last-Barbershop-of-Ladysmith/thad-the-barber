@@ -16,13 +16,11 @@ export type HomeExtraSelectors = {
   selectAreNextTimesMissing: MemoizedSelector<object, boolean>;
 };
 
-/** Store key for this slice; also names its localStorage entry (`ttb-home`). */
+/** Store key for this slice. */
 export const homeFeatureKey: 'home' = 'home' as const;
 
 /**
- * The home page's open times and the SMS signup, registered at bootstrap because the signup is saved to
- * localStorage and needs its initial state in place before the saved copy merges over it. Its effects register with
- * the home route.
+ * The home page's open times and the parked SMS signup, registered with the home route; nothing is saved to storage.
  */
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the Feature type.
 export const homeFeature = createFeature({

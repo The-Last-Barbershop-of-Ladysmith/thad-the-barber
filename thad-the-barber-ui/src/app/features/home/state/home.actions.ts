@@ -1,8 +1,6 @@
 import { createAction, props } from '@ngrx/store';
 
 export enum HomeActionTypes {
-  /** Clears the slice back to its initial state (also overwrites its saved copy). */
-  HomeStateReset = '[Home Page] State Reset',
   HomePageOpen = '[Home Page] Opened',
   HomePageClose = '[Home Page] Closed',
   SmsSignupRequest = '[Home Page] Sms Signup Submitted',
@@ -11,11 +9,6 @@ export enum HomeActionTypes {
   SmsSignupRequestSuccess = '[Home API] Sms Signup Succeeded',
   SmsSignupRequestFailure = '[Home API] Sms Signup Failed',
 }
-
-// eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
-export const HomeStateReset = createAction(
-  HomeActionTypes.HomeStateReset,
-);
 
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
 export const HomePageOpen = createAction(

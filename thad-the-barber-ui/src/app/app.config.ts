@@ -25,7 +25,6 @@ import { layoutFeature } from './store/app.feature';
 import { metaReducers } from './store/meta/meta.reducers';
 import * as shopEffects from './features/shop/state/shop.effects';
 import { shopFeature } from './features/shop/state/shop.feature';
-import { homeFeature } from './features/home/state/home.feature';
 import { toHeaderScrollOffset } from './shared/utils/scroll-offset.utils';
 import { ThadPreset, themeOptions } from './theme';
 import { provideClientHydration } from '@angular/platform-browser';
@@ -42,13 +41,12 @@ export const appConfig: ApplicationConfig = {
     { provide: TitleStrategy, useExisting: SeoTitleStrategy },
     // Shop and announcements are root reducers, not `provideState`, because the header and footer read them on every
     // page.
-    // Shop and home also save only part of their slice (`shopInfo`, `smsSignup`), and a partial saved copy merged
-    // before `provideState` would drop the rest.
+    // Shop also saves only part of its slice (`shopInfo`), and a partial saved copy merged before `provideState` would
+    // drop the rest.
     provideStore(
       {
         [layoutFeature.name]: layoutFeature.reducer,
         [shopFeature.name]: shopFeature.reducer,
-        [homeFeature.name]: homeFeature.reducer,
         [announcementsFeature.name]: announcementsFeature.reducer,
       },
       { metaReducers },
