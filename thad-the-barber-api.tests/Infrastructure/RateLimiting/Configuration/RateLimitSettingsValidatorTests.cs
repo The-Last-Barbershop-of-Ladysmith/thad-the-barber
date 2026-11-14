@@ -82,14 +82,14 @@ public sealed class RateLimitSettingsValidatorTests
         LookupVerifiedListPhone = Limit(5, TimeSpan.FromMinutes(10)),
     };
 
-    private static ValidateOptionsResult Validate(FixedWindowLimit session, FixedWindowLimit booking, FixedWindowLimit? manage = null, FixedWindowLimit? nextTimes = null, FixedWindowLimit? lookupStart = null) =>
+    private static ValidateOptionsResult Validate(FixedWindowLimit session, FixedWindowLimit booking, FixedWindowLimit? manage = null, FixedWindowLimit? nextTimes = null, FixedWindowLimit? lookupCode = null) =>
         new RateLimitSettingsValidator().Validate(null, new RateLimitSettings
         {
             Session = session,
             Booking = booking,
             Manage = manage ?? Limit(5, TimeSpan.FromMinutes(10)),
             NextTimes = nextTimes ?? Limit(5, TimeSpan.FromMinutes(10)),
-            LookupCode = lookupStart ?? Limit(5, TimeSpan.FromMinutes(10)),
+            LookupCode = lookupCode ?? Limit(5, TimeSpan.FromMinutes(10)),
             LookupVerifiedList = Limit(5, TimeSpan.FromMinutes(10)),
             LookupCodePhone = Limit(5, TimeSpan.FromMinutes(10)),
             LookupVerifiedListPhone = Limit(5, TimeSpan.FromMinutes(10)),

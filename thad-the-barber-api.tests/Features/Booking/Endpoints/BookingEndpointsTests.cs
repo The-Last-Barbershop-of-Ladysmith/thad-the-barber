@@ -448,7 +448,7 @@ public sealed class BookingEndpointsTests
     }
 
     [Fact]
-    public async Task StartIs202WithNoBodyForAPhoneWithBookings()
+    public async Task SendCodeIs202WithNoBodyForAPhoneWithBookings()
     {
         FakeSquareService square = new();
         square.Hold(1, AppointmentStatus.Accepted, Instant("2026-10-20T14:00:00Z"));
@@ -463,7 +463,7 @@ public sealed class BookingEndpointsTests
     }
 
     [Fact]
-    public async Task StartLooksTheSameForAPhoneWithNoBookings()
+    public async Task SendCodeLooksTheSameForAPhoneWithNoBookings()
     {
         FakeSquareService withBookings = new();
         withBookings.Hold(1, AppointmentStatus.Accepted, Instant("2026-10-20T14:00:00Z"));
@@ -490,7 +490,7 @@ public sealed class BookingEndpointsTests
     [InlineData("+1555555012")]
     [InlineData("+25555550123")]
     [InlineData("+1555555O123")]
-    public async Task StartRejectsAPhoneThatIsNotE164WithAUsNumber(string phone)
+    public async Task SendCodeRejectsAPhoneThatIsNotE164WithAUsNumber(string phone)
     {
         FakeTwilioVerifyService twilio = new();
         using ApiFactory api = Api(twilio: twilio);
@@ -502,7 +502,7 @@ public sealed class BookingEndpointsTests
     }
 
     [Fact]
-    public async Task StartNeedsASessionToken()
+    public async Task SendCodeNeedsASessionToken()
     {
         using ApiFactory api = Api();
 
@@ -531,7 +531,7 @@ public sealed class BookingEndpointsTests
     }
 
     [Fact]
-    public async Task AFailingTwilioIs503OnStart()
+    public async Task AFailingTwilioIs503OnSendCode()
     {
         FakeTwilioVerifyService twilio = new()
         {
@@ -545,9 +545,9 @@ public sealed class BookingEndpointsTests
     }
 
     [Fact]
-    public async Task VerifyListsUpcomingBookingsSoonestFirst()
+    public async Task VerifiedListHasUpcomingBookingsSoonestFirst()
     {
-        using HttpResponseMessage response = await VerifyWithThreeBookingsAsync();
+        using HttpResponseMessage response = await GetVerifiedListWithThreeBookingsAsync();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         JsonElement found = await response.Content.ReadFromJsonAsync<JsonElement>(Cancellation);
@@ -560,17 +560,17 @@ public sealed class BookingEndpointsTests
     }
 
     [Fact]
-    public async Task VerifyIsNeverStored()
+    public async Task VerifiedListIsNeverStored()
     {
-        using HttpResponseMessage response = await VerifyWithThreeBookingsAsync();
+        using HttpResponseMessage response = await GetVerifiedListWithThreeBookingsAsync();
 
         Assert.True(response.Headers.CacheControl?.NoStore);
     }
 
     [Fact]
-    public async Task VerifyReturnsOnlyIdStartAndManageToken()
+    public async Task VerifiedListReturnsOnlyIdStartAndManageToken()
     {
-        using HttpResponseMessage response = await VerifyWithThreeBookingsAsync();
+        using HttpResponseMessage response = await GetVerifiedListWithThreeBookingsAsync();
 
         JsonElement found = await response.Content.ReadFromJsonAsync<JsonElement>(Cancellation);
         Assert.All(found.EnumerateArray(), booking => Assert.Equal(
@@ -583,9 +583,9 @@ public sealed class BookingEndpointsTests
     }
 
     [Fact]
-    public async Task VerifyGivesEachBookingAValidManageToken()
+    public async Task VerifiedListGivesEachBookingAValidManageToken()
     {
-        using HttpResponseMessage response = await VerifyWithThreeBookingsAsync();
+        using HttpResponseMessage response = await GetVerifiedListWithThreeBookingsAsync();
 
         JsonElement found = await response.Content.ReadFromJsonAsync<JsonElement>(Cancellation);
         Assert.All(found.EnumerateArray(), booking =>
@@ -593,7 +593,7 @@ public sealed class BookingEndpointsTests
     }
 
     [Fact]
-    public async Task VerifyForAPhoneWithNoBookingsIsAnEmptyList()
+    public async Task VerifiedListForAPhoneWithNoBookingsIsAnEmptyList()
     {
         FakeSquareService square = new()
         {
@@ -610,7 +610,7 @@ public sealed class BookingEndpointsTests
     }
 
     [Fact]
-    public async Task VerifyWithAWrongCodeIs400CodeInvalid()
+    public async Task VerifiedListWithAWrongCodeIs400CodeInvalid()
     {
         using ApiFactory api = Api();
         using HttpClient client = api.CreateClient();
@@ -627,7 +627,7 @@ public sealed class BookingEndpointsTests
     [InlineData("+15555550123", "12345678901")]
     [InlineData("+15555550123", "12ab56")]
     [InlineData("5555550123", "123456")]
-    public async Task VerifyRejectsAMalformedPhoneOrCode(string phone, string code)
+    public async Task VerifiedListRejectsAMalformedPhoneOrCode(string phone, string code)
     {
         using ApiFactory api = Api();
 
@@ -637,7 +637,7 @@ public sealed class BookingEndpointsTests
     }
 
     [Fact]
-    public async Task AFailingTwilioIs503OnVerify()
+    public async Task AFailingTwilioIs503OnVerifiedList()
     {
         FakeTwilioVerifyService twilio = new()
         {
@@ -651,7 +651,7 @@ public sealed class BookingEndpointsTests
     }
 
     [Fact]
-    public async Task VerifyNeedsASessionToken()
+    public async Task VerifiedListNeedsASessionToken()
     {
         using ApiFactory api = Api();
 
@@ -660,7 +660,7 @@ public sealed class BookingEndpointsTests
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
-    private static async Task<HttpResponseMessage> VerifyWithThreeBookingsAsync()
+    private static async Task<HttpResponseMessage> GetVerifiedListWithThreeBookingsAsync()
     {
         FakeSquareService square = new();
         square.Hold(1, AppointmentStatus.Accepted, Instant("2026-11-03T14:00:00Z"));

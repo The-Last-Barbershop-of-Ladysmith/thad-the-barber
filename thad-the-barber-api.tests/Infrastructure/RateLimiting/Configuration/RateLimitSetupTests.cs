@@ -97,7 +97,7 @@ public sealed class RateLimitSetupTests(ApiFactory factory) : IClassFixture<ApiF
     }
 
     [Fact]
-    public async Task ThirdLookupStartFromOneIpIsRateLimitedWhateverThePhone()
+    public async Task ThirdCodeRequestFromOneIpIsRateLimitedWhateverThePhone()
     {
         using WebApplicationFactory<Program> limited = WithLimitOfTwo();
         using HttpClient client = ClientFrom(limited, FirstClientIp);
@@ -110,7 +110,7 @@ public sealed class RateLimitSetupTests(ApiFactory factory) : IClassFixture<ApiF
     }
 
     [Fact]
-    public async Task ThirdLookupVerifyFromOneIpIsRateLimited()
+    public async Task ThirdVerifiedListRequestFromOneIpIsRateLimited()
     {
         using WebApplicationFactory<Program> limited = WithLimitOfTwo();
         using HttpClient client = ClientFrom(limited, FirstClientIp);
@@ -123,9 +123,9 @@ public sealed class RateLimitSetupTests(ApiFactory factory) : IClassFixture<ApiF
     }
 
     [Fact]
-    public async Task ThirdVerifyForOnePhoneIsRateLimitedEvenFromAnotherIp()
+    public async Task ThirdVerifiedListRequestForOnePhoneIsRateLimitedEvenFromAnotherIp()
     {
-        using WebApplicationFactory<Program> limited = WithPhoneVerifyLimitOfTwo();
+        using WebApplicationFactory<Program> limited = WithPhoneVerifiedListLimitOfTwo();
         using HttpClient firstClient = ClientFrom(limited, FirstClientIp);
         using HttpClient secondClient = ClientFrom(limited, SecondClientIp);
 
@@ -137,9 +137,9 @@ public sealed class RateLimitSetupTests(ApiFactory factory) : IClassFixture<ApiF
     }
 
     [Fact]
-    public async Task AnotherPhoneIsNotLimitedByTheFirstPhonesVerifyAttempts()
+    public async Task AnotherPhoneIsNotLimitedByTheFirstPhonesVerifiedListAttempts()
     {
-        using WebApplicationFactory<Program> limited = WithPhoneVerifyLimitOfTwo();
+        using WebApplicationFactory<Program> limited = WithPhoneVerifiedListLimitOfTwo();
         using HttpClient client = ClientFrom(limited, FirstClientIp);
         AssertNotLimited(await GetVerifiedListAsync(client));
         AssertNotLimited(await GetVerifiedListAsync(client));
@@ -150,16 +150,16 @@ public sealed class RateLimitSetupTests(ApiFactory factory) : IClassFixture<ApiF
     }
 
     [Fact]
-    public async Task LookupStartAndVerifyHaveSeparateLimits()
+    public async Task LookupCodeAndVerifiedListHaveSeparateLimits()
     {
         using WebApplicationFactory<Program> limited = WithLimitOfTwo();
         using HttpClient client = ClientFrom(limited, FirstClientIp);
         AssertNotLimited(await SendLookupCodeAsync(client, "+15555550101"));
         AssertNotLimited(await SendLookupCodeAsync(client, "+15555550102"));
 
-        using HttpResponseMessage verify = await GetVerifiedListAsync(client);
+        using HttpResponseMessage verifiedList = await GetVerifiedListAsync(client);
 
-        AssertNotLimited(verify);
+        AssertNotLimited(verifiedList);
     }
 
     [Fact]
@@ -190,7 +190,7 @@ public sealed class RateLimitSetupTests(ApiFactory factory) : IClassFixture<ApiF
             }));
         });
 
-    private WebApplicationFactory<Program> WithPhoneVerifyLimitOfTwo() =>
+    private WebApplicationFactory<Program> WithPhoneVerifiedListLimitOfTwo() =>
         factory.WithWebHostBuilder(builder =>
         {
             builder.UseSetting("FORWARDEDHEADERS_ENABLED", "true");

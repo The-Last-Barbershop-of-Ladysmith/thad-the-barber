@@ -29,7 +29,7 @@ public sealed class BookingServiceTests
     private static readonly DateTimeOffset openTime = Instant("2026-10-07T13:30:00Z");
     private const int MaxUpcomingPerPhone = 3;
     private const int MaxTextCodesPerPhone = 2;
-    private const int MaxVerifyAttemptsPerPhone = 3;
+    private const int MaxVerifiedListAttemptsPerPhone = 3;
     private const string KnownPhone = "+15555550123";
     private const string UnknownPhone = "+15555550199";
 
@@ -249,7 +249,7 @@ public sealed class BookingServiceTests
     }
 
     [Fact]
-    public async Task StartTextsTheCodeWithoutAskingSquareAnything()
+    public async Task SendCodeTextsTheCodeWithoutAskingSquareAnything()
     {
         FakeSquareService square = new();
         FakeTwilioVerifyService twilio = new();
@@ -261,7 +261,7 @@ public sealed class BookingServiceTests
     }
 
     [Fact]
-    public async Task StartDoesTheSameForAPhoneSquareDoesNotKnow()
+    public async Task SendCodeDoesTheSameForAPhoneSquareDoesNotKnow()
     {
         FakeSquareService square = new()
         {
@@ -303,7 +303,7 @@ public sealed class BookingServiceTests
     }
 
     [Fact]
-    public async Task ATwilioFailureOnStartReachesTheCaller()
+    public async Task ATwilioFailureOnSendCodeReachesTheCaller()
     {
         FakeTwilioVerifyService twilio = new()
         {
@@ -410,11 +410,11 @@ public sealed class BookingServiceTests
     }
 
     [Fact]
-    public async Task AFourthVerifyAttemptForOnePhoneIsRateLimitedBeforeTwilioIsAsked()
+    public async Task AFourthVerifiedListAttemptForOnePhoneIsRateLimitedBeforeTwilioIsAsked()
     {
         FakeSquareService square = new();
         BookingService service = Service(square, await StartedTwilioAsync());
-        for (int attempt = 0; attempt < MaxVerifyAttemptsPerPhone; attempt++)
+        for (int attempt = 0; attempt < MaxVerifiedListAttemptsPerPhone; attempt++)
         {
             await Assert.ThrowsAsync<CodeInvalidException>(() => service.GetVerifiedListAsync(ListRequest(KnownPhone, "000000"), Cancellation));
         }
@@ -431,7 +431,7 @@ public sealed class BookingServiceTests
     }
 
     [Fact]
-    public async Task ATwilioFailureOnVerifyReachesTheCaller()
+    public async Task ATwilioFailureOnVerifiedListReachesTheCaller()
     {
         FakeTwilioVerifyService twilio = new()
         {
@@ -485,7 +485,7 @@ public sealed class BookingServiceTests
                 },
                 LookupVerifiedListPhone = new FixedWindowLimit
                 {
-                    PermitLimit = MaxVerifyAttemptsPerPhone,
+                    PermitLimit = MaxVerifiedListAttemptsPerPhone,
                     Window = TimeSpan.FromMinutes(10),
                 },
             })),

@@ -34,7 +34,7 @@ public sealed class PhoneRateLimiterTests
     }
 
     [Fact]
-    public void ThirdVerifyAttemptForOnePhoneIsRefusedWithARetryAfter()
+    public void ThirdVerifiedListAttemptForOnePhoneIsRefusedWithARetryAfter()
     {
         using PhoneRateLimiter limiter = Limiter(1, 2);
         limiter.EnforceVerifiedList("+15555550123");
@@ -46,7 +46,7 @@ public sealed class PhoneRateLimiterTests
     }
 
     [Fact]
-    public void VerifyAttemptsDontUseUpTheTextCodeLimit()
+    public void VerifiedListAttemptsDontUseUpTheTextCodeLimit()
     {
         using PhoneRateLimiter limiter = Limiter(1, 1);
         limiter.EnforceVerifiedList("+15555550123");
@@ -57,7 +57,7 @@ public sealed class PhoneRateLimiterTests
     }
 
     [Fact]
-    public void EachPhoneHasItsOwnVerifyLimit()
+    public void EachPhoneHasItsOwnVerifiedListLimit()
     {
         using PhoneRateLimiter limiter = Limiter(1, 1);
         limiter.EnforceVerifiedList("+15555550123");
