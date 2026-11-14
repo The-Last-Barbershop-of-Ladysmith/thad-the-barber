@@ -97,69 +97,69 @@ public sealed class RateLimitSetupTests(ApiFactory factory) : IClassFixture<ApiF
     }
 
     [Fact]
-    public async Task ThirdLookupStartFromOneIpIsRateLimitedWhateverThePhone()
+    public async Task ThirdCodeRequestFromOneIpIsRateLimitedWhateverThePhone()
     {
         using WebApplicationFactory<Program> limited = WithLimitOfTwo();
         using HttpClient client = ClientFrom(limited, FirstClientIp);
 
-        AssertNotLimited(await StartLookupAsync(client, "+15555550101"));
-        AssertNotLimited(await StartLookupAsync(client, "+15555550102"));
-        using HttpResponseMessage third = await StartLookupAsync(client, "+15555550103");
+        AssertNotLimited(await SendLookupCodeAsync(client, "+15555550101"));
+        AssertNotLimited(await SendLookupCodeAsync(client, "+15555550102"));
+        using HttpResponseMessage third = await SendLookupCodeAsync(client, "+15555550103");
 
         await AssertRateLimitedAsync(third);
     }
 
     [Fact]
-    public async Task ThirdLookupVerifyFromOneIpIsRateLimited()
+    public async Task ThirdVerifiedListRequestFromOneIpIsRateLimited()
     {
         using WebApplicationFactory<Program> limited = WithLimitOfTwo();
         using HttpClient client = ClientFrom(limited, FirstClientIp);
 
-        AssertNotLimited(await VerifyLookupAsync(client));
-        AssertNotLimited(await VerifyLookupAsync(client));
-        using HttpResponseMessage third = await VerifyLookupAsync(client);
+        AssertNotLimited(await GetVerifiedListAsync(client));
+        AssertNotLimited(await GetVerifiedListAsync(client));
+        using HttpResponseMessage third = await GetVerifiedListAsync(client);
 
         await AssertRateLimitedAsync(third);
     }
 
     [Fact]
-    public async Task ThirdVerifyForOnePhoneIsRateLimitedEvenFromAnotherIp()
+    public async Task ThirdVerifiedListRequestForOnePhoneIsRateLimitedEvenFromAnotherIp()
     {
-        using WebApplicationFactory<Program> limited = WithPhoneVerifyLimitOfTwo();
+        using WebApplicationFactory<Program> limited = WithPhoneVerifiedListLimitOfTwo();
         using HttpClient firstClient = ClientFrom(limited, FirstClientIp);
         using HttpClient secondClient = ClientFrom(limited, SecondClientIp);
 
-        AssertNotLimited(await VerifyLookupAsync(firstClient));
-        AssertNotLimited(await VerifyLookupAsync(secondClient));
-        using HttpResponseMessage third = await VerifyLookupAsync(firstClient);
+        AssertNotLimited(await GetVerifiedListAsync(firstClient));
+        AssertNotLimited(await GetVerifiedListAsync(secondClient));
+        using HttpResponseMessage third = await GetVerifiedListAsync(firstClient);
 
         await AssertRateLimitedAsync(third);
     }
 
     [Fact]
-    public async Task AnotherPhoneIsNotLimitedByTheFirstPhonesVerifyAttempts()
+    public async Task AnotherPhoneIsNotLimitedByTheFirstPhonesVerifiedListAttempts()
     {
-        using WebApplicationFactory<Program> limited = WithPhoneVerifyLimitOfTwo();
+        using WebApplicationFactory<Program> limited = WithPhoneVerifiedListLimitOfTwo();
         using HttpClient client = ClientFrom(limited, FirstClientIp);
-        AssertNotLimited(await VerifyLookupAsync(client));
-        AssertNotLimited(await VerifyLookupAsync(client));
+        AssertNotLimited(await GetVerifiedListAsync(client));
+        AssertNotLimited(await GetVerifiedListAsync(client));
 
-        using HttpResponseMessage otherPhone = await VerifyLookupAsync(client, "+15555550102");
+        using HttpResponseMessage otherPhone = await GetVerifiedListAsync(client, "+15555550102");
 
         AssertNotLimited(otherPhone);
     }
 
     [Fact]
-    public async Task LookupStartAndVerifyHaveSeparateLimits()
+    public async Task LookupCodeAndVerifiedListHaveSeparateLimits()
     {
         using WebApplicationFactory<Program> limited = WithLimitOfTwo();
         using HttpClient client = ClientFrom(limited, FirstClientIp);
-        AssertNotLimited(await StartLookupAsync(client, "+15555550101"));
-        AssertNotLimited(await StartLookupAsync(client, "+15555550102"));
+        AssertNotLimited(await SendLookupCodeAsync(client, "+15555550101"));
+        AssertNotLimited(await SendLookupCodeAsync(client, "+15555550102"));
 
-        using HttpResponseMessage verify = await VerifyLookupAsync(client);
+        using HttpResponseMessage verifiedList = await GetVerifiedListAsync(client);
 
-        AssertNotLimited(verify);
+        AssertNotLimited(verifiedList);
     }
 
     [Fact]
@@ -185,19 +185,19 @@ public sealed class RateLimitSetupTests(ApiFactory factory) : IClassFixture<ApiF
                 ["RateLimits:Booking:PermitLimit"] = "2",
                 ["RateLimits:Manage:PermitLimit"] = "2",
                 ["RateLimits:NextTimes:PermitLimit"] = "2",
-                ["RateLimits:LookupStart:PermitLimit"] = "2",
-                ["RateLimits:LookupVerify:PermitLimit"] = "2",
+                ["RateLimits:LookupCode:PermitLimit"] = "2",
+                ["RateLimits:LookupVerifiedList:PermitLimit"] = "2",
             }));
         });
 
-    private WebApplicationFactory<Program> WithPhoneVerifyLimitOfTwo() =>
+    private WebApplicationFactory<Program> WithPhoneVerifiedListLimitOfTwo() =>
         factory.WithWebHostBuilder(builder =>
         {
             builder.UseSetting("FORWARDEDHEADERS_ENABLED", "true");
             builder.ConfigureAppConfiguration((_, configuration) => configuration.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["RateLimits:LookupVerify:PermitLimit"] = "100",
-                ["RateLimits:LookupVerifyPhone:PermitLimit"] = "2",
+                ["RateLimits:LookupVerifiedList:PermitLimit"] = "100",
+                ["RateLimits:LookupVerifiedListPhone:PermitLimit"] = "2",
             }));
         });
 
@@ -211,11 +211,11 @@ public sealed class RateLimitSetupTests(ApiFactory factory) : IClassFixture<ApiF
     private static Task<HttpResponseMessage> BookAsync(HttpClient client) =>
         client.PostAsJsonAsync("/api/bookings", new { }, TestContext.Current.CancellationToken);
 
-    private static Task<HttpResponseMessage> StartLookupAsync(HttpClient client, string phone) =>
-        client.PostAsJsonAsync("/api/bookings/lookup/start", new { phone }, TestContext.Current.CancellationToken);
+    private static Task<HttpResponseMessage> SendLookupCodeAsync(HttpClient client, string phone) =>
+        client.PostAsJsonAsync("/api/bookings/lookup/code", new { phone }, TestContext.Current.CancellationToken);
 
-    private static Task<HttpResponseMessage> VerifyLookupAsync(HttpClient client, string phone = "+15555550101") =>
-        client.PostAsJsonAsync("/api/bookings/lookup/verify", new { phone, code = "000000" }, TestContext.Current.CancellationToken);
+    private static Task<HttpResponseMessage> GetVerifiedListAsync(HttpClient client, string phone = "+15555550101") =>
+        client.PostAsJsonAsync("/api/bookings/lookup/verified-list", new { phone, code = "000000" }, TestContext.Current.CancellationToken);
 
     private static Task<HttpResponseMessage> StartSessionAsync(HttpClient client) =>
         client.PostAsJsonAsync("/api/session", new { recaptchaToken = "fake-token" }, TestContext.Current.CancellationToken);

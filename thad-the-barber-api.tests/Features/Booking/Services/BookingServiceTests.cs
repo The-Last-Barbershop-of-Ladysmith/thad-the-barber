@@ -29,7 +29,7 @@ public sealed class BookingServiceTests
     private static readonly DateTimeOffset openTime = Instant("2026-10-07T13:30:00Z");
     private const int MaxUpcomingPerPhone = 3;
     private const int MaxTextCodesPerPhone = 2;
-    private const int MaxVerifyAttemptsPerPhone = 3;
+    private const int MaxVerifiedListAttemptsPerPhone = 3;
     private const string KnownPhone = "+15555550123";
     private const string UnknownPhone = "+15555550199";
 
@@ -249,19 +249,19 @@ public sealed class BookingServiceTests
     }
 
     [Fact]
-    public async Task StartTextsTheCodeWithoutAskingSquareAnything()
+    public async Task SendCodeTextsTheCodeWithoutAskingSquareAnything()
     {
         FakeSquareService square = new();
         FakeTwilioVerifyService twilio = new();
 
-        await Service(square, twilio).StartLookupAsync(KnownPhone, Cancellation);
+        await Service(square, twilio).SendLookupCodeAsync(KnownPhone, Cancellation);
 
         Assert.Equal([KnownPhone], twilio.StartedPhones);
         Assert.Equal(0, square.AppointmentListings);
     }
 
     [Fact]
-    public async Task StartDoesTheSameForAPhoneSquareDoesNotKnow()
+    public async Task SendCodeDoesTheSameForAPhoneSquareDoesNotKnow()
     {
         FakeSquareService square = new()
         {
@@ -269,7 +269,7 @@ public sealed class BookingServiceTests
         };
         FakeTwilioVerifyService twilio = new();
 
-        await Service(square, twilio).StartLookupAsync(UnknownPhone, Cancellation);
+        await Service(square, twilio).SendLookupCodeAsync(UnknownPhone, Cancellation);
 
         Assert.Equal([UnknownPhone], twilio.StartedPhones);
         Assert.Equal(0, square.AppointmentListings);
@@ -280,10 +280,10 @@ public sealed class BookingServiceTests
     {
         FakeTwilioVerifyService twilio = new();
         BookingService service = Service(new FakeSquareService(), twilio);
-        await service.StartLookupAsync(KnownPhone, Cancellation);
-        await service.StartLookupAsync(KnownPhone, Cancellation);
+        await service.SendLookupCodeAsync(KnownPhone, Cancellation);
+        await service.SendLookupCodeAsync(KnownPhone, Cancellation);
 
-        RateLimitedException limited = await Assert.ThrowsAsync<RateLimitedException>(() => service.StartLookupAsync(KnownPhone, Cancellation));
+        RateLimitedException limited = await Assert.ThrowsAsync<RateLimitedException>(() => service.SendLookupCodeAsync(KnownPhone, Cancellation));
 
         Assert.True(limited.RetryAfter > TimeSpan.Zero);
         Assert.Equal(MaxTextCodesPerPhone, twilio.StartedPhones.Count);
@@ -294,23 +294,23 @@ public sealed class BookingServiceTests
     {
         FakeTwilioVerifyService twilio = new();
         BookingService service = Service(new FakeSquareService(), twilio);
-        await service.StartLookupAsync(KnownPhone, Cancellation);
-        await service.StartLookupAsync(KnownPhone, Cancellation);
+        await service.SendLookupCodeAsync(KnownPhone, Cancellation);
+        await service.SendLookupCodeAsync(KnownPhone, Cancellation);
 
-        await service.StartLookupAsync(UnknownPhone, Cancellation);
+        await service.SendLookupCodeAsync(UnknownPhone, Cancellation);
 
         Assert.Contains(UnknownPhone, twilio.StartedPhones);
     }
 
     [Fact]
-    public async Task ATwilioFailureOnStartReachesTheCaller()
+    public async Task ATwilioFailureOnSendCodeReachesTheCaller()
     {
         FakeTwilioVerifyService twilio = new()
         {
             Failure = new TwilioRequestFailedException(StatusCodes.Status500InternalServerError, null),
         };
 
-        await Assert.ThrowsAsync<TwilioRequestFailedException>(() => Service(new FakeSquareService(), twilio).StartLookupAsync(KnownPhone, Cancellation));
+        await Assert.ThrowsAsync<TwilioRequestFailedException>(() => Service(new FakeSquareService(), twilio).SendLookupCodeAsync(KnownPhone, Cancellation));
     }
 
     [Fact]
@@ -321,7 +321,7 @@ public sealed class BookingServiceTests
         square.Hold(2, AppointmentStatus.Pending, Instant("2026-10-20T14:00:00Z"));
         BookingService service = Service(square, await StartedTwilioAsync());
 
-        List<FoundBooking> found = await service.VerifyLookupAsync(VerifyRequest(KnownPhone), Cancellation);
+        List<FoundBooking> found = await service.GetVerifiedListAsync(ListRequest(KnownPhone), Cancellation);
 
         Assert.Equal(
             [
@@ -345,7 +345,7 @@ public sealed class BookingServiceTests
         square.Hold(1, AppointmentStatus.Accepted, Instant("2026-10-24T14:00:00Z"));
         BookingService service = Service(square, await StartedTwilioAsync());
 
-        List<FoundBooking> found = await service.VerifyLookupAsync(VerifyRequest(KnownPhone), Cancellation);
+        List<FoundBooking> found = await service.GetVerifiedListAsync(ListRequest(KnownPhone), Cancellation);
 
         Assert.Equal([Instant("2026-10-24T14:00:00Z")], found.Select(booking => booking.StartAt));
     }
@@ -357,7 +357,7 @@ public sealed class BookingServiceTests
         square.Hold(1, AppointmentStatus.Accepted, now + square.BookingProfile.MaximumAdvance + TimeSpan.FromDays(1));
         BookingService service = Service(square, await StartedTwilioAsync());
 
-        List<FoundBooking> found = await service.VerifyLookupAsync(VerifyRequest(KnownPhone), Cancellation);
+        List<FoundBooking> found = await service.GetVerifiedListAsync(ListRequest(KnownPhone), Cancellation);
 
         Assert.Empty(found);
     }
@@ -375,7 +375,7 @@ public sealed class BookingServiceTests
         square.Hold(1, AppointmentStatus.Accepted, Instant("2026-10-23T14:00:00Z"), "CUSTOMER0TEST0SOMEONEELSE");
         BookingService service = Service(square, await StartedTwilioAsync());
 
-        List<FoundBooking> found = await service.VerifyLookupAsync(VerifyRequest(KnownPhone), Cancellation);
+        List<FoundBooking> found = await service.GetVerifiedListAsync(ListRequest(KnownPhone), Cancellation);
 
         Assert.Equal(3, found.Count);
         Assert.DoesNotContain(Instant("2026-10-23T14:00:00Z"), found.Select(booking => booking.StartAt));
@@ -390,7 +390,7 @@ public sealed class BookingServiceTests
         };
         BookingService service = Service(square, await StartedTwilioAsync());
 
-        List<FoundBooking> found = await service.VerifyLookupAsync(VerifyRequest(KnownPhone), Cancellation);
+        List<FoundBooking> found = await service.GetVerifiedListAsync(ListRequest(KnownPhone), Cancellation);
 
         Assert.Empty(found);
         Assert.Equal(0, square.AppointmentListings);
@@ -405,21 +405,21 @@ public sealed class BookingServiceTests
         square.Hold(1, AppointmentStatus.Accepted, Instant("2026-10-20T14:00:00Z"));
         BookingService service = Service(square, await StartedTwilioAsync());
 
-        await Assert.ThrowsAsync<CodeInvalidException>(() => service.VerifyLookupAsync(VerifyRequest(KnownPhone, code), Cancellation));
+        await Assert.ThrowsAsync<CodeInvalidException>(() => service.GetVerifiedListAsync(ListRequest(KnownPhone, code), Cancellation));
         Assert.Equal(0, square.AppointmentListings);
     }
 
     [Fact]
-    public async Task AFourthVerifyAttemptForOnePhoneIsRateLimitedBeforeTwilioIsAsked()
+    public async Task AFourthVerifiedListAttemptForOnePhoneIsRateLimitedBeforeTwilioIsAsked()
     {
         FakeSquareService square = new();
         BookingService service = Service(square, await StartedTwilioAsync());
-        for (int attempt = 0; attempt < MaxVerifyAttemptsPerPhone; attempt++)
+        for (int attempt = 0; attempt < MaxVerifiedListAttemptsPerPhone; attempt++)
         {
-            await Assert.ThrowsAsync<CodeInvalidException>(() => service.VerifyLookupAsync(VerifyRequest(KnownPhone, "000000"), Cancellation));
+            await Assert.ThrowsAsync<CodeInvalidException>(() => service.GetVerifiedListAsync(ListRequest(KnownPhone, "000000"), Cancellation));
         }
 
-        await Assert.ThrowsAsync<RateLimitedException>(() => service.VerifyLookupAsync(VerifyRequest(KnownPhone), Cancellation));
+        await Assert.ThrowsAsync<RateLimitedException>(() => service.GetVerifiedListAsync(ListRequest(KnownPhone), Cancellation));
     }
 
     [Fact]
@@ -427,18 +427,18 @@ public sealed class BookingServiceTests
     {
         BookingService service = Service(new FakeSquareService(), new FakeTwilioVerifyService());
 
-        await Assert.ThrowsAsync<CodeInvalidException>(() => service.VerifyLookupAsync(VerifyRequest(KnownPhone), Cancellation));
+        await Assert.ThrowsAsync<CodeInvalidException>(() => service.GetVerifiedListAsync(ListRequest(KnownPhone), Cancellation));
     }
 
     [Fact]
-    public async Task ATwilioFailureOnVerifyReachesTheCaller()
+    public async Task ATwilioFailureOnVerifiedListReachesTheCaller()
     {
         FakeTwilioVerifyService twilio = new()
         {
             Failure = new TwilioNotConfiguredException(),
         };
 
-        await Assert.ThrowsAsync<TwilioNotConfiguredException>(() => Service(new FakeSquareService(), twilio).VerifyLookupAsync(VerifyRequest(KnownPhone), Cancellation));
+        await Assert.ThrowsAsync<TwilioNotConfiguredException>(() => Service(new FakeSquareService(), twilio).GetVerifiedListAsync(ListRequest(KnownPhone), Cancellation));
     }
 
     private static async Task<FakeTwilioVerifyService> StartedTwilioAsync()
@@ -448,7 +448,7 @@ public sealed class BookingServiceTests
         return twilio;
     }
 
-    private static LookupVerifyRequest VerifyRequest(string phone, string code = FakeTwilioVerifyService.ApprovedCode) => new(
+    private static VerifiedListRequest ListRequest(string phone, string code = FakeTwilioVerifyService.ApprovedCode) => new(
         phone,
         code
     );
@@ -478,14 +478,14 @@ public sealed class BookingServiceTests
             twilio ?? new FakeTwilioVerifyService(),
             new PhoneRateLimiter(Options.Create(new RateLimitSettings
             {
-                LookupPhone = new FixedWindowLimit
+                LookupCodePhone = new FixedWindowLimit
                 {
                     PermitLimit = MaxTextCodesPerPhone,
                     Window = TimeSpan.FromMinutes(10),
                 },
-                LookupVerifyPhone = new FixedWindowLimit
+                LookupVerifiedListPhone = new FixedWindowLimit
                 {
-                    PermitLimit = MaxVerifyAttemptsPerPhone,
+                    PermitLimit = MaxVerifiedListAttemptsPerPhone,
                     Window = TimeSpan.FromMinutes(10),
                 },
             })),

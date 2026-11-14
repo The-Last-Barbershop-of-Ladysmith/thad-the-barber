@@ -16,13 +16,13 @@ public sealed class RateLimitSettings
 
     public FixedWindowLimit NextTimes { get; set; } = new();
 
-    public FixedWindowLimit LookupStart { get; set; } = new();
+    public FixedWindowLimit LookupCode { get; set; } = new();
 
-    public FixedWindowLimit LookupVerify { get; set; } = new();
+    public FixedWindowLimit LookupVerifiedList { get; set; } = new();
 
     /// <summary>Per phone, not per IP: stops one number being flooded with texts from many addresses.</summary>
-    public FixedWindowLimit LookupPhone { get; set; } = new();
+    public FixedWindowLimit LookupCodePhone { get; set; } = new();
 
     /// <summary>Per phone, not per IP: stops a code being guessed from many addresses.</summary>
-    public FixedWindowLimit LookupVerifyPhone { get; set; } = new();
+    public FixedWindowLimit LookupVerifiedListPhone { get; set; } = new();
 }

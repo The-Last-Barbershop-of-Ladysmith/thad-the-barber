@@ -15,17 +15,17 @@ namespace ThadTheBarber.Api.Infrastructure.RateLimiting.Services;
 /// </summary>
 public sealed class PhoneRateLimiter(IOptions<RateLimitSettings> settings) : IDisposable
 {
-    private readonly PartitionedRateLimiter<string> _startLimiter = CreateLimiter(() => settings.Value.LookupPhone);
-    private readonly PartitionedRateLimiter<string> _verifyLimiter = CreateLimiter(() => settings.Value.LookupVerifyPhone);
+    private readonly PartitionedRateLimiter<string> _codeLimiter = CreateLimiter(() => settings.Value.LookupCodePhone);
+    private readonly PartitionedRateLimiter<string> _verifiedListLimiter = CreateLimiter(() => settings.Value.LookupVerifiedListPhone);
 
-    public void EnforceStart(string phone) => Enforce(_startLimiter, phone);
+    public void EnforceCode(string phone) => Enforce(_codeLimiter, phone);
 
-    public void EnforceVerify(string phone) => Enforce(_verifyLimiter, phone);
+    public void EnforceVerifiedList(string phone) => Enforce(_verifiedListLimiter, phone);
 
     public void Dispose()
     {
-        _startLimiter.Dispose();
-        _verifyLimiter.Dispose();
+        _codeLimiter.Dispose();
+        _verifiedListLimiter.Dispose();
     }
 
     private static PartitionedRateLimiter<string> CreateLimiter(Func<FixedWindowLimit> getLimit) =>
