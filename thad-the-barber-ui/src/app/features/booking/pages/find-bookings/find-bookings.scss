@@ -1,57 +1,55 @@
-.lookup-form {
-  max-width: 28rem;
-
-  .code-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem 1.5rem;
-
-    button {
-      cursor: pointer;
-
-      &:disabled {
-        cursor: default;
-        opacity: 0.5;
+.lookup-column {
+  .lookup-form {
+    // Notices keep the full width; everything else is half of it from lg.
+    > :not(app-notice-message) {
+      @media (min-width: 64rem) {
+        width: 50%;
       }
     }
-  }
 
-  .found-bookings {
-    margin: 0;
-    padding: 0;
-    list-style: none;
+    .code-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem 1.5rem;
+    }
 
-    .found-booking {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      column-gap: 1rem;
-      align-items: center;
-      padding: 1rem 1.25rem;
-      border: 1px solid var(--p-brand-hairline);
-      border-radius: var(--p-border-radius-md);
-      color: var(--p-text-color);
-      transition: border-color 0.2s ease;
+    .found-bookings {
+      margin: 0;
+      padding: 0;
+      list-style: none;
 
-      &:hover {
-        border-color: var(--p-primary-color);
-      }
+      .found-booking {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        column-gap: 1rem;
+        align-items: center;
+        padding: 1rem 1.25rem;
+        border: 1px solid var(--p-brand-hairline);
+        border-radius: var(--p-border-radius-md);
+        color: var(--p-text-color);
+        transition: border-color 0.2s ease;
 
-      .found-day {
-        grid-column: 1;
-        font-size: 1.125rem;
-      }
+        &:hover {
+          border-color: var(--p-primary-color);
+        }
 
-      .found-time {
-        grid-column: 1;
-        font-family: var(--p-font-family-display);
-        font-size: 1.75rem;
-        font-weight: 800;
-        color: var(--p-primary-color);
-      }
+        .found-day {
+          grid-column: 1;
+          font-size: 1.125rem;
+        }
 
-      .pi {
-        grid-column: 2;
-        grid-row: 1 / span 2;
+        .found-time {
+          grid-column: 1;
+          font-family: var(--p-font-family-display);
+          font-size: 1.75rem;
+          font-weight: 800;
+          color: var(--p-primary-color);
+        }
+
+        .pi {
+          grid-column: 2;
+          grid-row: 1 / span 2;
+        }
       }
     }
   }
