@@ -4,7 +4,16 @@
   .code-actions {
     display: flex;
     flex-wrap: wrap;
-    justify-content: space-between;
+    gap: 0.75rem 1.5rem;
+
+    button {
+      cursor: pointer;
+
+      &:disabled {
+        cursor: default;
+        opacity: 0.5;
+      }
+    }
   }
 
   .found-bookings {

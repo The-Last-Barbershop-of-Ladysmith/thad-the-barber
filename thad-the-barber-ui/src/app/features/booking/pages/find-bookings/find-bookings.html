@@ -47,10 +47,8 @@
         </button>
         <div class="code-actions">
           <button
-            pButton
             type="button"
-            severity="secondary"
-            [text]="true"
+            class="inline-link font-semibold"
             data-testid="resend-code"
             [disabled]="isLookingUp()"
             (click)="resendCode()"
@@ -58,10 +56,8 @@
             Send a new code
           </button>
           <button
-            pButton
             type="button"
-            severity="secondary"
-            [text]="true"
+            class="inline-link font-semibold"
             data-testid="change-phone"
             [disabled]="isLookingUp()"
             (click)="changePhone()"
