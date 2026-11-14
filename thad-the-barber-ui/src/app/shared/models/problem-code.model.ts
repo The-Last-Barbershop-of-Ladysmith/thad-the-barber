@@ -9,4 +9,5 @@ export enum ProblemCode {
   BookingStarted = 'booking_started',
   BookingCancelled = 'booking_cancelled',
   CodeInvalid = 'code_invalid',
+  LookupExpired = 'lookup_expired',
 }

@@ -80,7 +80,7 @@
           <h2 id="lookup-results-heading" class="field-label" tabindex="-1">
             Upcoming appointments
           </h2>
-          @if (isShopLoading()) {
+          @if (isShopLoading() || isLookingUp()) {
             <p-skeleton width="100%" height="4rem" />
           } @else if (foundBookingLinks().length === 0) {
             <app-notice-message data-testid="no-bookings" [notice]="noUpcomingBookingsNotice" />

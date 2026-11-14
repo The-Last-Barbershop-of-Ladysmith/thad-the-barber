@@ -154,7 +154,14 @@ export const LOOKUP_RATE_LIMITED_NOTICE: Notice = {
   canRetry: false,
 };
 
+export const LOOKUP_EXPIRED_NOTICE: Notice = {
+  severity: NoticeSeverity.Info,
+  text: 'Your earlier check has expired. Get a new code to see your bookings.',
+  canRetry: false,
+};
+
 export const LOOKUP_PROBLEM_NOTICES: Record<string, Notice> = {
   [ProblemCode.CodeInvalid]: CODE_INVALID_NOTICE,
   [ProblemCode.RateLimited]: LOOKUP_RATE_LIMITED_NOTICE,
+  [ProblemCode.LookupExpired]: LOOKUP_EXPIRED_NOTICE,
 };

@@ -71,4 +71,12 @@ export const bookingReducer: ActionReducer<BookingState> = createReducer(
     BookingActions.AvailabilityRequestFailure,
     (state: BookingState): BookingState => ({ ...state, loadStatus: RequestStatus.Error }),
   ),
+  on(
+    BookingActions.LookupTokenSave,
+    (state: BookingState, { lookupToken }: { lookupToken: string; }): BookingState => ({ ...state, lookupToken }),
+  ),
+  on(
+    BookingActions.LookupTokenClear,
+    (state: BookingState): BookingState => ({ ...state, lookupToken: null }),
+  ),
 );

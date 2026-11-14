@@ -23,6 +23,7 @@ const october: BookingState = {
   loadStatus: RequestStatus.Error,
   submitStatus: RequestStatus.Idle,
   submitNotice: null,
+  lookupToken: null,
 };
 
 const failedNotice: Notice = {
@@ -129,6 +130,19 @@ describe(
         const reopened: BookingState = bookingReducer(sending, BookingActions.BookingPageOpen({ pickedStartAt: null }));
 
         expect(reopened.submitStatus).toBe(RequestStatus.Pending);
+      },
+    );
+
+    it(
+      'holds the lookup token once a code is right, and forgets it when cleared',
+      (): void => {
+        const saved: BookingState = bookingReducer(
+          october,
+          BookingActions.LookupTokenSave({ lookupToken: 'made-up-lookup-token' }),
+        );
+
+        expect(saved).toEqual({ ...october, lookupToken: 'made-up-lookup-token' });
+        expect(bookingReducer(saved, BookingActions.LookupTokenClear())).toEqual(october);
       },
     );
   },
