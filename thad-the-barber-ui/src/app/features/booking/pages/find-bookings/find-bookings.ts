@@ -228,7 +228,6 @@ export class FindBookings {
       });
   }
 
-  // A token kept from a code entered a few minutes ago asks the API for the list again instead of texting another code.
   private resumeLookup(): void {
     const lookupToken: string | null = this.lookupToken();
     if (!lookupToken) {
