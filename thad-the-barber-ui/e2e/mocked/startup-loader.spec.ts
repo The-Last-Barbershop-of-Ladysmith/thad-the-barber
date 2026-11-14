@@ -80,8 +80,8 @@ test.describe(
           async (route: Route): Promise<void> => {
             const response: APIResponse = await route.fetch();
             const html: string = (await response.text()).replace(
-              /<app-root[^>]*><\/app-root>/,
-              '<div></div>',
+              /<app-root([^>]*)><\/app-root>/,
+              '<div$1></div>',
             );
             await route.fulfill({
               response,
