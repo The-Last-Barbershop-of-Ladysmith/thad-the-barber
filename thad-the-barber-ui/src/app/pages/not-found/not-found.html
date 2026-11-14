@@ -6,7 +6,7 @@
 <section class="not-found px-6 md:px-8" data-testid="not-found">
   <div class="content stack gap-6">
     <span class="eyebrow">Error 404 · Page not found</span>
-    <h1 class="display-title text-shadow-hero">This chair's empty.</h1>
+    <h1 #heading tabindex="-1" class="display-title text-shadow-hero">This chair's empty.</h1>
     <p class="lead text-shadow-hero">
       The page you're looking for moved, got trimmed, or never existed. Your next cut is still a
       click away.
@@ -19,6 +19,18 @@
       </a>
       <a pButton size="large" [outlined]="true" routerLink="/" data-testid="not-found-home">
         Go to homepage
+      </a>
+      <a
+        pButton
+        size="large"
+        [outlined]="true"
+        [href]="squareBookingUrl()"
+        target="_blank"
+        rel="noopener"
+        data-testid="not-found-square"
+      >
+        Book on Square
+        <span class="sr-only"> (opens in a new tab)</span>
       </a>
     </div>
   </div>

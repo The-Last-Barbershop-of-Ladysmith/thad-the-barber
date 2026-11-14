@@ -51,6 +51,11 @@
     align-items: flex-start;
     max-width: 32.5rem;
 
+    // The heading only takes focus from the script, to announce the page; it isn't a control.
+    h1:focus {
+      outline: none;
+    }
+
     .actions {
       display: flex;
       flex-wrap: wrap;

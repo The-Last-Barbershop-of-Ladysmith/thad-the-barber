@@ -1,4 +1,5 @@
-import { Page, Response } from '@playwright/test';
+import { Locator, Page, Response } from '@playwright/test';
+import { TEST_SHOP } from '../../src/testing/test-shop';
 import { expectNoA11yViolations } from '../support/axe';
 import { expect, test } from '../support/fixtures';
 
@@ -17,6 +18,41 @@ test.describe(
 
         const response: Response | null = await page.goto('/another-missing-page');
         expect(response?.status()).toBe(404);
+      },
+    );
+
+    test(
+      'moves focus to the heading',
+      async ({ page }: { page: Page; }): Promise<void> => {
+        await expect(page.getByRole('heading', { level: 1 })).toBeFocused();
+      },
+    );
+
+    test(
+      'links to the Square booking site in a new tab',
+      async ({ page }: { page: Page; }): Promise<void> => {
+        const square: Locator = page.getByTestId('not-found-square');
+
+        await expect(square).toHaveAttribute('href', TEST_SHOP.squareBookingSiteUrl ?? '');
+        await expect(square).toHaveAttribute('target', '_blank');
+      },
+    );
+
+    test(
+      'navigating to an unknown route in the app shows the page without a reload',
+      async ({ page }: { page: Page; }): Promise<void> => {
+        await page.goto('/privacy');
+        await page.evaluate((): void => {
+          history.pushState(
+            {},
+            '',
+            '/another-missing-page',
+          );
+          dispatchEvent(new PopStateEvent('popstate'));
+        });
+
+        await expect(page.getByTestId('not-found')).toBeVisible();
+        await expect(page).toHaveURL('/another-missing-page');
       },
     );
 
