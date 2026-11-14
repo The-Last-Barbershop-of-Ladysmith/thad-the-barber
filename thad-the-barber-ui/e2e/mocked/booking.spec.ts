@@ -68,6 +68,18 @@ test.describe(
   'booking',
   (): void => {
     test(
+      'shows the text consent line with the confirm button, and no accessibility violations',
+      async ({ page }: { page: Page; }): Promise<void> => {
+        await page.goto('/book');
+        await fillInBooking(page);
+
+        await expect(page.getByTestId('booking-consent')).toBeVisible();
+        await expect(page.getByTestId('confirm-booking')).toBeEnabled();
+        await expectNoA11yViolations(page);
+      },
+    );
+
+    test(
       'shows the shop notice above the form with its line breaks kept',
       async ({ page }: { page: Page; }): Promise<void> => {
         const noticeText: string = 'Park behind the shop.\nSide door is on Pretend Alley.';

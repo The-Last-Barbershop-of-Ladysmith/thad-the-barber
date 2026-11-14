@@ -134,6 +134,12 @@
                     }
                     {{ confirmLabel() }}
                   </button>
+                  @if (!isRescheduling()) {
+                    <p class="small-print" data-testid="booking-consent">
+                      By booking you agree to receive a text confirming your appointment. Message and data rates may
+                      apply. Reply STOP to opt out, HELP for help.
+                    </p>
+                  }
                 </div>
                 @if (pickedDayLabel(); as pickedDay) {
                   @if (pickedTimeLabel(); as pickedTime) {
