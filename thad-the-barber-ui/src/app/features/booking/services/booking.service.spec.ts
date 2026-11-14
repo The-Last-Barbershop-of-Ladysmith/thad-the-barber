@@ -115,13 +115,13 @@ describe(
       'asks for a code with the phone, and the lookup has nothing to return',
       (): void => {
         let isCompleted: boolean = false;
-        TestBed.inject(BookingService).startLookup({ phone: '+15555550123' }).subscribe({
+        TestBed.inject(BookingService).sendLookupCode({ phone: '+15555550123' }).subscribe({
           complete: (): void => {
             isCompleted = true;
           },
         });
 
-        const call: TestRequest = TestBed.inject(HttpTestingController).expectOne(`${BOOKINGS_URL}/lookup/start`);
+        const call: TestRequest = TestBed.inject(HttpTestingController).expectOne(`${BOOKINGS_URL}/lookup/code`);
         call.flush(null, { status: 202, statusText: 'Accepted' });
 
         expect(call.request.method).toBe('POST');
@@ -142,12 +142,12 @@ describe(
         ];
         let result: FoundBooking[] | undefined;
         TestBed.inject(BookingService)
-          .verifyLookup({ phone: '+15555550123', code: '0042' })
+          .getVerifiedList({ phone: '+15555550123', code: '0042' })
           .subscribe((bookings: FoundBooking[]): void => {
             result = bookings;
           });
 
-        const call: TestRequest = TestBed.inject(HttpTestingController).expectOne(`${BOOKINGS_URL}/lookup/verify`);
+        const call: TestRequest = TestBed.inject(HttpTestingController).expectOne(`${BOOKINGS_URL}/lookup/verified-list`);
         call.flush(foundBookings);
 
         expect(call.request.method).toBe('POST');

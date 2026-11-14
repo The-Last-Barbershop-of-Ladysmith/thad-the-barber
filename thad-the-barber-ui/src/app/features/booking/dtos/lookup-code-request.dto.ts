@@ -1,3 +1,3 @@
-export interface LookupStartRequest {
+export interface LookupCodeRequest {
   phone: string;
 }

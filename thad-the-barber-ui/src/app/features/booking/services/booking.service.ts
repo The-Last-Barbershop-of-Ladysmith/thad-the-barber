@@ -5,8 +5,8 @@ import { environment } from '../../../../environments/environment';
 import { BookingConfirmation } from '../dtos/booking-confirmation.dto';
 import { BookingRequest } from '../dtos/booking-request.dto';
 import { FoundBooking } from '../dtos/found-booking.dto';
-import { LookupStartRequest } from '../dtos/lookup-start-request.dto';
-import { LookupVerifyRequest } from '../dtos/lookup-verify-request.dto';
+import { LookupCodeRequest } from '../dtos/lookup-code-request.dto';
+import { VerifiedListRequest } from '../dtos/verified-list-request.dto';
 import { ManagedBooking } from '../dtos/managed-booking.dto';
 import { RescheduleRequest } from '../dtos/reschedule-request.dto';
 
@@ -52,12 +52,12 @@ export class BookingService {
     );
   }
 
-  startLookup(request: LookupStartRequest): Observable<null> {
-    return this.http.post<null>(`${BOOKINGS_URL}/lookup/start`, request);
+  sendLookupCode(request: LookupCodeRequest): Observable<null> {
+    return this.http.post<null>(`${BOOKINGS_URL}/lookup/code`, request);
   }
 
-  verifyLookup(request: LookupVerifyRequest): Observable<FoundBooking[]> {
-    return this.http.post<FoundBooking[]>(`${BOOKINGS_URL}/lookup/verify`, request);
+  getVerifiedList(request: VerifiedListRequest): Observable<FoundBooking[]> {
+    return this.http.post<FoundBooking[]>(`${BOOKINGS_URL}/lookup/verified-list`, request);
   }
 
   private toBookingUrl(id: string): string {

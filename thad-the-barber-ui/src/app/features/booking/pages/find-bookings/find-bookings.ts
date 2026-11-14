@@ -155,7 +155,7 @@ export class FindBookings {
       return;
     }
     this.runLookup(
-      this.bookingService.startLookup({ phone: this.toPhone() }),
+      this.bookingService.sendLookupCode({ phone: this.toPhone() }),
       (): void => {
         this.step.set(LookupStep.Code);
         this.lookupNotice.set(CODE_SENT_NOTICE);
@@ -173,7 +173,7 @@ export class FindBookings {
       return;
     }
     this.runLookup(
-      this.bookingService.verifyLookup({
+      this.bookingService.getVerifiedList({
         phone: this.toPhone(),
         code: this.lookupForm.controls.code.value,
       }),

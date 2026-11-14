@@ -1,4 +1,4 @@
-export interface LookupVerifyRequest {
+export interface VerifiedListRequest {
   phone: string;
   code: string;
 }

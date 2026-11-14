@@ -9,8 +9,8 @@ import { AppState } from '../../../../store/app.state';
 import * as ShopActions from '../../../shop/state/shop.actions';
 import { shopFeature } from '../../../shop/state/shop.feature';
 import { FoundBooking } from '../../dtos/found-booking.dto';
-import { LookupStartRequest } from '../../dtos/lookup-start-request.dto';
-import { LookupVerifyRequest } from '../../dtos/lookup-verify-request.dto';
+import { LookupCodeRequest } from '../../dtos/lookup-code-request.dto';
+import { VerifiedListRequest } from '../../dtos/verified-list-request.dto';
 import { BookingService } from '../../services/booking.service';
 import { FindBookings } from './find-bookings';
 
@@ -33,16 +33,16 @@ describe(
   'FindBookings',
   (): void => {
     let fixture: ComponentFixture<FindBookings>;
-    let startRequests: LookupStartRequest[];
-    let startResponses: Subject<null>[];
-    let verifyRequests: LookupVerifyRequest[];
-    let verifyResponses: Subject<FoundBooking[]>[];
+    let codeRequests: LookupCodeRequest[];
+    let codeResponses: Subject<null>[];
+    let verifiedListRequests: VerifiedListRequest[];
+    let verifiedListResponses: Subject<FoundBooking[]>[];
 
     beforeEach((): void => {
-      startRequests = [];
-      startResponses = [];
-      verifyRequests = [];
-      verifyResponses = [];
+      codeRequests = [];
+      codeResponses = [];
+      verifiedListRequests = [];
+      verifiedListResponses = [];
       TestBed.configureTestingModule({
         providers: [
           provideStore({ [shopFeature.name]: shopFeature.reducer }),
@@ -50,16 +50,16 @@ describe(
           {
             provide: BookingService,
             useValue: {
-              startLookup: (request: LookupStartRequest): Subject<null> => {
+              sendLookupCode: (request: LookupCodeRequest): Subject<null> => {
                 const response: Subject<null> = new Subject<null>();
-                startRequests.push(request);
-                startResponses.push(response);
+                codeRequests.push(request);
+                codeResponses.push(response);
                 return response;
               },
-              verifyLookup: (request: LookupVerifyRequest): Subject<FoundBooking[]> => {
+              getVerifiedList: (request: VerifiedListRequest): Subject<FoundBooking[]> => {
                 const response: Subject<FoundBooking[]> = new Subject<FoundBooking[]>();
-                verifyRequests.push(request);
-                verifyResponses.push(response);
+                verifiedListRequests.push(request);
+                verifiedListResponses.push(response);
                 return response;
               },
             },
@@ -111,29 +111,29 @@ describe(
       fixture.detectChanges();
     }
 
-    function answerStart(): void {
-      const response: Subject<null> | undefined = startResponses.at(-1);
+    function answerCode(): void {
+      const response: Subject<null> | undefined = codeResponses.at(-1);
       response?.next(null);
       response?.complete();
       fixture.detectChanges();
     }
 
-    function answerVerify(answer: FoundBooking[]): void {
-      const response: Subject<FoundBooking[]> | undefined = verifyResponses.at(-1);
+    function answerVerifiedList(answer: FoundBooking[]): void {
+      const response: Subject<FoundBooking[]> | undefined = verifiedListResponses.at(-1);
       response?.next(answer);
       response?.complete();
       fixture.detectChanges();
     }
 
-    function failVerify(code: ProblemCode): void {
-      verifyResponses.at(-1)?.error(new HttpErrorResponse({ status: 400, error: { code } }));
+    function failVerifiedList(code: ProblemCode): void {
+      verifiedListResponses.at(-1)?.error(new HttpErrorResponse({ status: 400, error: { code } }));
       fixture.detectChanges();
     }
 
     function openCodeStep(): HTMLInputElement {
       typePhone();
       submit();
-      answerStart();
+      answerCode();
       const codeInput: HTMLInputElement | null = inputByTestId('lookup-code');
       if (!codeInput) {
         throw new Error('No code input');
@@ -146,7 +146,7 @@ describe(
       (): void => {
         expect(buttonByTestId('send-code')?.disabled).toBe(true);
         expect(byTestId('lookup-code')).toBeNull();
-        expect(startRequests).toEqual([]);
+        expect(codeRequests).toEqual([]);
       },
     );
 
@@ -158,7 +158,7 @@ describe(
         expect(buttonByTestId('send-code')?.disabled).toBe(false);
         submit();
 
-        expect(startRequests).toEqual([{ phone: '+15555550123' }]);
+        expect(codeRequests).toEqual([{ phone: '+15555550123' }]);
       },
     );
 
@@ -169,7 +169,7 @@ describe(
         submit();
         submit();
 
-        expect(startRequests).toHaveLength(1);
+        expect(codeRequests).toHaveLength(1);
       },
     );
 
@@ -195,7 +195,7 @@ describe(
 
         expect(buttonByTestId('verify-code')?.disabled).toBe(false);
         submit();
-        expect(verifyRequests).toEqual([{ phone: '+15555550123', code: '0042' }]);
+        expect(verifiedListRequests).toEqual([{ phone: '+15555550123', code: '0042' }]);
       },
     );
 
@@ -219,7 +219,7 @@ describe(
         const codeInput: HTMLInputElement = openCodeStep();
         type(codeInput, '0042');
         submit();
-        failVerify(ProblemCode.CodeInvalid);
+        failVerifiedList(ProblemCode.CodeInvalid);
 
         expect(byTestId('lookup-notice')).not.toBeNull();
         expect(codeInput.disabled).toBe(false);
@@ -238,7 +238,7 @@ describe(
         await fixture.whenStable();
         codeInput.blur();
 
-        failVerify(ProblemCode.CodeInvalid);
+        failVerifiedList(ProblemCode.CodeInvalid);
         await fixture.whenStable();
 
         expect(document.activeElement).toBe(codeInput);
@@ -262,7 +262,7 @@ describe(
         buttonByTestId('resend-code')?.click();
         fixture.detectChanges();
 
-        expect(startRequests).toEqual([{ phone: '+15555550123' }, { phone: '+15555550123' }]);
+        expect(codeRequests).toEqual([{ phone: '+15555550123' }, { phone: '+15555550123' }]);
         expect(codeInput.value).toBe('');
       },
     );
@@ -285,7 +285,7 @@ describe(
         const codeInput: HTMLInputElement = openCodeStep();
         type(codeInput, '0042');
         submit();
-        answerVerify(foundBookings);
+        answerVerifiedList(foundBookings);
 
         const links: HTMLAnchorElement[] = Array.from(
           (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLAnchorElement>('[data-testid="found-booking"]'),
@@ -304,7 +304,7 @@ describe(
         const codeInput: HTMLInputElement = openCodeStep();
         type(codeInput, '0042');
         submit();
-        answerVerify([]);
+        answerVerifiedList([]);
 
         expect(byTestId('no-bookings')).not.toBeNull();
         expect(byTestId('found-bookings')).toBeNull();
@@ -318,11 +318,11 @@ describe(
         const codeInput: HTMLInputElement = openCodeStep();
         type(codeInput, '0042');
         submit();
-        expect(verifyResponses[0]?.observed).toBe(true);
+        expect(verifiedListResponses[0]?.observed).toBe(true);
 
         fixture.destroy();
 
-        expect(verifyResponses[0]?.observed).toBe(false);
+        expect(verifiedListResponses[0]?.observed).toBe(false);
       },
     );
   },
