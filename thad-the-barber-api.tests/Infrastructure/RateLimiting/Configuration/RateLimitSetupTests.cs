@@ -160,6 +160,7 @@ public sealed class RateLimitSetupTests(ApiFactory factory) : IClassFixture<ApiF
                 ["RateLimits:NextTimes:PermitLimit"] = "2",
                 ["RateLimits:LookupCode:PermitLimit"] = "2",
                 ["RateLimits:LookupVerifiedList:PermitLimit"] = "2",
+                ["RateLimits:Contact:PermitLimit"] = "2",
             }));
         });
 

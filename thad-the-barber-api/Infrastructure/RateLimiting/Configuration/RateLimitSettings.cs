@@ -19,4 +19,6 @@ public sealed class RateLimitSettings
     public FixedWindowLimit LookupCode { get; set; } = new();
 
     public FixedWindowLimit LookupVerifiedList { get; set; } = new();
+
+    public FixedWindowLimit Contact { get; set; } = new();
 }
