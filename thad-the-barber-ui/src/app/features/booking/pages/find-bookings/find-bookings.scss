@@ -7,6 +7,11 @@
       }
     }
 
+    // The link's underline spans the element, so it takes its own width, not the column's.
+    .book-another {
+      width: fit-content;
+    }
+
     .code-actions {
       display: flex;
       flex-wrap: wrap;

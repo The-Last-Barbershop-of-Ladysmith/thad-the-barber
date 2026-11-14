@@ -150,6 +150,7 @@ test.describe(
         await submitCode(page);
 
         await expect(page.getByTestId('no-bookings')).toBeVisible();
+        await expect(page.getByTestId('book-another')).toHaveAttribute('href', '/book');
         await expect(page.getByTestId('found-bookings')).toHaveCount(0);
         await expect(page.getByTestId('lookup-notice')).toHaveCount(0);
         await expectNoA11yViolations(page);
