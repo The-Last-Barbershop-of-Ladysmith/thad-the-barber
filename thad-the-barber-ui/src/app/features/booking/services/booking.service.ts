@@ -52,7 +52,6 @@ export class BookingService {
     );
   }
 
-  /** The API answers the same whether or not the phone has bookings. */
   startLookup(request: LookupStartRequest): Observable<null> {
     return this.http.post<null>(`${BOOKINGS_URL}/lookup/start`, request);
   }

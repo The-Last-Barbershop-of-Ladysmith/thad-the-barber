@@ -119,14 +119,16 @@ describe(
       },
     );
 
-    it(
-      'rejects an empty code, one too short or long, and anything but digits',
-      (): void => {
-        expect(isValid('')).toBe(false);
-        expect(isValid('123')).toBe(false);
-        expect(isValid('12345678901')).toBe(false);
-        expect(isValid('12 345')).toBe(false);
-        expect(isValid('12a456')).toBe(false);
+    it.each([
+      ['an empty code', ''],
+      ['one too short', '123'],
+      ['one too long', '12345678901'],
+      ['one with a space', '12 345'],
+      ['one with a letter', '12a456'],
+    ])(
+      'rejects %s',
+      (_description: string, code: string): void => {
+        expect(isValid(code)).toBe(false);
       },
     );
   },

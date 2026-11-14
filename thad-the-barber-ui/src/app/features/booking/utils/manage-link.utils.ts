@@ -9,7 +9,6 @@ export function toManageCommands(id: string): string[] {
   return [MANAGE_ROOT, id];
 }
 
-/** Leaves the address bar once the manage page has read it, so it never shows in screenshots or shared tabs. */
 export function toManageFragment(manageToken: string): string {
   return new URLSearchParams({ t: manageToken }).toString();
 }

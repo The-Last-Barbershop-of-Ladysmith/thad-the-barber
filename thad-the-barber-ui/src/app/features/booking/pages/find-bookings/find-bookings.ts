@@ -101,12 +101,14 @@ export class FindBookings {
   // form's value makes the check run again as the customer types, since validity itself isn't a signal.
   protected readonly canSendCode: Signal<boolean> = computed((): boolean => {
     this.lookupFormValue();
-    return !this.lookupForm.controls.phone.invalid && !this.isLookingUp();
+    const isPhoneValid: boolean = !this.lookupForm.controls.phone.invalid;
+    return isPhoneValid && !this.isLookingUp();
   });
 
   protected readonly canVerifyCode: Signal<boolean> = computed((): boolean => {
     this.lookupFormValue();
-    return !this.lookupForm.controls.code.invalid && !this.isLookingUp();
+    const isCodeValid: boolean = !this.lookupForm.controls.code.invalid;
+    return isCodeValid && !this.isLookingUp();
   });
 
   protected readonly isShopLoading: Signal<boolean> = computed((): boolean => this.timeZone() === null);
@@ -195,7 +197,7 @@ export class FindBookings {
       [LookupStep.Code]: 'lookup-code',
       [LookupStep.Results]: 'lookup-results-heading',
     };
-    // Focus returns when a request ends, since locking the form drops it; a request's own notice is a live region.
+    // Focus returns when a request ends, since locking the form drops it.
     effect((): void => {
       const focusTarget: string = focusTargets[this.step()];
       if (this.isLookingUp()) {

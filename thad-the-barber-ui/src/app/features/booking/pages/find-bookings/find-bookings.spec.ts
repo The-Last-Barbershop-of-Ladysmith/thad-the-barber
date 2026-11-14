@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FormControl, FormGroup } from '@angular/forms';
 import { provideRouter } from '@angular/router';
 import { Action, ActionsSubject, Store, provideStore } from '@ngrx/store';
 import { firstValueFrom } from 'rxjs';
@@ -27,10 +26,6 @@ const foundBookings: FoundBooking[] = [
     manageToken: 'made-up-second-token',
   },
 ];
-
-interface FindBookingsPage {
-  lookupForm: FormGroup<{ phone: FormControl<string>; code: FormControl<string>; }>;
-}
 
 describe(
   'FindBookings',
@@ -81,8 +76,16 @@ describe(
     }
 
     function typePhone(): void {
-      const page: FindBookingsPage = fixture.componentInstance as unknown as FindBookingsPage;
-      page.lookupForm.controls.phone.setValue(MADE_UP_PHONE_FIELD_VALUE);
+      const phoneInput: HTMLInputElement | null = (fixture.nativeElement as HTMLElement)
+        .querySelector<HTMLInputElement>('#lookup-phone');
+      if (!phoneInput) {
+        throw new Error('No phone input');
+      }
+      // The input mask reads what was typed on a zero-delay timer.
+      vi.useFakeTimers();
+      type(phoneInput, MADE_UP_PHONE_FIELD_VALUE);
+      vi.runOnlyPendingTimers();
+      vi.useRealTimers();
       fixture.detectChanges();
     }
 

@@ -6,8 +6,13 @@ describe(
     it(
       'keeps only the digits, in the order typed',
       (): void => {
-        expect(toLookupCode('12 34-56')).toBe('123456');
-        expect(toLookupCode('a1b2')).toBe('12');
+        expect(toLookupCode('a1b2 3-4')).toBe('1234');
+      },
+    );
+
+    it(
+      'gives nothing for nothing typed',
+      (): void => {
         expect(toLookupCode('')).toBe('');
       },
     );
