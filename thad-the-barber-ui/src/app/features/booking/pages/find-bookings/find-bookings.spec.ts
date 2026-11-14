@@ -1,13 +1,15 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { Store, provideStore } from '@ngrx/store';
+import { Store, provideState, provideStore } from '@ngrx/store';
 import { Subject } from 'rxjs';
 import { TEST_SHOP } from '../../../../../testing/test-shop';
 import { ProblemCode } from '../../../../shared/models/problem-code.model';
 import { AppState } from '../../../../store/app.state';
 import * as ShopActions from '../../../shop/state/shop.actions';
 import { shopFeature } from '../../../shop/state/shop.feature';
+import * as BookingActions from '../../state/booking.actions';
+import { bookingFeature } from '../../state/booking.feature';
 import { FoundBooking } from '../../dtos/found-booking.dto';
 import { VerifiedList } from '../../dtos/verified-list.dto';
 import { LookupCodeRequest } from '../../dtos/lookup-code-request.dto';
@@ -38,15 +40,20 @@ describe(
     let codeResponses: Subject<null>[];
     let verifiedListRequests: VerifiedListRequest[];
     let verifiedListResponses: Subject<VerifiedList>[];
+    let refreshedTokens: string[];
+    let refreshedResponses: Subject<FoundBooking[]>[];
 
     beforeEach((): void => {
       codeRequests = [];
       codeResponses = [];
       verifiedListRequests = [];
       verifiedListResponses = [];
+      refreshedTokens = [];
+      refreshedResponses = [];
       TestBed.configureTestingModule({
         providers: [
           provideStore({ [shopFeature.name]: shopFeature.reducer }),
+          provideState(bookingFeature),
           provideRouter([]),
           {
             provide: BookingService,
@@ -63,14 +70,24 @@ describe(
                 verifiedListResponses.push(response);
                 return response;
               },
+              refreshVerifiedList: (lookupToken: string): Subject<FoundBooking[]> => {
+                const response: Subject<FoundBooking[]> = new Subject<FoundBooking[]>();
+                refreshedTokens.push(lookupToken);
+                refreshedResponses.push(response);
+                return response;
+              },
             },
           },
         ],
       });
       TestBed.inject<Store<AppState>>(Store).dispatch(ShopActions.ShopInfoRequestSuccess({ shopInfo: TEST_SHOP }));
+      openPage();
+    });
+
+    function openPage(): void {
       fixture = TestBed.createComponent(FindBookings);
       fixture.detectChanges();
-    });
+    }
 
     function byTestId(testId: string): HTMLElement | null {
       fixture.detectChanges();
@@ -328,6 +345,61 @@ describe(
         fixture.destroy();
 
         expect(verifiedListResponses[0]?.observed).toBe(false);
+      },
+    );
+
+    it(
+      'keeps the lookup token once a code is right',
+      (): void => {
+        const codeInput: HTMLInputElement = openCodeStep();
+        type(codeInput, '0042');
+        submit();
+        answerVerifiedList(foundBookings);
+
+        const store: Store<AppState> = TestBed.inject<Store<AppState>>(Store);
+        let kept: string | null = null;
+        store.select(bookingFeature.selectLookupToken).subscribe((lookupToken: string | null): void => {
+          kept = lookupToken;
+        }).unsubscribe();
+        expect(kept).toBe('made-up-lookup-token');
+      },
+    );
+
+    it(
+      'shows the bookings from a kept token without texting another code',
+      (): void => {
+        TestBed.inject<Store<AppState>>(Store).dispatch(BookingActions.LookupTokenSave({ lookupToken: 'kept-token' }));
+        openPage();
+
+        expect(byTestId('found-bookings')).toBeNull();
+        expect(refreshedTokens).toEqual(['kept-token']);
+
+        refreshedResponses[0]?.next(foundBookings);
+        refreshedResponses[0]?.complete();
+
+        expect(byTestId('found-bookings')).not.toBeNull();
+        expect(codeRequests).toEqual([]);
+      },
+    );
+
+    it(
+      'goes back to the phone step, forgetting the token, when the kept token has expired',
+      (): void => {
+        const store: Store<AppState> = TestBed.inject<Store<AppState>>(Store);
+        store.dispatch(BookingActions.LookupTokenSave({ lookupToken: 'kept-token' }));
+        openPage();
+
+        refreshedResponses[0]?.error(
+          new HttpErrorResponse({ status: 403, error: { code: ProblemCode.LookupExpired } }),
+        );
+
+        expect(byTestId('send-code')).not.toBeNull();
+        expect(byTestId('lookup-notice')).not.toBeNull();
+        let kept: string | null = 'unset';
+        store.select(bookingFeature.selectLookupToken).subscribe((lookupToken: string | null): void => {
+          kept = lookupToken;
+        }).unsubscribe();
+        expect(kept).toBeNull();
       },
     );
   },

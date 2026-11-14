@@ -1,6 +1,7 @@
 import { Locator, Page, Route } from '@playwright/test';
 import { FoundBooking } from '../../src/app/features/booking/dtos/found-booking.dto';
 import { LookupCodeRequest } from '../../src/app/features/booking/dtos/lookup-code-request.dto';
+import { VerifiedList } from '../../src/app/features/booking/dtos/verified-list.dto';
 import { VerifiedListRequest } from '../../src/app/features/booking/dtos/verified-list-request.dto';
 import { ProblemCode } from '../../src/app/shared/models/problem-code.model';
 import { expectNoA11yViolations } from '../support/axe';
@@ -42,6 +43,14 @@ async function problem(
   });
 }
 
+function toVerifiedList(bookings: FoundBooking[]): VerifiedList {
+  return {
+    bookings,
+    lookupToken: 'made-up-lookup-token',
+    expiresAt: new Date(Date.now() + (15 * 60 * 1000)).toISOString(),
+  };
+}
+
 async function acceptCode(route: Route): Promise<void> {
   await route.fulfill({ status: 202 });
 }
@@ -81,7 +90,7 @@ test.describe(
         });
         await page.route(isVerifiedListRequest, (route: Route): Promise<void> => {
           verified.push(route.request().postDataJSON() as VerifiedListRequest);
-          return route.fulfill({ json: foundBookings });
+          return route.fulfill({ json: toVerifiedList(foundBookings) });
         });
         await page.goto('/book/manage');
         await expect(page.getByTestId('send-code')).toBeDisabled();
@@ -122,7 +131,7 @@ test.describe(
               ProblemCode.CodeInvalid,
             );
           }
-          return route.fulfill({ json: foundBookings });
+          return route.fulfill({ json: toVerifiedList(foundBookings) });
         });
         await askForCode(page);
 
@@ -144,7 +153,8 @@ test.describe(
       'shows no upcoming bookings as a message, not an error, and no list',
       async ({ page }: { page: Page; }): Promise<void> => {
         await page.route(isLookupCodeRequest, acceptCode);
-        await page.route(isVerifiedListRequest, (route: Route): Promise<void> => route.fulfill({ json: [] }));
+        await page.route(isVerifiedListRequest, (route: Route): Promise<void> =>
+          route.fulfill({ json: toVerifiedList([]) }));
         await askForCode(page);
 
         await submitCode(page);
@@ -209,26 +219,65 @@ test.describe(
     );
 
     test(
-      'keeps nothing it found on the device, and forgets it on a reload',
+      'keeps only the lookup token, for the tab, and shows the list again after a reload without a new code',
       async ({ page }: { page: Page; }): Promise<void> => {
-        await page.route(isLookupCodeRequest, acceptCode);
-        await page.route(isVerifiedListRequest, (route: Route): Promise<void> =>
-          route.fulfill({ json: foundBookings }));
+        const codeRequests: LookupCodeRequest[] = [];
+        const lookupTokens: (string | undefined)[] = [];
+        await page.route(isLookupCodeRequest, (route: Route): Promise<void> => {
+          codeRequests.push(route.request().postDataJSON() as LookupCodeRequest);
+          return acceptCode(route);
+        });
+        await page.route(isVerifiedListRequest, (route: Route): Promise<void> => {
+          if (route.request().method() === 'GET') {
+            lookupTokens.push(route.request().headers()['x-lookup-token']);
+            return route.fulfill({ json: foundBookings });
+          }
+          return route.fulfill({ json: toVerifiedList(foundBookings) });
+        });
         await askForCode(page);
         await submitCode(page);
         await expect(page.getByTestId('found-booking')).toHaveCount(2);
 
-        const stored: string = await page.evaluate((): string => JSON.stringify([
-          Object.entries(localStorage),
-          Object.entries(sessionStorage),
-        ]));
-        expect(stored).not.toContain('made-up-soonest');
-        expect(stored).not.toContain('made-up-later-token');
+        const stored: { local: string; session: string; } = await page.evaluate(
+          (): { local: string; session: string; } => ({
+            local: JSON.stringify(Object.entries(localStorage)),
+            session: JSON.stringify(Object.entries(sessionStorage)),
+          }),
+        );
+        expect(stored.local).not.toContain('booking');
+        expect(stored.session).not.toContain('made-up-later-token');
 
         await page.reload();
 
-        await expect(page.getByTestId('found-booking')).toHaveCount(0);
+        await expect(page.getByTestId('found-booking')).toHaveCount(2);
+        expect(lookupTokens).toEqual(['made-up-lookup-token']);
+        expect(codeRequests).toHaveLength(1);
+      },
+    );
+
+    test(
+      'asks for a new code when the kept token has expired',
+      async ({ page }: { page: Page; }): Promise<void> => {
+        await page.route(isLookupCodeRequest, acceptCode);
+        await page.route(isVerifiedListRequest, (route: Route): Promise<void> => {
+          if (route.request().method() === 'GET') {
+            return problem(
+              route,
+              403,
+              ProblemCode.LookupExpired,
+            );
+          }
+          return route.fulfill({ json: toVerifiedList(foundBookings) });
+        });
+        await askForCode(page);
+        await submitCode(page);
+        await expect(page.getByTestId('found-booking')).toHaveCount(2);
+
+        await page.reload();
+
+        await expect(page.getByTestId('lookup-notice')).toBeVisible();
         await expect(page.getByTestId('send-code')).toBeVisible();
+        await expect(page.getByTestId('found-booking')).toHaveCount(0);
       },
     );
   },

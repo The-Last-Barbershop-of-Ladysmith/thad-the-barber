@@ -22,7 +22,8 @@ import { Observable, finalize, map } from 'rxjs';
 import { NoticeMessage } from '../../../../shared/components/notice-message/notice-message';
 import { TitledPage } from '../../../../shared/components/titled-page/titled-page';
 import { Notice } from '../../../../shared/models/notice.model';
-import { toProblemNotice } from '../../../../shared/utils/problem.utils';
+import { ProblemCode } from '../../../../shared/models/problem-code.model';
+import { getProblemCode, toProblemNotice } from '../../../../shared/utils/problem.utils';
 import { toE164 } from '../../../../shared/utils/phone.utils';
 import { LOOKUP_CODE_VALIDATORS, PHONE_VALIDATORS } from '../../../../shared/validators/form.validators';
 import { AppState } from '../../../../store/app.state';
@@ -34,6 +35,8 @@ import {
   LOOKUP_PROBLEM_NOTICES,
   NO_UPCOMING_BOOKINGS_NOTICE,
 } from '../../config/booking-notices';
+import * as BookingActions from '../../state/booking.actions';
+import { bookingFeature } from '../../state/booking.feature';
 import { FoundBooking } from '../../dtos/found-booking.dto';
 import { VerifiedList } from '../../dtos/verified-list.dto';
 import { LookupStep } from '../../models/lookup-step.model';
@@ -83,6 +86,7 @@ export class FindBookings {
   private readonly injector: Injector = inject(Injector);
 
   private readonly timeZone: Signal<string | null> = this.store.selectSignal(shopFeature.selectTimeZone);
+  private readonly lookupToken: Signal<string | null> = this.store.selectSignal(bookingFeature.selectLookupToken);
   private readonly foundBookings: WritableSignal<FoundBooking[]> = signal([]);
   protected readonly step: WritableSignal<LookupStep> = signal(LookupStep.Phone);
   protected readonly isLookingUp: WritableSignal<boolean> = signal(false);
@@ -141,6 +145,7 @@ export class FindBookings {
     this.keepOnlyDigitsInCode();
     this.lockFormWhileLookingUp();
     this.focusFirstFieldOfStep();
+    this.resumeLookup();
   }
 
   protected submitStep(): void {
@@ -179,6 +184,7 @@ export class FindBookings {
         code: this.lookupForm.controls.code.value,
       }),
       (verifiedList: VerifiedList): void => {
+        this.store.dispatch(BookingActions.LookupTokenSave({ lookupToken: verifiedList.lookupToken }));
         this.foundBookings.set(verifiedList.bookings);
         this.step.set(LookupStep.Results);
       },
@@ -192,7 +198,11 @@ export class FindBookings {
   }
 
   // A request still sent when the page closes is dropped with it.
-  private runLookup<T>(request: Observable<T>, onSuccess: (result: T) => void): void {
+  private runLookup<T>(
+    request: Observable<T>,
+    onSuccess: (result: T) => void,
+    onFailure?: () => void,
+  ): void {
     this.isLookingUp.set(true);
     this.lookupNotice.set(null);
     request
@@ -205,6 +215,10 @@ export class FindBookings {
       .subscribe({
         next: onSuccess,
         error: (error: unknown): void => {
+          if (getProblemCode(error) === ProblemCode.LookupExpired) {
+            this.store.dispatch(BookingActions.LookupTokenClear());
+          }
+          onFailure?.();
           this.lookupNotice.set(toProblemNotice(
             error,
             LOOKUP_PROBLEM_NOTICES,
@@ -212,6 +226,24 @@ export class FindBookings {
           ));
         },
       });
+  }
+
+  // A token kept from a code entered a few minutes ago asks the API for the list again instead of texting another code.
+  private resumeLookup(): void {
+    const lookupToken: string | null = this.lookupToken();
+    if (!lookupToken) {
+      return;
+    }
+    this.step.set(LookupStep.Results);
+    this.runLookup(
+      this.bookingService.refreshVerifiedList(lookupToken),
+      (foundBookings: FoundBooking[]): void => {
+        this.foundBookings.set(foundBookings);
+      },
+      (): void => {
+        this.step.set(LookupStep.Phone);
+      },
+    );
   }
 
   private toPhone(): string {
