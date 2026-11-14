@@ -4,6 +4,9 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { BookingConfirmation } from '../dtos/booking-confirmation.dto';
 import { BookingRequest } from '../dtos/booking-request.dto';
+import { FoundBooking } from '../dtos/found-booking.dto';
+import { LookupStartRequest } from '../dtos/lookup-start-request.dto';
+import { LookupVerifyRequest } from '../dtos/lookup-verify-request.dto';
 import { ManagedBooking } from '../dtos/managed-booking.dto';
 import { RescheduleRequest } from '../dtos/reschedule-request.dto';
 
@@ -47,6 +50,15 @@ export class BookingService {
       request,
       { headers: { [MANAGE_TOKEN_HEADER]: manageToken } },
     );
+  }
+
+  /** The API answers the same whether or not the phone has bookings. */
+  startLookup(request: LookupStartRequest): Observable<void> {
+    return this.http.post<void>(`${BOOKINGS_URL}/lookup/start`, request);
+  }
+
+  verifyLookup(request: LookupVerifyRequest): Observable<FoundBooking[]> {
+    return this.http.post<FoundBooking[]>(`${BOOKINGS_URL}/lookup/verify`, request);
   }
 
   private toBookingUrl(id: string): string {
