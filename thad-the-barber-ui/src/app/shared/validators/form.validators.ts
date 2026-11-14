@@ -11,3 +11,8 @@ export const NAME_VALIDATORS: ValidatorFn[] = [
   Validators.required,
   Validators.pattern(/\S.*\S/),
 ];
+
+export const LOOKUP_CODE_VALIDATORS: ValidatorFn[] = [
+  Validators.required,
+  Validators.pattern(/^\d{4,10}$/),
+];

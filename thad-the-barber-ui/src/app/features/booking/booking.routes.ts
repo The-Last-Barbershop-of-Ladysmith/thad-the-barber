@@ -6,6 +6,7 @@ import * as bookingEffects from './state/booking.effects';
 import { Booking } from './booking';
 import { leaveBookingGuard } from './guards/leave-booking.guard';
 import { bookingFeature } from './state/booking.feature';
+import { FindBookings } from './pages/find-bookings/find-bookings';
 import { ManageBooking } from './pages/manage-booking/manage-booking';
 
 // The booking slice and effects register once for /book and the manage pages; a reschedule opens the booking page.
@@ -25,6 +26,13 @@ export const BOOKING_ROUTES: Routes = [
         canDeactivate: [leaveBookingGuard],
         loadComponent: (): Promise<typeof Booking> =>
           import('./booking').then((m: { Booking: typeof Booking; }): typeof Booking => m.Booking),
+      },
+      {
+        path: 'manage',
+        title: 'Find my bookings · Thad The Barber',
+        loadComponent: (): Promise<typeof FindBookings> =>
+          import('./pages/find-bookings/find-bookings')
+            .then((m: { FindBookings: typeof FindBookings; }): typeof FindBookings => m.FindBookings),
       },
       {
         path: 'manage/:id/reschedule',

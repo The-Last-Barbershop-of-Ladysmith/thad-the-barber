@@ -48,7 +48,7 @@ import {
 } from '../../config/booking-notices';
 import { toLongDate, toTimeLabel } from '../../utils/booking-time.utils';
 import { toIcsFile } from '../../utils/ics.utils';
-import { toManagePath } from '../../utils/manage-link.utils';
+import { toManageFragment, toManagePath } from '../../utils/manage-link.utils';
 
 interface AppointmentStart {
   day: string;
@@ -129,8 +129,7 @@ export class ManageBooking implements OnInit {
     if (!manageToken) {
       return null;
     }
-    const fragment: string = new URLSearchParams({ t: manageToken }).toString();
-    return `${window.location.origin}${toManagePath(this.id())}#${fragment}`;
+    return `${window.location.origin}${toManagePath(this.id())}#${toManageFragment(manageToken)}`;
   });
 
   /** Waits for the shop, which holds the appointment's length and address. */

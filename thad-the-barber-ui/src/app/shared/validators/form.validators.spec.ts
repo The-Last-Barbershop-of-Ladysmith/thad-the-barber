@@ -1,5 +1,5 @@
 import { FormControl } from '@angular/forms';
-import { NAME_VALIDATORS, PHONE_MASK, PHONE_VALIDATORS } from './form.validators';
+import { LOOKUP_CODE_VALIDATORS, NAME_VALIDATORS, PHONE_MASK, PHONE_VALIDATORS } from './form.validators';
 
 describe(
   'PHONE_VALIDATORS',
@@ -99,6 +99,36 @@ describe(
       'rejects only spaces',
       (): void => {
         expect(isValid('     ')).toBe(false);
+      },
+    );
+  },
+);
+
+describe(
+  'LOOKUP_CODE_VALIDATORS',
+  (): void => {
+    const isValid: (code: string) => boolean = (code: string): boolean => {
+      return new FormControl(code, LOOKUP_CODE_VALIDATORS).valid;
+    };
+
+    it(
+      'accepts 4 to 10 digits, leading zeros included',
+      (): void => {
+        expect(isValid('0042')).toBe(true);
+        expect(isValid('1234567890')).toBe(true);
+      },
+    );
+
+    it.each([
+      ['an empty code', ''],
+      ['one too short', '123'],
+      ['one too long', '12345678901'],
+      ['one with a space', '12 345'],
+      ['one with a letter', '12a456'],
+    ])(
+      'rejects %s',
+      (_description: string, code: string): void => {
+        expect(isValid(code)).toBe(false);
       },
     );
   },

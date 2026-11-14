@@ -1,4 +1,4 @@
-import { toManagePath } from './manage-link.utils';
+import { toManageCommands, toManageFragment, toManagePath } from './manage-link.utils';
 
 describe(
   'toManagePath',
@@ -8,6 +8,31 @@ describe(
       (): void => {
         expect(toManagePath('made-up-booking')).toBe('/book/manage/made-up-booking');
         expect(toManagePath('made-up/booking?x')).toBe('/book/manage/made-up%2Fbooking%3Fx');
+      },
+    );
+  },
+);
+
+describe(
+  'toManageFragment',
+  (): void => {
+    it(
+      'carries the token as t, encoding one that would otherwise break the fragment',
+      (): void => {
+        expect(toManageFragment('made-up-token')).toBe('t=made-up-token');
+        expect(toManageFragment('made+up/token=&#')).toBe('t=made%2Bup%2Ftoken%3D%26%23');
+      },
+    );
+  },
+);
+
+describe(
+  'toManageCommands',
+  (): void => {
+    it(
+      'leaves the ID as it is, for the router to encode',
+      (): void => {
+        expect(toManageCommands('made-up/booking?x')).toEqual(['/book/manage', 'made-up/booking?x']);
       },
     );
   },

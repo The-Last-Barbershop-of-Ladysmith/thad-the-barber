@@ -1,7 +1,15 @@
 import { NO_ERRORS_SCHEMA, Signal, WritableSignal, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute, Navigation, ParamMap, Router, convertToParamMap, provideRouter } from '@angular/router';
+import {
+  ActivatedRoute,
+  Navigation,
+  ParamMap,
+  Router,
+  RouterLink,
+  convertToParamMap,
+  provideRouter,
+} from '@angular/router';
 import { provideEffects } from '@ngrx/effects';
 import { Action, ActionsSubject, Store, provideStore } from '@ngrx/store';
 import { BehaviorSubject } from 'rxjs';
@@ -79,7 +87,15 @@ describe(
       // Only the page's own markup renders; the day, time and details components have their own specs.
       TestBed.overrideComponent(
         Booking,
-        { set: { imports: [ReactiveFormsModule, NoticeMessage], schemas: [NO_ERRORS_SCHEMA] } },
+        {
+          set: {
+            imports: [
+              ReactiveFormsModule,
+              RouterLink,
+              NoticeMessage,
+            ], schemas: [NO_ERRORS_SCHEMA],
+          },
+        },
       );
       store = TestBed.inject<Store<AppState>>(Store);
     });
@@ -385,11 +401,11 @@ describe(
     );
 
     it(
-      "links anyone already booked to Square's booking site",
+      'links anyone already booked to find their bookings',
       (): void => {
         openPage();
 
-        expect(byTestId('manage-bookings-link')?.getAttribute('href')).toBe(TEST_SHOP.squareBookingSiteUrl);
+        expect(byTestId('find-bookings-link')?.getAttribute('href')).toBe('/book/manage');
       },
     );
 
@@ -400,13 +416,13 @@ describe(
         const bookedPageState: ReschedulePageState = { manageToken: booked.manageToken, startAt: booked.startAt };
 
         it(
-          'needs no details and has no link to Square, so it can confirm once a time is picked',
+          'needs no details and has no link to find bookings, so it can confirm once a time is picked',
           (): void => {
             openPage(booked.id, bookedPageState);
             pick(SECOND_TIME);
 
             expect(page.isRescheduling()).toBe(true);
-            expect(byTestId('manage-bookings-link')).toBeNull();
+            expect(byTestId('find-bookings-link')).toBeNull();
             expect(page.canConfirm()).toBe(true);
           },
         );

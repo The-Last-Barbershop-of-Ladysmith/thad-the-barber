@@ -3,6 +3,7 @@ import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@a
 import { TestBed } from '@angular/core/testing';
 import { BookingConfirmation } from '../dtos/booking-confirmation.dto';
 import { BookingRequest } from '../dtos/booking-request.dto';
+import { FoundBooking } from '../dtos/found-booking.dto';
 import { ManagedBooking } from '../dtos/managed-booking.dto';
 import { BOOKINGS_URL, BookingService } from './booking.service';
 
@@ -107,6 +108,52 @@ describe(
         expect(call.request.headers.get('X-Manage-Token')).toBe('made-up-token');
         expect(call.request.urlWithParams).not.toContain('made-up-token');
         expect(result).toEqual(managedBooking);
+      },
+    );
+
+    it(
+      'asks for a code with the phone, and the lookup has nothing to return',
+      (): void => {
+        let isCompleted: boolean = false;
+        TestBed.inject(BookingService).sendLookupCode({ phone: '+15555550123' }).subscribe({
+          complete: (): void => {
+            isCompleted = true;
+          },
+        });
+
+        const call: TestRequest = TestBed.inject(HttpTestingController).expectOne(`${BOOKINGS_URL}/lookup/code`);
+        call.flush(null, { status: 202, statusText: 'Accepted' });
+
+        expect(call.request.method).toBe('POST');
+        expect(call.request.body).toEqual({ phone: '+15555550123' });
+        expect(isCompleted).toBe(true);
+      },
+    );
+
+    it(
+      'verifies the code and returns the found bookings, none of them in the URL',
+      (): void => {
+        const foundBookings: FoundBooking[] = [
+          {
+            id: 'made-up-booking',
+            startAt: '2026-10-03T20:30:00Z',
+            manageToken: 'made-up-token',
+          },
+        ];
+        let result: FoundBooking[] | undefined;
+        TestBed.inject(BookingService)
+          .getVerifiedList({ phone: '+15555550123', code: '0042' })
+          .subscribe((bookings: FoundBooking[]): void => {
+            result = bookings;
+          });
+
+        const call: TestRequest = TestBed.inject(HttpTestingController).expectOne(`${BOOKINGS_URL}/lookup/verified-list`);
+        call.flush(foundBookings);
+
+        expect(call.request.method).toBe('POST');
+        expect(call.request.body).toEqual({ phone: '+15555550123', code: '0042' });
+        expect(call.request.url).not.toContain('0042');
+        expect(result).toEqual(foundBookings);
       },
     );
   },

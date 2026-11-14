@@ -4,6 +4,9 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { BookingConfirmation } from '../dtos/booking-confirmation.dto';
 import { BookingRequest } from '../dtos/booking-request.dto';
+import { FoundBooking } from '../dtos/found-booking.dto';
+import { LookupCodeRequest } from '../dtos/lookup-code-request.dto';
+import { VerifiedListRequest } from '../dtos/verified-list-request.dto';
 import { ManagedBooking } from '../dtos/managed-booking.dto';
 import { RescheduleRequest } from '../dtos/reschedule-request.dto';
 
@@ -47,6 +50,14 @@ export class BookingService {
       request,
       { headers: { [MANAGE_TOKEN_HEADER]: manageToken } },
     );
+  }
+
+  sendLookupCode(request: LookupCodeRequest): Observable<null> {
+    return this.http.post<null>(`${BOOKINGS_URL}/lookup/code`, request);
+  }
+
+  getVerifiedList(request: VerifiedListRequest): Observable<FoundBooking[]> {
+    return this.http.post<FoundBooking[]>(`${BOOKINGS_URL}/lookup/verified-list`, request);
   }
 
   private toBookingUrl(id: string): string {

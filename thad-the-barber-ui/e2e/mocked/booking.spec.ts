@@ -42,11 +42,6 @@ function openDays(page: Page): Locator {
   return page.getByTestId('date-picker').locator('td:not(.p-datepicker-other-month) .p-datepicker-day:not(.p-disabled)');
 }
 
-/** The shop has loaded, so the page can show times and a kept booking. */
-async function waitForShop(page: Page): Promise<void> {
-  await expect(page.locator(`a[href="tel:${TEST_SHOP.phone}"]`).first()).toBeAttached();
-}
-
 /** Picks the first open day and time and fills in the made-up customer. */
 async function fillInBooking(page: Page): Promise<void> {
   await openDays(page).first().click();
@@ -145,14 +140,14 @@ test.describe(
     );
 
     test(
-      "sends anyone already booked to Square's booking site, in a new tab",
+      'sends anyone already booked to find their bookings',
       async ({ page }: { page: Page; }): Promise<void> => {
         await page.goto('/book');
-        await waitForShop(page);
 
-        const manageBookings: Locator = page.getByTestId('manage-bookings-link');
-        await expect(manageBookings).toHaveAttribute('href', TEST_SHOP.squareBookingSiteUrl ?? '');
-        await expect(manageBookings).toHaveAttribute('target', '_blank');
+        await page.getByTestId('find-bookings-link').click();
+
+        await expect(page).toHaveURL(/\/book\/manage$/);
+        await expect(page.locator('#lookup-phone')).toBeVisible();
       },
     );
 

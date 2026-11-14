@@ -238,6 +238,13 @@
     --underline-color: currentColor;
     color: var(--p-primary-hover-color);
   }
+  &:is(button) {
+    cursor: pointer;
+  }
+  &:disabled {
+    cursor: default;
+    opacity: 0.5;
+  }
 }
 
 /*

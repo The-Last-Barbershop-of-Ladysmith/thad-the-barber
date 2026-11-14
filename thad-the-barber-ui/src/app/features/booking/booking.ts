@@ -12,7 +12,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, ParamMap, Router } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { ButtonModule } from 'primeng/button';
 import { StepPassThrough, StepperPassThrough } from 'primeng/types/stepper';
@@ -63,6 +63,7 @@ interface BookingFormValue {
   selector: 'app-booking',
   imports: [
     ReactiveFormsModule,
+    RouterLink,
     ButtonModule,
     ConfirmDialogModule,
     MessageModule,
@@ -109,7 +110,6 @@ export class Booking implements LeaveConfirmable {
   protected readonly botCheckFailedNotice: Notice = BOT_CHECK_FAILED_NOTICE;
   protected readonly bookingNotFoundNotice: Notice = BOOKING_NOT_FOUND_NOTICE;
   protected readonly submitNotice: Signal<Notice | null> = this.store.selectSignal(bookingFeature.selectSubmitNotice);
-  protected readonly squareBookingUrl: Signal<string> = this.store.selectSignal(shopFeature.selectBookingUrl);
   protected readonly shopNotice: Signal<string | null> = this.store.selectSignal(shopFeature.selectNotice);
 
   protected readonly bookingForm: BookingForm = new FormGroup({

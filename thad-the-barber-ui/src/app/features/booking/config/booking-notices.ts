@@ -121,3 +121,40 @@ export const CHANGE_PROBLEM_NOTICES: Record<string, Notice> = {
     canRetry: false,
   },
 };
+
+// Find my bookings page
+
+export const NO_UPCOMING_BOOKINGS_NOTICE: Notice = {
+  severity: NoticeSeverity.Info,
+  text: 'No upcoming appointments for that phone number.',
+  canRetry: false,
+};
+
+export const CODE_SENT_NOTICE: Notice = {
+  severity: NoticeSeverity.Success,
+  text: 'We texted you a code.',
+  canRetry: false,
+};
+
+export const LOOKUP_FAILED_NOTICE: Notice = {
+  severity: NoticeSeverity.Error,
+  text: 'We couldn’t check that. Please try again.',
+  canRetry: false,
+};
+
+export const CODE_INVALID_NOTICE: Notice = {
+  severity: NoticeSeverity.Warn,
+  text: 'That code didn’t work. Check it and try again, or go back to get a new one.',
+  canRetry: false,
+};
+
+export const LOOKUP_RATE_LIMITED_NOTICE: Notice = {
+  severity: NoticeSeverity.Warn,
+  text: 'Too many tries from this device for now. Please wait a while and try again.',
+  canRetry: false,
+};
+
+export const LOOKUP_PROBLEM_NOTICES: Record<string, Notice> = {
+  [ProblemCode.CodeInvalid]: CODE_INVALID_NOTICE,
+  [ProblemCode.RateLimited]: LOOKUP_RATE_LIMITED_NOTICE,
+};
