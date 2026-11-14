@@ -3,6 +3,7 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import {
   ApplicationConfig,
   CSP_NONCE,
+  ErrorHandler,
   inject,
   isDevMode,
   provideBrowserGlobalErrorListeners,
@@ -15,6 +16,7 @@ import { provideStoreDevtools } from '@ngrx/store-devtools';
 import { MessageService } from 'primeng/api';
 import { PrimeNG, providePrimeNG } from 'primeng/config';
 import { PRIMEUI_LICENSE } from './core/config/primeui-license';
+import { ErrorToastService } from './core/telemetry/error-toast.service';
 import { sessionInterceptor } from './core/interceptors/session.interceptor';
 import { routes } from './app.routes';
 import * as announcementsEffects from './features/announcements/state/announcements.effects';
@@ -32,6 +34,7 @@ import { provideClientHydration } from '@angular/platform-browser';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
+    { provide: ErrorHandler, useExisting: ErrorToastService },
     provideHttpClient(withInterceptors([sessionInterceptor])),
     provideRouter(
       routes,

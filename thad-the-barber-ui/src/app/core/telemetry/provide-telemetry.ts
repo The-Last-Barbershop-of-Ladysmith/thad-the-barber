@@ -74,9 +74,8 @@ export function provideTelemetry(settings: TelemetrySettings): EnvironmentProvid
       useFactory: (): ErrorHandler => {
         const errorService: ApplicationinsightsAngularpluginErrorService =
           inject(ApplicationinsightsAngularpluginErrorService);
-        // Angular's default handler keeps logging to the console, from the first error on, before the SDK loads too.
+        // The toast service logs to the console, from the first error on, before the SDK loads too.
         // Add other handlers with addErrorHandler: an errorServices array in the plugin config replaces this one.
-        errorService.addErrorHandler(new ErrorHandler());
         errorService.addErrorHandler(inject(ErrorToastService));
         return errorService;
       },

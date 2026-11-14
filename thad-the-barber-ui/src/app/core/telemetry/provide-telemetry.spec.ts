@@ -100,7 +100,7 @@ describe(
 
         TestBed.inject(ErrorHandler).handleError(error);
 
-        expect(consoleError).toHaveBeenCalledWith('ERROR', error);
+        expect(consoleError).toHaveBeenCalledExactlyOnceWith('ERROR', error);
         consoleError.mockRestore();
       },
     );
