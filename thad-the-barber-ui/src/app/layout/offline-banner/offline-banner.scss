@@ -1,0 +1,4 @@
+// The warn message is translucent; the header's own colour behind it keeps the text readable over the page.
+.offline-bar {
+  background: var(--p-brand-header-background);
+}
