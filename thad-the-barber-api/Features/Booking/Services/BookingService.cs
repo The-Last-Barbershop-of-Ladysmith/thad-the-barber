@@ -26,7 +26,7 @@ public sealed class BookingService(
     IOptions<BookingSettings> settings,
     TimeProvider time)
 {
-    public async Task StartLookupAsync(string phone, CancellationToken cancellationToken)
+    public async Task SendLookupCodeAsync(string phone, CancellationToken cancellationToken)
     {
         phoneRateLimiter.EnforceStart(phone);
         await twilioVerify.StartAsync(phone, cancellationToken);
@@ -37,7 +37,7 @@ public sealed class BookingService(
     /// isn't asked about the phone before that, and nothing is stored. Listing reads up to the booking window's end,
     /// which <see cref="ISquareService"/> splits into Square's 31-day pieces.
     /// </summary>
-    public async Task<List<FoundBooking>> VerifyLookupAsync(LookupVerifyRequest request, CancellationToken cancellationToken)
+    public async Task<List<FoundBooking>> GetVerifiedListAsync(VerifiedListRequest request, CancellationToken cancellationToken)
     {
         phoneRateLimiter.EnforceVerify(request.Phone);
         bool isCodeValid = await twilioVerify.CheckAsync(request.Phone, request.Code, cancellationToken);

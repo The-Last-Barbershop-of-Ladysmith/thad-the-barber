@@ -455,7 +455,7 @@ public sealed class BookingEndpointsTests
         FakeTwilioVerifyService twilio = new();
         using ApiFactory api = Api(square, twilio);
 
-        using HttpResponseMessage response = await StartLookupAsync(api.CreateClient(), LookupPhone);
+        using HttpResponseMessage response = await SendLookupCodeAsync(api.CreateClient(), LookupPhone);
 
         Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
         Assert.Equal(string.Empty, await response.Content.ReadAsStringAsync(Cancellation));
@@ -474,8 +474,8 @@ public sealed class BookingEndpointsTests
         using ApiFactory known = Api(withBookings);
         using ApiFactory unknown = Api(unknownPhone);
 
-        using HttpResponseMessage knownResponse = await StartLookupAsync(known.CreateClient(), LookupPhone);
-        using HttpResponseMessage unknownResponse = await StartLookupAsync(unknown.CreateClient(), LookupPhone);
+        using HttpResponseMessage knownResponse = await SendLookupCodeAsync(known.CreateClient(), LookupPhone);
+        using HttpResponseMessage unknownResponse = await SendLookupCodeAsync(unknown.CreateClient(), LookupPhone);
 
         Assert.Equal(knownResponse.StatusCode, unknownResponse.StatusCode);
         Assert.Equal(
@@ -495,7 +495,7 @@ public sealed class BookingEndpointsTests
         FakeTwilioVerifyService twilio = new();
         using ApiFactory api = Api(twilio: twilio);
 
-        using HttpResponseMessage response = await StartLookupAsync(api.CreateClient(), phone);
+        using HttpResponseMessage response = await SendLookupCodeAsync(api.CreateClient(), phone);
 
         await ProblemAssert.IsProblemAsync(response, StatusCodes.Status400BadRequest, "validation_failed");
         Assert.Empty(twilio.StartedPhones);
@@ -506,7 +506,7 @@ public sealed class BookingEndpointsTests
     {
         using ApiFactory api = Api();
 
-        using HttpResponseMessage response = await StartLookupAsync(api.CreateClientWithoutToken(), LookupPhone);
+        using HttpResponseMessage response = await SendLookupCodeAsync(api.CreateClientWithoutToken(), LookupPhone);
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
@@ -519,11 +519,11 @@ public sealed class BookingEndpointsTests
         using HttpClient client = api.CreateClient();
         for (int attempt = 0; attempt < 3; attempt++)
         {
-            using HttpResponseMessage allowed = await StartLookupAsync(client, LookupPhone);
+            using HttpResponseMessage allowed = await SendLookupCodeAsync(client, LookupPhone);
             Assert.Equal(HttpStatusCode.Accepted, allowed.StatusCode);
         }
 
-        using HttpResponseMessage refused = await StartLookupAsync(client, LookupPhone);
+        using HttpResponseMessage refused = await SendLookupCodeAsync(client, LookupPhone);
 
         await ProblemAssert.IsProblemAsync(refused, StatusCodes.Status429TooManyRequests, "rate_limited");
         Assert.InRange(refused.Headers.RetryAfter!.Delta!.Value, TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(10));
@@ -539,7 +539,7 @@ public sealed class BookingEndpointsTests
         };
         using ApiFactory api = Api(twilio: twilio);
 
-        using HttpResponseMessage response = await StartLookupAsync(api.CreateClient(), LookupPhone);
+        using HttpResponseMessage response = await SendLookupCodeAsync(api.CreateClient(), LookupPhone);
 
         await ProblemAssert.IsProblemAsync(response, StatusCodes.Status503ServiceUnavailable, "verification_unavailable");
     }
@@ -601,9 +601,9 @@ public sealed class BookingEndpointsTests
         };
         using ApiFactory api = Api(square);
         using HttpClient client = api.CreateClient();
-        (await StartLookupAsync(client, LookupPhone)).Dispose();
+        (await SendLookupCodeAsync(client, LookupPhone)).Dispose();
 
-        using HttpResponseMessage response = await VerifyLookupAsync(client, LookupPhone, FakeTwilioVerifyService.ApprovedCode);
+        using HttpResponseMessage response = await GetVerifiedListAsync(client, LookupPhone, FakeTwilioVerifyService.ApprovedCode);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal(0, (await response.Content.ReadFromJsonAsync<JsonElement>(Cancellation)).GetArrayLength());
@@ -614,9 +614,9 @@ public sealed class BookingEndpointsTests
     {
         using ApiFactory api = Api();
         using HttpClient client = api.CreateClient();
-        (await StartLookupAsync(client, LookupPhone)).Dispose();
+        (await SendLookupCodeAsync(client, LookupPhone)).Dispose();
 
-        using HttpResponseMessage response = await VerifyLookupAsync(client, LookupPhone, "000000");
+        using HttpResponseMessage response = await GetVerifiedListAsync(client, LookupPhone, "000000");
 
         await ProblemAssert.IsProblemAsync(response, StatusCodes.Status400BadRequest, "code_invalid");
     }
@@ -631,7 +631,7 @@ public sealed class BookingEndpointsTests
     {
         using ApiFactory api = Api();
 
-        using HttpResponseMessage response = await VerifyLookupAsync(api.CreateClient(), phone, code);
+        using HttpResponseMessage response = await GetVerifiedListAsync(api.CreateClient(), phone, code);
 
         await ProblemAssert.IsProblemAsync(response, StatusCodes.Status400BadRequest, "validation_failed");
     }
@@ -645,7 +645,7 @@ public sealed class BookingEndpointsTests
         };
         using ApiFactory api = Api(twilio: twilio);
 
-        using HttpResponseMessage response = await VerifyLookupAsync(api.CreateClient(), LookupPhone, FakeTwilioVerifyService.ApprovedCode);
+        using HttpResponseMessage response = await GetVerifiedListAsync(api.CreateClient(), LookupPhone, FakeTwilioVerifyService.ApprovedCode);
 
         await ProblemAssert.IsProblemAsync(response, StatusCodes.Status503ServiceUnavailable, "verification_unavailable");
     }
@@ -655,7 +655,7 @@ public sealed class BookingEndpointsTests
     {
         using ApiFactory api = Api();
 
-        using HttpResponseMessage response = await VerifyLookupAsync(api.CreateClientWithoutToken(), LookupPhone, FakeTwilioVerifyService.ApprovedCode);
+        using HttpResponseMessage response = await GetVerifiedListAsync(api.CreateClientWithoutToken(), LookupPhone, FakeTwilioVerifyService.ApprovedCode);
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
@@ -668,16 +668,16 @@ public sealed class BookingEndpointsTests
         square.Hold(1, AppointmentStatus.CancelledByCustomer, Instant("2026-10-10T14:00:00Z"));
         using ApiFactory api = Api(square);
         using HttpClient client = api.CreateClient();
-        (await StartLookupAsync(client, LookupPhone)).Dispose();
+        (await SendLookupCodeAsync(client, LookupPhone)).Dispose();
 
-        return await VerifyLookupAsync(client, LookupPhone, FakeTwilioVerifyService.ApprovedCode);
+        return await GetVerifiedListAsync(client, LookupPhone, FakeTwilioVerifyService.ApprovedCode);
     }
 
-    private static Task<HttpResponseMessage> StartLookupAsync(HttpClient client, string phone) =>
-        client.PostAsJsonAsync("/api/bookings/lookup/start", new { phone }, Cancellation);
+    private static Task<HttpResponseMessage> SendLookupCodeAsync(HttpClient client, string phone) =>
+        client.PostAsJsonAsync("/api/bookings/lookup/code", new { phone }, Cancellation);
 
-    private static Task<HttpResponseMessage> VerifyLookupAsync(HttpClient client, string phone, string code) =>
-        client.PostAsJsonAsync("/api/bookings/lookup/verify", new { phone, code }, Cancellation);
+    private static Task<HttpResponseMessage> GetVerifiedListAsync(HttpClient client, string phone, string code) =>
+        client.PostAsJsonAsync("/api/bookings/lookup/verified-list", new { phone, code }, Cancellation);
 
     private static DateTimeOffset Instant(string instant) => DateTimeOffset.Parse(instant, CultureInfo.InvariantCulture);
 
