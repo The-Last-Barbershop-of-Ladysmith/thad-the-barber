@@ -1,4 +1,4 @@
-import { Locator, Page, Route } from '@playwright/test';
+import { APIResponse, Locator, Page, Route } from '@playwright/test';
 import { expect, test } from '../support/fixtures';
 
 const APP_SCRIPT: string = '**/main*.js';
@@ -75,14 +75,21 @@ test.describe(
     test(
       'shows the error message when the bootstrap fails',
       async ({ page }: { page: Page; }): Promise<void> => {
-        await holdAppScript(page);
-        await page.goto(
-          '/book',
-          { waitUntil: 'commit' },
+        await page.route(
+          (url: URL): boolean => url.pathname === '/book',
+          async (route: Route): Promise<void> => {
+            const response: APIResponse = await route.fetch();
+            const html: string = (await response.text()).replace(
+              /<app-root[^>]*><\/app-root>/,
+              '<div></div>',
+            );
+            await route.fulfill({
+              response,
+              body: html,
+            });
+          },
         );
-        await page.locator('#startup-loader').evaluate((loader: HTMLElement): void => {
-          loader.setAttribute('data-failed', '');
-        });
+        await page.goto('/book');
 
         await expect(page.locator('#startup-loader .failed')).toBeVisible();
         await expect(page.locator('#startup-loader .spinner')).toBeHidden();
