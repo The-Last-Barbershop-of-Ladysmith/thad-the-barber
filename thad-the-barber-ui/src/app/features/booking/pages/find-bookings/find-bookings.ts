@@ -72,7 +72,7 @@ export class FindBookings {
   private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
   private readonly injector: Injector = inject(Injector);
 
-  private readonly timeZone: Signal<string | null> = this.store.selectSignal(shopFeature.selectTimeZone);
+  protected readonly timeZone: Signal<string | null> = this.store.selectSignal(shopFeature.selectTimeZone);
   private readonly foundBookings: Signal<FoundBooking[]> = this.store.selectSignal(bookingFeature.selectFoundBookings);
   protected readonly step: Signal<LookupStep> = this.store.selectSignal(bookingFeature.selectLookupStep);
   protected readonly isLookingUp: Signal<boolean> = this.store.selectSignal(bookingFeature.selectIsLookingUp);
@@ -92,7 +92,7 @@ export class FindBookings {
       validators: LOOKUP_CODE_VALIDATORS,
     }),
   });
-  private readonly lookupFormValue: Signal<LookupFormValue> = toSignal(
+  protected readonly lookupFormValue: Signal<LookupFormValue> = toSignal(
     this.lookupForm.valueChanges.pipe(map((): LookupFormValue => this.lookupForm.getRawValue())),
     { initialValue: this.lookupForm.getRawValue() },
   );
