@@ -11,6 +11,12 @@ public static class BookingDtoMapper
         manageToken
     );
 
+    public static FoundBooking ToFoundBookingDto(this Appointment appointment, string manageToken) => new(
+        appointment.Id,
+        appointment.StartAt,
+        manageToken
+    );
+
     public static ManagedBooking ToManagedBookingDto(this Appointment appointment, bool canChange) => new(
         appointment.Id,
         appointment.StartAt,

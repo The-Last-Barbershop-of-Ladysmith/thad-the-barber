@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using ThadTheBarber.Api.Common.Exceptions;
@@ -24,6 +25,11 @@ public sealed partial class ProblemExceptionHandler(
             Title = problemException.Title,
         };
         problem.Extensions[ProblemsSetup.CodeKey] = problemException.Code;
+
+        if (problemException is RateLimitedException rateLimited)
+        {
+            httpContext.Response.Headers.RetryAfter = ((int)Math.Ceiling(rateLimited.RetryAfter.TotalSeconds)).ToString(CultureInfo.InvariantCulture);
+        }
 
         httpContext.Response.StatusCode = problemException.StatusCode;
         return await problemDetails.TryWriteAsync(new ProblemDetailsContext

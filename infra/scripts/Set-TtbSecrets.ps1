@@ -49,6 +49,9 @@ $secrets = [ordered]@{
     'ManageLink--HmacKey'         = 'Manage-link HMAC key (64 random bytes, base64; use -Generate)'
     'MediaWebhook--Key'           = 'Media webhook key (64 random bytes, base64; use -Generate)'
     'Recaptcha--ApiKey'           = 'reCAPTCHA API key for server-side verification'
+    'Twilio--AccountSid'          = 'Twilio account SID (AC...) for Verify text codes'
+    'Twilio--ApiKeySid'           = 'Twilio API key SID (SK...) for Verify text codes'
+    'Twilio--ApiKeySecret'        = 'Twilio API key secret for Verify text codes'
     'Google--ClientSecret'        = 'Google OAuth client secret (reviews)'
     'Google--RefreshToken'        = 'Google OAuth refresh token (reviews)'
 }

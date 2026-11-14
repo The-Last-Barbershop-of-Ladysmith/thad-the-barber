@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Options;
+using ThadTheBarber.Api.Infrastructure.RateLimiting.Services;
 
 namespace ThadTheBarber.Api.Infrastructure.RateLimiting.Configuration;
 
@@ -16,6 +17,8 @@ public static class RateLimitSetup
     public const string BookingPolicy = "booking";
     public const string ManagePolicy = "manage";
     public const string NextTimesPolicy = "next-times";
+    public const string LookupStartPolicy = "lookup-start";
+    public const string LookupVerifyPolicy = "lookup-verify";
 
     public static IServiceCollection AddRateLimits(this IServiceCollection services, IConfiguration configuration)
     {
@@ -23,6 +26,7 @@ public static class RateLimitSetup
             .Bind(configuration.GetSection(RateLimitSettings.SectionName))
             .ValidateOnStart();
         services.AddSingleton<IValidateOptions<RateLimitSettings>, RateLimitSettingsValidator>();
+        services.AddSingleton<PhoneRateLimiter>();
 
         services.AddRateLimiter(_ => { });
         services.AddOptions<RateLimiterOptions>()
@@ -42,6 +46,8 @@ public static class RateLimitSetup
                 options.AddPolicy(BookingPolicy, context => PerClientIp(context, settings.Value.Booking));
                 options.AddPolicy(ManagePolicy, context => PerClientIp(context, settings.Value.Manage));
                 options.AddPolicy(NextTimesPolicy, context => PerClientIp(context, settings.Value.NextTimes));
+                options.AddPolicy(LookupStartPolicy, context => PerClientIp(context, settings.Value.LookupStart));
+                options.AddPolicy(LookupVerifyPolicy, context => PerClientIp(context, settings.Value.LookupVerify));
             });
         return services;
     }

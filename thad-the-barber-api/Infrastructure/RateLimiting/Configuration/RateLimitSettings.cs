@@ -15,4 +15,14 @@ public sealed class RateLimitSettings
     public FixedWindowLimit Manage { get; set; } = new();
 
     public FixedWindowLimit NextTimes { get; set; } = new();
+
+    public FixedWindowLimit LookupStart { get; set; } = new();
+
+    public FixedWindowLimit LookupVerify { get; set; } = new();
+
+    /// <summary>Per phone, not per IP: stops one number being flooded with texts from many addresses.</summary>
+    public FixedWindowLimit LookupPhone { get; set; } = new();
+
+    /// <summary>Per phone, not per IP: stops a code being guessed from many addresses.</summary>
+    public FixedWindowLimit LookupVerifyPhone { get; set; } = new();
 }

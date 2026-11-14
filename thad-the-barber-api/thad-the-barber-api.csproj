@@ -20,6 +20,7 @@
     <PackageReference Include="Square" Version="47.0.0" />
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="11.0.1" />
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="10.3.1" />
+    <PackageReference Include="Twilio" Version="8.2.0" />
   </ItemGroup>
 
 </Project>

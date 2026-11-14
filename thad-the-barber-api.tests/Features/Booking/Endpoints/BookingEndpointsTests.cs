@@ -7,6 +7,7 @@ using Microsoft.Extensions.Time.Testing;
 using ThadTheBarber.Api.Square.Models;
 using ThadTheBarber.Api.Tests.TestSupport;
 using ThadTheBarber.Api.Tests.TestSupport.Fakes;
+using ThadTheBarber.Api.Twilio.Exceptions;
 
 namespace ThadTheBarber.Api.Tests.Features.Booking.Endpoints;
 
@@ -14,6 +15,7 @@ namespace ThadTheBarber.Api.Tests.Features.Booking.Endpoints;
 public sealed class BookingEndpointsTests
 {
     private const string Now = "2026-10-06T15:10:00Z";
+    private const string LookupPhone = "+15555550123";
 
     private static CancellationToken Cancellation => TestContext.Current.CancellationToken;
 
@@ -445,6 +447,240 @@ public sealed class BookingEndpointsTests
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
+    [Fact]
+    public async Task StartIs202WithNoBodyForAPhoneWithBookings()
+    {
+        FakeSquareService square = new();
+        square.Hold(1, AppointmentStatus.Accepted, Instant("2026-10-20T14:00:00Z"));
+        FakeTwilioVerifyService twilio = new();
+        using ApiFactory api = Api(square, twilio);
+
+        using HttpResponseMessage response = await StartLookupAsync(api.CreateClient(), LookupPhone);
+
+        Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
+        Assert.Equal(string.Empty, await response.Content.ReadAsStringAsync(Cancellation));
+        Assert.Equal([LookupPhone], twilio.StartedPhones);
+    }
+
+    [Fact]
+    public async Task StartLooksTheSameForAPhoneWithNoBookings()
+    {
+        FakeSquareService withBookings = new();
+        withBookings.Hold(1, AppointmentStatus.Accepted, Instant("2026-10-20T14:00:00Z"));
+        FakeSquareService unknownPhone = new()
+        {
+            CustomerId = null,
+        };
+        using ApiFactory known = Api(withBookings);
+        using ApiFactory unknown = Api(unknownPhone);
+
+        using HttpResponseMessage knownResponse = await StartLookupAsync(known.CreateClient(), LookupPhone);
+        using HttpResponseMessage unknownResponse = await StartLookupAsync(unknown.CreateClient(), LookupPhone);
+
+        Assert.Equal(knownResponse.StatusCode, unknownResponse.StatusCode);
+        Assert.Equal(
+            knownResponse.Headers.Select(header => header.Key).Order(),
+            unknownResponse.Headers.Select(header => header.Key).Order());
+        Assert.Equal(await knownResponse.Content.ReadAsStringAsync(Cancellation), await unknownResponse.Content.ReadAsStringAsync(Cancellation));
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("5555550123")]
+    [InlineData("+1555555012")]
+    [InlineData("+25555550123")]
+    [InlineData("+1555555O123")]
+    public async Task StartRejectsAPhoneThatIsNotE164WithAUsNumber(string phone)
+    {
+        FakeTwilioVerifyService twilio = new();
+        using ApiFactory api = Api(twilio: twilio);
+
+        using HttpResponseMessage response = await StartLookupAsync(api.CreateClient(), phone);
+
+        await ProblemAssert.IsProblemAsync(response, StatusCodes.Status400BadRequest, "validation_failed");
+        Assert.Empty(twilio.StartedPhones);
+    }
+
+    [Fact]
+    public async Task StartNeedsASessionToken()
+    {
+        using ApiFactory api = Api();
+
+        using HttpResponseMessage response = await StartLookupAsync(api.CreateClientWithoutToken(), LookupPhone);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task AFourthCodeForOnePhoneIs429WithRetryAfter()
+    {
+        FakeTwilioVerifyService twilio = new();
+        using ApiFactory api = Api(twilio: twilio);
+        using HttpClient client = api.CreateClient();
+        for (int attempt = 0; attempt < 3; attempt++)
+        {
+            using HttpResponseMessage allowed = await StartLookupAsync(client, LookupPhone);
+            Assert.Equal(HttpStatusCode.Accepted, allowed.StatusCode);
+        }
+
+        using HttpResponseMessage refused = await StartLookupAsync(client, LookupPhone);
+
+        await ProblemAssert.IsProblemAsync(refused, StatusCodes.Status429TooManyRequests, "rate_limited");
+        Assert.InRange(refused.Headers.RetryAfter!.Delta!.Value, TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(10));
+        Assert.Equal(3, twilio.StartedPhones.Count);
+    }
+
+    [Fact]
+    public async Task AFailingTwilioIs503OnStart()
+    {
+        FakeTwilioVerifyService twilio = new()
+        {
+            Failure = new TwilioRequestFailedException(StatusCodes.Status500InternalServerError, null),
+        };
+        using ApiFactory api = Api(twilio: twilio);
+
+        using HttpResponseMessage response = await StartLookupAsync(api.CreateClient(), LookupPhone);
+
+        await ProblemAssert.IsProblemAsync(response, StatusCodes.Status503ServiceUnavailable, "verification_unavailable");
+    }
+
+    [Fact]
+    public async Task VerifyListsUpcomingBookingsSoonestFirst()
+    {
+        using HttpResponseMessage response = await VerifyWithThreeBookingsAsync();
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        JsonElement found = await response.Content.ReadFromJsonAsync<JsonElement>(Cancellation);
+        Assert.Equal(
+            [
+                "2026-10-20T14:00:00+00:00",
+                "2026-11-03T14:00:00+00:00",
+            ],
+            found.EnumerateArray().Select(booking => booking.GetProperty("startAt").GetString()));
+    }
+
+    [Fact]
+    public async Task VerifyIsNeverStored()
+    {
+        using HttpResponseMessage response = await VerifyWithThreeBookingsAsync();
+
+        Assert.True(response.Headers.CacheControl?.NoStore);
+    }
+
+    [Fact]
+    public async Task VerifyReturnsOnlyIdStartAndManageToken()
+    {
+        using HttpResponseMessage response = await VerifyWithThreeBookingsAsync();
+
+        JsonElement found = await response.Content.ReadFromJsonAsync<JsonElement>(Cancellation);
+        Assert.All(found.EnumerateArray(), booking => Assert.Equal(
+            [
+                "id",
+                "startAt",
+                "manageToken",
+            ],
+            booking.EnumerateObject().Select(property => property.Name)));
+    }
+
+    [Fact]
+    public async Task VerifyGivesEachBookingAValidManageToken()
+    {
+        using HttpResponseMessage response = await VerifyWithThreeBookingsAsync();
+
+        JsonElement found = await response.Content.ReadFromJsonAsync<JsonElement>(Cancellation);
+        Assert.All(found.EnumerateArray(), booking =>
+            Assert.True(ManageTokens.Signer.IsValid(booking.GetProperty("id").GetString()!, booking.GetProperty("manageToken").GetString())));
+    }
+
+    [Fact]
+    public async Task VerifyForAPhoneWithNoBookingsIsAnEmptyList()
+    {
+        FakeSquareService square = new()
+        {
+            CustomerId = null,
+        };
+        using ApiFactory api = Api(square);
+        using HttpClient client = api.CreateClient();
+        (await StartLookupAsync(client, LookupPhone)).Dispose();
+
+        using HttpResponseMessage response = await VerifyLookupAsync(client, LookupPhone, FakeTwilioVerifyService.ApprovedCode);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(0, (await response.Content.ReadFromJsonAsync<JsonElement>(Cancellation)).GetArrayLength());
+    }
+
+    [Fact]
+    public async Task VerifyWithAWrongCodeIs400CodeInvalid()
+    {
+        using ApiFactory api = Api();
+        using HttpClient client = api.CreateClient();
+        (await StartLookupAsync(client, LookupPhone)).Dispose();
+
+        using HttpResponseMessage response = await VerifyLookupAsync(client, LookupPhone, "000000");
+
+        await ProblemAssert.IsProblemAsync(response, StatusCodes.Status400BadRequest, "code_invalid");
+    }
+
+    [Theory]
+    [InlineData("+15555550123", "")]
+    [InlineData("+15555550123", "123")]
+    [InlineData("+15555550123", "12345678901")]
+    [InlineData("+15555550123", "12ab56")]
+    [InlineData("5555550123", "123456")]
+    public async Task VerifyRejectsAMalformedPhoneOrCode(string phone, string code)
+    {
+        using ApiFactory api = Api();
+
+        using HttpResponseMessage response = await VerifyLookupAsync(api.CreateClient(), phone, code);
+
+        await ProblemAssert.IsProblemAsync(response, StatusCodes.Status400BadRequest, "validation_failed");
+    }
+
+    [Fact]
+    public async Task AFailingTwilioIs503OnVerify()
+    {
+        FakeTwilioVerifyService twilio = new()
+        {
+            Failure = new TwilioRequestFailedException(0, null),
+        };
+        using ApiFactory api = Api(twilio: twilio);
+
+        using HttpResponseMessage response = await VerifyLookupAsync(api.CreateClient(), LookupPhone, FakeTwilioVerifyService.ApprovedCode);
+
+        await ProblemAssert.IsProblemAsync(response, StatusCodes.Status503ServiceUnavailable, "verification_unavailable");
+    }
+
+    [Fact]
+    public async Task VerifyNeedsASessionToken()
+    {
+        using ApiFactory api = Api();
+
+        using HttpResponseMessage response = await VerifyLookupAsync(api.CreateClientWithoutToken(), LookupPhone, FakeTwilioVerifyService.ApprovedCode);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    private static async Task<HttpResponseMessage> VerifyWithThreeBookingsAsync()
+    {
+        FakeSquareService square = new();
+        square.Hold(1, AppointmentStatus.Accepted, Instant("2026-11-03T14:00:00Z"));
+        square.Hold(1, AppointmentStatus.Accepted, Instant("2026-10-20T14:00:00Z"));
+        square.Hold(1, AppointmentStatus.CancelledByCustomer, Instant("2026-10-10T14:00:00Z"));
+        using ApiFactory api = Api(square);
+        using HttpClient client = api.CreateClient();
+        (await StartLookupAsync(client, LookupPhone)).Dispose();
+
+        return await VerifyLookupAsync(client, LookupPhone, FakeTwilioVerifyService.ApprovedCode);
+    }
+
+    private static Task<HttpResponseMessage> StartLookupAsync(HttpClient client, string phone) =>
+        client.PostAsJsonAsync("/api/bookings/lookup/start", new { phone }, Cancellation);
+
+    private static Task<HttpResponseMessage> VerifyLookupAsync(HttpClient client, string phone, string code) =>
+        client.PostAsJsonAsync("/api/bookings/lookup/verify", new { phone, code }, Cancellation);
+
+    private static DateTimeOffset Instant(string instant) => DateTimeOffset.Parse(instant, CultureInfo.InvariantCulture);
+
     private static async Task<(string Id, string ManageToken)> BookAsync(HttpClient client)
     {
         using HttpResponseMessage response = await client.PostAsJsonAsync("/api/bookings", BookingBody(), Cancellation);
@@ -476,8 +712,9 @@ public sealed class BookingEndpointsTests
         ["idempotencyKey"] = Guid.NewGuid(),
     };
 
-    private static ApiFactory Api(FakeSquareService? square = null) => new(
+    private static ApiFactory Api(FakeSquareService? square = null, FakeTwilioVerifyService? twilio = null) => new(
         square: square,
+        twilio: twilio,
         time: new FakeTimeProvider(DateTimeOffset.Parse(Now, CultureInfo.InvariantCulture))
     );
 }
