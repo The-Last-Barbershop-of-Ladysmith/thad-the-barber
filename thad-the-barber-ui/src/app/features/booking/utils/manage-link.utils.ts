@@ -9,7 +9,7 @@ export function toManageCommands(id: string): string[] {
   return [MANAGE_ROOT, id];
 }
 
-/** The fragment that carries a manage token: `t=…`, which the manage page then moves out of the address bar. */
+/** Leaves the address bar once the manage page has read it, so it never shows in screenshots or shared tabs. */
 export function toManageFragment(manageToken: string): string {
   return new URLSearchParams({ t: manageToken }).toString();
 }

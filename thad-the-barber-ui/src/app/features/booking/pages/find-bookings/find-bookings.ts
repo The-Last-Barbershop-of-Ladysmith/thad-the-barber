@@ -72,7 +72,7 @@ export class FindBookings {
   private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
   private readonly injector: Injector = inject(Injector);
 
-  protected readonly timeZone: Signal<string | null> = this.store.selectSignal(shopFeature.selectTimeZone);
+  private readonly timeZone: Signal<string | null> = this.store.selectSignal(shopFeature.selectTimeZone);
   private readonly foundBookings: Signal<FoundBooking[]> = this.store.selectSignal(bookingFeature.selectFoundBookings);
   protected readonly step: Signal<LookupStep> = this.store.selectSignal(bookingFeature.selectLookupStep);
   protected readonly isLookingUp: Signal<boolean> = this.store.selectSignal(bookingFeature.selectIsLookingUp);
@@ -96,8 +96,6 @@ export class FindBookings {
     this.lookupForm.valueChanges.pipe(map((): LookupFormValue => this.lookupForm.getRawValue())),
     { initialValue: this.lookupForm.getRawValue() },
   );
-
-  protected readonly phoneLabel: Signal<string> = computed((): string => this.lookupFormValue().phone);
 
   // `invalid`, not `valid`: the form is disabled while looking up, and disabled controls are never valid. Reading the
   // form's value makes the check run again as the customer types, since validity itself isn't a signal.
