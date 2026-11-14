@@ -18,6 +18,7 @@ public static class RateLimitSetup
     public const string ManagePolicy = "manage";
     public const string NextTimesPolicy = "next-times";
     public const string LookupCodePolicy = "lookup-code";
+    public const string LookupSessionPolicy = "lookup-session";
     public const string LookupVerifiedListPolicy = "lookup-verified-list";
 
     public static IServiceCollection AddRateLimits(this IServiceCollection services, IConfiguration configuration)
@@ -47,6 +48,7 @@ public static class RateLimitSetup
                 options.AddPolicy(ManagePolicy, context => PerClientIp(context, settings.Value.Manage));
                 options.AddPolicy(NextTimesPolicy, context => PerClientIp(context, settings.Value.NextTimes));
                 options.AddPolicy(LookupCodePolicy, context => PerClientIp(context, settings.Value.LookupCode));
+                options.AddPolicy(LookupSessionPolicy, context => PerClientIp(context, settings.Value.LookupSession));
                 options.AddPolicy(LookupVerifiedListPolicy, context => PerClientIp(context, settings.Value.LookupVerifiedList));
             });
         return services;

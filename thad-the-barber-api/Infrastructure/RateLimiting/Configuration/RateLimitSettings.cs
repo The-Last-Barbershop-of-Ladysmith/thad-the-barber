@@ -18,6 +18,8 @@ public sealed class RateLimitSettings
 
     public FixedWindowLimit LookupCode { get; set; } = new();
 
+    public FixedWindowLimit LookupSession { get; set; } = new();
+
     public FixedWindowLimit LookupVerifiedList { get; set; } = new();
 
     /// <summary>Per phone, not per IP: stops one number being flooded with texts from many addresses.</summary>

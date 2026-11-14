@@ -13,6 +13,7 @@ public sealed class RateLimitSettingsValidator : IValidateOptions<RateLimitSetti
         AddFailures(failures, nameof(RateLimitSettings.Manage), options.Manage);
         AddFailures(failures, nameof(RateLimitSettings.NextTimes), options.NextTimes);
         AddFailures(failures, nameof(RateLimitSettings.LookupCode), options.LookupCode);
+        AddFailures(failures, nameof(RateLimitSettings.LookupSession), options.LookupSession);
         AddFailures(failures, nameof(RateLimitSettings.LookupVerifiedList), options.LookupVerifiedList);
         AddFailures(failures, nameof(RateLimitSettings.LookupCodePhone), options.LookupCodePhone);
         AddFailures(failures, nameof(RateLimitSettings.LookupVerifiedListPhone), options.LookupVerifiedListPhone);
