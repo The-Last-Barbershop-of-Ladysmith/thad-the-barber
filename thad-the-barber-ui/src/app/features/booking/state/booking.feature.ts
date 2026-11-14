@@ -5,7 +5,7 @@ import { Notice } from '../../../shared/models/notice.model';
 import { AVAILABILITY_FAILED_NOTICE, NO_OPEN_DAYS_NOTICE } from '../config/booking-notices';
 import { AvailableDay } from '../dtos/available-day.dto';
 import { bookingReducer } from './booking.reducer';
-import { BookingState } from './booking.state';
+import { BookingState, bookingFeatureKey } from './booking.state';
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- extraSelectors needs a type alias.
 export type BookingExtraSelectors = {
@@ -20,7 +20,7 @@ export type BookingExtraSelectors = {
 
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the Feature type.
 export const bookingFeature = createFeature({
-  name: 'booking',
+  name: bookingFeatureKey,
   reducer: bookingReducer,
   extraSelectors: ({
     selectLoadStatus,

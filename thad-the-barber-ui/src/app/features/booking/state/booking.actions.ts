@@ -11,6 +11,8 @@ export enum BookingActionTypes {
   BookingPageOpen = '[Booking Page] Opened',
   BookingRequest = '[Booking Page] Booking Requested',
   RescheduleRequest = '[Booking Page] Reschedule Requested',
+  LookupTokenSave = '[Booking Lookup Page] Token Saved',
+  LookupTokenClear = '[Booking Lookup Page] Token Cleared',
   AvailabilityRequestSuccess = '[Booking API] Availability Loaded',
   AvailabilityRequestFailure = '[Booking API] Availability Load Failed',
   BookingRequestSuccess = '[Booking API] Booking Made',
@@ -87,3 +89,13 @@ export const RescheduleRequestFailure = createAction(
   props<{ notice: Notice | null; takenStartAt: string | null; }>(),
 );
 
+// eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
+export const LookupTokenSave = createAction(
+  BookingActionTypes.LookupTokenSave,
+  props<{ lookupToken: string; }>(),
+);
+
+// eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
+export const LookupTokenClear = createAction(
+  BookingActionTypes.LookupTokenClear,
+);
