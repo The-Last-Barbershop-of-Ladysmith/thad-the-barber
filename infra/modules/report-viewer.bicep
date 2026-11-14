@@ -82,6 +82,7 @@ module app 'app-service.bicep' = {
       Reports__StorageAccount: storageName
       Reports__Container: containerName
       OVERRIDE_USE_MI_FIC_ASSERTION_CLIENTID: authIdentity.properties.clientId
+      WEBSITES_CONTAINER_START_TIME_LIMIT: '600'
     }
   }
 }

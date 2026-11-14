@@ -234,6 +234,8 @@ module web 'app-service.bicep' = {
       NOINDEX: string(noIndex)
       // Mount the zip (~25,000 node_modules files) instead of Kudu unpacking it, which 504'd on deploy.
       WEBSITE_RUN_FROM_PACKAGE: '1'
+      // The 230 s default killed a slow Free-plan cold start (236 s on 2026-11-14) and left the site stopped.
+      WEBSITES_CONTAINER_START_TIME_LIMIT: '600'
     }
   }
 }
