@@ -154,6 +154,32 @@ public sealed class TwilioVerifyServiceTests
     }
 
     [Fact]
+    public async Task AnHttpClientTimeoutIsAFailureForBothCalls()
+    {
+        FakeTwilioHttp http = new()
+        {
+            IsTimingOut = true,
+        };
+        TwilioVerifyService service = Service(http);
+
+        await Assert.ThrowsAsync<TwilioRequestFailedException>(() => service.StartAsync(Phone, Cancellation));
+        await Assert.ThrowsAsync<TwilioRequestFailedException>(() => service.CheckAsync(Phone, Code, Cancellation));
+    }
+
+    [Fact]
+    public async Task ACancelledCallerIsNotAFailureAndNothingIsSent()
+    {
+        FakeTwilioHttp http = new();
+        TwilioVerifyService service = Service(http);
+        using CancellationTokenSource cancelled = new();
+        await cancelled.CancelAsync();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => service.StartAsync(Phone, cancelled.Token));
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => service.CheckAsync(Phone, Code, cancelled.Token));
+        Assert.Empty(http.Requests);
+    }
+
+    [Fact]
     public async Task WithoutSettingsNothingIsSentAndTheServiceIsNotConfigured()
     {
         FakeTwilioHttp http = new();

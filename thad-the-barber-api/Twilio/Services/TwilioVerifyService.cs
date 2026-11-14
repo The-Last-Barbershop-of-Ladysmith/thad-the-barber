@@ -26,24 +26,30 @@ public sealed class TwilioVerifyService(IOptions<TwilioSettings> settings, IHttp
 
     public async Task StartAsync(string phone, CancellationToken cancellationToken)
     {
-        await CallTwilioAsync(() => VerificationResource.CreateAsync(
-            new CreateVerificationOptions(settings.Value.VerifyServiceSid, phone, SmsChannel),
-            _client.Value
-        ));
+        await CallTwilioAsync(
+            () => VerificationResource.CreateAsync(
+                new CreateVerificationOptions(settings.Value.VerifyServiceSid, phone, SmsChannel),
+                _client.Value
+            ),
+            cancellationToken
+        );
     }
 
     public async Task<bool> CheckAsync(string phone, string code, CancellationToken cancellationToken)
     {
         try
         {
-            VerificationCheckResource check = await CallTwilioAsync(() => VerificationCheckResource.CreateAsync(
-                new CreateVerificationCheckOptions(settings.Value.VerifyServiceSid)
-                {
-                    To = phone,
-                    Code = code,
-                },
-                _client.Value
-            ));
+            VerificationCheckResource check = await CallTwilioAsync(
+                () => VerificationCheckResource.CreateAsync(
+                    new CreateVerificationCheckOptions(settings.Value.VerifyServiceSid)
+                    {
+                        To = phone,
+                        Code = code,
+                    },
+                    _client.Value
+                ),
+                cancellationToken
+            );
 
             return check.Status == ApprovedStatus;
         }
@@ -69,12 +75,17 @@ public sealed class TwilioVerifyService(IOptions<TwilioSettings> settings, IHttp
             httpClient: new TwilioSystemNetHttpClient(httpClientFactory.CreateClient(TwilioSetup.HttpClientName))
         );
 
-    private async Task<T> CallTwilioAsync<T>(Func<Task<T>> call)
+    private static bool IsTimeout(Exception exception, CancellationToken cancellationToken) =>
+        exception is TaskCanceledException && !cancellationToken.IsCancellationRequested;
+
+    private async Task<T> CallTwilioAsync<T>(Func<Task<T>> call, CancellationToken cancellationToken)
     {
         if (!settings.Value.IsConfigured)
         {
             throw new TwilioNotConfiguredException();
         }
+
+        cancellationToken.ThrowIfCancellationRequested();
 
         try
         {
@@ -84,7 +95,7 @@ public sealed class TwilioVerifyService(IOptions<TwilioSettings> settings, IHttp
         {
             throw new TwilioRequestFailedException(exception.Status, exception.Code);
         }
-        catch (Exception exception) when (exception is TwilioApiConnectionException or HttpRequestException or TaskCanceledException)
+        catch (Exception exception) when (exception is TwilioApiConnectionException or HttpRequestException || IsTimeout(exception, cancellationToken))
         {
             throw new TwilioRequestFailedException(0, null);
         }

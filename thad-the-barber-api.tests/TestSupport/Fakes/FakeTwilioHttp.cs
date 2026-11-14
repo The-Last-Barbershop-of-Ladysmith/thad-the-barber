@@ -13,11 +13,18 @@ public sealed class FakeTwilioHttp : HttpMessageHandler
 
     public bool IsDown { get; set; }
 
+    public bool IsTimingOut { get; set; }
+
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         if (IsDown)
         {
             throw new HttpRequestException("Twilio is down.");
+        }
+
+        if (IsTimingOut)
+        {
+            throw new TaskCanceledException("Twilio timed out.");
         }
 
         string requestBody = string.Empty;
