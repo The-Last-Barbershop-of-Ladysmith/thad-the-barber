@@ -4,9 +4,8 @@ import sharp from 'sharp';
 
 /**
  * Renders the icon set from `scripts/brand/mark.svg` (the TB monogram with a straight razor as the T's crossbar)
- * on the espresso page color. The tab icons (`favicon.svg`, and the 16, 32 and 48 px images in `favicon.ico`) use the
- * simplified `mark-small.svg`, drawn on a 16-unit grid so its edges stay crisp at those sizes.
- * The output in `public/` is committed. Rerun it after the mark or brand colors change: `npm run icons`.
+ * on the espresso page color. The output in `public/` is committed. Rerun it after the mark or brand colors
+ * change: `npm run icons`.
  */
 interface RasterIcon {
   fileName: string;
@@ -64,14 +63,6 @@ const markShapes: string = readFileSync(
   ),
   'utf8',
 ).replace(/^[\s\S]*?<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '');
-
-const smallMarkSvg: string = readFileSync(
-  join(
-    brandDir,
-    'mark-small.svg',
-  ),
-  'utf8',
-);
 
 function toIconSvg(markFraction: number): string {
   const canvas: number = 512;
@@ -146,7 +137,7 @@ writeFileSync(
     publicDir,
     'favicon.svg',
   ),
-  smallMarkSvg,
+  toIconSvg(FULL_MARK_FRACTION),
 );
 await Promise.all(RASTER_ICONS.map(async (icon: RasterIcon): Promise<void> => {
   writeFileSync(
@@ -161,7 +152,7 @@ await Promise.all(RASTER_ICONS.map(async (icon: RasterIcon): Promise<void> => {
   );
 }));
 const icoPngs: Buffer[] = await Promise.all(ICO_SIZES.map((size: number): Promise<Buffer> => renderPng(
-  smallMarkSvg,
+  toIconSvg(FULL_MARK_FRACTION),
   size,
 )));
 writeFileSync(
