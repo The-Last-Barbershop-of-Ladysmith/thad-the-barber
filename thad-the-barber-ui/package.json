@@ -13,6 +13,7 @@
     "test": "ng test",
     "e2e": "playwright test",
     "e2e:smoke": "playwright test --config playwright.smoke.config.ts",
+    "icons": "node scripts/generate-icons.ts",
     "social:images": "node scripts/generate-social-images.ts",
     "lighthouse:check": "node ci/lighthouse-check.ts",
     "e2e:merge": "playwright merge-reports --reporter=html,json blob-reports",
