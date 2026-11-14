@@ -1,0 +1,101 @@
+<app-titled-page>
+  <span pageEyebrow class="eyebrow">Your appointments</span>
+  <h1 pageHeading class="page-title">Find my bookings</h1>
+  <p pageSubtitle class="m-0 text-muted-color">We text a code to the phone number you booked with.</p>
+
+  @if (lookupNotice(); as notice) {
+    <app-notice-message data-testid="lookup-notice" [notice]="notice" />
+  }
+
+  <form class="lookup-form stack gap-4" data-testid="lookup-form" [formGroup]="lookupForm" (ngSubmit)="submitStep()">
+    @switch (step()) {
+      @case (lookupStep.Phone) {
+        <app-phone-field inputId="lookup-phone" [phoneControl]="lookupForm.controls.phone" />
+        <button
+          pButton
+          type="submit"
+          data-testid="send-code"
+          [fluid]="true"
+          [disabled]="!canSendCode()"
+        >
+          Text me a code
+        </button>
+      }
+      @case (lookupStep.Code) {
+        <p class="m-0 text-muted-color" data-testid="code-sent-to">Code sent to {{ phoneLabel() }}</p>
+        <div class="stack gap-1.5">
+          <label class="field-label" for="lookup-code">Code</label>
+          <input
+            id="lookup-code"
+            pInputText
+            data-testid="lookup-code"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            [maxlength]="codeMaxLength"
+            [fluid]="true"
+            [formControl]="lookupForm.controls.code"
+          />
+        </div>
+        <button
+          pButton
+          type="submit"
+          data-testid="verify-code"
+          [fluid]="true"
+          [disabled]="!canVerifyCode()"
+        >
+          Find my bookings
+        </button>
+        <div class="code-actions">
+          <button
+            pButton
+            type="button"
+            severity="secondary"
+            [text]="true"
+            data-testid="resend-code"
+            [disabled]="isLookingUp()"
+            (click)="resendCode()"
+          >
+            Send a new code
+          </button>
+          <button
+            pButton
+            type="button"
+            severity="secondary"
+            [text]="true"
+            data-testid="change-phone"
+            [disabled]="isLookingUp()"
+            (click)="changePhone()"
+          >
+            Use another number
+          </button>
+        </div>
+      }
+      @case (lookupStep.Results) {
+        <h2 id="lookup-results-heading" class="field-label" tabindex="-1">Upcoming appointments</h2>
+        @if (isShopLoading()) {
+          <p-skeleton width="100%" height="4rem" />
+        } @else if (foundBookingLinks().length === 0) {
+          <app-notice-message data-testid="no-bookings" [notice]="noUpcomingBookingsNotice" />
+        } @else {
+          <ol class="found-bookings stack gap-3" data-testid="found-bookings">
+            @for (found of foundBookingLinks(); track found.id) {
+              <li>
+                <a
+                  class="found-booking"
+                  data-testid="found-booking"
+                  [routerLink]="found.commands"
+                  [fragment]="found.fragment"
+                >
+                  <span class="found-day">{{ found.day }}</span>
+                  <span class="found-time">{{ found.time }}</span>
+                  <i class="pi pi-chevron-right" aria-hidden="true"></i>
+                </a>
+              </li>
+            }
+          </ol>
+        }
+        <a class="nav-link" data-testid="book-another" routerLink="/book">Book an appointment</a>
+      }
+    }
+  </form>
+</app-titled-page>
