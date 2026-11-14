@@ -2,6 +2,7 @@ using System.Net;
 using System.Text;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
+using ThadTheBarber.Api.Common.Exceptions;
 using ThadTheBarber.Api.Tests.TestSupport.Fakes;
 using ThadTheBarber.Api.Twilio.Configuration;
 using ThadTheBarber.Api.Twilio.Exceptions;
@@ -122,8 +123,22 @@ public sealed class TwilioVerifyServiceTests
         Assert.Null(failure.InnerException);
     }
 
+    [Fact]
+    public async Task AStartAfterTwilioCountedFiveTextsIsRateLimitedWithoutThePhone()
+    {
+        FakeTwilioHttp http = new()
+        {
+            Status = HttpStatusCode.TooManyRequests,
+            Body = ErrorBody(HttpStatusCode.TooManyRequests, 60203),
+        };
+
+        RateLimitedException limited = await Assert.ThrowsAsync<RateLimitedException>(() => Service(http).StartAsync(Phone, Cancellation));
+
+        Assert.Equal(TimeSpan.FromMinutes(10), limited.RetryAfter);
+        Assert.DoesNotContain(Phone, limited.Message, StringComparison.Ordinal);
+    }
+
     [Theory]
-    [InlineData(HttpStatusCode.TooManyRequests, 60203)]
     [InlineData(HttpStatusCode.InternalServerError, 20500)]
     [InlineData(HttpStatusCode.BadRequest, 60205)]
     public async Task AStartTwilioRefusesIsAFailureWithoutThePhone(HttpStatusCode status, int twilioErrorCode)

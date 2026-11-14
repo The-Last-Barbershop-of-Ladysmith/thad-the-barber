@@ -2,7 +2,6 @@ using System.Globalization;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Options;
-using ThadTheBarber.Api.Infrastructure.RateLimiting.Services;
 
 namespace ThadTheBarber.Api.Infrastructure.RateLimiting.Configuration;
 
@@ -26,7 +25,6 @@ public static class RateLimitSetup
             .Bind(configuration.GetSection(RateLimitSettings.SectionName))
             .ValidateOnStart();
         services.AddSingleton<IValidateOptions<RateLimitSettings>, RateLimitSettingsValidator>();
-        services.AddSingleton<PhoneRateLimiter>();
 
         services.AddRateLimiter(_ => { });
         services.AddOptions<RateLimiterOptions>()

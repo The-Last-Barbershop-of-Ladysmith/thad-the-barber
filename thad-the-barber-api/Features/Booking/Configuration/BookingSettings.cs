@@ -26,4 +26,11 @@ public sealed class BookingSettings
     /// </summary>
     [Range(typeof(TimeSpan), "00:00:01", "00:10:00")]
     public TimeSpan NextTimesCacheFor { get; set; }
+
+    /// <summary>
+    /// How long a phone stays trusted after its text code was checked, counted from that check and never extended, so
+    /// the customer can reopen their bookings without paying for another text (BR-20).
+    /// </summary>
+    [Range(typeof(TimeSpan), "00:01:00", "01:00:00")]
+    public TimeSpan LookupSessionLifetime { get; set; }
 }

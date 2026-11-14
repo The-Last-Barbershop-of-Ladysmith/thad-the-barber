@@ -40,6 +40,35 @@ public sealed partial class TelemetrySetupTests
         AssertNoCustomerData(capture);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task ALookupTokenNeverReachesTelemetryWhetherItWorksOrIsRefused(bool isTokenValid)
+    {
+        TelemetryCapture capture = new();
+        FakeTimeProvider clock = new(DateTimeOffset.Parse(Now, CultureInfo.InvariantCulture));
+        using ApiFactory api = new(time: clock);
+        TimeSpan lifetime = TimeSpan.FromMinutes(15);
+        if (!isTokenValid)
+        {
+            lifetime = TimeSpan.FromMinutes(-1);
+        }
+
+        string token = LookupTokens.CreateSigner(clock).Sign(Phone, clock.GetUtcNow() + lifetime);
+        using WebApplicationFactory<Program> host = capture.Attach(api);
+        ActivityTraceId traceId = ActivityTraceId.CreateRandom();
+        using HttpRequestMessage request = new(HttpMethod.Get, "/api/bookings/lookup/verified-list");
+        request.Headers.Add("X-Lookup-Token", token);
+        request.Headers.Add("traceparent", $"00-{traceId.ToHexString()}-{ActivitySpanId.CreateRandom().ToHexString()}-01");
+
+        using HttpResponseMessage response = await host.CreateClient().SendAsync(request, Cancellation);
+        await capture.WaitForSpanAsync(span => span.TraceId == traceId && span.Kind == ActivityKind.Server, Cancellation);
+
+        Assert.Equal(isTokenValid, response.IsSuccessStatusCode);
+        Assert.DoesNotContain(capture.Texts, text => text.Contains(token, StringComparison.Ordinal));
+        AssertNoCustomerData(capture);
+    }
+
     /// <summary>
     /// What the processors' own tests can't show: the app registers them ahead of export. A booking logs no customer data
     /// today, so this logs and tags some through the host's pipeline itself.

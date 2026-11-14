@@ -11,6 +11,7 @@ namespace ThadTheBarber.Api.Features.Booking.Endpoints;
 public static class BookingEndpoints
 {
     public const string ManageTokenHeader = "X-Manage-Token";
+    public const string LookupTokenHeader = "X-Lookup-Token";
 
     public static IEndpointRouteBuilder MapBookingEndpoints(this IEndpointRouteBuilder api)
     {
@@ -32,6 +33,8 @@ public static class BookingEndpoints
         bookings.MapPost("/lookup/verified-list", GetVerifiedListAsync)
             .WithName("GetVerifiedBookingList")
             .RequireRateLimiting(RateLimitSetup.LookupVerifiedListPolicy);
+        bookings.MapGet("/lookup/verified-list", GetVerifiedListByTokenAsync)
+            .WithName("GetBookingListByLookupToken");
         bookings.MapGet("/{id}", GetBookingAsync)
             .WithName("GetBooking");
         bookings.MapPost("/{id}/cancel", CancelBookingAsync)
@@ -126,11 +129,22 @@ public static class BookingEndpoints
         return TypedResults.Accepted((string?)null);
     }
 
-    internal static async Task<Ok<List<FoundBooking>>> GetVerifiedListAsync(
+    internal static async Task<Ok<VerifiedList>> GetVerifiedListAsync(
         VerifiedListRequest request,
         BookingService booking,
         CancellationToken cancellationToken) =>
         TypedResults.Ok(await booking.GetVerifiedListAsync(request, cancellationToken));
+
+    /// <summary>
+    /// The phone's current upcoming bookings again, without a new text code. The lookup token comes only from the
+    /// <c>X-Lookup-Token</c> header, never the query string, so it stays out of server logs; a missing, wrong or expired
+    /// one is 403 <c>lookup_expired</c>.
+    /// </summary>
+    internal static async Task<Ok<List<FoundBooking>>> GetVerifiedListByTokenAsync(
+        [FromHeader(Name = LookupTokenHeader)] string? lookupToken,
+        BookingService booking,
+        CancellationToken cancellationToken) =>
+        TypedResults.Ok(await booking.GetVerifiedListForTokenAsync(lookupToken, cancellationToken));
 
     /// <summary>
     /// The booking's time and whether it can still change. The manage token comes only from the

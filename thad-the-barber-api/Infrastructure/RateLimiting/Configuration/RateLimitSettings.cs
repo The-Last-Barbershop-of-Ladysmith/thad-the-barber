@@ -19,10 +19,4 @@ public sealed class RateLimitSettings
     public FixedWindowLimit LookupCode { get; set; } = new();
 
     public FixedWindowLimit LookupVerifiedList { get; set; } = new();
-
-    /// <summary>Per phone, not per IP: stops one number being flooded with texts from many addresses.</summary>
-    public FixedWindowLimit LookupCodePhone { get; set; } = new();
-
-    /// <summary>Per phone, not per IP: stops a code being guessed from many addresses.</summary>
-    public FixedWindowLimit LookupVerifiedListPhone { get; set; } = new();
 }

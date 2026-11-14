@@ -123,33 +123,6 @@ public sealed class RateLimitSetupTests(ApiFactory factory) : IClassFixture<ApiF
     }
 
     [Fact]
-    public async Task ThirdVerifiedListRequestForOnePhoneIsRateLimitedEvenFromAnotherIp()
-    {
-        using WebApplicationFactory<Program> limited = WithPhoneVerifiedListLimitOfTwo();
-        using HttpClient firstClient = ClientFrom(limited, FirstClientIp);
-        using HttpClient secondClient = ClientFrom(limited, SecondClientIp);
-
-        AssertNotLimited(await GetVerifiedListAsync(firstClient));
-        AssertNotLimited(await GetVerifiedListAsync(secondClient));
-        using HttpResponseMessage third = await GetVerifiedListAsync(firstClient);
-
-        await AssertRateLimitedAsync(third);
-    }
-
-    [Fact]
-    public async Task AnotherPhoneIsNotLimitedByTheFirstPhonesVerifiedListAttempts()
-    {
-        using WebApplicationFactory<Program> limited = WithPhoneVerifiedListLimitOfTwo();
-        using HttpClient client = ClientFrom(limited, FirstClientIp);
-        AssertNotLimited(await GetVerifiedListAsync(client));
-        AssertNotLimited(await GetVerifiedListAsync(client));
-
-        using HttpResponseMessage otherPhone = await GetVerifiedListAsync(client, "+15555550102");
-
-        AssertNotLimited(otherPhone);
-    }
-
-    [Fact]
     public async Task LookupCodeAndVerifiedListHaveSeparateLimits()
     {
         using WebApplicationFactory<Program> limited = WithLimitOfTwo();
@@ -187,17 +160,6 @@ public sealed class RateLimitSetupTests(ApiFactory factory) : IClassFixture<ApiF
                 ["RateLimits:NextTimes:PermitLimit"] = "2",
                 ["RateLimits:LookupCode:PermitLimit"] = "2",
                 ["RateLimits:LookupVerifiedList:PermitLimit"] = "2",
-            }));
-        });
-
-    private WebApplicationFactory<Program> WithPhoneVerifiedListLimitOfTwo() =>
-        factory.WithWebHostBuilder(builder =>
-        {
-            builder.UseSetting("FORWARDEDHEADERS_ENABLED", "true");
-            builder.ConfigureAppConfiguration((_, configuration) => configuration.AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["RateLimits:LookupVerifiedList:PermitLimit"] = "100",
-                ["RateLimits:LookupVerifiedListPhone:PermitLimit"] = "2",
             }));
         });
 

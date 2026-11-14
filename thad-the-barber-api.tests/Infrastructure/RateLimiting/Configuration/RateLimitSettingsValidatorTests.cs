@@ -57,8 +57,6 @@ public sealed class RateLimitSettingsValidatorTests
     [Theory]
     [InlineData(nameof(RateLimitSettings.LookupCode))]
     [InlineData(nameof(RateLimitSettings.LookupVerifiedList))]
-    [InlineData(nameof(RateLimitSettings.LookupCodePhone))]
-    [InlineData(nameof(RateLimitSettings.LookupVerifiedListPhone))]
     public void AMissingLookupLimitFails(string limitName)
     {
         RateLimitSettings settings = ValidSettings();
@@ -78,8 +76,7 @@ public sealed class RateLimitSettingsValidatorTests
         NextTimes = Limit(5, TimeSpan.FromMinutes(10)),
         LookupCode = Limit(5, TimeSpan.FromMinutes(10)),
         LookupVerifiedList = Limit(5, TimeSpan.FromMinutes(10)),
-        LookupCodePhone = Limit(5, TimeSpan.FromMinutes(10)),
-        LookupVerifiedListPhone = Limit(5, TimeSpan.FromMinutes(10)),
+
     };
 
     private static ValidateOptionsResult Validate(FixedWindowLimit session, FixedWindowLimit booking, FixedWindowLimit? manage = null, FixedWindowLimit? nextTimes = null, FixedWindowLimit? lookupCode = null) =>
@@ -91,8 +88,7 @@ public sealed class RateLimitSettingsValidatorTests
             NextTimes = nextTimes ?? Limit(5, TimeSpan.FromMinutes(10)),
             LookupCode = lookupCode ?? Limit(5, TimeSpan.FromMinutes(10)),
             LookupVerifiedList = Limit(5, TimeSpan.FromMinutes(10)),
-            LookupCodePhone = Limit(5, TimeSpan.FromMinutes(10)),
-            LookupVerifiedListPhone = Limit(5, TimeSpan.FromMinutes(10)),
+
         });
 
     private static FixedWindowLimit Limit(int permitLimit, TimeSpan window) => new()

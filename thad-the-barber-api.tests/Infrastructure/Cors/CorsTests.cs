@@ -16,7 +16,7 @@ public sealed class CorsTests(ApiFactory factory) : IClassFixture<ApiFactory>
     [InlineData(ApiFactory.CustomDomainOrigin)]
     public async Task PreflightFromAnAllowedOriginSucceeds(string origin)
     {
-        using HttpResponseMessage response = await SendPreflightAsync(origin, "GET", "authorization,content-type,x-manage-token,traceparent,tracestate");
+        using HttpResponseMessage response = await SendPreflightAsync(origin, "GET", "authorization,content-type,x-manage-token,x-lookup-token,traceparent,tracestate");
 
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
         Assert.Equal(origin, Assert.Single(response.Headers.GetValues("Access-Control-Allow-Origin")));
@@ -50,7 +50,7 @@ public sealed class CorsTests(ApiFactory factory) : IClassFixture<ApiFactory>
 
         Assert.Equal(["GET", "POST"], SplitHeader(response, "Access-Control-Allow-Methods"));
         Assert.Equal(
-            ["Authorization", "Content-Type", "X-Manage-Token", "traceparent", "tracestate"],
+            ["Authorization", "Content-Type", "X-Manage-Token", "X-Lookup-Token", "traceparent", "tracestate"],
             SplitHeader(response, "Access-Control-Allow-Headers"));
     }
 

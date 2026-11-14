@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Options;
+using ThadTheBarber.Api.Common.Exceptions;
 using ThadTheBarber.Api.Twilio.Configuration;
 using ThadTheBarber.Api.Twilio.Exceptions;
 using TwilioApiConnectionException = global::Twilio.Exceptions.ApiConnectionException;
@@ -22,17 +23,27 @@ public sealed class TwilioVerifyService(IOptions<TwilioSettings> settings, IHttp
     private const string ApprovedStatus = "approved";
     private const int VerificationNotFoundErrorCode = 20404;
     private const int MaxCheckAttemptsErrorCode = 60202;
+    private const int MaxSendAttemptsErrorCode = 60203;
+    private static readonly TimeSpan SendAttemptsResetAfter = TimeSpan.FromMinutes(10);
     private readonly Lazy<TwilioRestClient> _client = new(() => CreateClient(settings.Value, httpClientFactory));
 
     public async Task StartAsync(string phone, CancellationToken cancellationToken)
     {
-        await CallTwilioAsync(
-            () => VerificationResource.CreateAsync(
-                new CreateVerificationOptions(settings.Value.VerifyServiceSid, phone, SmsChannel),
-                _client.Value
-            ),
-            cancellationToken
-        );
+        try
+        {
+            await CallTwilioAsync(
+                () => VerificationResource.CreateAsync(
+                    new CreateVerificationOptions(settings.Value.VerifyServiceSid, phone, SmsChannel),
+                    _client.Value
+                ),
+                cancellationToken
+            );
+        }
+        catch (TwilioRequestFailedException exception) when (exception.TwilioErrorCode == MaxSendAttemptsErrorCode)
+        {
+            // Twilio caps texts per phone (five in ten minutes), so that limit is Twilio's and not kept in this API.
+            throw new RateLimitedException("Twilio refused another text code for the phone.", SendAttemptsResetAfter);
+        }
     }
 
     public async Task<bool> CheckAsync(string phone, string code, CancellationToken cancellationToken)
