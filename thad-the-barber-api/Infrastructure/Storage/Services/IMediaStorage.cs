@@ -3,8 +3,8 @@ using ThadTheBarber.Api.Infrastructure.Storage.Models;
 namespace ThadTheBarber.Api.Infrastructure.Storage.Services;
 
 /// <summary>
-/// Reads (and writes contact messages to) the environment's storage account with the API's managed identity: the photos and announcement images in
-/// the media container, and the private content container that holds <c>announcements.json</c>. Anonymous listing is
+/// Reads the environment's storage account, and writes contact messages to it, with the API's managed identity: the
+/// photos and announcement images in the media container, and the private content container that holds <c>announcements.json</c>. Anonymous listing is
 /// off on both, so nothing but the API can see what's there.
 /// </summary>
 public interface IMediaStorage
