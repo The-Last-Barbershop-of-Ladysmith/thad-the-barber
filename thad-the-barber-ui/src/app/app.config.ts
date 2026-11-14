@@ -8,7 +8,7 @@ import {
   provideBrowserGlobalErrorListeners,
   provideEnvironmentInitializer,
 } from '@angular/core';
-import { provideRouter, withComponentInputBinding, withInMemoryScrolling } from '@angular/router';
+import { TitleStrategy, provideRouter, withComponentInputBinding, withInMemoryScrolling } from '@angular/router';
 import { provideEffects } from '@ngrx/effects';
 import { provideStore } from '@ngrx/store';
 import { provideStoreDevtools } from '@ngrx/store-devtools';
@@ -16,6 +16,7 @@ import { MessageService } from 'primeng/api';
 import { PrimeNG, providePrimeNG } from 'primeng/config';
 import { PRIMEUI_LICENSE } from './core/config/primeui-license';
 import { sessionInterceptor } from './core/interceptors/session.interceptor';
+import { SeoTitleStrategy } from './core/services/seo-title-strategy';
 import { routes } from './app.routes';
 import * as announcementsEffects from './features/announcements/state/announcements.effects';
 import { announcementsFeature } from './features/announcements/state/announcements.feature';
@@ -38,6 +39,7 @@ export const appConfig: ApplicationConfig = {
       withComponentInputBinding(),
       withInMemoryScrolling({ anchorScrolling: 'enabled', scrollPositionRestoration: 'enabled' }),
     ),
+    { provide: TitleStrategy, useExisting: SeoTitleStrategy },
     // Shop and announcements are root reducers, not `provideState`, because the header and footer read them on every
     // page.
     // Shop and home also save only part of their slice (`shopInfo`, `smsSignup`), and a partial saved copy merged

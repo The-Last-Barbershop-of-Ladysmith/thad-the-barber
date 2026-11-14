@@ -7,6 +7,7 @@ export const SHOP_FALLBACK: ShopFallback = {
   name: 'Thad The Barber',
   phone: '+15406212143',
   squareBookingSiteUrl: 'https://square.site/book/L36PTJY0KNFV2/thad-the-barber-fredericksburg-va',
+  city: 'Fredericksburg',
 };
 
 /** In-page sections of the home feature, used by the header, mobile drawer and footer. */

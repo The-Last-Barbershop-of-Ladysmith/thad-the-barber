@@ -1,0 +1,21 @@
+.statement {
+  max-width: 68ch;
+
+  section {
+    padding-block: 2.25rem;
+    border-top: 1px solid var(--p-brand-divider);
+
+    &:first-child {
+      padding-top: 0;
+      border-top: 0;
+    }
+  }
+
+  h2 {
+    margin: 0;
+    font-size: 1.375rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: var(--p-text-color);
+  }
+}
