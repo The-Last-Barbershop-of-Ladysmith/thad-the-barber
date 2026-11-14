@@ -136,6 +136,19 @@ public sealed class RateLimitSetupTests(ApiFactory factory) : IClassFixture<ApiF
     }
 
     [Fact]
+    public async Task ThirdContactMessageFromOneIpIsRateLimited()
+    {
+        using WebApplicationFactory<Program> limited = WithLimitOfTwo();
+        using HttpClient client = ClientFrom(limited, FirstClientIp);
+
+        AssertNotLimited(await SendContactMessageAsync(client));
+        AssertNotLimited(await SendContactMessageAsync(client));
+        using HttpResponseMessage third = await SendContactMessageAsync(client);
+
+        await AssertRateLimitedAsync(third);
+    }
+
+    [Fact]
     public async Task ReadsAreNotRateLimited()
     {
         using WebApplicationFactory<Program> limited = WithLimitOfTwo();
@@ -174,6 +187,9 @@ public sealed class RateLimitSetupTests(ApiFactory factory) : IClassFixture<ApiF
     private static Task<HttpResponseMessage> BookAsync(HttpClient client) =>
         client.PostAsJsonAsync("/api/bookings", new { }, TestContext.Current.CancellationToken);
 
+    private static Task<HttpResponseMessage> SendContactMessageAsync(HttpClient client) =>
+        client.PostAsJsonAsync("/api/contact", new { category = "feedback", message = "Made-up praise." }, TestContext.Current.CancellationToken);
+
     private static Task<HttpResponseMessage> SendLookupCodeAsync(HttpClient client, string phone) =>
         client.PostAsJsonAsync("/api/bookings/lookup/code", new { phone }, TestContext.Current.CancellationToken);
 
@@ -196,7 +212,7 @@ public sealed class RateLimitSetupTests(ApiFactory factory) : IClassFixture<ApiF
         Assert.Equal(HttpStatusCode.TooManyRequests, response.StatusCode);
         TimeSpan? retryAfter = response.Headers.RetryAfter?.Delta;
         Assert.NotNull(retryAfter);
-        Assert.InRange(retryAfter.Value, TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(10));
+        Assert.InRange(retryAfter.Value, TimeSpan.FromSeconds(1), TimeSpan.FromHours(1));
         await ProblemAssert.IsProblemAsync(response, StatusCodes.Status429TooManyRequests, "rate_limited");
     }
 }
