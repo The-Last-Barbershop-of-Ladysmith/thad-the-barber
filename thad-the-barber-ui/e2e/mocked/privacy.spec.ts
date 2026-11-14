@@ -23,7 +23,7 @@ test.describe(
       async ({ page }: { page: Page; }): Promise<void> => {
         await page.goto('/privacy');
 
-        await expect(page.getByTestId('privacy-phone')).toHaveAttribute('href', `tel:${TEST_SHOP.phone}`);
+        await expect(page.getByTestId('privacy-phone').first()).toHaveAttribute('href', `tel:${TEST_SHOP.phone}`);
       },
     );
 

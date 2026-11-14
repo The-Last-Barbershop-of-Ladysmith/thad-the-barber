@@ -28,7 +28,11 @@
 
     <article class="policy legal-copy">
       @for (section of sections; track section.fragment) {
-        <section class="body-copy rich-text" [id]="section.fragment" [attr.data-testid]="'privacy-section-' + section.fragment">
+        <section
+          class="body-copy rich-text"
+          [id]="section.fragment"
+          [attr.data-testid]="'privacy-section-' + section.fragment"
+        >
           <h2>{{ section.label }}</h2>
           @for (paragraph of section.paragraphs; track $index) {
             <p>
