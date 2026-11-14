@@ -22,6 +22,14 @@ export function isBookingRequest(url: URL): boolean {
   return url.href === BOOKINGS_URL;
 }
 
+export function isLookupStartRequest(url: URL): boolean {
+  return `${url.origin}${url.pathname}` === `${BOOKINGS_URL}/lookup/start`;
+}
+
+export function isLookupVerifyRequest(url: URL): boolean {
+  return `${url.origin}${url.pathname}` === `${BOOKINGS_URL}/lookup/verify`;
+}
+
 /** The path segments after `/api/bookings/`: `[id]`, `[id, 'cancel']`…; none for any other URL. */
 function toBookingSegments(url: URL): string[] {
   const address: string = `${url.origin}${url.pathname}`;
