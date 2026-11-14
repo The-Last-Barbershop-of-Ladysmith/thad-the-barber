@@ -4,6 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { BookingConfirmation } from '../dtos/booking-confirmation.dto';
 import { BookingRequest } from '../dtos/booking-request.dto';
 import { FoundBooking } from '../dtos/found-booking.dto';
+import { VerifiedList } from '../dtos/verified-list.dto';
 import { ManagedBooking } from '../dtos/managed-booking.dto';
 import { BOOKINGS_URL, BookingService } from './booking.service';
 
@@ -131,7 +132,38 @@ describe(
     );
 
     it(
-      'verifies the code and returns the found bookings, none of them in the URL',
+      'verifies the code and returns the found bookings with their lookup token, none of it in the URL',
+      (): void => {
+        const verifiedList: VerifiedList = {
+          bookings: [
+            {
+              id: 'made-up-booking',
+              startAt: '2026-10-03T20:30:00Z',
+              manageToken: 'made-up-token',
+            },
+          ],
+          lookupToken: 'made-up-lookup-token',
+          expiresAt: '2026-10-03T20:45:00Z',
+        };
+        let result: VerifiedList | undefined;
+        TestBed.inject(BookingService)
+          .getVerifiedList({ phone: '+15555550123', code: '0042' })
+          .subscribe((list: VerifiedList): void => {
+            result = list;
+          });
+
+        const call: TestRequest = TestBed.inject(HttpTestingController).expectOne(`${BOOKINGS_URL}/lookup/verified-list`);
+        call.flush(verifiedList);
+
+        expect(call.request.method).toBe('POST');
+        expect(call.request.body).toEqual({ phone: '+15555550123', code: '0042' });
+        expect(call.request.url).not.toContain('0042');
+        expect(result).toEqual(verifiedList);
+      },
+    );
+
+    it(
+      'refreshes the list with the lookup token in the header only',
       (): void => {
         const foundBookings: FoundBooking[] = [
           {
@@ -141,18 +173,16 @@ describe(
           },
         ];
         let result: FoundBooking[] | undefined;
-        TestBed.inject(BookingService)
-          .getVerifiedList({ phone: '+15555550123', code: '0042' })
-          .subscribe((bookings: FoundBooking[]): void => {
-            result = bookings;
-          });
+        TestBed.inject(BookingService).refreshVerifiedList('made-up-lookup-token').subscribe((bookings: FoundBooking[]): void => {
+          result = bookings;
+        });
 
         const call: TestRequest = TestBed.inject(HttpTestingController).expectOne(`${BOOKINGS_URL}/lookup/verified-list`);
         call.flush(foundBookings);
 
-        expect(call.request.method).toBe('POST');
-        expect(call.request.body).toEqual({ phone: '+15555550123', code: '0042' });
-        expect(call.request.url).not.toContain('0042');
+        expect(call.request.method).toBe('GET');
+        expect(call.request.headers.get('X-Lookup-Token')).toBe('made-up-lookup-token');
+        expect(call.request.urlWithParams).not.toContain('made-up-lookup-token');
         expect(result).toEqual(foundBookings);
       },
     );

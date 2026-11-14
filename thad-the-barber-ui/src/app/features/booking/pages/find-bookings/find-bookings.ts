@@ -35,6 +35,7 @@ import {
   NO_UPCOMING_BOOKINGS_NOTICE,
 } from '../../config/booking-notices';
 import { FoundBooking } from '../../dtos/found-booking.dto';
+import { VerifiedList } from '../../dtos/verified-list.dto';
 import { LookupStep } from '../../models/lookup-step.model';
 import { BookingService } from '../../services/booking.service';
 import { toLongDate, toTimeLabel } from '../../utils/booking-time.utils';
@@ -177,8 +178,8 @@ export class FindBookings {
         phone: this.toPhone(),
         code: this.lookupForm.controls.code.value,
       }),
-      (foundBookings: FoundBooking[]): void => {
-        this.foundBookings.set(foundBookings);
+      (verifiedList: VerifiedList): void => {
+        this.foundBookings.set(verifiedList.bookings);
         this.step.set(LookupStep.Results);
       },
     );

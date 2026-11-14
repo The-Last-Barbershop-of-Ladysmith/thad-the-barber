@@ -9,6 +9,7 @@ import { AppState } from '../../../../store/app.state';
 import * as ShopActions from '../../../shop/state/shop.actions';
 import { shopFeature } from '../../../shop/state/shop.feature';
 import { FoundBooking } from '../../dtos/found-booking.dto';
+import { VerifiedList } from '../../dtos/verified-list.dto';
 import { LookupCodeRequest } from '../../dtos/lookup-code-request.dto';
 import { VerifiedListRequest } from '../../dtos/verified-list-request.dto';
 import { BookingService } from '../../services/booking.service';
@@ -36,7 +37,7 @@ describe(
     let codeRequests: LookupCodeRequest[];
     let codeResponses: Subject<null>[];
     let verifiedListRequests: VerifiedListRequest[];
-    let verifiedListResponses: Subject<FoundBooking[]>[];
+    let verifiedListResponses: Subject<VerifiedList>[];
 
     beforeEach((): void => {
       codeRequests = [];
@@ -56,8 +57,8 @@ describe(
                 codeResponses.push(response);
                 return response;
               },
-              getVerifiedList: (request: VerifiedListRequest): Subject<FoundBooking[]> => {
-                const response: Subject<FoundBooking[]> = new Subject<FoundBooking[]>();
+              getVerifiedList: (request: VerifiedListRequest): Subject<VerifiedList> => {
+                const response: Subject<VerifiedList> = new Subject<VerifiedList>();
                 verifiedListRequests.push(request);
                 verifiedListResponses.push(response);
                 return response;
@@ -119,8 +120,12 @@ describe(
     }
 
     function answerVerifiedList(answer: FoundBooking[]): void {
-      const response: Subject<FoundBooking[]> | undefined = verifiedListResponses.at(-1);
-      response?.next(answer);
+      const response: Subject<VerifiedList> | undefined = verifiedListResponses.at(-1);
+      response?.next({
+        bookings: answer,
+        lookupToken: 'made-up-lookup-token',
+        expiresAt: '2030-10-03T20:15:00Z',
+      });
       response?.complete();
       fixture.detectChanges();
     }
