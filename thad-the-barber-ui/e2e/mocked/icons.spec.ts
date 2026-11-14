@@ -5,7 +5,7 @@ import { expect, test } from '../support/fixtures';
 
 interface IconLink {
   selector: string;
-  contentType: string;
+  contentType: RegExp;
 }
 
 interface ManifestIcon {
@@ -28,10 +28,10 @@ interface PrimitiveTokens {
 
 const PAGE_BACKGROUND: string | undefined = (primitive as PrimitiveTokens).espresso['950'];
 const ICON_LINKS: IconLink[] = [
-  { selector: 'link[rel="icon"][type="image/svg+xml"]', contentType: 'image/svg+xml' },
-  { selector: 'link[rel="icon"][type="image/x-icon"]', contentType: 'image/x-icon' },
-  { selector: 'link[rel="apple-touch-icon"]', contentType: 'image/png' },
-  { selector: 'link[rel="manifest"]', contentType: 'application/manifest+json' },
+  { selector: 'link[rel="icon"][type="image/svg+xml"]', contentType: /^image\/svg\+xml/ },
+  { selector: 'link[rel="icon"][type="image/x-icon"]', contentType: /^image\/(x-icon|vnd\.microsoft\.icon)/ },
+  { selector: 'link[rel="apple-touch-icon"]', contentType: /^image\/png/ },
+  { selector: 'link[rel="manifest"]', contentType: /^application\/manifest\+json/ },
 ];
 const MIN_SEARCH_ICON_SIZE: number = 48;
 const PNG_WIDTH_OFFSET: number = 16;
@@ -67,7 +67,7 @@ test.describe(
           );
 
           expect(response.status()).toBe(200);
-          expect(response.headers()['content-type']).toContain(link.contentType);
+          expect(response.headers()['content-type']).toMatch(link.contentType);
         },
       );
     }
