@@ -1,14 +1,19 @@
 using System.Globalization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
+using ThadTheBarber.Api.Common.Exceptions;
 using ThadTheBarber.Api.Features.Booking.Configuration;
 using ThadTheBarber.Api.Features.Booking.Exceptions;
 using ThadTheBarber.Api.Features.Booking.Models;
 using ThadTheBarber.Api.Features.Booking.Services;
+using ThadTheBarber.Api.Infrastructure.RateLimiting.Configuration;
+using ThadTheBarber.Api.Infrastructure.RateLimiting.Services;
 using ThadTheBarber.Api.Square.Configuration;
 using ThadTheBarber.Api.Square.Exceptions;
 using ThadTheBarber.Api.Square.Models;
 using ThadTheBarber.Api.Square.Services;
+using ThadTheBarber.Api.Twilio.Exceptions;
 using ThadTheBarber.Api.Tests.TestSupport;
 using ThadTheBarber.Api.Tests.TestSupport.Fakes;
 
@@ -23,6 +28,9 @@ public sealed class BookingServiceTests
     private static readonly DateTimeOffset now = Instant("2026-10-06T15:10:00Z");
     private static readonly DateTimeOffset openTime = Instant("2026-10-07T13:30:00Z");
     private const int MaxUpcomingPerPhone = 3;
+    private const int MaxTextCodesPerPhone = 2;
+    private const string KnownPhone = "+15555550123";
+    private const string UnknownPhone = "+15555550199";
 
     private static CancellationToken Cancellation => TestContext.Current.CancellationToken;
 
@@ -239,6 +247,195 @@ public sealed class BookingServiceTests
         Assert.Equal(first, retried);
     }
 
+    [Fact]
+    public async Task StartTextsTheCodeWithoutAskingSquareAnything()
+    {
+        FakeSquareService square = new();
+        FakeTwilioVerifyService twilio = new();
+
+        await Service(square, twilio).StartLookupAsync(KnownPhone, Cancellation);
+
+        Assert.Equal([KnownPhone], twilio.StartedPhones);
+        Assert.Equal(0, square.AppointmentListings);
+    }
+
+    [Fact]
+    public async Task StartDoesTheSameForAPhoneSquareDoesNotKnow()
+    {
+        FakeSquareService square = new()
+        {
+            CustomerId = null,
+        };
+        FakeTwilioVerifyService twilio = new();
+
+        await Service(square, twilio).StartLookupAsync(UnknownPhone, Cancellation);
+
+        Assert.Equal([UnknownPhone], twilio.StartedPhones);
+        Assert.Equal(0, square.AppointmentListings);
+    }
+
+    [Fact]
+    public async Task AThirdCodeForOnePhoneIsRateLimitedBeforeTwilioIsCalled()
+    {
+        FakeTwilioVerifyService twilio = new();
+        BookingService service = Service(new FakeSquareService(), twilio);
+        await service.StartLookupAsync(KnownPhone, Cancellation);
+        await service.StartLookupAsync(KnownPhone, Cancellation);
+
+        RateLimitedException limited = await Assert.ThrowsAsync<RateLimitedException>(() => service.StartLookupAsync(KnownPhone, Cancellation));
+
+        Assert.True(limited.RetryAfter > TimeSpan.Zero);
+        Assert.Equal(MaxTextCodesPerPhone, twilio.StartedPhones.Count);
+    }
+
+    [Fact]
+    public async Task EachPhoneHasItsOwnTextCodeLimit()
+    {
+        FakeTwilioVerifyService twilio = new();
+        BookingService service = Service(new FakeSquareService(), twilio);
+        await service.StartLookupAsync(KnownPhone, Cancellation);
+        await service.StartLookupAsync(KnownPhone, Cancellation);
+
+        await service.StartLookupAsync(UnknownPhone, Cancellation);
+
+        Assert.Contains(UnknownPhone, twilio.StartedPhones);
+    }
+
+    [Fact]
+    public async Task ATwilioFailureOnStartReachesTheCaller()
+    {
+        FakeTwilioVerifyService twilio = new()
+        {
+            Failure = new TwilioRequestFailedException(StatusCodes.Status500InternalServerError, null),
+        };
+
+        await Assert.ThrowsAsync<TwilioRequestFailedException>(() => Service(new FakeSquareService(), twilio).StartLookupAsync(KnownPhone, Cancellation));
+    }
+
+    [Fact]
+    public async Task ARightCodeListsUpcomingBookingsSoonestFirstWithValidManageTokens()
+    {
+        FakeSquareService square = new();
+        square.Hold(1, AppointmentStatus.Accepted, Instant("2026-11-09T14:00:00Z"));
+        square.Hold(2, AppointmentStatus.Pending, Instant("2026-10-20T14:00:00Z"));
+        BookingService service = Service(square, await StartedTwilioAsync());
+
+        List<FoundBooking> found = await service.VerifyLookupAsync(VerifyRequest(KnownPhone), Cancellation);
+
+        Assert.Equal(
+            [
+                Instant("2026-10-20T14:00:00Z"),
+                Instant("2026-10-21T14:00:00Z"),
+                Instant("2026-11-09T14:00:00Z"),
+            ],
+            found.Select(booking => booking.StartAt));
+        Assert.All(found, booking => Assert.True(ManageTokens.Signer.IsValid(booking.Id, booking.ManageToken)));
+    }
+
+    [Fact]
+    public async Task CancelledDeclinedNoShowAndPastBookingsAreLeftOut()
+    {
+        FakeSquareService square = new();
+        square.Hold(1, AppointmentStatus.CancelledByCustomer, Instant("2026-10-20T14:00:00Z"));
+        square.Hold(1, AppointmentStatus.CancelledBySeller, Instant("2026-10-21T14:00:00Z"));
+        square.Hold(1, AppointmentStatus.Declined, Instant("2026-10-22T14:00:00Z"));
+        square.Hold(1, AppointmentStatus.NoShow, Instant("2026-10-23T14:00:00Z"));
+        square.Hold(1, AppointmentStatus.Accepted, now.AddMinutes(-1));
+        square.Hold(1, AppointmentStatus.Accepted, Instant("2026-10-24T14:00:00Z"));
+        BookingService service = Service(square, await StartedTwilioAsync());
+
+        List<FoundBooking> found = await service.VerifyLookupAsync(VerifyRequest(KnownPhone), Cancellation);
+
+        Assert.Equal([Instant("2026-10-24T14:00:00Z")], found.Select(booking => booking.StartAt));
+    }
+
+    [Fact]
+    public async Task BookingsBeyondTheBookingWindowAreNotRead()
+    {
+        FakeSquareService square = new();
+        square.Hold(1, AppointmentStatus.Accepted, now + square.BookingProfile.MaximumAdvance + TimeSpan.FromDays(1));
+        BookingService service = Service(square, await StartedTwilioAsync());
+
+        List<FoundBooking> found = await service.VerifyLookupAsync(VerifyRequest(KnownPhone), Cancellation);
+
+        Assert.Empty(found);
+    }
+
+    [Fact]
+    public async Task EveryCustomerWithThePhoneContributesItsBookings()
+    {
+        FakeSquareService square = new()
+        {
+            DuplicateCustomerIds = ["CUSTOMER0TEST0DUPLICATE01", "CUSTOMER0TEST0DUPLICATE02"],
+        };
+        square.Hold(1, AppointmentStatus.Accepted, Instant("2026-10-20T14:00:00Z"));
+        square.Hold(1, AppointmentStatus.Accepted, Instant("2026-10-21T14:00:00Z"), "CUSTOMER0TEST0DUPLICATE01");
+        square.Hold(1, AppointmentStatus.Accepted, Instant("2026-10-22T14:00:00Z"), "CUSTOMER0TEST0DUPLICATE02");
+        square.Hold(1, AppointmentStatus.Accepted, Instant("2026-10-23T14:00:00Z"), "CUSTOMER0TEST0SOMEONEELSE");
+        BookingService service = Service(square, await StartedTwilioAsync());
+
+        List<FoundBooking> found = await service.VerifyLookupAsync(VerifyRequest(KnownPhone), Cancellation);
+
+        Assert.Equal(3, found.Count);
+        Assert.DoesNotContain(Instant("2026-10-23T14:00:00Z"), found.Select(booking => booking.StartAt));
+    }
+
+    [Fact]
+    public async Task APhoneSquareDoesNotKnowHasNoBookings()
+    {
+        FakeSquareService square = new()
+        {
+            CustomerId = null,
+        };
+        BookingService service = Service(square, await StartedTwilioAsync());
+
+        List<FoundBooking> found = await service.VerifyLookupAsync(VerifyRequest(KnownPhone), Cancellation);
+
+        Assert.Empty(found);
+        Assert.Equal(0, square.AppointmentListings);
+    }
+
+    [Theory]
+    [InlineData("000000")]
+    [InlineData("1234")]
+    public async Task AWrongCodeIsInvalidAndSquareIsNeverAsked(string code)
+    {
+        FakeSquareService square = new();
+        square.Hold(1, AppointmentStatus.Accepted, Instant("2026-10-20T14:00:00Z"));
+        BookingService service = Service(square, await StartedTwilioAsync());
+
+        await Assert.ThrowsAsync<CodeInvalidException>(() => service.VerifyLookupAsync(new LookupVerifyRequest(KnownPhone, code), Cancellation));
+        Assert.Equal(0, square.AppointmentListings);
+    }
+
+    [Fact]
+    public async Task ACodeForAPhoneThatWasNeverTextedIsInvalid()
+    {
+        BookingService service = Service(new FakeSquareService(), new FakeTwilioVerifyService());
+
+        await Assert.ThrowsAsync<CodeInvalidException>(() => service.VerifyLookupAsync(VerifyRequest(KnownPhone), Cancellation));
+    }
+
+    [Fact]
+    public async Task ATwilioFailureOnVerifyReachesTheCaller()
+    {
+        FakeTwilioVerifyService twilio = new()
+        {
+            Failure = new TwilioNotConfiguredException(),
+        };
+
+        await Assert.ThrowsAsync<TwilioNotConfiguredException>(() => Service(new FakeSquareService(), twilio).VerifyLookupAsync(VerifyRequest(KnownPhone), Cancellation));
+    }
+
+    private static async Task<FakeTwilioVerifyService> StartedTwilioAsync()
+    {
+        FakeTwilioVerifyService twilio = new();
+        await twilio.StartAsync(KnownPhone, Cancellation);
+        return twilio;
+    }
+
+    private static LookupVerifyRequest VerifyRequest(string phone) => new(phone, FakeTwilioVerifyService.ApprovedCode);
+
     private static FakeSquareService Square(bool isCustomerKnown)
     {
         FakeSquareService square = new();
@@ -250,7 +447,7 @@ public sealed class BookingServiceTests
         return square;
     }
 
-    private static BookingService Service(FakeSquareService square)
+    private static BookingService Service(FakeSquareService square, FakeTwilioVerifyService? twilio = null)
     {
         FakeTimeProvider time = new(now);
         return new BookingService(
@@ -261,6 +458,15 @@ public sealed class BookingServiceTests
                 time
             ),
             ManageTokens.Signer,
+            twilio ?? new FakeTwilioVerifyService(),
+            new PhoneRateLimiter(Options.Create(new RateLimitSettings
+            {
+                LookupPhone = new FixedWindowLimit
+                {
+                    PermitLimit = MaxTextCodesPerPhone,
+                    Window = TimeSpan.FromMinutes(10),
+                },
+            })),
             Options.Create(new BookingSettings
             {
                 MaxUpcomingPerPhone = MaxUpcomingPerPhone,

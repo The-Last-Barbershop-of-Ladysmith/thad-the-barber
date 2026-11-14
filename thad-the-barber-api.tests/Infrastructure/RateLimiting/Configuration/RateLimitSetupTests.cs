@@ -97,6 +97,45 @@ public sealed class RateLimitSetupTests(ApiFactory factory) : IClassFixture<ApiF
     }
 
     [Fact]
+    public async Task ThirdLookupStartFromOneIpIsRateLimitedWhateverThePhone()
+    {
+        using WebApplicationFactory<Program> limited = WithLimitOfTwo();
+        using HttpClient client = ClientFrom(limited, FirstClientIp);
+
+        AssertNotLimited(await StartLookupAsync(client, "+15555550101"));
+        AssertNotLimited(await StartLookupAsync(client, "+15555550102"));
+        using HttpResponseMessage third = await StartLookupAsync(client, "+15555550103");
+
+        await AssertRateLimitedAsync(third);
+    }
+
+    [Fact]
+    public async Task ThirdLookupVerifyFromOneIpIsRateLimited()
+    {
+        using WebApplicationFactory<Program> limited = WithLimitOfTwo();
+        using HttpClient client = ClientFrom(limited, FirstClientIp);
+
+        AssertNotLimited(await VerifyLookupAsync(client));
+        AssertNotLimited(await VerifyLookupAsync(client));
+        using HttpResponseMessage third = await VerifyLookupAsync(client);
+
+        await AssertRateLimitedAsync(third);
+    }
+
+    [Fact]
+    public async Task LookupStartAndVerifyHaveSeparateLimits()
+    {
+        using WebApplicationFactory<Program> limited = WithLimitOfTwo();
+        using HttpClient client = ClientFrom(limited, FirstClientIp);
+        AssertNotLimited(await StartLookupAsync(client, "+15555550101"));
+        AssertNotLimited(await StartLookupAsync(client, "+15555550102"));
+
+        using HttpResponseMessage verify = await VerifyLookupAsync(client);
+
+        AssertNotLimited(verify);
+    }
+
+    [Fact]
     public async Task ReadsAreNotRateLimited()
     {
         using WebApplicationFactory<Program> limited = WithLimitOfTwo();
@@ -119,6 +158,8 @@ public sealed class RateLimitSetupTests(ApiFactory factory) : IClassFixture<ApiF
                 ["RateLimits:Booking:PermitLimit"] = "2",
                 ["RateLimits:Manage:PermitLimit"] = "2",
                 ["RateLimits:NextTimes:PermitLimit"] = "2",
+                ["RateLimits:LookupStart:PermitLimit"] = "2",
+                ["RateLimits:LookupVerify:PermitLimit"] = "2",
             }));
         });
 
@@ -131,6 +172,12 @@ public sealed class RateLimitSetupTests(ApiFactory factory) : IClassFixture<ApiF
 
     private static Task<HttpResponseMessage> BookAsync(HttpClient client) =>
         client.PostAsJsonAsync("/api/bookings", new { }, TestContext.Current.CancellationToken);
+
+    private static Task<HttpResponseMessage> StartLookupAsync(HttpClient client, string phone) =>
+        client.PostAsJsonAsync("/api/bookings/lookup/start", new { phone }, TestContext.Current.CancellationToken);
+
+    private static Task<HttpResponseMessage> VerifyLookupAsync(HttpClient client) =>
+        client.PostAsJsonAsync("/api/bookings/lookup/verify", new { phone = "+15555550101", code = "000000" }, TestContext.Current.CancellationToken);
 
     private static Task<HttpResponseMessage> StartSessionAsync(HttpClient client) =>
         client.PostAsJsonAsync("/api/session", new { recaptchaToken = "fake-token" }, TestContext.Current.CancellationToken);

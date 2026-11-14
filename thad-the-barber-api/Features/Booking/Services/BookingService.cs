@@ -5,23 +5,71 @@ using ThadTheBarber.Api.Features.Booking.Configuration;
 using ThadTheBarber.Api.Features.Booking.Exceptions;
 using ThadTheBarber.Api.Features.Booking.Mappers;
 using ThadTheBarber.Api.Features.Booking.Models;
+using ThadTheBarber.Api.Infrastructure.RateLimiting.Services;
 using ThadTheBarber.Api.Square.Exceptions;
 using ThadTheBarber.Api.Square.Models;
 using ThadTheBarber.Api.Square.Services;
+using ThadTheBarber.Api.Twilio.Services;
 
 namespace ThadTheBarber.Api.Features.Booking.Services;
 
 /// <summary>
 /// Books the shop's one service for a customer matched silently by phone (BR-21). The request's idempotency key goes
-/// to both <c>CreateCustomer</c> and <c>CreateBooking</c>, so a retried attempt never creates a second of either.
+/// to both <c>CreateCustomer</c> and <c>CreateBooking</c>, so a retried attempt never creates a second of either. Also
+/// finds a phone's upcoming bookings once a text code proves the phone (BR-20).
 /// </summary>
 public sealed class BookingService(
     ISquareService square,
     AvailabilityService availability,
     ManageTokenSigner manageTokens,
+    ITwilioVerifyService twilioVerify,
+    PhoneRateLimiter phoneRateLimiter,
     IOptions<BookingSettings> settings,
     TimeProvider time)
 {
+    public async Task StartLookupAsync(string phone, CancellationToken cancellationToken)
+    {
+        phoneRateLimiter.Enforce(phone);
+        await twilioVerify.StartAsync(phone, cancellationToken);
+    }
+
+    /// <summary>
+    /// The upcoming bookings of every Square customer with the phone, once Twilio confirms the code (BR-20). Square
+    /// isn't asked about the phone before that, and nothing is stored. Listing reads up to the booking window's end,
+    /// which <see cref="ISquareService"/> splits into Square's 31-day pieces.
+    /// </summary>
+    public async Task<List<FoundBooking>> VerifyLookupAsync(LookupVerifyRequest request, CancellationToken cancellationToken)
+    {
+        bool isCodeValid = await twilioVerify.CheckAsync(request.Phone, request.Code, cancellationToken);
+        if (!isCodeValid)
+        {
+            throw new CodeInvalidException("Twilio did not approve the code.");
+        }
+
+        List<string> customerIds = await square.FindCustomerIdsAsync(request.Phone, cancellationToken);
+        if (customerIds.Count == 0)
+        {
+            return [];
+        }
+
+        ShopDetails shopDetails = await square.GetShopDetailsAsync(cancellationToken);
+        BookingProfile bookingProfile = await square.GetBookingProfileAsync(shopDetails.LocationId, cancellationToken);
+        DateTimeOffset now = time.GetUtcNow();
+        DateTimeRange bookingWindow = new(
+            now,
+            now + bookingProfile.MaximumAdvance
+        );
+        List<Appointment>[] appointmentsByCustomer = await Task.WhenAll(customerIds.Select(customerId =>
+            square.ListCustomerAppointmentsAsync(shopDetails.LocationId, customerId, bookingWindow, cancellationToken)));
+
+        return [.. appointmentsByCustomer
+            .SelectMany(appointments => appointments)
+            .Where(appointment => appointment.IsUpcomingAt(now))
+            .DistinctBy(appointment => appointment.Id)
+            .OrderBy(appointment => appointment.StartAt)
+            .Select(appointment => appointment.ToFoundBookingDto(manageTokens.Sign(appointment.Id)))];
+    }
+
     public async Task<BookingConfirmation> BookAsync(BookingRequest request, CancellationToken cancellationToken)
     {
         string idempotencyKey = request.IdempotencyKey.ToString();

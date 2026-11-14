@@ -9,6 +9,7 @@ using ThadTheBarber.Api.Infrastructure.Storage.Services;
 using ThadTheBarber.Api.Features.Session.Services;
 using ThadTheBarber.Api.Recaptcha.Services;
 using ThadTheBarber.Api.Square.Services;
+using ThadTheBarber.Api.Twilio.Services;
 using ThadTheBarber.Api.Tests.TestSupport.Fakes;
 
 namespace ThadTheBarber.Api.Tests.TestSupport;
@@ -36,9 +37,10 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
     private readonly TimeProvider _time;
     private readonly FakeRecaptchaService _recaptcha;
     private readonly FakeMediaStorage _media;
+    private readonly FakeTwilioVerifyService _twilio;
 
     public ApiFactory()
-        : this(null, null, null, null, null)
+        : this(null, null, null, null, null, null)
     {
     }
 
@@ -52,18 +54,21 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
     /// Replaces the storage account's gallery folder and content container; defaults to two photos and a valid
     /// reviews file.
     /// </param>
+    /// <param name="twilio">Replaces Twilio Verify; defaults to a <see cref="FakeTwilioVerifyService"/> that approves <see cref="FakeTwilioVerifyService.ApprovedCode"/>.</param>
     internal ApiFactory(
         string[]? origins = null,
         ISquareService? square = null,
         TimeProvider? time = null,
         FakeRecaptchaService? recaptcha = null,
-        FakeMediaStorage? media = null)
+        FakeMediaStorage? media = null,
+        FakeTwilioVerifyService? twilio = null)
     {
         _origins = origins ?? [FrontendOrigin, CustomDomainOrigin];
         _square = square ?? new FakeSquareService();
         _time = time ?? TimeProvider.System;
         _recaptcha = recaptcha ?? new FakeRecaptchaService();
         _media = media ?? CreateMediaWithReviews();
+        _twilio = twilio ?? new FakeTwilioVerifyService();
     }
 
     public FakeSessionSigningKey SigningKey { get; } = new();
@@ -114,6 +119,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
             services.AddSingleton<IRecaptchaService>(_recaptcha);
             services.AddSingleton<ISessionSigningKey>(SigningKey);
             services.AddSingleton<IMediaStorage>(_media);
+            services.AddSingleton<ITwilioVerifyService>(_twilio);
         });
     }
 

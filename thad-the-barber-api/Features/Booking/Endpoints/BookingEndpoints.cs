@@ -26,6 +26,12 @@ public static class BookingEndpoints
         bookings.MapPost("", CreateBookingAsync)
             .WithName("CreateBooking")
             .RequireRateLimiting(RateLimitSetup.BookingPolicy);
+        bookings.MapPost("/lookup/start", StartLookupAsync)
+            .WithName("StartBookingLookup")
+            .RequireRateLimiting(RateLimitSetup.LookupStartPolicy);
+        bookings.MapPost("/lookup/verify", VerifyLookupAsync)
+            .WithName("VerifyBookingLookup")
+            .RequireRateLimiting(RateLimitSetup.LookupVerifyPolicy);
         bookings.MapGet("/{id}", GetBookingAsync)
             .WithName("GetBooking");
         bookings.MapPost("/{id}/cancel", CancelBookingAsync)
@@ -106,6 +112,29 @@ public static class BookingEndpoints
         BookingService booking,
         CancellationToken cancellationToken) =>
         TypedResults.Created((string?)null, await booking.BookAsync(request, cancellationToken));
+
+    /// <summary>
+    /// Texts a code to the phone. Always 202, whether or not the phone has bookings, so it can't be used to find out who
+    /// books here (BR-20); a phone asked too often is 429 <c>rate_limited</c>.
+    /// </summary>
+    internal static async Task<Accepted> StartLookupAsync(
+        LookupStartRequest request,
+        BookingService booking,
+        CancellationToken cancellationToken)
+    {
+        await booking.StartLookupAsync(request.Phone, cancellationToken);
+        return TypedResults.Accepted((string?)null);
+    }
+
+    /// <summary>
+    /// The phone's upcoming bookings, soonest first, once the code from the text is right; a wrong or expired code is
+    /// 400 <c>code_invalid</c>.
+    /// </summary>
+    internal static async Task<Ok<List<FoundBooking>>> VerifyLookupAsync(
+        LookupVerifyRequest request,
+        BookingService booking,
+        CancellationToken cancellationToken) =>
+        TypedResults.Ok(await booking.VerifyLookupAsync(request, cancellationToken));
 
     /// <summary>
     /// The booking's time and whether it can still change. The manage token comes only from the
