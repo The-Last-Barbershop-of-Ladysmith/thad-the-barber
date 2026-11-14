@@ -5,4 +5,5 @@ import { App } from './app/app';
 bootstrapApplication(App, config)
   .catch((err: unknown): void => {
     console.error(err);
+    document.getElementById('startup-loader')?.setAttribute('data-failed', '');
   });
