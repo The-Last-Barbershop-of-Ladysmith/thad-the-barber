@@ -29,6 +29,7 @@ using ThadTheBarber.Api.Infrastructure.Telemetry.Configuration;
 using ThadTheBarber.Api.Recaptcha.Configuration;
 using ThadTheBarber.Api.Square.Configuration;
 using ThadTheBarber.Api.Square.Endpoints;
+using ThadTheBarber.Api.Twilio.Configuration;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -50,6 +51,7 @@ builder.Services.AddFrontendCors(builder.Configuration);
 builder.Services.AddRateLimits(builder.Configuration);
 builder.Services.AddSquareService(builder.Configuration);
 builder.Services.AddRecaptcha(builder.Configuration);
+builder.Services.AddTwilioVerify(builder.Configuration);
 builder.Services.AddSessionTokens(builder.Configuration);
 builder.Services.AddSessionBearerAuth();
 builder.Services.AddHealth();
