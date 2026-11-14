@@ -45,9 +45,15 @@ public sealed class TwilioVerifyService(IOptions<TwilioSettings> settings, IHttp
 
             return check.Status == ApprovedStatus;
         }
-        // Twilio answers 404 for an expired or already used code and 429 once its wrong tries are used up.
-        catch (TwilioRequestFailedException exception) when (exception.StatusCode is StatusCodes.Status404NotFound or StatusCodes.Status429TooManyRequests)
+        catch (TwilioRequestFailedException exception)
         {
+            // Twilio answers 404 for an expired or already used code and 429 once its wrong tries are used up.
+            bool isCodeRefused = exception.StatusCode is StatusCodes.Status404NotFound or StatusCodes.Status429TooManyRequests;
+            if (!isCodeRefused)
+            {
+                throw;
+            }
+
             return false;
         }
     }

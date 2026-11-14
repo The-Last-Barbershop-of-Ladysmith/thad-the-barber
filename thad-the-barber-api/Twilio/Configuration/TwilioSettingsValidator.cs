@@ -10,7 +10,8 @@ public sealed class TwilioSettingsValidator : IValidateOptions<TwilioSettings>
 {
     public ValidateOptionsResult Validate(string? name, TwilioSettings options)
     {
-        if (options.AccountSid.Length + options.VerifyServiceSid.Length + options.ApiKeySid.Length + options.ApiKeySecret.Length == 0)
+        bool isAnythingSet = options.AccountSid.Length + options.VerifyServiceSid.Length + options.ApiKeySid.Length + options.ApiKeySecret.Length > 0;
+        if (!isAnythingSet)
         {
             return ValidateOptionsResult.Success;
         }
