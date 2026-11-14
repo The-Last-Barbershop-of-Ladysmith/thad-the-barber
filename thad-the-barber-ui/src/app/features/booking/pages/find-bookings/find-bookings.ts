@@ -195,8 +195,12 @@ export class FindBookings {
       [LookupStep.Code]: 'lookup-code',
       [LookupStep.Results]: 'lookup-results-heading',
     };
+    // Focus returns when a request ends, since locking the form drops it; a request's own notice is a live region.
     effect((): void => {
       const focusTarget: string = focusTargets[this.step()];
+      if (this.isLookingUp()) {
+        return;
+      }
       afterNextRender(
         (): void => {
           document.getElementById(focusTarget)?.focus();

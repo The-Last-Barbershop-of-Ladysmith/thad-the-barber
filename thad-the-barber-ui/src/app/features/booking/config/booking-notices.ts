@@ -130,6 +130,12 @@ export const NO_UPCOMING_BOOKINGS_NOTICE: Notice = {
   canRetry: false,
 };
 
+export const CODE_SENT_NOTICE: Notice = {
+  severity: NoticeSeverity.Success,
+  text: 'We texted you a code.',
+  canRetry: false,
+};
+
 export const LOOKUP_FAILED_NOTICE: Notice = {
   severity: NoticeSeverity.Error,
   text: 'We couldn’t check that. Please try again.',

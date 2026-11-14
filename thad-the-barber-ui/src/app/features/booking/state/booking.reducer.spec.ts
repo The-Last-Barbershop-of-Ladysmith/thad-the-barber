@@ -8,6 +8,7 @@ import { LookupStep } from '../models/lookup-step.model';
 import { Action } from '@ngrx/store';
 import { Notice } from '../../../shared/models/notice.model';
 import { NoticeSeverity } from '../../../shared/models/notice-severity.model';
+import { CODE_SENT_NOTICE } from '../config/booking-notices';
 import * as BookingActions from './booking.actions';
 import { bookingReducer } from './booking.reducer';
 import { BookingState, initialBookingState } from './booking.state';
@@ -158,6 +159,7 @@ describe(
           canRetry: false,
         };
         const codeAsked: BookingState = { ...initialBookingState, lookupStep: LookupStep.Code };
+        const codeSent: BookingState = { ...codeAsked, lookupNotice: CODE_SENT_NOTICE };
         const found: BookingState = {
           ...initialBookingState,
           lookupStep: LookupStep.Results,
@@ -183,11 +185,11 @@ describe(
         );
 
         it(
-          'moves to the code step once it is sent, and to the results once it is verified',
+          'moves to the code step with a confirmation once it is sent, and to the results once it is verified',
           (): void => {
             const asking: BookingState = { ...initialBookingState, lookupStatus: RequestStatus.Pending };
 
-            expect(bookingReducer(asking, BookingActions.LookupStartRequestSuccess())).toEqual(codeAsked);
+            expect(bookingReducer(asking, BookingActions.LookupStartRequestSuccess())).toEqual(codeSent);
             expect(bookingReducer(
               { ...codeAsked, lookupStatus: RequestStatus.Pending },
               BookingActions.LookupVerifyRequestSuccess({ foundBookings }),

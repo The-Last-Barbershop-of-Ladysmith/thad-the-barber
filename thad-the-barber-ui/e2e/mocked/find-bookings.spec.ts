@@ -130,6 +130,7 @@ test.describe(
 
         await expect(page.getByTestId('lookup-notice')).toBeVisible();
         await expect(page.getByTestId('lookup-code')).toBeEnabled();
+        await expect(page.getByTestId('lookup-code')).toBeFocused();
         await expectNoA11yViolations(page);
 
         await submitCode(page);
@@ -171,7 +172,24 @@ test.describe(
 
         await expect(page.getByTestId('lookup-notice')).toBeVisible();
         await expect(page.getByTestId('send-code')).toBeEnabled();
+        await expect(page.locator('#lookup-phone')).toBeFocused();
         await expect(page.getByTestId('lookup-code')).toHaveCount(0);
+        await expectNoA11yViolations(page);
+      },
+    );
+
+    test(
+      'confirms a new code with a live-region notice, and keeps focus on the empty code field',
+      async ({ page }: { page: Page; }): Promise<void> => {
+        await page.route(isLookupStartRequest, acceptStart);
+        await askForCode(page);
+        await page.getByTestId('lookup-code').fill('12');
+
+        await page.getByTestId('resend-code').click();
+
+        await expect(page.getByTestId('lookup-notice').getByRole('alert')).toBeVisible();
+        await expect(page.getByTestId('lookup-code')).toHaveValue('');
+        await expect(page.getByTestId('lookup-code')).toBeFocused();
         await expectNoA11yViolations(page);
       },
     );

@@ -5,6 +5,7 @@ import { FoundBooking } from '../dtos/found-booking.dto';
 import { DayRange } from '../models/day-range.model';
 import { LookupStep } from '../models/lookup-step.model';
 import { Notice } from '../../../shared/models/notice.model';
+import { CODE_SENT_NOTICE } from '../config/booking-notices';
 import * as BookingActions from './booking.actions';
 import { BookingState, initialBookingState } from './booking.state';
 
@@ -107,6 +108,7 @@ export const bookingReducer: ActionReducer<BookingState> = createReducer(
       ...state,
       lookupStep: LookupStep.Code,
       lookupStatus: RequestStatus.Idle,
+      lookupNotice: CODE_SENT_NOTICE,
     }),
   ),
   on(
@@ -115,6 +117,7 @@ export const bookingReducer: ActionReducer<BookingState> = createReducer(
       ...state,
       lookupStep: LookupStep.Results,
       lookupStatus: RequestStatus.Idle,
+      lookupNotice: null,
       foundBookings,
     }),
   ),

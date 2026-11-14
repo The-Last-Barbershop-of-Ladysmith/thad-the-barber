@@ -186,6 +186,34 @@ describe(
     );
 
     it(
+      'puts focus back on the code field when a request fails and the form unlocks',
+      async (): Promise<void> => {
+        document.body.append(fixture.nativeElement as HTMLElement);
+        const codeInput: HTMLInputElement = openCodeStep();
+        type(codeInput, '0042');
+        store.dispatch(BookingActions.LookupVerifyRequest({ phone: '+15555550123', code: '0042' }));
+        fixture.detectChanges();
+        await fixture.whenStable();
+        codeInput.blur();
+
+        store.dispatch(BookingActions.LookupVerifyRequestFailure({ notice: CODE_INVALID_NOTICE }));
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(document.activeElement).toBe(codeInput);
+      },
+    );
+
+    it(
+      'confirms a sent code with a notice on the code step',
+      (): void => {
+        openCodeStep();
+
+        expect(byTestId('lookup-notice')).not.toBeNull();
+      },
+    );
+
+    it(
       'asks for a new code with an empty code field',
       (): void => {
         const codeInput: HTMLInputElement = openCodeStep();
