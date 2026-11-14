@@ -478,12 +478,12 @@ public sealed class BookingServiceTests
             twilio ?? new FakeTwilioVerifyService(),
             new PhoneRateLimiter(Options.Create(new RateLimitSettings
             {
-                LookupPhone = new FixedWindowLimit
+                LookupCodePhone = new FixedWindowLimit
                 {
                     PermitLimit = MaxTextCodesPerPhone,
                     Window = TimeSpan.FromMinutes(10),
                 },
-                LookupVerifyPhone = new FixedWindowLimit
+                LookupVerifiedListPhone = new FixedWindowLimit
                 {
                     PermitLimit = MaxVerifyAttemptsPerPhone,
                     Window = TimeSpan.FromMinutes(10),

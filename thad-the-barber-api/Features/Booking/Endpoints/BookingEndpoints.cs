@@ -28,10 +28,10 @@ public static class BookingEndpoints
             .RequireRateLimiting(RateLimitSetup.BookingPolicy);
         bookings.MapPost("/lookup/code", SendLookupCodeAsync)
             .WithName("SendBookingLookupCode")
-            .RequireRateLimiting(RateLimitSetup.LookupStartPolicy);
+            .RequireRateLimiting(RateLimitSetup.LookupCodePolicy);
         bookings.MapPost("/lookup/verified-list", GetVerifiedListAsync)
             .WithName("GetVerifiedBookingList")
-            .RequireRateLimiting(RateLimitSetup.LookupVerifyPolicy);
+            .RequireRateLimiting(RateLimitSetup.LookupVerifiedListPolicy);
         bookings.MapGet("/{id}", GetBookingAsync)
             .WithName("GetBooking");
         bookings.MapPost("/{id}/cancel", CancelBookingAsync)

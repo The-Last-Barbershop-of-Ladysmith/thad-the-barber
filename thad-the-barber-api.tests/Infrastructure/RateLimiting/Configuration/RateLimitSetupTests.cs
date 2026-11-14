@@ -185,8 +185,8 @@ public sealed class RateLimitSetupTests(ApiFactory factory) : IClassFixture<ApiF
                 ["RateLimits:Booking:PermitLimit"] = "2",
                 ["RateLimits:Manage:PermitLimit"] = "2",
                 ["RateLimits:NextTimes:PermitLimit"] = "2",
-                ["RateLimits:LookupStart:PermitLimit"] = "2",
-                ["RateLimits:LookupVerify:PermitLimit"] = "2",
+                ["RateLimits:LookupCode:PermitLimit"] = "2",
+                ["RateLimits:LookupVerifiedList:PermitLimit"] = "2",
             }));
         });
 
@@ -196,8 +196,8 @@ public sealed class RateLimitSetupTests(ApiFactory factory) : IClassFixture<ApiF
             builder.UseSetting("FORWARDEDHEADERS_ENABLED", "true");
             builder.ConfigureAppConfiguration((_, configuration) => configuration.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["RateLimits:LookupVerify:PermitLimit"] = "100",
-                ["RateLimits:LookupVerifyPhone:PermitLimit"] = "2",
+                ["RateLimits:LookupVerifiedList:PermitLimit"] = "100",
+                ["RateLimits:LookupVerifiedListPhone:PermitLimit"] = "2",
             }));
         });
 

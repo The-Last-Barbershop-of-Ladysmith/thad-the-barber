@@ -17,8 +17,8 @@ public static class RateLimitSetup
     public const string BookingPolicy = "booking";
     public const string ManagePolicy = "manage";
     public const string NextTimesPolicy = "next-times";
-    public const string LookupStartPolicy = "lookup-start";
-    public const string LookupVerifyPolicy = "lookup-verify";
+    public const string LookupCodePolicy = "lookup-code";
+    public const string LookupVerifiedListPolicy = "lookup-verified-list";
 
     public static IServiceCollection AddRateLimits(this IServiceCollection services, IConfiguration configuration)
     {
@@ -46,8 +46,8 @@ public static class RateLimitSetup
                 options.AddPolicy(BookingPolicy, context => PerClientIp(context, settings.Value.Booking));
                 options.AddPolicy(ManagePolicy, context => PerClientIp(context, settings.Value.Manage));
                 options.AddPolicy(NextTimesPolicy, context => PerClientIp(context, settings.Value.NextTimes));
-                options.AddPolicy(LookupStartPolicy, context => PerClientIp(context, settings.Value.LookupStart));
-                options.AddPolicy(LookupVerifyPolicy, context => PerClientIp(context, settings.Value.LookupVerify));
+                options.AddPolicy(LookupCodePolicy, context => PerClientIp(context, settings.Value.LookupCode));
+                options.AddPolicy(LookupVerifiedListPolicy, context => PerClientIp(context, settings.Value.LookupVerifiedList));
             });
         return services;
     }

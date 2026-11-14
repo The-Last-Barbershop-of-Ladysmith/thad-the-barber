@@ -28,7 +28,7 @@ public sealed class BookingService(
 {
     public async Task SendLookupCodeAsync(string phone, CancellationToken cancellationToken)
     {
-        phoneRateLimiter.EnforceStart(phone);
+        phoneRateLimiter.EnforceCode(phone);
         await twilioVerify.StartAsync(phone, cancellationToken);
     }
 
@@ -39,7 +39,7 @@ public sealed class BookingService(
     /// </summary>
     public async Task<List<FoundBooking>> GetVerifiedListAsync(VerifiedListRequest request, CancellationToken cancellationToken)
     {
-        phoneRateLimiter.EnforceVerify(request.Phone);
+        phoneRateLimiter.EnforceVerifiedList(request.Phone);
         bool isCodeValid = await twilioVerify.CheckAsync(request.Phone, request.Code, cancellationToken);
         if (!isCodeValid)
         {
