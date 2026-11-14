@@ -23,7 +23,6 @@ public sealed class PhoneRateLimiter(IOptions<RateLimitSettings> settings) : IDi
                 Window = settings.Value.LookupPhone.Window,
             }));
 
-    /// <exception cref="RateLimitedException">The phone has used up its limit for this window.</exception>
     public void Enforce(string phone)
     {
         string phoneHash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(phone)));

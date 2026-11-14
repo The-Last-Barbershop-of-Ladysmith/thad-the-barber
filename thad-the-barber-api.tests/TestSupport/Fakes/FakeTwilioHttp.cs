@@ -3,10 +3,6 @@ using System.Text;
 
 namespace ThadTheBarber.Api.Tests.TestSupport.Fakes;
 
-/// <summary>
-/// Twilio Verify's HTTP API for tests: every request is recorded and answered with <see cref="Status"/> and
-/// <see cref="Body"/>; <see cref="Down"/> makes them fail like a lost connection.
-/// </summary>
 public sealed class FakeTwilioHttp : HttpMessageHandler
 {
     public List<RecordedRequest> Requests { get; } = [];

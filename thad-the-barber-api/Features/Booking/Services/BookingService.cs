@@ -15,8 +15,7 @@ namespace ThadTheBarber.Api.Features.Booking.Services;
 
 /// <summary>
 /// Books the shop's one service for a customer matched silently by phone (BR-21). The request's idempotency key goes
-/// to both <c>CreateCustomer</c> and <c>CreateBooking</c>, so a retried attempt never creates a second of either. Also
-/// finds a phone's upcoming bookings once a text code proves the phone (BR-20).
+/// to both <c>CreateCustomer</c> and <c>CreateBooking</c>, so a retried attempt never creates a second of either.
 /// </summary>
 public sealed class BookingService(
     ISquareService square,

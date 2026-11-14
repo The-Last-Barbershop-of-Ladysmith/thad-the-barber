@@ -54,7 +54,6 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
     /// Replaces the storage account's gallery folder and content container; defaults to two photos and a valid
     /// reviews file.
     /// </param>
-    /// <param name="twilio">Replaces Twilio Verify; defaults to a <see cref="FakeTwilioVerifyService"/> that approves <see cref="FakeTwilioVerifyService.ApprovedCode"/>.</param>
     internal ApiFactory(
         string[]? origins = null,
         ISquareService? square = null,

@@ -126,10 +126,6 @@ public static class BookingEndpoints
         return TypedResults.Accepted((string?)null);
     }
 
-    /// <summary>
-    /// The phone's upcoming bookings, soonest first, once the code from the text is right; a wrong or expired code is
-    /// 400 <c>code_invalid</c>.
-    /// </summary>
     internal static async Task<Ok<List<FoundBooking>>> VerifyLookupAsync(
         LookupVerifyRequest request,
         BookingService booking,
