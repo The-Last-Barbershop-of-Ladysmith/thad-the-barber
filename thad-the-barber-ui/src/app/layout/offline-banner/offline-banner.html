@@ -1,0 +1,13 @@
+<div class="offline-bar" (window:offline)="isOffline.set(true)" (window:online)="isOffline.set(false)">
+  @if (isOffline()) {
+    <p-message
+      styleClass="w-full"
+      data-testid="offline-banner"
+      severity="warn"
+      icon="pi pi-exclamation-triangle"
+      [closable]="false"
+    >
+      You’re offline. Some things won’t load or save until you’re back online.
+    </p-message>
+  }
+</div>

@@ -1,7 +1,10 @@
-import { ErrorHandler } from '@angular/core';
+import { EnvironmentProviders, ErrorHandler, Provider } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { MockInstance } from 'vitest';
+import { provideStore } from '@ngrx/store';
+import { ToastMessageOptions, MessageService } from 'primeng/api';
+import { Mock, MockInstance } from 'vitest';
+import { shopFeature } from '../../features/shop/state/shop.feature';
 import {
   AngularPlugin,
   ApplicationinsightsAngularpluginErrorService,
@@ -14,6 +17,14 @@ const SETTINGS: TelemetrySettings = {
   apiBaseUrl: 'https://api.example.com/api',
 };
 
+const add: Mock<(message: ToastMessageOptions) => void> = vi.fn();
+
+/** What the error toast needs: the shop's phone from the store, and somewhere to show the toast. */
+const TOAST_PROVIDERS: (Provider | EnvironmentProviders)[] = [
+  provideStore({ [shopFeature.name]: shopFeature.reducer }),
+  { provide: MessageService, useValue: { add } },
+];
+
 /** The plugin keeps the loaded SDK in a private field; it is only set once App Insights has loaded. */
 interface WiredErrorService { analyticsPlugin?: unknown; }
 
@@ -24,6 +35,10 @@ function wiredPlugin(): unknown {
 describe(
   'provideTelemetry',
   (): void => {
+    beforeEach((): void => {
+      add.mockClear();
+    });
+
     it(
       'does not load the SDK when the connection string is empty',
       (): void => {
@@ -38,10 +53,35 @@ describe(
     it(
       'loads the SDK and routes errors through the plugin when a connection string is set',
       (): void => {
-        TestBed.configureTestingModule({ providers: [provideRouter([]), provideTelemetry(SETTINGS)] });
+        TestBed.configureTestingModule({
+          providers: [
+            provideRouter([]),
+            TOAST_PROVIDERS,
+            provideTelemetry(SETTINGS),
+          ],
+        });
 
         expect(TestBed.inject(ErrorHandler)).toBeInstanceOf(ApplicationinsightsAngularpluginErrorService);
         expect(wiredPlugin()).toBeDefined();
+      },
+    );
+
+    it(
+      'shows the friendly error toast for an uncaught error, once per error',
+      (): void => {
+        vi.spyOn(console, 'error').mockReturnValue(undefined);
+        TestBed.configureTestingModule({
+          providers: [
+            provideRouter([]),
+            TOAST_PROVIDERS,
+            provideTelemetry(SETTINGS),
+          ],
+        });
+
+        TestBed.inject(ErrorHandler).handleError(new Error('boom'));
+
+        expect(add).toHaveBeenCalledTimes(1);
+        expect(add.mock.calls[0]?.[0].severity).toBe('error');
       },
     );
 
@@ -50,11 +90,17 @@ describe(
       (): void => {
         const consoleError: MockInstance<typeof console.error> = vi.spyOn(console, 'error').mockReturnValue(undefined);
         const error: Error = new Error('boom');
-        TestBed.configureTestingModule({ providers: [provideRouter([]), provideTelemetry(SETTINGS)] });
+        TestBed.configureTestingModule({
+          providers: [
+            provideRouter([]),
+            TOAST_PROVIDERS,
+            provideTelemetry(SETTINGS),
+          ],
+        });
 
         TestBed.inject(ErrorHandler).handleError(error);
 
-        expect(consoleError).toHaveBeenCalledWith('ERROR', error);
+        expect(consoleError).toHaveBeenCalledExactlyOnceWith('ERROR', error);
         consoleError.mockRestore();
       },
     );
