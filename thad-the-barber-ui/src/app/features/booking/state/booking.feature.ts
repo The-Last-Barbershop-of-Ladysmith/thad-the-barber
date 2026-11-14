@@ -11,7 +11,6 @@ import { BookingState } from './booking.state';
 export type BookingExtraSelectors = {
   selectIsLoading: MemoizedSelector<object, boolean>;
   selectIsSubmitting: MemoizedSelector<object, boolean>;
-  selectIsLookingUp: MemoizedSelector<object, boolean>;
   /** The booking or move went through and the page is leaving: nothing more is sent, and leaving doesn't ask. */
   selectIsSubmitDone: MemoizedSelector<object, boolean>;
   /** Each open day of the month in view ("2026-10-03") and how many open times it has. */
@@ -26,7 +25,6 @@ export const bookingFeature = createFeature({
   extraSelectors: ({
     selectLoadStatus,
     selectSubmitStatus,
-    selectLookupStatus,
     selectAvailableDays,
   }: FeatureSelectors<BookingState>): BookingExtraSelectors => ({
     selectIsLoading: createSelector(
@@ -35,10 +33,6 @@ export const bookingFeature = createFeature({
     ),
     selectIsSubmitting: createSelector(
       selectSubmitStatus,
-      toIsPending,
-    ),
-    selectIsLookingUp: createSelector(
-      selectLookupStatus,
       toIsPending,
     ),
     selectIsSubmitDone: createSelector(

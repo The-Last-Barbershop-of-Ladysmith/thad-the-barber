@@ -1,11 +1,8 @@
 import { ActionReducer, createReducer, on } from '@ngrx/store';
 import { RequestStatus } from '../../../shared/models/request.models';
 import { AvailableDay } from '../dtos/available-day.dto';
-import { FoundBooking } from '../dtos/found-booking.dto';
 import { DayRange } from '../models/day-range.model';
-import { LookupStep } from '../models/lookup-step.model';
 import { Notice } from '../../../shared/models/notice.model';
-import { CODE_SENT_NOTICE } from '../config/booking-notices';
 import * as BookingActions from './booking.actions';
 import { BookingState, initialBookingState } from './booking.state';
 
@@ -73,61 +70,5 @@ export const bookingReducer: ActionReducer<BookingState> = createReducer(
   on(
     BookingActions.AvailabilityRequestFailure,
     (state: BookingState): BookingState => ({ ...state, loadStatus: RequestStatus.Error }),
-  ),
-  on(
-    BookingActions.LookupReset,
-    (state: BookingState): BookingState => ({
-      ...state,
-      lookupStep: initialBookingState.lookupStep,
-      lookupStatus: initialBookingState.lookupStatus,
-      lookupNotice: null,
-      foundBookings: [],
-    }),
-  ),
-  on(
-    BookingActions.LookupPhoneChange,
-    (state: BookingState): BookingState => ({
-      ...state,
-      lookupStep: LookupStep.Phone,
-      lookupStatus: RequestStatus.Idle,
-      lookupNotice: null,
-    }),
-  ),
-  on(
-    BookingActions.LookupStartRequest,
-    BookingActions.LookupVerifyRequest,
-    (state: BookingState): BookingState => ({
-      ...state,
-      lookupStatus: RequestStatus.Pending,
-      lookupNotice: null,
-    }),
-  ),
-  on(
-    BookingActions.LookupStartRequestSuccess,
-    (state: BookingState): BookingState => ({
-      ...state,
-      lookupStep: LookupStep.Code,
-      lookupStatus: RequestStatus.Idle,
-      lookupNotice: CODE_SENT_NOTICE,
-    }),
-  ),
-  on(
-    BookingActions.LookupVerifyRequestSuccess,
-    (state: BookingState, { foundBookings }: { foundBookings: FoundBooking[]; }): BookingState => ({
-      ...state,
-      lookupStep: LookupStep.Results,
-      lookupStatus: RequestStatus.Idle,
-      lookupNotice: null,
-      foundBookings,
-    }),
-  ),
-  on(
-    BookingActions.LookupStartRequestFailure,
-    BookingActions.LookupVerifyRequestFailure,
-    (state: BookingState, { notice }: { notice: Notice; }): BookingState => ({
-      ...state,
-      lookupStatus: RequestStatus.Error,
-      lookupNotice: notice,
-    }),
   ),
 );

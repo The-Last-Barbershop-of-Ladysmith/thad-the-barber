@@ -18,27 +18,18 @@ import { shopFeature } from '../../shop/state/shop.feature';
 import { AvailableDay } from '../dtos/available-day.dto';
 import { BookingConfirmation } from '../dtos/booking-confirmation.dto';
 import { BookingRequest } from '../dtos/booking-request.dto';
-import { FoundBooking } from '../dtos/found-booking.dto';
 import { ManagedBooking } from '../dtos/managed-booking.dto';
 import { DayRange } from '../models/day-range.model';
 import { AvailabilityService } from '../services/availability.service';
 import { BookingService } from '../services/booking.service';
 import { toMonthRange } from '../utils/booking-time.utils';
-import {
-  BOOKING_CHANGED_NOTICE,
-  CODE_INVALID_NOTICE,
-  LOOKUP_FAILED_NOTICE,
-  LOOKUP_RATE_LIMITED_NOTICE,
-  SLOT_TAKEN_NOTICE,
-} from '../config/booking-notices';
+import { BOOKING_CHANGED_NOTICE, SLOT_TAKEN_NOTICE } from '../config/booking-notices';
 import * as BookingActions from './booking.actions';
 import {
   loadAvailability,
   openBookedPage,
   openFirstMonth,
   requestBooking,
-  requestLookupStart,
-  requestLookupVerify,
   requestReschedule,
   returnToMovedBooking,
 } from './booking.effects';
@@ -348,136 +339,6 @@ describe(
           emitted[0] as ReturnType<typeof BookingActions.RescheduleRequestFailure>;
         expect(failure.takenStartAt).toBe(moved.startAt);
         expect(failure.notice?.canRetry).toBe(false);
-      },
-    );
-  },
-);
-
-describe(
-  'looking up bookings',
-  (): void => {
-    const phone: string = '+15555550123';
-    const foundBookings: FoundBooking[] = [
-      {
-        id: 'made-up-booking',
-        startAt: '2026-02-03T20:00:00Z',
-        manageToken: 'made-up-token',
-      },
-    ];
-    let actions$: Subject<Action>;
-    let emitted: Action[];
-    let response: Subject<unknown>;
-    let sentCount: number;
-
-    function failWith(status: number, code: ProblemCode): void {
-      response.error(new HttpErrorResponse({ status, error: { code } }));
-    }
-
-    beforeEach((): void => {
-      actions$ = new Subject<Action>();
-      emitted = [];
-      response = new Subject<unknown>();
-      sentCount = 0;
-      TestBed.configureTestingModule({
-        providers: [
-          { provide: Actions, useValue: new Actions(actions$) },
-          {
-            provide: BookingService,
-            useValue: {
-              startLookup: (): Observable<unknown> => {
-                sentCount++;
-                return response;
-              },
-              verifyLookup: (): Observable<unknown> => {
-                sentCount++;
-                return response;
-              },
-            },
-          },
-        ],
-      });
-      for (const effect of [requestLookupStart, requestLookupVerify]) {
-        TestBed.runInInjectionContext((): Observable<Action> => effect() as Observable<Action>)
-          .subscribe((action: Action): void => {
-            emitted.push(action);
-          });
-      }
-    });
-
-    it(
-      'reports the code as sent',
-      (): void => {
-        actions$.next(BookingActions.LookupStartRequest({ phone }));
-        response.next(null);
-
-        expect(emitted).toEqual([BookingActions.LookupStartRequestSuccess()]);
-      },
-    );
-
-    it(
-      'passes on the found bookings, even none',
-      (): void => {
-        actions$.next(BookingActions.LookupVerifyRequest({ phone, code: '0042' }));
-        response.next([]);
-
-        expect(emitted).toEqual([BookingActions.LookupVerifyRequestSuccess({ foundBookings: [] })]);
-      },
-    );
-
-    it(
-      'passes on the found bookings in the order they came',
-      (): void => {
-        actions$.next(BookingActions.LookupVerifyRequest({ phone, code: '0042' }));
-        response.next(foundBookings);
-
-        expect(emitted).toEqual([BookingActions.LookupVerifyRequestSuccess({ foundBookings })]);
-      },
-    );
-
-    it(
-      'lets the customer retry a wrong code and tells a rate limit apart',
-      (): void => {
-        actions$.next(BookingActions.LookupVerifyRequest({ phone, code: '0042' }));
-        failWith(400, ProblemCode.CodeInvalid);
-        response = new Subject<unknown>();
-        actions$.next(BookingActions.LookupStartRequest({ phone }));
-        failWith(429, ProblemCode.RateLimited);
-
-        expect(emitted).toEqual([
-          BookingActions.LookupVerifyRequestFailure({ notice: CODE_INVALID_NOTICE }),
-          BookingActions.LookupStartRequestFailure({ notice: LOOKUP_RATE_LIMITED_NOTICE }),
-        ]);
-      },
-    );
-
-    it(
-      'shows the failed notice for any other failure',
-      (): void => {
-        actions$.next(BookingActions.LookupStartRequest({ phone }));
-        response.error(new HttpErrorResponse({ status: 503 }));
-
-        expect(emitted).toEqual([BookingActions.LookupStartRequestFailure({ notice: LOOKUP_FAILED_NOTICE })]);
-      },
-    );
-
-    it(
-      'sends a second request only once the first is answered',
-      (): void => {
-        actions$.next(BookingActions.LookupStartRequest({ phone }));
-        actions$.next(BookingActions.LookupStartRequest({ phone }));
-
-        expect(sentCount).toBe(1);
-      },
-    );
-
-    it(
-      'drops an answer that comes after the page was left',
-      (): void => {
-        actions$.next(BookingActions.LookupVerifyRequest({ phone, code: '0042' }));
-        actions$.next(BookingActions.LookupReset());
-        response.next(foundBookings);
-
-        expect(emitted).toEqual([]);
       },
     );
   },

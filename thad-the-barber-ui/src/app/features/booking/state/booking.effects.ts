@@ -3,19 +3,7 @@ import { Router } from '@angular/router';
 import { Actions, FunctionalEffect, createEffect, ofType } from '@ngrx/effects';
 import { Action, Store } from '@ngrx/store';
 import { MessageService } from 'primeng/api';
-import {
-  Observable,
-  catchError,
-  combineLatest,
-  exhaustMap,
-  filter,
-  map,
-  of,
-  switchMap,
-  take,
-  takeUntil,
-  tap,
-} from 'rxjs';
+import { Observable, catchError, combineLatest, exhaustMap, filter, map, of, switchMap, take, tap } from 'rxjs';
 import { SessionService } from '../../../core/services/session.service';
 import { Notice } from '../../../shared/models/notice.model';
 import { ProblemCode } from '../../../shared/models/problem-code.model';
@@ -26,7 +14,6 @@ import { shopFeature } from '../../shop/state/shop.feature';
 import { AvailableDay } from '../dtos/available-day.dto';
 import { BookingConfirmation } from '../dtos/booking-confirmation.dto';
 import { BookingRequest } from '../dtos/booking-request.dto';
-import { FoundBooking } from '../dtos/found-booking.dto';
 import { ManagedBooking } from '../dtos/managed-booking.dto';
 import { DayRange } from '../models/day-range.model';
 import { ManagePageState } from '../models/manage-page-state.model';
@@ -36,8 +23,6 @@ import {
   BOOKING_FAILED_NOTICE,
   BOOKING_PROBLEM_NOTICES,
   CHANGE_PROBLEM_NOTICES,
-  LOOKUP_FAILED_NOTICE,
-  LOOKUP_PROBLEM_NOTICES,
   RESCHEDULE_FAILED_NOTICE,
 } from '../config/booking-notices';
 import { toFirstMonth } from '../utils/booking-time.utils';
@@ -197,53 +182,6 @@ export const returnToMovedBooking: FunctionalEffect = createEffect(
     functional: true,
     dispatch: false,
   },
-);
-
-// Leaving the lookup page drops a request still in flight, so its answer can't land on the page's next visit.
-export const requestLookupStart: FunctionalEffect = createEffect(
-  (
-    actions$: Actions = inject<Actions>(Actions),
-    bookingService: BookingService = inject(BookingService),
-  ): Observable<Action> =>
-    actions$.pipe(
-      ofType(BookingActions.LookupStartRequest),
-      exhaustMap(({ phone }: { phone: string; }): Observable<Action> =>
-        bookingService.startLookup({ phone }).pipe(
-          map((): Action => BookingActions.LookupStartRequestSuccess()),
-          catchError((error: unknown): Observable<Action> => of(BookingActions.LookupStartRequestFailure({
-            notice: toProblemNotice(
-              error,
-              LOOKUP_PROBLEM_NOTICES,
-              LOOKUP_FAILED_NOTICE,
-            ),
-          }))),
-          takeUntil(actions$.pipe(ofType(BookingActions.LookupReset))),
-        )),
-    ),
-  { functional: true },
-);
-
-export const requestLookupVerify: FunctionalEffect = createEffect(
-  (
-    actions$: Actions = inject<Actions>(Actions),
-    bookingService: BookingService = inject(BookingService),
-  ): Observable<Action> =>
-    actions$.pipe(
-      ofType(BookingActions.LookupVerifyRequest),
-      exhaustMap(({ phone, code }: { phone: string; code: string; }): Observable<Action> =>
-        bookingService.verifyLookup({ phone, code }).pipe(
-          map((foundBookings: FoundBooking[]): Action => BookingActions.LookupVerifyRequestSuccess({ foundBookings })),
-          catchError((error: unknown): Observable<Action> => of(BookingActions.LookupVerifyRequestFailure({
-            notice: toProblemNotice(
-              error,
-              LOOKUP_PROBLEM_NOTICES,
-              LOOKUP_FAILED_NOTICE,
-            ),
-          }))),
-          takeUntil(actions$.pipe(ofType(BookingActions.LookupReset))),
-        )),
-    ),
-  { functional: true },
 );
 
 // A failed bot check already shows its own message, so its failure carries no notice. A taken time comes off the open
