@@ -19,6 +19,7 @@ import {
 } from '@microsoft/applicationinsights-web';
 import { Environment } from '../../../environments/environment.model';
 import { filter } from 'rxjs';
+import { ErrorToastService } from './error-toast.service';
 import { stripUrlQueries } from './strip-url-queries';
 
 export type TelemetrySettings = Pick<Environment, 'appInsightsConnectionString' | 'apiBaseUrl'>;
@@ -76,6 +77,7 @@ export function provideTelemetry(settings: TelemetrySettings): EnvironmentProvid
         // Angular's default handler keeps logging to the console, from the first error on, before the SDK loads too.
         // Add other handlers with addErrorHandler: an errorServices array in the plugin config replaces this one.
         errorService.addErrorHandler(new ErrorHandler());
+        errorService.addErrorHandler(inject(ErrorToastService));
         return errorService;
       },
     },
