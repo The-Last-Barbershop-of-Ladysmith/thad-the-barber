@@ -4,10 +4,12 @@ import {
   DestroyRef,
   Injector,
   Signal,
+  WritableSignal,
   afterNextRender,
   computed,
   effect,
   inject,
+  signal,
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
@@ -16,20 +18,25 @@ import { Store } from '@ngrx/store';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { SkeletonModule } from 'primeng/skeleton';
-import { map } from 'rxjs';
+import { Observable, finalize, map } from 'rxjs';
 import { NoticeMessage } from '../../../../shared/components/notice-message/notice-message';
 import { TitledPage } from '../../../../shared/components/titled-page/titled-page';
 import { Notice } from '../../../../shared/models/notice.model';
+import { toProblemNotice } from '../../../../shared/utils/problem.utils';
 import { toE164 } from '../../../../shared/utils/phone.utils';
 import { LOOKUP_CODE_VALIDATORS, PHONE_VALIDATORS } from '../../../../shared/validators/form.validators';
 import { AppState } from '../../../../store/app.state';
 import { shopFeature } from '../../../shop/state/shop.feature';
 import { PhoneField } from '../../components/phone-field/phone-field';
-import { NO_UPCOMING_BOOKINGS_NOTICE } from '../../config/booking-notices';
+import {
+  CODE_SENT_NOTICE,
+  LOOKUP_FAILED_NOTICE,
+  LOOKUP_PROBLEM_NOTICES,
+  NO_UPCOMING_BOOKINGS_NOTICE,
+} from '../../config/booking-notices';
 import { FoundBooking } from '../../dtos/found-booking.dto';
 import { LookupStep } from '../../models/lookup-step.model';
-import * as BookingActions from '../../state/booking.actions';
-import { bookingFeature } from '../../state/booking.feature';
+import { BookingService } from '../../services/booking.service';
 import { toLongDate, toTimeLabel } from '../../utils/booking-time.utils';
 import { LOOKUP_CODE_MAX_LENGTH, toLookupCode } from '../../utils/lookup-code.utils';
 import { toManageCommands, toManageFragment } from '../../utils/manage-link.utils';
@@ -70,13 +77,15 @@ type LookupForm = FormGroup<{
 })
 export class FindBookings {
   private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
+  private readonly bookingService: BookingService = inject(BookingService);
+  private readonly destroyRef: DestroyRef = inject(DestroyRef);
   private readonly injector: Injector = inject(Injector);
 
   private readonly timeZone: Signal<string | null> = this.store.selectSignal(shopFeature.selectTimeZone);
-  private readonly foundBookings: Signal<FoundBooking[]> = this.store.selectSignal(bookingFeature.selectFoundBookings);
-  protected readonly step: Signal<LookupStep> = this.store.selectSignal(bookingFeature.selectLookupStep);
-  protected readonly isLookingUp: Signal<boolean> = this.store.selectSignal(bookingFeature.selectIsLookingUp);
-  protected readonly lookupNotice: Signal<Notice | null> = this.store.selectSignal(bookingFeature.selectLookupNotice);
+  private readonly foundBookings: WritableSignal<FoundBooking[]> = signal([]);
+  protected readonly step: WritableSignal<LookupStep> = signal(LookupStep.Phone);
+  protected readonly isLookingUp: WritableSignal<boolean> = signal(false);
+  protected readonly lookupNotice: WritableSignal<Notice | null> = signal(null);
 
   protected readonly lookupStep: typeof LookupStep = LookupStep;
   protected readonly codeMaxLength: number = LOOKUP_CODE_MAX_LENGTH;
@@ -128,10 +137,6 @@ export class FindBookings {
   });
 
   constructor() {
-    this.store.dispatch(BookingActions.LookupReset());
-    inject(DestroyRef).onDestroy((): void => {
-      this.store.dispatch(BookingActions.LookupReset());
-    });
     this.keepOnlyDigitsInCode();
     this.lockFormWhileLookingUp();
     this.focusFirstFieldOfStep();
@@ -146,9 +151,16 @@ export class FindBookings {
   }
 
   protected sendCode(): void {
-    if (this.canSendCode()) {
-      this.store.dispatch(BookingActions.LookupStartRequest({ phone: toE164(this.lookupForm.controls.phone.value) }));
+    if (!this.canSendCode()) {
+      return;
     }
+    this.runLookup(
+      this.bookingService.startLookup({ phone: this.toPhone() }),
+      (): void => {
+        this.step.set(LookupStep.Code);
+        this.lookupNotice.set(CODE_SENT_NOTICE);
+      },
+    );
   }
 
   protected resendCode(): void {
@@ -157,17 +169,52 @@ export class FindBookings {
   }
 
   protected verifyCode(): void {
-    if (this.canVerifyCode()) {
-      this.store.dispatch(BookingActions.LookupVerifyRequest({
-        phone: toE164(this.lookupForm.controls.phone.value),
-        code: this.lookupForm.controls.code.value,
-      }));
+    if (!this.canVerifyCode()) {
+      return;
     }
+    this.runLookup(
+      this.bookingService.verifyLookup({
+        phone: this.toPhone(),
+        code: this.lookupForm.controls.code.value,
+      }),
+      (foundBookings: FoundBooking[]): void => {
+        this.foundBookings.set(foundBookings);
+        this.step.set(LookupStep.Results);
+      },
+    );
   }
 
   protected changePhone(): void {
     this.lookupForm.controls.code.reset();
-    this.store.dispatch(BookingActions.LookupPhoneChange());
+    this.lookupNotice.set(null);
+    this.step.set(LookupStep.Phone);
+  }
+
+  // A request still sent when the page closes is dropped with it.
+  private runLookup<T>(request: Observable<T>, onSuccess: (result: T) => void): void {
+    this.isLookingUp.set(true);
+    this.lookupNotice.set(null);
+    request
+      .pipe(
+        finalize((): void => {
+          this.isLookingUp.set(false);
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: onSuccess,
+        error: (error: unknown): void => {
+          this.lookupNotice.set(toProblemNotice(
+            error,
+            LOOKUP_PROBLEM_NOTICES,
+            LOOKUP_FAILED_NOTICE,
+          ));
+        },
+      });
+  }
+
+  private toPhone(): string {
+    return toE164(this.lookupForm.controls.phone.value);
   }
 
   private keepOnlyDigitsInCode(): void {

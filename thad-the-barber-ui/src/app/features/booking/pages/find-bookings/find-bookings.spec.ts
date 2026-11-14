@@ -1,15 +1,17 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { Action, ActionsSubject, Store, provideStore } from '@ngrx/store';
-import { firstValueFrom } from 'rxjs';
+import { Store, provideStore } from '@ngrx/store';
+import { Subject } from 'rxjs';
 import { TEST_SHOP } from '../../../../../testing/test-shop';
+import { ProblemCode } from '../../../../shared/models/problem-code.model';
 import { AppState } from '../../../../store/app.state';
 import * as ShopActions from '../../../shop/state/shop.actions';
 import { shopFeature } from '../../../shop/state/shop.feature';
-import { CODE_INVALID_NOTICE } from '../../config/booking-notices';
 import { FoundBooking } from '../../dtos/found-booking.dto';
-import * as BookingActions from '../../state/booking.actions';
-import { bookingFeature } from '../../state/booking.feature';
+import { LookupStartRequest } from '../../dtos/lookup-start-request.dto';
+import { LookupVerifyRequest } from '../../dtos/lookup-verify-request.dto';
+import { BookingService } from '../../services/booking.service';
 import { FindBookings } from './find-bookings';
 
 const MADE_UP_PHONE_FIELD_VALUE: string = '(555) 555-0123';
@@ -31,27 +33,42 @@ describe(
   'FindBookings',
   (): void => {
     let fixture: ComponentFixture<FindBookings>;
-    let store: Store<AppState>;
-    let dispatched: Action[];
+    let startRequests: LookupStartRequest[];
+    let startResponses: Subject<null>[];
+    let verifyRequests: LookupVerifyRequest[];
+    let verifyResponses: Subject<FoundBooking[]>[];
 
     beforeEach((): void => {
+      startRequests = [];
+      startResponses = [];
+      verifyRequests = [];
+      verifyResponses = [];
       TestBed.configureTestingModule({
         providers: [
-          provideStore({
-            [shopFeature.name]: shopFeature.reducer,
-            [bookingFeature.name]: bookingFeature.reducer,
-          }),
+          provideStore({ [shopFeature.name]: shopFeature.reducer }),
           provideRouter([]),
+          {
+            provide: BookingService,
+            useValue: {
+              startLookup: (request: LookupStartRequest): Subject<null> => {
+                const response: Subject<null> = new Subject<null>();
+                startRequests.push(request);
+                startResponses.push(response);
+                return response;
+              },
+              verifyLookup: (request: LookupVerifyRequest): Subject<FoundBooking[]> => {
+                const response: Subject<FoundBooking[]> = new Subject<FoundBooking[]>();
+                verifyRequests.push(request);
+                verifyResponses.push(response);
+                return response;
+              },
+            },
+          },
         ],
       });
-      store = TestBed.inject<Store<AppState>>(Store);
-      store.dispatch(ShopActions.ShopInfoRequestSuccess({ shopInfo: TEST_SHOP }));
+      TestBed.inject<Store<AppState>>(Store).dispatch(ShopActions.ShopInfoRequestSuccess({ shopInfo: TEST_SHOP }));
       fixture = TestBed.createComponent(FindBookings);
       fixture.detectChanges();
-      dispatched = [];
-      TestBed.inject(ActionsSubject).subscribe((action: Action): void => {
-        dispatched.push(action);
-      });
     });
 
     function byTestId(testId: string): HTMLElement | null {
@@ -94,9 +111,29 @@ describe(
       fixture.detectChanges();
     }
 
+    function answerStart(): void {
+      const response: Subject<null> | undefined = startResponses.at(-1);
+      response?.next(null);
+      response?.complete();
+      fixture.detectChanges();
+    }
+
+    function answerVerify(answer: FoundBooking[]): void {
+      const response: Subject<FoundBooking[]> | undefined = verifyResponses.at(-1);
+      response?.next(answer);
+      response?.complete();
+      fixture.detectChanges();
+    }
+
+    function failVerify(code: ProblemCode): void {
+      verifyResponses.at(-1)?.error(new HttpErrorResponse({ status: 400, error: { code } }));
+      fixture.detectChanges();
+    }
+
     function openCodeStep(): HTMLInputElement {
       typePhone();
-      store.dispatch(BookingActions.LookupStartRequestSuccess());
+      submit();
+      answerStart();
       const codeInput: HTMLInputElement | null = inputByTestId('lookup-code');
       if (!codeInput) {
         throw new Error('No code input');
@@ -104,16 +141,12 @@ describe(
       return codeInput;
     }
 
-    function dispatchedOf(actionCreator: { type: string; }): Action[] {
-      return dispatched.filter((action: Action): boolean => action.type === actionCreator.type);
-    }
-
     it(
       'starts empty on the phone step, with nothing to send',
       (): void => {
         expect(buttonByTestId('send-code')?.disabled).toBe(true);
         expect(byTestId('lookup-code')).toBeNull();
-        expect(dispatchedOf(BookingActions.LookupStartRequest)).toEqual([]);
+        expect(startRequests).toEqual([]);
       },
     );
 
@@ -125,8 +158,18 @@ describe(
         expect(buttonByTestId('send-code')?.disabled).toBe(false);
         submit();
 
-        expect(dispatchedOf(BookingActions.LookupStartRequest))
-          .toEqual([BookingActions.LookupStartRequest({ phone: '+15555550123' })]);
+        expect(startRequests).toEqual([{ phone: '+15555550123' }]);
+      },
+    );
+
+    it(
+      'sends nothing a second time while the first request is sent',
+      (): void => {
+        typePhone();
+        submit();
+        submit();
+
+        expect(startRequests).toHaveLength(1);
       },
     );
 
@@ -152,8 +195,7 @@ describe(
 
         expect(buttonByTestId('verify-code')?.disabled).toBe(false);
         submit();
-        expect(dispatchedOf(BookingActions.LookupVerifyRequest))
-          .toEqual([BookingActions.LookupVerifyRequest({ phone: '+15555550123', code: '0042' })]);
+        expect(verifyRequests).toEqual([{ phone: '+15555550123', code: '0042' }]);
       },
     );
 
@@ -162,8 +204,7 @@ describe(
       (): void => {
         const codeInput: HTMLInputElement = openCodeStep();
         type(codeInput, '0042');
-        store.dispatch(BookingActions.LookupVerifyRequest({ phone: '+15555550123', code: '0042' }));
-        fixture.detectChanges();
+        submit();
 
         expect(codeInput.disabled).toBe(true);
         expect(buttonByTestId('verify-code')?.disabled).toBe(true);
@@ -177,9 +218,8 @@ describe(
       (): void => {
         const codeInput: HTMLInputElement = openCodeStep();
         type(codeInput, '0042');
-        store.dispatch(BookingActions.LookupVerifyRequest({ phone: '+15555550123', code: '0042' }));
-        store.dispatch(BookingActions.LookupVerifyRequestFailure({ notice: CODE_INVALID_NOTICE }));
-        fixture.detectChanges();
+        submit();
+        failVerify(ProblemCode.CodeInvalid);
 
         expect(byTestId('lookup-notice')).not.toBeNull();
         expect(codeInput.disabled).toBe(false);
@@ -194,13 +234,11 @@ describe(
         document.body.append(fixture.nativeElement as HTMLElement);
         const codeInput: HTMLInputElement = openCodeStep();
         type(codeInput, '0042');
-        store.dispatch(BookingActions.LookupVerifyRequest({ phone: '+15555550123', code: '0042' }));
-        fixture.detectChanges();
+        submit();
         await fixture.whenStable();
         codeInput.blur();
 
-        store.dispatch(BookingActions.LookupVerifyRequestFailure({ notice: CODE_INVALID_NOTICE }));
-        fixture.detectChanges();
+        failVerify(ProblemCode.CodeInvalid);
         await fixture.whenStable();
 
         expect(document.activeElement).toBe(codeInput);
@@ -224,29 +262,30 @@ describe(
         buttonByTestId('resend-code')?.click();
         fixture.detectChanges();
 
-        expect(dispatchedOf(BookingActions.LookupStartRequest))
-          .toEqual([BookingActions.LookupStartRequest({ phone: '+15555550123' })]);
+        expect(startRequests).toEqual([{ phone: '+15555550123' }, { phone: '+15555550123' }]);
         expect(codeInput.value).toBe('');
       },
     );
 
     it(
-      'goes back to the phone step to use another number',
+      'goes back to the phone step to use another number, without a notice',
       (): void => {
         openCodeStep();
         buttonByTestId('change-phone')?.click();
 
         expect(byTestId('send-code')).not.toBeNull();
         expect(byTestId('lookup-code')).toBeNull();
+        expect(byTestId('lookup-notice')).toBeNull();
       },
     );
 
     it(
-      'lists the found bookings in order, each a link to its manage page with its token in the fragment, encoded once for the router',
+      'lists the found bookings in order, each a link to its manage page with its token in the fragment, encoded once',
       (): void => {
-        openCodeStep();
-        store.dispatch(BookingActions.LookupVerifyRequestSuccess({ foundBookings }));
-        fixture.detectChanges();
+        const codeInput: HTMLInputElement = openCodeStep();
+        type(codeInput, '0042');
+        submit();
+        answerVerify(foundBookings);
 
         const links: HTMLAnchorElement[] = Array.from(
           (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLAnchorElement>('[data-testid="found-booking"]'),
@@ -262,8 +301,10 @@ describe(
     it(
       'says there is nothing upcoming, and lists nothing, when the phone has no bookings',
       (): void => {
-        openCodeStep();
-        store.dispatch(BookingActions.LookupVerifyRequestSuccess({ foundBookings: [] }));
+        const codeInput: HTMLInputElement = openCodeStep();
+        type(codeInput, '0042');
+        submit();
+        answerVerify([]);
 
         expect(byTestId('no-bookings')).not.toBeNull();
         expect(byTestId('found-bookings')).toBeNull();
@@ -272,16 +313,16 @@ describe(
     );
 
     it(
-      'forgets the found bookings when the page is left',
-      async (): Promise<void> => {
-        openCodeStep();
-        store.dispatch(BookingActions.LookupVerifyRequestSuccess({ foundBookings }));
-        dispatched = [];
+      'drops a request still sent when the page is left',
+      (): void => {
+        const codeInput: HTMLInputElement = openCodeStep();
+        type(codeInput, '0042');
+        submit();
+        expect(verifyResponses[0]?.observed).toBe(true);
 
         fixture.destroy();
 
-        expect(dispatched).toEqual([BookingActions.LookupReset()]);
-        expect(await firstValueFrom(store.select(bookingFeature.selectFoundBookings))).toEqual([]);
+        expect(verifyResponses[0]?.observed).toBe(false);
       },
     );
   },
