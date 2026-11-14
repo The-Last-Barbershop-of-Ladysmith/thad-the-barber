@@ -20,6 +20,8 @@ public sealed class TwilioVerifyService(IOptions<TwilioSettings> settings, IHttp
 {
     private const string SmsChannel = "sms";
     private const string ApprovedStatus = "approved";
+    private const int VerificationNotFoundErrorCode = 20404;
+    private const int MaxCheckAttemptsErrorCode = 60202;
     private readonly Lazy<TwilioRestClient> _client = new(() => CreateClient(settings.Value, httpClientFactory));
 
     public async Task StartAsync(string phone, CancellationToken cancellationToken)
@@ -47,8 +49,9 @@ public sealed class TwilioVerifyService(IOptions<TwilioSettings> settings, IHttp
         }
         catch (TwilioRequestFailedException exception)
         {
-            // Twilio answers 404 for an expired or already used code and 429 once its wrong tries are used up.
-            bool isCodeRefused = exception.StatusCode is StatusCodes.Status404NotFound or StatusCodes.Status429TooManyRequests;
+            // 20404: the verification expired, was approved or was deleted; 60202: its five checks are used up. Other 404
+            // and 429 codes (a wrong service, account throttling) are real failures.
+            bool isCodeRefused = exception.TwilioErrorCode is VerificationNotFoundErrorCode or MaxCheckAttemptsErrorCode;
             if (!isCodeRefused)
             {
                 throw;

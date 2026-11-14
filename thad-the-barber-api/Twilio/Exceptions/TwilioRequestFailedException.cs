@@ -9,4 +9,6 @@ public sealed class TwilioRequestFailedException(int statusCode, int? twilioErro
     : Exception($"Twilio answered {statusCode} (error code {twilioErrorCode}).")
 {
     public int StatusCode { get; } = statusCode;
+
+    public int? TwilioErrorCode { get; } = twilioErrorCode;
 }

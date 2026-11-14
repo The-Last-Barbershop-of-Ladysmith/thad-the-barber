@@ -76,7 +76,7 @@ public sealed class TwilioVerifyServiceTests
     [Theory]
     [InlineData(HttpStatusCode.NotFound, 20404)]
     [InlineData(HttpStatusCode.TooManyRequests, 60202)]
-    public async Task ACheckTwilioRefusesAsGoneOrOverusedIsFalse(HttpStatusCode status, int twilioErrorCode)
+    public async Task ACheckOnAGoneOrOverusedVerificationIsFalse(HttpStatusCode status, int twilioErrorCode)
     {
         FakeTwilioHttp http = new()
         {
@@ -85,6 +85,25 @@ public sealed class TwilioVerifyServiceTests
         };
 
         Assert.False(await Service(http).CheckAsync(Phone, Code, Cancellation));
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.TooManyRequests, 20429)]
+    [InlineData(HttpStatusCode.TooManyRequests, 60203)]
+    [InlineData(HttpStatusCode.NotFound, 20003)]
+    [InlineData(HttpStatusCode.Unauthorized, 20003)]
+    [InlineData(HttpStatusCode.InternalServerError, 20500)]
+    public async Task ACheckFailingForAnyOtherCodeIsAFailureNotAWrongCode(HttpStatusCode status, int twilioErrorCode)
+    {
+        FakeTwilioHttp http = new()
+        {
+            Status = status,
+            Body = ErrorBody(status, twilioErrorCode),
+        };
+
+        TwilioRequestFailedException failure = await Assert.ThrowsAsync<TwilioRequestFailedException>(() => Service(http).CheckAsync(Phone, Code, Cancellation));
+
+        Assert.Equal(twilioErrorCode, failure.TwilioErrorCode);
     }
 
     [Fact]
