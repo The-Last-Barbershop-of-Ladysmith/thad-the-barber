@@ -23,9 +23,9 @@ public sealed class TwilioExceptionHandlerTests
     {
         DefaultHttpContext context = ExceptionHandlerHarness.NewContext();
 
-        bool handled = await Handler(context).TryHandleAsync(context, exception, TestContext.Current.CancellationToken);
+        bool isHandled = await Handler(context).TryHandleAsync(context, exception, TestContext.Current.CancellationToken);
 
-        Assert.True(handled);
+        Assert.True(isHandled);
         Assert.Equal(StatusCodes.Status503ServiceUnavailable, context.Response.StatusCode);
         JsonElement body = await ExceptionHandlerHarness.ReadBodyAsync(context);
         Assert.Equal(StatusCodes.Status503ServiceUnavailable, body.GetProperty("status").GetInt32());
@@ -38,9 +38,9 @@ public sealed class TwilioExceptionHandlerTests
     {
         DefaultHttpContext context = ExceptionHandlerHarness.NewContext();
 
-        bool handled = await Handler(context).TryHandleAsync(context, new InvalidOperationException(), TestContext.Current.CancellationToken);
+        bool isHandled = await Handler(context).TryHandleAsync(context, new InvalidOperationException(), TestContext.Current.CancellationToken);
 
-        Assert.False(handled);
+        Assert.False(isHandled);
     }
 
     private static TwilioExceptionHandler Handler(HttpContext context) =>

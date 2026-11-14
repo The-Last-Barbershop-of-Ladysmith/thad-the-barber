@@ -11,20 +11,26 @@ public sealed class FakeTwilioHttp : HttpMessageHandler
 
     public string Body { get; set; } = """{"sid":"VEmadeup","status":"pending"}""";
 
-    public bool Down { get; set; }
+    public bool IsDown { get; set; }
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
-        if (Down)
+        if (IsDown)
         {
             throw new HttpRequestException("Twilio is down.");
+        }
+
+        string requestBody = string.Empty;
+        if (request.Content is not null)
+        {
+            requestBody = await request.Content.ReadAsStringAsync(cancellationToken);
         }
 
         Requests.Add(new RecordedRequest(
             request.RequestUri!.AbsolutePath,
             request.RequestUri.Query,
             request.Headers.Authorization?.Parameter,
-            request.Content is null ? string.Empty : await request.Content.ReadAsStringAsync(cancellationToken)
+            requestBody
         ));
         return new HttpResponseMessage(Status)
         {

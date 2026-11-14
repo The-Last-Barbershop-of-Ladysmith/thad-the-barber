@@ -404,7 +404,7 @@ public sealed class BookingServiceTests
         square.Hold(1, AppointmentStatus.Accepted, Instant("2026-10-20T14:00:00Z"));
         BookingService service = Service(square, await StartedTwilioAsync());
 
-        await Assert.ThrowsAsync<CodeInvalidException>(() => service.VerifyLookupAsync(new LookupVerifyRequest(KnownPhone, code), Cancellation));
+        await Assert.ThrowsAsync<CodeInvalidException>(() => service.VerifyLookupAsync(VerifyRequest(KnownPhone, code), Cancellation));
         Assert.Equal(0, square.AppointmentListings);
     }
 
@@ -434,7 +434,10 @@ public sealed class BookingServiceTests
         return twilio;
     }
 
-    private static LookupVerifyRequest VerifyRequest(string phone) => new(phone, FakeTwilioVerifyService.ApprovedCode);
+    private static LookupVerifyRequest VerifyRequest(string phone, string code = FakeTwilioVerifyService.ApprovedCode) => new(
+        phone,
+        code
+    );
 
     private static FakeSquareService Square(bool isCustomerKnown)
     {

@@ -126,7 +126,7 @@ public sealed class TwilioVerifyServiceTests
     {
         FakeTwilioHttp http = new()
         {
-            Down = true,
+            IsDown = true,
         };
         TwilioVerifyService service = Service(http);
 
