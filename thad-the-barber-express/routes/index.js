@@ -33,12 +33,14 @@ var ONE_DAY_SECONDS = 24 * 60 * 60;
 // Angular's output hashing names files like main-LDA72QPD.js or media/primeicons-S6ICFECY.eot.
 var HASHED_FILE = /-[A-Z0-9]{8}\.[a-z0-9]+$/;
 
-// Hashed files never change under their name. Unhashed images and frames under assets/ can wait a day for an update;
-// anything else unhashed (favicon, a development build's main.js) is checked on every use.
+// Hashed files never change under their name, and neither do the share images under social/, which carry a version
+// in their name (og-v1.jpg). Unhashed images and frames under assets/ can wait a day for an update; anything else
+// unhashed (favicon, a development build's main.js) is checked on every use.
 function cacheControl(res, filePath) {
-  if (HASHED_FILE.test(path.basename(filePath))) {
+  var topFolder = path.relative(angularDist, filePath).split(path.sep)[0];
+  if (HASHED_FILE.test(path.basename(filePath)) || topFolder === 'social') {
     res.set('Cache-Control', 'public, max-age=' + ONE_YEAR_SECONDS + ', immutable');
-  } else if (path.relative(angularDist, filePath).split(path.sep)[0] === 'assets') {
+  } else if (topFolder === 'assets') {
     res.set('Cache-Control', 'public, max-age=' + ONE_DAY_SECONDS);
   } else {
     res.set('Cache-Control', 'no-cache');

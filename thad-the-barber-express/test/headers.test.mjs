@@ -17,6 +17,7 @@ beforeAll(function() {
     'main.js': 'console.log(1);',
     'media/primeicons-S6ICFECY.eot': 'font',
     'assets/frames/001.avif': 'frame',
+    'social/og-v1.jpg': 'image',
     'favicon.ico': 'icon',
     'csp-sources.json': '{}',
   });
@@ -74,6 +75,11 @@ describe('noindex', function() {
 describe('cache headers', function() {
   it.each(['/main-LDA72QPD.js', '/media/primeicons-S6ICFECY.eot'])('cache hashed file %s for a year', async function(path) {
     var response = await request(app).get(path);
+    expect(response.headers['cache-control']).toBe('public, max-age=31536000, immutable');
+  });
+
+  it('cache the versioned share images for a year', async function() {
+    var response = await request(app).get('/social/og-v1.jpg');
     expect(response.headers['cache-control']).toBe('public, max-age=31536000, immutable');
   });
 
