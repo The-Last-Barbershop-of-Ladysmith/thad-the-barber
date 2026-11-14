@@ -69,6 +69,19 @@ describe(
     );
 
     it(
+      'rewrites the tags when the shop name loads after the page',
+      (): void => {
+        seoService.apply(INDEXED_SEO, '/chairs');
+
+        TestBed.inject(Store).dispatch(ShopActions.ShopInfoRequestSuccess({ shopInfo: TEST_SHOP }));
+        TestBed.tick();
+
+        expect(title.getTitle()).toBe(`Chairs · ${TEST_SHOP.name} in ${SHOP_FALLBACK.city}`);
+        expect(readMetaContent('property', 'og:site_name')).toBe(TEST_SHOP.name);
+      },
+    );
+
+    it(
       'tells search engines to index an indexed route',
       (): void => {
         seoService.apply(INDEXED_SEO, '/chairs');
@@ -85,6 +98,7 @@ describe(
 
         expect(readMetaContent('name', 'robots')).toBe('noindex, nofollow');
         expect(readCanonicalHref()).toBeNull();
+        expect(readMetaContent('property', 'og:url')).toBeNull();
       },
     );
 

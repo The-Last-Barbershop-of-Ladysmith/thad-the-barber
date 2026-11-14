@@ -1,5 +1,5 @@
 import { DOCUMENT } from '@angular/common';
-import { Injectable, Signal, inject } from '@angular/core';
+import { Injectable, Signal, effect, inject } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
 import { Store } from '@ngrx/store';
 import { environment } from '../../../environments/environment';
@@ -26,8 +26,24 @@ export class SeoService {
   private readonly document: Document = inject(DOCUMENT);
   private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
   private readonly shopName: Signal<string> = this.store.selectSignal(shopFeature.selectShopName);
+  private lastApplied: { routeSeo: RouteSeo; path: string; } | null = null;
 
+  constructor() {
+    effect((): void => {
+      this.shopName();
+      if (this.lastApplied) {
+        this.write(this.lastApplied.routeSeo, this.lastApplied.path);
+      }
+    });
+  }
+
+  /** Remembers the route so the tags are written again when the shop's name loads or changes. */
   apply(routeSeo: RouteSeo, path: string): void {
+    this.lastApplied = { routeSeo, path };
+    this.write(routeSeo, path);
+  }
+
+  private write(routeSeo: RouteSeo, path: string): void {
     const title: string = fillSeoTemplate(
       routeSeo.title,
       this.shopName(),
@@ -60,7 +76,6 @@ export class SeoService {
         'og:site_name': this.shopName(),
         'og:title': title,
         'og:description': description,
-        'og:url': pageUrl,
         'og:image': `${environment.siteUrl}${OPEN_GRAPH_IMAGE_PATH}`,
         'og:image:width': OPEN_GRAPH_IMAGE_WIDTH,
         'og:image:height': OPEN_GRAPH_IMAGE_HEIGHT,
@@ -68,7 +83,7 @@ export class SeoService {
         'og:image:alt': imageAlt,
       },
     );
-    this.setCanonical(routeSeo.isIndexed ? pageUrl : null);
+    this.setIndexedPageUrl(routeSeo.isIndexed ? pageUrl : null);
   }
 
   private setTags(attribute: 'name' | 'property', tags: Record<string, string>): void {
@@ -77,12 +92,15 @@ export class SeoService {
     }
   }
 
-  private setCanonical(url: string | null): void {
+  /** Only an indexed page has a canonical address; a hidden page (or the 404, at whatever path was typed) has none. */
+  private setIndexedPageUrl(url: string | null): void {
     let link: HTMLLinkElement | null = this.document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
     if (url === null) {
       link?.parentNode?.removeChild(link);
+      this.meta.removeTag('property="og:url"');
       return;
     }
+    this.meta.updateTag({ property: 'og:url', content: url });
     if (!link) {
       link = this.document.createElement('link');
       link.rel = 'canonical';
