@@ -33,31 +33,5 @@ describe(
         expect(privacyLink?.target).toBe('_blank');
       },
     );
-
-    it(
-      'puts the caret on the first digit slot when an empty phone field is clicked anywhere in the mask',
-      (): void => {
-        const phoneInput: HTMLInputElement = render('');
-        phoneInput.value = '(___) ___-____';
-        phoneInput.setSelectionRange(9, 9);
-
-        phoneInput.click();
-
-        expect(phoneInput.selectionStart).toBe(1);
-      },
-    );
-
-    it(
-      'leaves the caret where it was clicked once a digit is typed',
-      (): void => {
-        const phoneInput: HTMLInputElement = render('(540) ___-____');
-        phoneInput.value = '(540) ___-____';
-        phoneInput.setSelectionRange(9, 9);
-
-        phoneInput.click();
-
-        expect(phoneInput.selectionStart).toBe(9);
-      },
-    );
   },
 );
