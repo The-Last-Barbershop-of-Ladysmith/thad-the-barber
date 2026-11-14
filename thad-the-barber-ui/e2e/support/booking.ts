@@ -22,12 +22,12 @@ export function isBookingRequest(url: URL): boolean {
   return url.href === BOOKINGS_URL;
 }
 
-export function isLookupStartRequest(url: URL): boolean {
-  return `${url.origin}${url.pathname}` === `${BOOKINGS_URL}/lookup/start`;
+export function isLookupCodeRequest(url: URL): boolean {
+  return `${url.origin}${url.pathname}` === `${BOOKINGS_URL}/lookup/code`;
 }
 
-export function isLookupVerifyRequest(url: URL): boolean {
-  return `${url.origin}${url.pathname}` === `${BOOKINGS_URL}/lookup/verify`;
+export function isVerifiedListRequest(url: URL): boolean {
+  return `${url.origin}${url.pathname}` === `${BOOKINGS_URL}/lookup/verified-list`;
 }
 
 /** The path segments after `/api/bookings/`: `[id]`, `[id, 'cancel']`…; none for any other URL. */
