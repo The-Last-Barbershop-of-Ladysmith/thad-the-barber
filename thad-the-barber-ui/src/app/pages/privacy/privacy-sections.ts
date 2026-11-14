@@ -31,6 +31,37 @@ export const PRIVACY_SECTIONS: readonly PrivacySection[] = [
     ],
   },
   {
+    label: 'Booking texts',
+    fragment: 'texts',
+    paragraphs: [
+      [
+        {
+          kind: PrivacyPartKind.Text,
+          text: "After you book, the shop's booking system, Square, texts the phone number you gave to confirm your "
+            + 'appointment, and may text a reminder before it. A text is sent only after you submit a booking with a '
+            + 'phone number. You get no other texts from us, and no promotions.',
+        },
+      ],
+      [
+        {
+          kind: PrivacyPartKind.Text,
+          text: 'Reply STOP to any of these texts to stop them. Reply HELP for help, or call or text ',
+        },
+        { kind: PrivacyPartKind.ShopName },
+        { kind: PrivacyPartKind.Text, text: ' at ' },
+        { kind: PrivacyPartKind.Phone },
+        { kind: PrivacyPartKind.Text, text: '. Message and data rates may apply.' },
+      ],
+      [
+        {
+          kind: PrivacyPartKind.Text,
+          text: 'Your number is used only for booking texts. It is never shared or sold. If you ask to find your '
+            + 'bookings, we also text a one-time code to that number, once for each request.',
+        },
+      ],
+    ],
+  },
+  {
     label: "Where it's kept",
     fragment: 'where',
     paragraphs: [

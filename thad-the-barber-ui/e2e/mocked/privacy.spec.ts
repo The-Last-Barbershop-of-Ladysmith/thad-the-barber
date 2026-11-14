@@ -28,6 +28,17 @@ test.describe(
     );
 
     test(
+      'has a booking texts section with the shop phone for help',
+      async ({ page }: { page: Page; }): Promise<void> => {
+        await page.goto('/privacy');
+
+        const texts: Locator = page.getByTestId('privacy-section-texts');
+        await expect(texts).toHaveCount(1);
+        await expect(texts.getByTestId('privacy-phone')).toHaveAttribute('href', `tel:${TEST_SHOP.phone}`);
+      },
+    );
+
+    test(
       'renders without a11y violations',
       async ({ page }: { page: Page; }): Promise<void> => {
         await page.goto('/privacy');

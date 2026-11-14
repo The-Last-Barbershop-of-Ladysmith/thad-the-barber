@@ -48,6 +48,17 @@ describe(
     );
 
     it(
+      "gives the booking texts section the shop's name and Square phone for help",
+      (): void => {
+        TestBed.inject(Store).dispatch(ShopActions.ShopInfoRequestSuccess({ shopInfo: TEST_SHOP }));
+        const texts: HTMLElement | null = render().querySelector<HTMLElement>('[data-testid="privacy-section-texts"]');
+
+        expect(texts?.textContent).toContain(TEST_SHOP.name);
+        expect(texts?.querySelector('a')?.getAttribute('href')).toBe(`tel:${TEST_SHOP.phone}`);
+      },
+    );
+
+    it(
       "links to Google's privacy policy and terms for the bot check",
       (): void => {
         const hrefs: string[] = Array.from(render().querySelectorAll('a'))
