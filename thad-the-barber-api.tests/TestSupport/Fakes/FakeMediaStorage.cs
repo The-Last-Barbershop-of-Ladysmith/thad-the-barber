@@ -43,4 +43,20 @@ public sealed class FakeMediaStorage : IMediaStorage
 
         return Task.FromResult(ContentFiles.GetValueOrDefault(blobName));
     }
+
+    public Task WriteNewTextAsync(string container, string blobName, string text, CancellationToken cancellationToken)
+    {
+        Calls++;
+        if (Failure is not null)
+        {
+            throw Failure;
+        }
+
+        if (!ContentFiles.TryAdd(blobName, text))
+        {
+            throw new InvalidOperationException($"{blobName} already exists.");
+        }
+
+        return Task.CompletedTask;
+    }
 }

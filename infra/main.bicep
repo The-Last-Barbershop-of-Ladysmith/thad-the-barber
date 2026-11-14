@@ -22,6 +22,9 @@ type environmentConfig = {
   @description('Two Square alerts (email + SMS): a Square secret read by someone other than the API, and Square not connected. Prod only: nonprod uses the Square sandbox.')
   squareAlerts: bool?
 
+  @description('Emails the shared action group when a contact-page question or issue arrives. On unless set to false.')
+  contactAlerts: bool?
+
   @description('Lets the admin (adminPrincipalId) sign with this environment\'s session-JWT key, so local runs under az login can issue session tokens. Dev only.')
   canAdminSignSessions: bool?
 
@@ -145,6 +148,7 @@ module env 'modules/environment.bicep' = [
       extraCorsOrigins: e.extraCorsOrigins
       adminPrincipalId: adminPrincipalId
       squareAlerts: e.?squareAlerts ?? false
+      contactAlerts: e.?contactAlerts ?? true
       canAdminSignSessions: e.?canAdminSignSessions ?? false
       canAdminWriteMedia: e.?canAdminWriteMedia ?? false
       restrictMediaListing: e.?restrictMediaListing ?? false

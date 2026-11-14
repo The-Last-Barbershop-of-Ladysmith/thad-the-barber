@@ -26,6 +26,8 @@ public sealed partial class TelemetrySetupTests
     private const string FamilyName = "Vey-Ashgrove";
     private const string Phone = "+15550100163";
     private const string PhoneDigits = "5550100163";
+    private const string Email = "quillon.vey@example.test";
+    private const string SecretWord = "moonlit-pomade";
 
     private static CancellationToken Cancellation => TestContext.Current.CancellationToken;
 
@@ -37,6 +39,37 @@ public sealed partial class TelemetrySetupTests
         using HttpResponseMessage response = await BookAsync(capture, new FakeSquareService { CustomerId = null });
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        AssertNoCustomerData(capture);
+    }
+
+    [Fact]
+    public async Task AContactQuestionKeepsItsContactDetailsAndWordsOutOfTelemetryButLogsItsFileName()
+    {
+        TelemetryCapture capture = new();
+        FakeMediaStorage media = new();
+        using ApiFactory api = new(media: media);
+        using WebApplicationFactory<Program> host = capture.Attach(api);
+        ActivityTraceId traceId = ActivityTraceId.CreateRandom();
+        using HttpRequestMessage request = new(HttpMethod.Post, "/api/contact")
+        {
+            Content = JsonContent.Create(new
+            {
+                category = "question",
+                message = $"Call {GivenName} about the {SecretWord}.",
+                name = $"{GivenName} {FamilyName}",
+                email = Email,
+                phone = Phone,
+            }),
+        };
+        request.Headers.Add("traceparent", $"00-{traceId.ToHexString()}-{ActivitySpanId.CreateRandom().ToHexString()}-01");
+
+        using HttpResponseMessage response = await host.CreateClient().SendAsync(request, Cancellation);
+        await capture.WaitForSpanAsync(span => span.TraceId == traceId && span.Kind == ActivityKind.Server, Cancellation);
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        Assert.Contains(capture.Texts, text => text.Contains(Assert.Single(media.ContentFiles.Keys), StringComparison.Ordinal));
+        Assert.DoesNotContain(capture.Texts, text => text.Contains(SecretWord, StringComparison.Ordinal));
+        Assert.DoesNotContain(capture.Texts, text => text.Contains(Email, StringComparison.Ordinal));
         AssertNoCustomerData(capture);
     }
 
