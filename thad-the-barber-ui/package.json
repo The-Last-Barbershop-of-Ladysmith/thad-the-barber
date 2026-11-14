@@ -13,6 +13,7 @@
     "test": "ng test",
     "e2e": "playwright test",
     "e2e:smoke": "playwright test --config playwright.smoke.config.ts",
+    "social:images": "node scripts/generate-social-images.ts",
     "lighthouse:check": "node ci/lighthouse-check.ts",
     "e2e:merge": "playwright merge-reports --reporter=html,json blob-reports",
     "e2e:summary": "node ci/e2e-summary.ts",
@@ -78,6 +79,7 @@
     "jsdom": "^31.0.0",
     "lighthouse": "^13.6.0",
     "prettier": "^3.9.10",
+    "sharp": "^0.35.5",
     "typescript": "~6.0.2",
     "typescript-eslint": "8.72.2",
     "vitest": "^5.1.0"

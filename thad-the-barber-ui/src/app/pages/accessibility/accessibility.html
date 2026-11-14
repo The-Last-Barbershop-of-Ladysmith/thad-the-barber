@@ -1,0 +1,27 @@
+<app-titled-page eyebrow="Accessibility" heading="Accessibility">
+  <article class="legal-copy body-copy rich-text" data-testid="accessibility">
+    <section>
+      <h2>Our goal</h2>
+      <p>
+        {{ shopName() }} wants everyone to be able to see the hours, read the news and book a cut on
+        this site. We aim to meet the Web Content Accessibility Guidelines (WCAG) 2.2, level AA.
+      </p>
+    </section>
+    <section>
+      <h2>What we do</h2>
+      <p>
+        We build with semantic page structure, keyboard-friendly controls and text that stays
+        readable when enlarged, and we run automated accessibility checks on every change. Motion on
+        the site respects your device's reduced-motion setting.
+      </p>
+    </section>
+    <section>
+      <h2>Tell us about a problem</h2>
+      <p>
+        If something on this site is hard to use, call or text us at
+        <a [href]="phone().tel" data-testid="accessibility-phone">{{ phone().display }}</a> and
+        we'll help you book or find what you need, then fix the problem.
+      </p>
+    </section>
+  </article>
+</app-titled-page>

@@ -20,6 +20,7 @@ export const CLIENT_ROUTES: string[] = [
 export const serverRoutes: ServerRoute[] = [
   { path: '', renderMode: RenderMode.Prerender },
   { path: 'privacy', renderMode: RenderMode.Prerender },
+  { path: 'accessibility', renderMode: RenderMode.Prerender },
   { path: '404', renderMode: RenderMode.Prerender },
   ...CLIENT_ROUTES.map((path: string): ServerRoute => ({ path, renderMode: RenderMode.Client })),
   { path: '**', renderMode: RenderMode.Client },
