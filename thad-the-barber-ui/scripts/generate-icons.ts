@@ -3,19 +3,17 @@ import { join } from 'node:path';
 import sharp from 'sharp';
 
 /**
- * Renders the icon set from `scripts/brand/mark.svg` (the clipper-topped H from the logo, simplified to stay legible
- * at 16px) on the espresso page color. The output in `public/` is committed. Rerun it after the mark or brand colors
+ * Renders the icon set from `scripts/brand/mark.svg` (the TB monogram with a straight razor as the T's crossbar)
+ * on the espresso page color. The output in `public/` is committed. Rerun it after the mark or brand colors
  * change: `npm run icons`.
  */
 interface RasterIcon {
   fileName: string;
   size: number;
-  radiusFraction: number;
   markFraction: number;
 }
 
 const ESPRESSO_950: string = '#0c0806';
-const ROUNDED_RADIUS_FRACTION: number = 0.22;
 const FULL_MARK_FRACTION: number = 1;
 const MASKABLE_SAFE_ZONE_FRACTION: number = 0.7;
 const ICO_SIZES: number[] = [
@@ -30,25 +28,21 @@ const RASTER_ICONS: RasterIcon[] = [
   {
     fileName: 'apple-touch-icon.png',
     size: 180,
-    radiusFraction: 0,
     markFraction: FULL_MARK_FRACTION,
   },
   {
     fileName: 'icon-192.png',
     size: 192,
-    radiusFraction: ROUNDED_RADIUS_FRACTION,
     markFraction: FULL_MARK_FRACTION,
   },
   {
     fileName: 'icon-512.png',
     size: 512,
-    radiusFraction: ROUNDED_RADIUS_FRACTION,
     markFraction: FULL_MARK_FRACTION,
   },
   {
     fileName: 'icon-maskable-512.png',
     size: 512,
-    radiusFraction: 0,
     markFraction: MASKABLE_SAFE_ZONE_FRACTION,
   },
 ];
@@ -70,11 +64,11 @@ const markShapes: string = readFileSync(
   'utf8',
 ).replace(/^[\s\S]*?<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '');
 
-function toIconSvg(radiusFraction: number, markFraction: number): string {
+function toIconSvg(markFraction: number): string {
   const canvas: number = 512;
   const offset: number = (canvas - canvas * markFraction) / 2;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${canvas} ${canvas}">
-  <rect width="${canvas}" height="${canvas}" rx="${canvas * radiusFraction}" fill="${ESPRESSO_950}"/>
+  <rect width="${canvas}" height="${canvas}" fill="${ESPRESSO_950}"/>
   <g fill="#e8904a" transform="translate(${offset} ${offset}) scale(${markFraction})">${markShapes}</g>
 </svg>
 `;
@@ -143,10 +137,7 @@ writeFileSync(
     publicDir,
     'favicon.svg',
   ),
-  toIconSvg(
-    ROUNDED_RADIUS_FRACTION,
-    FULL_MARK_FRACTION,
-  ),
+  toIconSvg(FULL_MARK_FRACTION),
 );
 await Promise.all(RASTER_ICONS.map(async (icon: RasterIcon): Promise<void> => {
   writeFileSync(
@@ -155,19 +146,13 @@ await Promise.all(RASTER_ICONS.map(async (icon: RasterIcon): Promise<void> => {
       icon.fileName,
     ),
     await renderPng(
-      toIconSvg(
-        icon.radiusFraction,
-        icon.markFraction,
-      ),
+      toIconSvg(icon.markFraction),
       icon.size,
     ),
   );
 }));
 const icoPngs: Buffer[] = await Promise.all(ICO_SIZES.map((size: number): Promise<Buffer> => renderPng(
-  toIconSvg(
-    ROUNDED_RADIUS_FRACTION,
-    FULL_MARK_FRACTION,
-  ),
+  toIconSvg(FULL_MARK_FRACTION),
   size,
 )));
 writeFileSync(

@@ -1,16 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="112.64" fill="#0c0806"/>
+  <rect width="512" height="512" fill="#0c0806"/>
   <g fill="#e8904a" transform="translate(0 0) scale(1)">
-  <rect x="96" y="80" width="26" height="70" rx="10"/>
-  <rect x="138" y="80" width="26" height="70" rx="10"/>
-  <rect x="180" y="80" width="26" height="70" rx="10"/>
-  <rect x="222" y="80" width="26" height="70" rx="10"/>
-  <rect x="264" y="80" width="26" height="70" rx="10"/>
-  <rect x="306" y="80" width="26" height="70" rx="10"/>
-  <rect x="348" y="80" width="26" height="70" rx="10"/>
-  <rect x="390" y="80" width="26" height="70" rx="10"/>
-  <rect x="96" y="140" width="320" height="140"/>
-  <rect x="96" y="280" width="80" height="152"/>
-  <rect x="336" y="280" width="80" height="152"/>
+  <g transform="translate(0 -4)">
+    <path d="M76 197H254V227H216V399H150V227H76Z"/>
+    <path fill-rule="evenodd" d="M262 192H380C425 192 448 217 448 252C448 274 438 287 421 294C450 302 462 327 462 352C462 382 435 399 395 399H262Z M322 232V268H372A18 18 0 0 0 372 232Z M322 310V352H378A21 21 0 0 0 378 310Z"/>
+    <path d="M38 194C36 176 52 160 76 157L134 138L158 124C168 120 178 127 178 138V183H172C145 168 100 192 72 199C55 203 40 202 38 194Z"/>
+    <path d="M178 131H412Q420 131 418 142Q414 183 376 183H178Z"/>
+    <circle cx="157" cy="142" r="8" fill="#0c0806"/>
+  </g>
 </g>
 </svg>
