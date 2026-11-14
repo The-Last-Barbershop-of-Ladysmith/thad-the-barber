@@ -40,10 +40,6 @@ public sealed partial class TelemetrySetupTests
         AssertNoCustomerData(capture);
     }
 
-    /// <summary>
-    /// What the processors' own tests can't show: the app registers them ahead of export. A booking logs no customer data
-    /// today, so this logs and tags some through the host's pipeline itself.
-    /// </summary>
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
@@ -73,6 +69,10 @@ public sealed partial class TelemetrySetupTests
         AssertNoCustomerData(capture);
     }
 
+    /// <summary>
+    /// What the processors' own tests can't show: the app registers them ahead of export. A booking logs no customer data
+    /// today, so this logs and tags some through the host's pipeline itself.
+    /// </summary>
     [Fact]
     public async Task CustomerDataLoggedOrTaggedInTheAppIsRedactedBeforeExport()
     {
