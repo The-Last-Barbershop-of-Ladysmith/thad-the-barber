@@ -405,7 +405,7 @@ describe(
       (): void => {
         openPage();
 
-        expect(byTestId('find-bookings-link')?.getAttribute('href')).toBe('/book/find');
+        expect(byTestId('find-bookings-link')?.getAttribute('href')).toBe('/book/manage');
       },
     );
 

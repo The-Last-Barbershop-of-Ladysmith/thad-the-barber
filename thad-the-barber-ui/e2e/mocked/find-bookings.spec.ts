@@ -56,7 +56,7 @@ async function fillInPhone(page: Page): Promise<void> {
 }
 
 async function askForCode(page: Page): Promise<void> {
-  await page.goto('/book/find');
+  await page.goto('/book/manage');
   await fillInPhone(page);
   await page.getByTestId('send-code').click();
   await expect(page.getByTestId('lookup-code')).toBeVisible();
@@ -83,7 +83,7 @@ test.describe(
           verified.push(route.request().postDataJSON() as LookupVerifyRequest);
           return route.fulfill({ json: foundBookings });
         });
-        await page.goto('/book/find');
+        await page.goto('/book/manage');
         await expect(page.getByTestId('send-code')).toBeDisabled();
         await expectNoA11yViolations(page);
 
@@ -164,7 +164,7 @@ test.describe(
             429,
             ProblemCode.RateLimited,
           ));
-        await page.goto('/book/find');
+        await page.goto('/book/manage');
         await fillInPhone(page);
 
         await page.getByTestId('send-code').click();

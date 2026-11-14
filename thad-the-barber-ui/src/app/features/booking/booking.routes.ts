@@ -28,7 +28,7 @@ export const BOOKING_ROUTES: Routes = [
           import('./booking').then((m: { Booking: typeof Booking; }): typeof Booking => m.Booking),
       },
       {
-        path: 'find',
+        path: 'manage',
         title: 'Find my bookings · Thad The Barber',
         loadComponent: (): Promise<typeof FindBookings> =>
           import('./pages/find-bookings/find-bookings')

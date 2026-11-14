@@ -146,7 +146,7 @@ test.describe(
 
         await page.getByTestId('find-bookings-link').click();
 
-        await expect(page).toHaveURL(/\/book\/find$/);
+        await expect(page).toHaveURL(/\/book\/manage$/);
         await expect(page.locator('#lookup-phone')).toBeVisible();
       },
     );
