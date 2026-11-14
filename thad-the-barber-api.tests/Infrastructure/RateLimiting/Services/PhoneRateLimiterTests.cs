@@ -28,7 +28,9 @@ public sealed class PhoneRateLimiterTests
         using PhoneRateLimiter limiter = Limiter(1);
         limiter.Enforce("+15555550123");
 
-        limiter.Enforce("+15555550124");
+        Exception? thrown = Record.Exception(() => limiter.Enforce("+15555550124"));
+
+        Assert.Null(thrown);
     }
 
     [Fact]

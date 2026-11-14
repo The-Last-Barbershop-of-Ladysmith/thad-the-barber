@@ -545,20 +545,11 @@ public sealed class BookingEndpointsTests
     }
 
     [Fact]
-    public async Task VerifyListsOnlyIdStartAndManageTokenSoonestFirst()
+    public async Task VerifyListsUpcomingBookingsSoonestFirst()
     {
-        FakeSquareService square = new();
-        square.Hold(1, AppointmentStatus.Accepted, Instant("2026-11-03T14:00:00Z"));
-        square.Hold(1, AppointmentStatus.Accepted, Instant("2026-10-20T14:00:00Z"));
-        square.Hold(1, AppointmentStatus.CancelledByCustomer, Instant("2026-10-10T14:00:00Z"));
-        using ApiFactory api = Api(square);
-        using HttpClient client = api.CreateClient();
-        (await StartLookupAsync(client, LookupPhone)).Dispose();
-
-        using HttpResponseMessage response = await VerifyLookupAsync(client, LookupPhone, FakeTwilioVerifyService.ApprovedCode);
+        using HttpResponseMessage response = await VerifyWithThreeBookingsAsync();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.True(response.Headers.CacheControl?.NoStore);
         JsonElement found = await response.Content.ReadFromJsonAsync<JsonElement>(Cancellation);
         Assert.Equal(
             [
@@ -566,17 +557,39 @@ public sealed class BookingEndpointsTests
                 "2026-11-03T14:00:00+00:00",
             ],
             found.EnumerateArray().Select(booking => booking.GetProperty("startAt").GetString()));
+    }
+
+    [Fact]
+    public async Task VerifyIsNeverStored()
+    {
+        using HttpResponseMessage response = await VerifyWithThreeBookingsAsync();
+
+        Assert.True(response.Headers.CacheControl?.NoStore);
+    }
+
+    [Fact]
+    public async Task VerifyReturnsOnlyIdStartAndManageToken()
+    {
+        using HttpResponseMessage response = await VerifyWithThreeBookingsAsync();
+
+        JsonElement found = await response.Content.ReadFromJsonAsync<JsonElement>(Cancellation);
+        Assert.All(found.EnumerateArray(), booking => Assert.Equal(
+            [
+                "id",
+                "startAt",
+                "manageToken",
+            ],
+            booking.EnumerateObject().Select(property => property.Name)));
+    }
+
+    [Fact]
+    public async Task VerifyGivesEachBookingAValidManageToken()
+    {
+        using HttpResponseMessage response = await VerifyWithThreeBookingsAsync();
+
+        JsonElement found = await response.Content.ReadFromJsonAsync<JsonElement>(Cancellation);
         Assert.All(found.EnumerateArray(), booking =>
-        {
-            Assert.Equal(
-                [
-                    "id",
-                    "startAt",
-                    "manageToken",
-                ],
-                booking.EnumerateObject().Select(property => property.Name));
-            Assert.True(ManageTokens.Signer.IsValid(booking.GetProperty("id").GetString()!, booking.GetProperty("manageToken").GetString()));
-        });
+            Assert.True(ManageTokens.Signer.IsValid(booking.GetProperty("id").GetString()!, booking.GetProperty("manageToken").GetString())));
     }
 
     [Fact]
@@ -645,6 +658,19 @@ public sealed class BookingEndpointsTests
         using HttpResponseMessage response = await VerifyLookupAsync(api.CreateClientWithoutToken(), LookupPhone, FakeTwilioVerifyService.ApprovedCode);
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    private static async Task<HttpResponseMessage> VerifyWithThreeBookingsAsync()
+    {
+        FakeSquareService square = new();
+        square.Hold(1, AppointmentStatus.Accepted, Instant("2026-11-03T14:00:00Z"));
+        square.Hold(1, AppointmentStatus.Accepted, Instant("2026-10-20T14:00:00Z"));
+        square.Hold(1, AppointmentStatus.CancelledByCustomer, Instant("2026-10-10T14:00:00Z"));
+        using ApiFactory api = Api(square);
+        using HttpClient client = api.CreateClient();
+        (await StartLookupAsync(client, LookupPhone)).Dispose();
+
+        return await VerifyLookupAsync(client, LookupPhone, FakeTwilioVerifyService.ApprovedCode);
     }
 
     private static Task<HttpResponseMessage> StartLookupAsync(HttpClient client, string phone) =>

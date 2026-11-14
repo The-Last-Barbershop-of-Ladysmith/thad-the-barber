@@ -11,16 +11,24 @@ public sealed class TwilioSettingsValidatorTests
     public void NothingSetPassesSoEnvironmentsWithoutTwilioStart()
     {
         Assert.True(validator.Validate(null, new TwilioSettings()).Succeeded);
+    }
+
+    [Fact]
+    public void NothingSetIsNotConfigured()
+    {
         Assert.False(new TwilioSettings().IsConfigured);
+    }
+
+    [Fact]
+    public void EverythingSetIsConfigured()
+    {
+        Assert.True(FullSettings().IsConfigured);
     }
 
     [Fact]
     public void EverythingSetPasses()
     {
-        TwilioSettings settings = FullSettings();
-
-        Assert.True(validator.Validate(null, settings).Succeeded);
-        Assert.True(settings.IsConfigured);
+        Assert.True(validator.Validate(null, FullSettings()).Succeeded);
     }
 
     [Fact]
@@ -30,6 +38,14 @@ public sealed class TwilioSettingsValidatorTests
         settings.ApiKeySecret = string.Empty;
 
         Assert.Contains(nameof(TwilioSettings.ApiKeySecret), validator.Validate(null, settings).FailureMessage, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AMissingApiKeySecretIsNotConfigured()
+    {
+        TwilioSettings settings = FullSettings();
+        settings.ApiKeySecret = string.Empty;
+
         Assert.False(settings.IsConfigured);
     }
 
