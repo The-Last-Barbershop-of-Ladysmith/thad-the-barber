@@ -54,13 +54,42 @@ public sealed class RateLimitSettingsValidatorTests
         Assert.Contains("RateLimits:NextTimes:PermitLimit", result.FailureMessage, StringComparison.Ordinal);
     }
 
-    private static ValidateOptionsResult Validate(FixedWindowLimit session, FixedWindowLimit booking, FixedWindowLimit? manage = null, FixedWindowLimit? nextTimes = null) =>
+    [Theory]
+    [InlineData(nameof(RateLimitSettings.LookupStart))]
+    [InlineData(nameof(RateLimitSettings.LookupVerify))]
+    [InlineData(nameof(RateLimitSettings.LookupPhone))]
+    public void AMissingLookupLimitFails(string limitName)
+    {
+        RateLimitSettings settings = ValidSettings();
+        typeof(RateLimitSettings).GetProperty(limitName)!.SetValue(settings, new FixedWindowLimit());
+
+        ValidateOptionsResult result = new RateLimitSettingsValidator().Validate(null, settings);
+
+        Assert.True(result.Failed);
+        Assert.Contains($"RateLimits:{limitName}:PermitLimit", result.FailureMessage, StringComparison.Ordinal);
+    }
+
+    private static RateLimitSettings ValidSettings() => new()
+    {
+        Session = Limit(5, TimeSpan.FromMinutes(10)),
+        Booking = Limit(5, TimeSpan.FromMinutes(10)),
+        Manage = Limit(5, TimeSpan.FromMinutes(10)),
+        NextTimes = Limit(5, TimeSpan.FromMinutes(10)),
+        LookupStart = Limit(5, TimeSpan.FromMinutes(10)),
+        LookupVerify = Limit(5, TimeSpan.FromMinutes(10)),
+        LookupPhone = Limit(5, TimeSpan.FromMinutes(10)),
+    };
+
+    private static ValidateOptionsResult Validate(FixedWindowLimit session, FixedWindowLimit booking, FixedWindowLimit? manage = null, FixedWindowLimit? nextTimes = null, FixedWindowLimit? lookupStart = null) =>
         new RateLimitSettingsValidator().Validate(null, new RateLimitSettings
         {
             Session = session,
             Booking = booking,
             Manage = manage ?? Limit(5, TimeSpan.FromMinutes(10)),
             NextTimes = nextTimes ?? Limit(5, TimeSpan.FromMinutes(10)),
+            LookupStart = lookupStart ?? Limit(5, TimeSpan.FromMinutes(10)),
+            LookupVerify = Limit(5, TimeSpan.FromMinutes(10)),
+            LookupPhone = Limit(5, TimeSpan.FromMinutes(10)),
         });
 
     private static FixedWindowLimit Limit(int permitLimit, TimeSpan window) => new()
