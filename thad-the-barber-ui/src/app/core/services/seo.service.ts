@@ -75,13 +75,13 @@ export class SeoService {
   private setCanonical(url: string | null): void {
     let link: HTMLLinkElement | null = this.document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
     if (url === null) {
-      link?.remove();
+      link?.parentNode?.removeChild(link);
       return;
     }
     if (!link) {
       link = this.document.createElement('link');
       link.rel = 'canonical';
-      this.document.head.append(link);
+      this.document.head.appendChild(link);
     }
     link.href = url;
   }
