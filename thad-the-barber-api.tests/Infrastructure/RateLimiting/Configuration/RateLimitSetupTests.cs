@@ -150,6 +150,19 @@ public sealed class RateLimitSetupTests(ApiFactory factory) : IClassFixture<ApiF
     }
 
     [Fact]
+    public async Task ThirdLookupTokenListFromOneIpIsRateLimited()
+    {
+        using WebApplicationFactory<Program> limited = WithLimitOfTwo();
+        using HttpClient client = ClientFrom(limited, FirstClientIp);
+
+        AssertNotLimited(await client.GetAsync("/api/bookings/lookup/verified-list", TestContext.Current.CancellationToken));
+        AssertNotLimited(await client.GetAsync("/api/bookings/lookup/verified-list", TestContext.Current.CancellationToken));
+        using HttpResponseMessage third = await client.GetAsync("/api/bookings/lookup/verified-list", TestContext.Current.CancellationToken);
+
+        await AssertRateLimitedAsync(third);
+    }
+
+    [Fact]
     public async Task LookupCodeAndVerifiedListHaveSeparateLimits()
     {
         using WebApplicationFactory<Program> limited = WithLimitOfTwo();
@@ -186,6 +199,7 @@ public sealed class RateLimitSetupTests(ApiFactory factory) : IClassFixture<ApiF
                 ["RateLimits:Manage:PermitLimit"] = "2",
                 ["RateLimits:NextTimes:PermitLimit"] = "2",
                 ["RateLimits:LookupCode:PermitLimit"] = "2",
+                ["RateLimits:LookupSession:PermitLimit"] = "2",
                 ["RateLimits:LookupVerifiedList:PermitLimit"] = "2",
             }));
         });

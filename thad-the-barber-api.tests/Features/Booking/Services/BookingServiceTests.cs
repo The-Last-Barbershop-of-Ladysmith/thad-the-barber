@@ -29,6 +29,7 @@ public sealed class BookingServiceTests
     private static readonly DateTimeOffset openTime = Instant("2026-10-07T13:30:00Z");
     private const int MaxUpcomingPerPhone = 3;
     private const int MaxTextCodesPerPhone = 2;
+    private static readonly TimeSpan LookupSessionLifetime = TimeSpan.FromMinutes(15);
     private const int MaxVerifiedListAttemptsPerPhone = 3;
     private const string KnownPhone = "+15555550123";
     private const string UnknownPhone = "+15555550199";
@@ -321,7 +322,7 @@ public sealed class BookingServiceTests
         square.Hold(2, AppointmentStatus.Pending, Instant("2026-10-20T14:00:00Z"));
         BookingService service = Service(square, await StartedTwilioAsync());
 
-        List<FoundBooking> found = await service.GetVerifiedListAsync(ListRequest(KnownPhone), Cancellation);
+        List<FoundBooking> found = (await service.GetVerifiedListAsync(ListRequest(KnownPhone), Cancellation)).Bookings;
 
         Assert.Equal(
             [
@@ -345,7 +346,7 @@ public sealed class BookingServiceTests
         square.Hold(1, AppointmentStatus.Accepted, Instant("2026-10-24T14:00:00Z"));
         BookingService service = Service(square, await StartedTwilioAsync());
 
-        List<FoundBooking> found = await service.GetVerifiedListAsync(ListRequest(KnownPhone), Cancellation);
+        List<FoundBooking> found = (await service.GetVerifiedListAsync(ListRequest(KnownPhone), Cancellation)).Bookings;
 
         Assert.Equal([Instant("2026-10-24T14:00:00Z")], found.Select(booking => booking.StartAt));
     }
@@ -357,7 +358,7 @@ public sealed class BookingServiceTests
         square.Hold(1, AppointmentStatus.Accepted, now + square.BookingProfile.MaximumAdvance + TimeSpan.FromDays(1));
         BookingService service = Service(square, await StartedTwilioAsync());
 
-        List<FoundBooking> found = await service.GetVerifiedListAsync(ListRequest(KnownPhone), Cancellation);
+        List<FoundBooking> found = (await service.GetVerifiedListAsync(ListRequest(KnownPhone), Cancellation)).Bookings;
 
         Assert.Empty(found);
     }
@@ -375,7 +376,7 @@ public sealed class BookingServiceTests
         square.Hold(1, AppointmentStatus.Accepted, Instant("2026-10-23T14:00:00Z"), "CUSTOMER0TEST0SOMEONEELSE");
         BookingService service = Service(square, await StartedTwilioAsync());
 
-        List<FoundBooking> found = await service.GetVerifiedListAsync(ListRequest(KnownPhone), Cancellation);
+        List<FoundBooking> found = (await service.GetVerifiedListAsync(ListRequest(KnownPhone), Cancellation)).Bookings;
 
         Assert.Equal(3, found.Count);
         Assert.DoesNotContain(Instant("2026-10-23T14:00:00Z"), found.Select(booking => booking.StartAt));
@@ -390,7 +391,7 @@ public sealed class BookingServiceTests
         };
         BookingService service = Service(square, await StartedTwilioAsync());
 
-        List<FoundBooking> found = await service.GetVerifiedListAsync(ListRequest(KnownPhone), Cancellation);
+        List<FoundBooking> found = (await service.GetVerifiedListAsync(ListRequest(KnownPhone), Cancellation)).Bookings;
 
         Assert.Empty(found);
         Assert.Equal(0, square.AppointmentListings);
@@ -441,6 +442,75 @@ public sealed class BookingServiceTests
         await Assert.ThrowsAsync<TwilioNotConfiguredException>(() => Service(new FakeSquareService(), twilio).GetVerifiedListAsync(ListRequest(KnownPhone), Cancellation));
     }
 
+    [Fact]
+    public async Task ARightCodeAlsoReturnsALookupTokenForThePhoneThatExpiresAfterTheLifetime()
+    {
+        BookingService service = Service(new FakeSquareService(), await StartedTwilioAsync());
+
+        VerifiedList verified = await service.GetVerifiedListAsync(ListRequest(KnownPhone), Cancellation);
+
+        Assert.Equal(now + LookupSessionLifetime, verified.ExpiresAt);
+        Assert.Equal(KnownPhone, LookupTokens.CreateSigner(new FakeTimeProvider(now)).ReadPhone(verified.LookupToken));
+    }
+
+    [Fact]
+    public async Task TheLookupTokenListsTheCurrentBookingsWithoutAskingTwilioAgain()
+    {
+        FakeSquareService square = new();
+        square.Hold(1, AppointmentStatus.Accepted, Instant("2026-10-20T14:00:00Z"));
+        FakeTwilioVerifyService twilio = await StartedTwilioAsync();
+        BookingService service = Service(square, twilio);
+        VerifiedList verified = await service.GetVerifiedListAsync(ListRequest(KnownPhone), Cancellation);
+        square.Hold(1, AppointmentStatus.Accepted, Instant("2026-10-22T14:00:00Z"));
+        twilio.Failure = new TwilioNotConfiguredException();
+
+        List<FoundBooking> again = await service.GetVerifiedListForTokenAsync(verified.LookupToken, Cancellation);
+
+        Assert.Equal(
+            [
+                Instant("2026-10-20T14:00:00Z"),
+                Instant("2026-10-22T14:00:00Z"),
+            ],
+            again.Select(booking => booking.StartAt));
+    }
+
+    [Fact]
+    public async Task TheLookupTokenListLeavesOutCancelledAndPastBookings()
+    {
+        FakeSquareService square = new();
+        square.Hold(1, AppointmentStatus.CancelledByCustomer, Instant("2026-10-20T14:00:00Z"));
+        square.Hold(1, AppointmentStatus.Accepted, now.AddMinutes(-1));
+        square.Hold(1, AppointmentStatus.Accepted, Instant("2026-10-24T14:00:00Z"));
+        FakeTimeProvider clock = new(now);
+        string token = LookupTokens.CreateSigner(clock).Sign(KnownPhone, now + LookupSessionLifetime);
+
+        List<FoundBooking> found = await Service(square, clock: clock).GetVerifiedListForTokenAsync(token, Cancellation);
+
+        Assert.Equal([Instant("2026-10-24T14:00:00Z")], found.Select(booking => booking.StartAt));
+    }
+
+    [Fact]
+    public async Task AnExpiredLookupTokenIsRefusedAndSquareIsNeverAsked()
+    {
+        FakeSquareService square = new();
+        FakeTimeProvider clock = new(now);
+        BookingService service = Service(square, await StartedTwilioAsync(), clock);
+        VerifiedList verified = await service.GetVerifiedListAsync(ListRequest(KnownPhone), Cancellation);
+        clock.Advance(LookupSessionLifetime);
+
+        await Assert.ThrowsAsync<LookupExpiredException>(() => service.GetVerifiedListForTokenAsync(verified.LookupToken, Cancellation));
+        Assert.Equal(1, square.AppointmentListings);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("not-a-token")]
+    public async Task AMissingOrMalformedLookupTokenIsRefused(string? token)
+    {
+        await Assert.ThrowsAsync<LookupExpiredException>(() => Service(new FakeSquareService()).GetVerifiedListForTokenAsync(token, Cancellation));
+    }
+
     private static async Task<FakeTwilioVerifyService> StartedTwilioAsync()
     {
         FakeTwilioVerifyService twilio = new();
@@ -464,9 +534,9 @@ public sealed class BookingServiceTests
         return square;
     }
 
-    private static BookingService Service(FakeSquareService square, FakeTwilioVerifyService? twilio = null)
+    private static BookingService Service(FakeSquareService square, FakeTwilioVerifyService? twilio = null, FakeTimeProvider? clock = null)
     {
-        FakeTimeProvider time = new(now);
+        FakeTimeProvider time = clock ?? new FakeTimeProvider(now);
         return new BookingService(
             square,
             new AvailabilityService(
@@ -475,6 +545,7 @@ public sealed class BookingServiceTests
                 time
             ),
             ManageTokens.Signer,
+            LookupTokens.CreateSigner(time),
             twilio ?? new FakeTwilioVerifyService(),
             new PhoneRateLimiter(Options.Create(new RateLimitSettings
             {
@@ -493,6 +564,7 @@ public sealed class BookingServiceTests
             {
                 MaxUpcomingPerPhone = MaxUpcomingPerPhone,
                 CapWindow = TimeSpan.FromDays(31),
+                LookupSessionLifetime = LookupSessionLifetime,
             }),
             time
         );

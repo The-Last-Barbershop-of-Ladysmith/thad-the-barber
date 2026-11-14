@@ -21,6 +21,7 @@ public sealed class BookingService(
     ISquareService square,
     AvailabilityService availability,
     ManageTokenSigner manageTokens,
+    LookupTokenSigner lookupTokens,
     ITwilioVerifyService twilioVerify,
     PhoneRateLimiter phoneRateLimiter,
     IOptions<BookingSettings> settings,
@@ -33,11 +34,10 @@ public sealed class BookingService(
     }
 
     /// <summary>
-    /// The upcoming bookings of every Square customer with the phone, once Twilio confirms the code (BR-20). Square
-    /// isn't asked about the phone before that, and nothing is stored. Listing reads up to the booking window's end,
-    /// which <see cref="ISquareService"/> splits into Square's 31-day pieces.
+    /// The phone's upcoming bookings plus a lookup token, once Twilio confirms the code (BR-20). Square isn't asked
+    /// about the phone before that, and nothing is stored.
     /// </summary>
-    public async Task<List<FoundBooking>> GetVerifiedListAsync(VerifiedListRequest request, CancellationToken cancellationToken)
+    public async Task<VerifiedList> GetVerifiedListAsync(VerifiedListRequest request, CancellationToken cancellationToken)
     {
         phoneRateLimiter.EnforceVerifiedList(request.Phone);
         bool isCodeValid = await twilioVerify.CheckAsync(request.Phone, request.Code, cancellationToken);
@@ -46,7 +46,28 @@ public sealed class BookingService(
             throw new CodeInvalidException("Twilio did not approve the code.");
         }
 
-        List<string> customerIds = await square.FindCustomerIdsAsync(request.Phone, cancellationToken);
+        DateTimeOffset expiresAt = time.GetUtcNow() + settings.Value.LookupSessionLifetime;
+        return new VerifiedList(
+            await FindUpcomingBookingsAsync(request.Phone, cancellationToken),
+            lookupTokens.Sign(request.Phone, expiresAt),
+            expiresAt
+        );
+    }
+
+    public async Task<List<FoundBooking>> GetVerifiedListForTokenAsync(string? lookupToken, CancellationToken cancellationToken)
+    {
+        string phone = lookupTokens.ReadPhone(lookupToken)
+            ?? throw new LookupExpiredException("The lookup token is missing, wrong or expired.");
+        return await FindUpcomingBookingsAsync(phone, cancellationToken);
+    }
+
+    /// <summary>
+    /// The upcoming bookings of every Square customer with the phone, soonest first. Listing reads up to the booking
+    /// window's end, which <see cref="ISquareService"/> splits into Square's 31-day pieces.
+    /// </summary>
+    private async Task<List<FoundBooking>> FindUpcomingBookingsAsync(string phone, CancellationToken cancellationToken)
+    {
+        List<string> customerIds = await square.FindCustomerIdsAsync(phone, cancellationToken);
         if (customerIds.Count == 0)
         {
             return [];

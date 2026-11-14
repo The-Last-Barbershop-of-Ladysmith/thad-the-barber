@@ -550,7 +550,7 @@ public sealed class BookingEndpointsTests
         using HttpResponseMessage response = await GetVerifiedListWithThreeBookingsAsync();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        JsonElement found = await response.Content.ReadFromJsonAsync<JsonElement>(Cancellation);
+        JsonElement found = (await response.Content.ReadFromJsonAsync<JsonElement>(Cancellation)).GetProperty("bookings");
         Assert.Equal(
             [
                 "2026-10-20T14:00:00+00:00",
@@ -572,7 +572,7 @@ public sealed class BookingEndpointsTests
     {
         using HttpResponseMessage response = await GetVerifiedListWithThreeBookingsAsync();
 
-        JsonElement found = await response.Content.ReadFromJsonAsync<JsonElement>(Cancellation);
+        JsonElement found = (await response.Content.ReadFromJsonAsync<JsonElement>(Cancellation)).GetProperty("bookings");
         Assert.All(found.EnumerateArray(), booking => Assert.Equal(
             [
                 "id",
@@ -587,7 +587,7 @@ public sealed class BookingEndpointsTests
     {
         using HttpResponseMessage response = await GetVerifiedListWithThreeBookingsAsync();
 
-        JsonElement found = await response.Content.ReadFromJsonAsync<JsonElement>(Cancellation);
+        JsonElement found = (await response.Content.ReadFromJsonAsync<JsonElement>(Cancellation)).GetProperty("bookings");
         Assert.All(found.EnumerateArray(), booking =>
             Assert.True(ManageTokens.Signer.IsValid(booking.GetProperty("id").GetString()!, booking.GetProperty("manageToken").GetString())));
     }
@@ -606,7 +606,7 @@ public sealed class BookingEndpointsTests
         using HttpResponseMessage response = await GetVerifiedListAsync(client, LookupPhone, FakeTwilioVerifyService.ApprovedCode);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Equal(0, (await response.Content.ReadFromJsonAsync<JsonElement>(Cancellation)).GetArrayLength());
+        Assert.Equal(0, (await response.Content.ReadFromJsonAsync<JsonElement>(Cancellation)).GetProperty("bookings").GetArrayLength());
     }
 
     [Fact]
@@ -660,6 +660,103 @@ public sealed class BookingEndpointsTests
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
+    [Fact]
+    public async Task TheVerifiedListAlsoCarriesALookupTokenAndItsExpiry()
+    {
+        using HttpResponseMessage response = await GetVerifiedListWithThreeBookingsAsync();
+
+        JsonElement verified = await response.Content.ReadFromJsonAsync<JsonElement>(Cancellation);
+        Assert.Equal(
+            [
+                "bookings",
+                "lookupToken",
+                "expiresAt",
+            ],
+            verified.EnumerateObject().Select(property => property.Name));
+        Assert.Equal(DateTimeOffset.Parse(Now, CultureInfo.InvariantCulture).AddMinutes(15), verified.GetProperty("expiresAt").GetDateTimeOffset());
+    }
+
+    [Fact]
+    public async Task TheLookupTokenListsTheBookingsAgainWithoutACode()
+    {
+        FakeSquareService square = new();
+        square.Hold(1, AppointmentStatus.Accepted, Instant("2026-10-20T14:00:00Z"));
+        FakeTwilioVerifyService twilio = new();
+        using ApiFactory api = Api(square, twilio);
+        using HttpClient client = api.CreateClient();
+        (await SendLookupCodeAsync(client, LookupPhone)).Dispose();
+        using HttpResponseMessage verified = await GetVerifiedListAsync(client, LookupPhone, FakeTwilioVerifyService.ApprovedCode);
+        string token = (await verified.Content.ReadFromJsonAsync<JsonElement>(Cancellation)).GetProperty("lookupToken").GetString()!;
+        square.Hold(1, AppointmentStatus.Accepted, Instant("2026-10-22T14:00:00Z"));
+        twilio.Failure = new TwilioNotConfiguredException();
+
+        using HttpResponseMessage response = await GetVerifiedListByTokenAsync(client, token);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.True(response.Headers.CacheControl?.NoStore);
+        JsonElement found = await response.Content.ReadFromJsonAsync<JsonElement>(Cancellation);
+        Assert.Equal(
+            [
+                "2026-10-20T14:00:00+00:00",
+                "2026-10-22T14:00:00+00:00",
+            ],
+            found.EnumerateArray().Select(booking => booking.GetProperty("startAt").GetString()));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("not-a-token")]
+    [InlineData("abc.def")]
+    public async Task AMissingOrWrongLookupTokenIs403LookupExpired(string? token)
+    {
+        using ApiFactory api = Api();
+
+        using HttpResponseMessage response = await GetVerifiedListByTokenAsync(api.CreateClient(), token);
+
+        await ProblemAssert.IsProblemAsync(response, StatusCodes.Status403Forbidden, "lookup_expired");
+    }
+
+    [Fact]
+    public async Task AnExpiredLookupTokenIs403LookupExpired()
+    {
+        FakeTimeProvider clock = new(DateTimeOffset.Parse(Now, CultureInfo.InvariantCulture));
+        using ApiFactory api = new(time: clock);
+        using HttpClient client = api.CreateClient();
+        (await SendLookupCodeAsync(client, LookupPhone)).Dispose();
+        using HttpResponseMessage verified = await GetVerifiedListAsync(client, LookupPhone, FakeTwilioVerifyService.ApprovedCode);
+        string token = (await verified.Content.ReadFromJsonAsync<JsonElement>(Cancellation)).GetProperty("lookupToken").GetString()!;
+        clock.Advance(TimeSpan.FromMinutes(15));
+
+        using HttpResponseMessage response = await GetVerifiedListByTokenAsync(client, token);
+
+        await ProblemAssert.IsProblemAsync(response, StatusCodes.Status403Forbidden, "lookup_expired");
+    }
+
+    [Fact]
+    public async Task TheLookupTokenOnlyWorksInItsHeaderNotTheQueryString()
+    {
+        using ApiFactory api = Api();
+        using HttpClient client = api.CreateClient();
+        (await SendLookupCodeAsync(client, LookupPhone)).Dispose();
+        using HttpResponseMessage verified = await GetVerifiedListAsync(client, LookupPhone, FakeTwilioVerifyService.ApprovedCode);
+        string token = (await verified.Content.ReadFromJsonAsync<JsonElement>(Cancellation)).GetProperty("lookupToken").GetString()!;
+
+        using HttpResponseMessage response = await client.GetAsync($"/api/bookings/lookup/verified-list?lookupToken={token}", Cancellation);
+
+        await ProblemAssert.IsProblemAsync(response, StatusCodes.Status403Forbidden, "lookup_expired");
+    }
+
+    [Fact]
+    public async Task TheLookupTokenListNeedsASessionToken()
+    {
+        using ApiFactory api = Api();
+
+        using HttpResponseMessage response = await GetVerifiedListByTokenAsync(api.CreateClientWithoutToken(), "any");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
     private static async Task<HttpResponseMessage> GetVerifiedListWithThreeBookingsAsync()
     {
         FakeSquareService square = new();
@@ -671,6 +768,17 @@ public sealed class BookingEndpointsTests
         (await SendLookupCodeAsync(client, LookupPhone)).Dispose();
 
         return await GetVerifiedListAsync(client, LookupPhone, FakeTwilioVerifyService.ApprovedCode);
+    }
+
+    private static Task<HttpResponseMessage> GetVerifiedListByTokenAsync(HttpClient client, string? lookupToken)
+    {
+        HttpRequestMessage request = new(HttpMethod.Get, "/api/bookings/lookup/verified-list");
+        if (lookupToken is not null)
+        {
+            request.Headers.Add("X-Lookup-Token", lookupToken);
+        }
+
+        return client.SendAsync(request, Cancellation);
     }
 
     private static Task<HttpResponseMessage> SendLookupCodeAsync(HttpClient client, string phone) =>

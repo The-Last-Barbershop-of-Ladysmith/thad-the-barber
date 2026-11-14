@@ -15,6 +15,7 @@ public static class CorsSetup
         "Authorization",
         "Content-Type",
         BookingEndpoints.ManageTokenHeader,
+        BookingEndpoints.LookupTokenHeader,
         // W3C trace context, so a browser request can be followed end to end in App Insights.
         "traceparent",
         "tracestate",
