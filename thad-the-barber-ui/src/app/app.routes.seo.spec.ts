@@ -1,5 +1,6 @@
 import { SHOP_FALLBACK } from './core/config/shop-info';
 import { routes } from './app.routes';
+import { INDEXED_ROUTES } from './app.routes.server';
 import { RouteLeaf, collectRouteLeaves } from '../testing/route-leaves';
 import { fillSeoTemplate } from './shared/utils/seo.utils';
 
@@ -119,6 +120,17 @@ describe(
           'privacy',
           'accessibility',
         ]);
+      },
+    );
+
+    it(
+      'lists exactly the indexed pages in the sitemap routes',
+      (): void => {
+        const indexed: string[] = leaves
+          .filter((leaf: RouteLeaf): boolean => leaf.seo?.isIndexed === true)
+          .map((leaf: RouteLeaf): string => leaf.path);
+
+        expect(INDEXED_ROUTES).toEqual(indexed);
       },
     );
   },
