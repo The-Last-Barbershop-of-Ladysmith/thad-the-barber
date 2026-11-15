@@ -155,6 +155,7 @@ module contactAlert 'contact-alerts.bicep' = if (contactAlerts) {
     location: location
     workspaceId: workspaceId
     actionGroupId: actionGroupId
+    storageName: storageName
     tags: tags
   }
 }
