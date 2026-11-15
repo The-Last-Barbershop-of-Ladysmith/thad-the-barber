@@ -40,6 +40,7 @@ This is the single record of how the shop's booking and website behave. Each rul
 | BR-23 | Names and phone numbers are never written to logs. | ✅ | API: redacting log and span processors before export ([#32](https://github.com/The-Last-Barbershop-of-Ladysmith/thad-the-barber/issues/32)) |
 | BR-24 | Visitors pass an invisible **Google reCAPTCHA v3** check before they can book. If they fail it, they're asked to call or text instead. | ✅ 2026-09-28 | API (`Recaptcha:MinScore`, app config) + UI |
 | BR-25 | A booking text is sent only after a booking is submitted with a phone number. The booking form shows a consent line next to the Book button ("By booking you agree to receive a text confirming your appointment. Message and data rates may apply. Reply STOP to opt out, HELP for help."), and `/privacy` has an SMS section: what is sent, how often, how STOP and HELP work, and that the number is used only for booking texts and is never shared or sold. | ✅ 2026-11-14 ([#283](https://github.com/The-Last-Barbershop-of-Ladysmith/thad-the-barber/issues/283)) | UI booking form + `/privacy` |
+| BR-43 | Contact messages (`/contact`) are **anonymous by default**: name, email and phone are optional. A `question` or `issue` must include an email or a phone number, so someone can answer or follow up; `feedback` may stay fully anonymous. | ✅ 2026-11-15 ([#286](https://github.com/The-Last-Barbershop-of-Ladysmith/thad-the-barber/issues/286)) | UI contact form + API `ContactRequest` validation |
 
 ## Announcements and content
 
