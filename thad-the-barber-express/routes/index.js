@@ -101,8 +101,13 @@ async function homePageWithStructuredData(page) {
   if (!siteData) {
     return page;
   }
-  var hairSalon = structuredData.buildHairSalon(siteData.shop, siteData.reviews, pageUrl);
-  return { html: structuredData.injectJsonLd(page.html, hairSalon), styleHashes: page.styleHashes };
+  try {
+    var hairSalon = structuredData.buildHairSalon(siteData.shop, siteData.reviews, pageUrl);
+    return { html: structuredData.injectJsonLd(page.html, hairSalon), styleHashes: page.styleHashes };
+  } catch (error) {
+    console.error('Structured data: building it failed:', error.message);
+    return page;
+  }
 }
 
 router.get('/{*splat}', async function(req, res, next) {

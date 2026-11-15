@@ -53,7 +53,26 @@ describe('buildHairSalon', function() {
   });
 });
 
+describe('buildHairSalon with gaps in Square', function() {
+  it('leaves out empty values and unusable days', function() {
+    var gappy = {
+      ...SHOP,
+      phone: null,
+      address: { street: '1 Test Lane', city: '', state: 'ZZ', postalCode: null },
+      hours: [{ day: 9, opens: '09:00:00', closes: '10:00:00' }, { day: 2, opens: null, closes: '10:00:00' }, SHOP.hours[0]],
+    };
+    var hairSalon = buildHairSalon(gappy, REVIEWS, PAGE_URL);
+    expect(hairSalon).not.toHaveProperty('telephone');
+    expect(hairSalon.address).toEqual({ '@type': 'PostalAddress', streetAddress: '1 Test Lane', addressRegion: 'ZZ' });
+    expect(hairSalon.openingHoursSpecification).toHaveLength(1);
+  });
+});
+
 describe('canonicalUrlOf', function() {
+  it('reads the link whatever order its attributes come in', function() {
+    expect(canonicalUrlOf('<head><link href="https://site.example/x" rel="canonical"></head>')).toBe('https://site.example/x');
+  });
+
   it('reads the canonical link', function() {
     expect(canonicalUrlOf('<head><link rel="canonical" href="https://site.example/"></head>')).toBe('https://site.example/');
   });
@@ -64,6 +83,12 @@ describe('canonicalUrlOf', function() {
 });
 
 describe('injectJsonLd', function() {
+  it('keeps replacement patterns in a value as they are', function() {
+    var html = injectJsonLd('<head></head><body></body>', { name: "Cuts $& $$ $' Co" });
+    expect(html).toContain("Cuts $& $$ $' Co");
+    expect(html.match(/<\/head>/g)).toHaveLength(1);
+  });
+
   it('puts the data in the head and cannot be closed early by a value', function() {
     var html = injectJsonLd('<head></head><body></body>', buildHairSalon({ ...SHOP, name: '</script><b>' }, REVIEWS, PAGE_URL));
     expect(html).toMatch(/<script type="application\/ld\+json">.*<\/script><\/head>/);

@@ -66,6 +66,21 @@ describe('home page structured data', function() {
     expect(fetch).not.toHaveBeenCalled();
   });
 
+  it('still has the shop when only the reviews file fails', async function() {
+    answerWith(SHOP, null);
+    var response = await homeFrom(INDEXED_HOME);
+    var json = JSON.parse(/<script type="application\/ld\+json">(.*)<\/script>/.exec(response.text)[1]);
+    expect(json.name).toBe('Made-Up Cuts');
+    expect(json).not.toHaveProperty('aggregateRating');
+  });
+
+  it('is left off, and the page still served, when the shop has an unexpected shape', async function() {
+    answerWith({ name: 'Made-Up Cuts', address: null }, REVIEWS);
+    var response = await homeFrom(INDEXED_HOME);
+    expect(response.status).toBe(200);
+    expect(response.text).not.toContain('ld+json');
+  });
+
   it('is left off, and the page still served, when the API fails', async function() {
     answerWith(null, null);
     var response = await homeFrom(INDEXED_HOME);
