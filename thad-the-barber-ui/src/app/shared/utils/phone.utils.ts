@@ -17,3 +17,8 @@ export function toPhoneLinks(e164: string): PhoneLinks {
 export function toE164(usNumber: string): string {
   return `+1${usNumber.replace(/\D/g, '')}`;
 }
+
+/** A masked phone field with at least one digit typed counts as filled in; its empty mask doesn't. */
+export function hasPhoneDigits(phone: string): boolean {
+  return /\d/.test(phone);
+}

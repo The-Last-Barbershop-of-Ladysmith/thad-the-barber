@@ -10,4 +10,6 @@ export enum ProblemCode {
   BookingCancelled = 'booking_cancelled',
   CodeInvalid = 'code_invalid',
   LookupExpired = 'lookup_expired',
+  ValidationFailed = 'validation_failed',
+  ContactUnavailable = 'contact_unavailable',
 }

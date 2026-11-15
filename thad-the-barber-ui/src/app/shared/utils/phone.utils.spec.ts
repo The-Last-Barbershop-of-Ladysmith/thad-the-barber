@@ -1,4 +1,4 @@
-import { toE164, toPhoneLinks } from './phone.utils';
+import { hasPhoneDigits, toE164, toPhoneLinks } from './phone.utils';
 
 describe(
   'toPhoneLinks',
@@ -30,6 +30,26 @@ describe(
       'keeps only the digits after +1',
       (): void => {
         expect(toE164('(555) 010-0142')).toBe('+15550100142');
+      },
+    );
+  },
+);
+
+describe(
+  'hasPhoneDigits',
+  (): void => {
+    it(
+      'counts a field with any digit typed as filled in',
+      (): void => {
+        expect(hasPhoneDigits('(5__) ___-____')).toBe(true);
+      },
+    );
+
+    it(
+      'does not count an empty mask or an empty field',
+      (): void => {
+        expect(hasPhoneDigits('(___) ___-____')).toBe(false);
+        expect(hasPhoneDigits('')).toBe(false);
       },
     );
   },

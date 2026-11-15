@@ -38,6 +38,15 @@
         >.
       </span>
     }
+    @if (notice().canReport) {
+      <a
+        class="inline-link w-fit font-semibold"
+        data-testid="notice-report"
+        routerLink="/contact"
+        [state]="reportPrefill()"
+        >Report this problem</a
+      >
+    }
     @if (notice().canRetry) {
       <button
         pButton

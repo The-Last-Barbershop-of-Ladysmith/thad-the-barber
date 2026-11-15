@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, InputSignal, input } from '@angular
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { InputTextModule } from 'primeng/inputtext';
-import { PhoneField } from '../phone-field/phone-field';
+import { PhoneField } from '../../../../shared/components/phone-field/phone-field';
 
 @Component({
   selector: 'app-details-step',

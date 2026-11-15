@@ -144,6 +144,12 @@
   color: var(--p-text-muted-color);
 }
 
+/* The asterisk after a required field's label; hide it from screen readers and mark the field aria-required */
+@utility required-mark {
+  margin-inline-start: 0.25rem;
+  color: var(--p-primary-color);
+}
+
 /* Fine print under a form or action: the privacy line, the reCAPTCHA notice */
 @utility small-print {
   margin: 0;

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, InputSignal, input } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { InputMaskModule } from 'primeng/inputmask';
-import { PHONE_MASK } from '../../../../shared/validators/form.validators';
+import { PHONE_MASK } from '../../validators/form.validators';
 
 @Component({
   selector: 'app-phone-field',
@@ -16,6 +16,7 @@ export class PhoneField {
   protected readonly phoneMask: string = PHONE_MASK;
 
   readonly inputId: InputSignal<string> = input.required<string>();
+  readonly isRequiredMarked: InputSignal<boolean> = input<boolean>(false);
   readonly phoneControl: InputSignal<FormControl<string>> = input.required<FormControl<string>>();
 
   /**

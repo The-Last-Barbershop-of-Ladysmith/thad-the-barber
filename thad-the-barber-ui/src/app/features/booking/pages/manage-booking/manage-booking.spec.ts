@@ -81,6 +81,7 @@ describe(
           {
             provide: Router,
             useValue: {
+              url: '/book/manage/made-up-id',
               currentNavigation: (): object | null => (navigationState ? { extras: { state: navigationState } } : null),
               navigateByUrl,
             },
