@@ -182,7 +182,10 @@ export class Contact {
   private fillFromNavigationState(): void {
     const prefill: ContactPrefill | null = toContactPrefill(this.router.currentNavigation()?.extras.state);
     if (prefill) {
-      this.contactForm.patchValue(prefill);
+      this.contactForm.patchValue({
+        category: prefill.category,
+        pageOrBooking: prefill.pageOrBooking.slice(0, PAGE_OR_BOOKING_MAX_LENGTH),
+      });
     }
   }
 

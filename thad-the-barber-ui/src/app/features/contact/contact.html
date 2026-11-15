@@ -40,7 +40,7 @@
           (ngSubmit)="send()"
         >
           <p class="m-0 text-muted-color" data-testid="contact-required-note">
-            <span class="required-mark ms-0" aria-hidden="true">*</span> marks a required field.
+            <span class="required-mark" aria-hidden="true">*</span> marks a required field.
           </p>
 
           <div class="stack gap-1.5">
@@ -89,7 +89,7 @@
             </div>
           }
 
-          <fieldset class="contact-details stack gap-4">
+          <fieldset class="contact-details stack gap-4" aria-describedby="contact-details-hint">
             <legend class="field-label">
               {{ isAnonymousAllowed() ? 'Your details (optional)' : 'How can we reach you?' }}
             </legend>
@@ -121,7 +121,6 @@
               >
               <input
                 id="contact-email"
-                aria-describedby="contact-details-hint"
                 pInputText
                 type="email"
                 autocomplete="email"

@@ -1,4 +1,4 @@
-/** What a visitor is writing about (the API's `category`). A question or an issue needs a way to reply. */
+/** A question or an issue needs a way to reply; feedback can be anonymous. */
 export enum ContactCategory {
   Question = 'question',
   Issue = 'issue',

@@ -32,6 +32,19 @@ describe(
     );
 
     it(
+      'leaves out the page or booking of a message that is not a problem report',
+      (): void => {
+        const request: ContactRequest = toContactRequest({
+          ...EMPTY_FORM,
+          category: ContactCategory.Question,
+          pageOrBooking: '/book',
+        });
+
+        expect(request.pageOrBooking).toBeUndefined();
+      },
+    );
+
+    it(
       'trims the text fields and sends the phone as E.164',
       (): void => {
         const request: ContactRequest = toContactRequest({

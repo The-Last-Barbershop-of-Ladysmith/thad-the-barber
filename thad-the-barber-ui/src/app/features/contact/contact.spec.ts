@@ -9,6 +9,7 @@ import { AppState } from '../../store/app.state';
 import * as ShopActions from '../shop/state/shop.actions';
 import { shopFeature } from '../shop/state/shop.feature';
 import { Contact } from './contact';
+import { PAGE_OR_BOOKING_MAX_LENGTH } from './config/contact-limits';
 import { CONTACT_PROBLEM_NOTICES } from './config/contact-notices';
 import { ContactReceipt } from './dtos/contact-receipt.dto';
 import { ContactRequest } from './dtos/contact-request.dto';
@@ -266,6 +267,19 @@ describe(
           'is prefilled with the page it came from',
           (): void => {
             expect(inputByTestId('contact-page-or-booking')?.value).toBe('/book');
+          },
+        );
+
+        it(
+          'keeps a prefilled page within the length the API takes',
+          (): void => {
+            fixture.destroy();
+            openPage({
+              category: ContactCategory.Issue,
+              pageOrBooking: `/${'a'.repeat(PAGE_OR_BOOKING_MAX_LENGTH * 2)}`,
+            });
+
+            expect(inputByTestId('contact-page-or-booking')?.value).toHaveLength(PAGE_OR_BOOKING_MAX_LENGTH);
           },
         );
 
