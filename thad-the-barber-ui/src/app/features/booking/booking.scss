@@ -1,3 +1,13 @@
+// The height of the open stepper, so the footer stays put when it replaces the placeholder: about 55rem on phones and
+// tablets, 40rem from lg, where the steps are tabs.
+.steps-placeholder {
+  height: 55rem;
+
+  @media (min-width: 64rem) {
+    height: 40rem;
+  }
+}
+
 .booking-steps {
   border-top: 1px solid var(--p-brand-hairline);
 

@@ -58,6 +58,7 @@
       <app-notice-message [notice]="failureNotice" (retry)="confirm()" />
     }
     <form class="relative" [formGroup]="bookingForm" (ngSubmit)="confirm()">
+      <!-- Browser only: PrimeNG's p-motion leaves a prerendered open panel display:none after hydration (22.1.5). -->
       @defer (on immediate) {
         <p-stepper class="booking-steps" [(value)]="openStep" [pt]="stepperPt">
           <p-step-item [value]="bookingStep.Day">
@@ -157,7 +158,9 @@
           </p-step-item>
         </p-stepper>
       } @placeholder {
-        <p-skeleton width="100%" height="15rem" />
+        <div class="steps-placeholder">
+          <p-skeleton width="100%" height="100%" />
+        </div>
       }
     </form>
   }
