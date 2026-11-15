@@ -29,7 +29,7 @@ const accessibilitySeo: RouteSeo = {
 };
 
 const contactSeo: RouteSeo = {
-  title: 'Contact · {shopName}',
+  title: 'Contact Â· {shopName}',
   description: 'Ask {shopName} a question, report a problem with the site or a booking, or leave feedback. '
     + 'You can also call, text or book on Square.',
   isIndexed: true,
