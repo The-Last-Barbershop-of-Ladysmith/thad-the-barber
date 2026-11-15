@@ -6,6 +6,7 @@ var { errorHandler } = require('./lib/error-handler');
 var { securityHeaders } = require('./lib/security-headers');
 var healthRouter = require('./routes/health');
 var indexRouter = require('./routes/index');
+var robotsRouter = require('./routes/robots');
 
 var app = express();
 
@@ -21,6 +22,7 @@ app.use(compression());
 app.use(securityHeaders(process.env.NOINDEX !== 'false'));
 app.use('/stylesheets', express.static(path.join(__dirname, 'public', 'stylesheets')));
 app.use('/', healthRouter);
+app.use('/', robotsRouter);
 
 // Playwright's CI run turns this on to check the error page against a real thrown error.
 if (process.env.ERROR_TEST_ROUTE === 'true') {
