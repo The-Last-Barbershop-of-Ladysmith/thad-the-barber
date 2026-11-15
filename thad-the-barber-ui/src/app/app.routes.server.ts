@@ -19,6 +19,7 @@ export const INDEXED_ROUTES: string[] = [
   'book',
   'privacy',
   'accessibility',
+  'contact',
 ];
 
 /**
