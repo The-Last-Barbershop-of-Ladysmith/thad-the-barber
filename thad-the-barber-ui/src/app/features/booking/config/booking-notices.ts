@@ -8,6 +8,7 @@ export const AVAILABILITY_FAILED_NOTICE: Notice = {
   severity: NoticeSeverity.Error,
   text: 'We couldn’t load the open times.',
   canRetry: true,
+  canReport: true,
 };
 
 export const NO_OPEN_DAYS_NOTICE: Notice = {
@@ -27,6 +28,7 @@ export const BOOKING_FAILED_NOTICE: Notice = {
   severity: NoticeSeverity.Error,
   text: 'That booking didn’t go through.',
   canRetry: true,
+  canReport: true,
 };
 
 export const SLOT_TAKEN_NOTICE: Notice = {
@@ -54,6 +56,7 @@ export const BOOKING_LOAD_FAILED_NOTICE: Notice = {
   severity: NoticeSeverity.Error,
   text: 'We couldn’t load your booking.',
   canRetry: true,
+  canReport: true,
 };
 
 export const BOOKING_CANCELLED_NOTICE: Notice = {

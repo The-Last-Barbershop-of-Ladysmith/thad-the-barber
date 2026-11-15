@@ -13,4 +13,6 @@ export interface Notice {
   text: string;
   link?: NoticeLink;
   canRetry: boolean;
+  /** A failure the visitor can't fix by retrying: it ends with a link to report it on the contact page. */
+  canReport?: boolean;
 }

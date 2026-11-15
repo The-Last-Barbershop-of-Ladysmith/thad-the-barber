@@ -1,5 +1,5 @@
 import { ContactRequest } from '../dtos/contact-request.dto';
-import { ContactCategory } from '../models/contact-category.model';
+import { ContactCategory } from '../../../shared/models/contact-category.model';
 import { ContactFormValue } from '../models/contact-form-value.model';
 import { toContactRequest } from './contact-request.utils';
 

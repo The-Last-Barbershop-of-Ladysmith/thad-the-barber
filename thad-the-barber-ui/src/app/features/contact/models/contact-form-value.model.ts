@@ -1,4 +1,4 @@
-import { ContactCategory } from './contact-category.model';
+import { ContactCategory } from '../../../shared/models/contact-category.model';
 
 export interface ContactFormValue {
   category: ContactCategory;

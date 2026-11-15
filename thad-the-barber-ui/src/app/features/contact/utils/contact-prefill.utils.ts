@@ -1,5 +1,5 @@
-import { ContactCategory } from '../models/contact-category.model';
-import { ContactPrefill } from '../models/contact-prefill.model';
+import { ContactCategory } from '../../../shared/models/contact-category.model';
+import { ContactPrefill } from '../../../shared/models/contact-prefill.model';
 
 interface PossiblePrefill {
   category?: unknown;

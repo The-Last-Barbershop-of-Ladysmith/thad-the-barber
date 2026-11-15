@@ -3,7 +3,7 @@ import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@a
 import { TestBed } from '@angular/core/testing';
 import { ContactReceipt } from '../dtos/contact-receipt.dto';
 import { ContactRequest } from '../dtos/contact-request.dto';
-import { ContactCategory } from '../models/contact-category.model';
+import { ContactCategory } from '../../../shared/models/contact-category.model';
 import { CONTACT_URL, ContactService } from './contact.service';
 
 describe(

@@ -1,11 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { MockInstance } from 'vitest';
+import { Router, provideRouter } from '@angular/router';
 import { Store, provideStore } from '@ngrx/store';
 import { TEST_SHOP } from '../../../../testing/test-shop';
 import { PhoneLinks } from '../../models/phone-links.model';
 import { AppState } from '../../../store/app.state';
 import * as ShopActions from '../../../features/shop/state/shop.actions';
 import { shopFeature } from '../../../features/shop/state/shop.feature';
+import { ContactCategory } from '../../models/contact-category.model';
 import { Notice } from '../../models/notice.model';
 import { NoticeSeverity } from '../../models/notice-severity.model';
 import { NoticeMessage } from './notice-message';
@@ -99,6 +101,46 @@ describe(
 
         expect(find(withLink, 'notice-link')?.getAttribute('href')).toBe('/made-up/path');
         expect(find(withoutLink, 'notice-link')).toBeNull();
+      },
+    );
+
+    it(
+      'offers to report a failure that cannot be fixed by retrying, as a problem on the page it came from',
+      (): void => {
+        const router: Router = TestBed.inject(Router);
+        vi.spyOn(
+          router,
+          'url',
+          'get',
+        ).mockReturnValue('/made-up/page?made-up=1#t=made-up-token');
+        const navigate: MockInstance<Router['navigateByUrl']> = vi.spyOn(router, 'navigateByUrl')
+          .mockResolvedValue(true);
+        const fixture: ComponentFixture<NoticeMessage> = render({
+          severity: NoticeSeverity.Error,
+          text: 'Made-up failure',
+          canRetry: true,
+          canReport: true,
+        });
+
+        find(fixture, 'notice-report')?.click();
+
+        expect(navigate.mock.calls[0]?.[1]?.state).toEqual({
+          category: ContactCategory.Issue,
+          pageOrBooking: '/made-up/page',
+        });
+      },
+    );
+
+    it(
+      'offers no report link unless the notice can be reported',
+      (): void => {
+        const fixture: ComponentFixture<NoticeMessage> = render({
+          severity: NoticeSeverity.Error,
+          text: 'Made-up failure',
+          canRetry: true,
+        });
+
+        expect(find(fixture, 'notice-report')).toBeNull();
       },
     );
 

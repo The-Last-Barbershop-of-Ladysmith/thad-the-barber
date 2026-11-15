@@ -1,5 +1,5 @@
 import { FormControl, FormGroup, ValidationErrors } from '@angular/forms';
-import { ContactCategory } from '../models/contact-category.model';
+import { ContactCategory } from '../../../shared/models/contact-category.model';
 import { ContactFormValue } from '../models/contact-form-value.model';
 import { contactDetailsValidator } from './contact-details.validator';
 

@@ -36,9 +36,9 @@ import {
   PAGE_OR_BOOKING_MAX_LENGTH,
 } from './config/contact-limits';
 import { CONTACT_FAILED_NOTICE, CONTACT_PROBLEM_NOTICES, CONTACT_SENT_NOTICE } from './config/contact-notices';
-import { ContactCategory } from './models/contact-category.model';
+import { ContactCategory } from '../../shared/models/contact-category.model';
 import { ContactFormValue } from './models/contact-form-value.model';
-import { ContactPrefill } from './models/contact-prefill.model';
+import { ContactPrefill } from '../../shared/models/contact-prefill.model';
 import { ContactService } from './services/contact.service';
 import { toContactPrefill } from './utils/contact-prefill.utils';
 import { toContactRequest } from './utils/contact-request.utils';

@@ -12,8 +12,8 @@ import { Contact } from './contact';
 import { CONTACT_PROBLEM_NOTICES } from './config/contact-notices';
 import { ContactReceipt } from './dtos/contact-receipt.dto';
 import { ContactRequest } from './dtos/contact-request.dto';
-import { ContactCategory } from './models/contact-category.model';
-import { ContactPrefill } from './models/contact-prefill.model';
+import { ContactCategory } from '../../shared/models/contact-category.model';
+import { ContactPrefill } from '../../shared/models/contact-prefill.model';
 import { ContactService } from './services/contact.service';
 
 const MADE_UP_PHONE_FIELD_VALUE: string = '(555) 555-0123';

@@ -10,12 +10,14 @@ import {
   Signal,
 } from '@angular/core';
 import { ButtonModule, ButtonSeverity } from 'primeng/button';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { MessageModule } from 'primeng/message';
 import { PhoneLinks } from '../../models/phone-links.model';
 import { AppState } from '../../../store/app.state';
 import { shopFeature } from '../../../features/shop/state/shop.feature';
+import { ContactCategory } from '../../models/contact-category.model';
+import { ContactPrefill } from '../../models/contact-prefill.model';
 import { Notice } from '../../models/notice.model';
 import { NoticeSeverity } from '../../models/notice-severity.model';
 
@@ -35,8 +37,18 @@ export class NoticeMessage {
   readonly retry: OutputEmitterRef<void> = output();
 
   private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
+  private readonly router: Router = inject(Router);
   protected readonly phone: Signal<PhoneLinks> = this.store.selectSignal(shopFeature.selectPhoneLinks);
   protected readonly bookingUrl: Signal<string> = this.store.selectSignal(shopFeature.selectBookingUrl);
+
+  /**
+   * The contact page opens as a problem report about this page.
+   * The address's fragment, which can hold a manage token, is left out.
+   */
+  protected readonly reportPrefill: ContactPrefill = {
+    category: ContactCategory.Issue,
+    pageOrBooking: this.router.url.split(/[?#]/)[0] ?? '',
+  };
 
   /** Every problem ends with the phone, text and Square's booking site, so a customer is never stuck (BR-14). */
   protected readonly isProblem: Signal<boolean> = computed((): boolean =>

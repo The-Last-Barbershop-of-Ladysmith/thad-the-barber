@@ -1,5 +1,5 @@
 import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
-import { ContactCategory } from '../models/contact-category.model';
+import { ContactCategory } from '../../../shared/models/contact-category.model';
 import { ContactFormValue } from '../models/contact-form-value.model';
 
 /**
