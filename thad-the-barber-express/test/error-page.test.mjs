@@ -54,6 +54,11 @@ describe('error page', function() {
     );
   });
 
+  it('links to the contact page, with no prefilled context', async function() {
+    var response = await request(app).get('/_test/error');
+    expect(response.text).toContain('href="/contact" data-testid="error-contact"');
+  });
+
   it.each([502, 503])('keeps a %s status', async function(status) {
     var response = await request(app).get('/_test/error?status=' + status);
     expect(response.status).toBe(status);
