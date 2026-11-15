@@ -13,6 +13,14 @@ export const CLIENT_ROUTES: string[] = [
   'book/manage/:id/reschedule',
 ];
 
+/** The routes search engines should find; the build writes them to the sitemap (`scripts/write-express-files.ts`). */
+export const INDEXED_ROUTES: string[] = [
+  '',
+  'book',
+  'privacy',
+  'accessibility',
+];
+
 /**
  * Express serves each prerendered page as a file, the app shell for `CLIENT_ROUTES`, and the prerendered /404 page with
  * a 404 status for any other path (thad-the-barber-express/routes/index.js).

@@ -7,6 +7,7 @@ interface CspEnvironment {
   apiBaseUrl: string;
   mediaBaseUrl: string;
   appInsightsConnectionString: string;
+  siteUrl: string;
 }
 
 interface EnvironmentModule { environment: CspEnvironment; }
@@ -38,7 +39,12 @@ interface ShopInfoModule { SHOP_FALLBACK: ShopFallback; }
 
 interface PhoneUtilsModule { toPhoneLinks: (e164: string) => PhoneLinks; }
 
-interface ClientRoutesModule { CLIENT_ROUTES: string[]; }
+interface RoutesServerModule {
+  CLIENT_ROUTES: string[];
+  INDEXED_ROUTES: string[];
+}
+
+interface SitemapUtilsModule { toSitemapXml: (siteUrl: string, routes: string[]) => string; }
 
 interface FileReplacement {
   replace: string;
@@ -65,6 +71,7 @@ interface AngularJson { projects: Record<string, AngularProject>; }
  * - font-preloads.json: the Latin files of those fonts and PrimeIcons' woff2, which Express preloads on each page.
  * - shop.json: the shop name, phone and Square booking URL for the error page, from src/app/core/config/shop-info.ts.
  * - client-routes.json: the routes Express serves the app shell for, from src/app/app.routes.server.ts.
+ * - sitemap.xml: the indexed routes under the environment's siteUrl.
  */
 const ENVIRONMENT_FILE: string = 'src/environments/environment.ts';
 
@@ -99,12 +106,14 @@ const environmentModule: Promise<EnvironmentModule> = importSource(environmentFi
 const brandCssModule: Promise<BrandCssModule> = importSource('src/app/theme/brand-css.ts');
 const shopInfoModule: Promise<ShopInfoModule> = importSource('src/app/core/config/shop-info.ts');
 const phoneUtilsModule: Promise<PhoneUtilsModule> = importSource('src/app/shared/utils/phone.utils.ts');
-const clientRoutesModule: Promise<ClientRoutesModule> = importSource('src/app/app.routes.server.ts');
+const routesServerModule: Promise<RoutesServerModule> = importSource('src/app/app.routes.server.ts');
 const { environment }: EnvironmentModule = await environmentModule;
 const { brandCss }: BrandCssModule = await brandCssModule;
 const { SHOP_FALLBACK }: ShopInfoModule = await shopInfoModule;
 const { toPhoneLinks }: PhoneUtilsModule = await phoneUtilsModule;
-const { CLIENT_ROUTES }: ClientRoutesModule = await clientRoutesModule;
+const sitemapUtilsModule: Promise<SitemapUtilsModule> = importSource('src/app/shared/utils/sitemap.utils.ts');
+const { CLIENT_ROUTES, INDEXED_ROUTES }: RoutesServerModule = await routesServerModule;
+const { toSitemapXml }: SitemapUtilsModule = await sitemapUtilsModule;
 const shop: ErrorPageShop = {
   name: SHOP_FALLBACK.name,
   phone: toPhoneLinks(SHOP_FALLBACK.phone),
@@ -176,6 +185,7 @@ writeFileSync(join(outDir, 'client-routes.json'), `${JSON.stringify(
   null,
   2,
 )}\n`);
+writeFileSync(join(outDir, 'sitemap.xml'), toSitemapXml(environment.siteUrl, INDEXED_ROUTES));
 process.stdout.write(
-  `Wrote csp-sources.json from ${environmentFile}, brand.css, fonts.css, font-preloads.json, shop.json and client-routes.json to ${outDir}\n`,
+  `Wrote csp-sources.json from ${environmentFile}, brand.css, fonts.css, font-preloads.json, shop.json, client-routes.json and sitemap.xml to ${outDir}\n`,
 );
