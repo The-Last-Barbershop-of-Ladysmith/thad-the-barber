@@ -110,11 +110,12 @@ router.get('/{*splat}', async function(req, res, next) {
     return next();
   }
   var route = req.path.length > 1 ? req.path.replace(/\/+$/, '') : req.path;
-  if (route === '/' && pages.has(route)) {
-    return sendPage(res, 200, await homePageWithStructuredData(pages.get(route)));
-  }
   if (pages.has(route)) {
-    return sendPage(res, 200, pages.get(route));
+    var page = pages.get(route);
+    if (route === '/') {
+      page = await homePageWithStructuredData(page);
+    }
+    return sendPage(res, 200, page);
   }
   if (appShell && isClientRoute(route)) {
     return sendPage(res, 200, appShell);
