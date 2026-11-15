@@ -68,7 +68,7 @@ describe(
     let dispatched: Action[];
     let routeParams: BehaviorSubject<ParamMap>;
 
-    beforeEach((): void => {
+    beforeEach(async (): Promise<void> => {
       isBotCheckFailed = signal(false);
       routeParams = new BehaviorSubject<ParamMap>(convertToParamMap({}));
       TestBed.configureTestingModule({
@@ -97,6 +97,7 @@ describe(
           },
         },
       );
+      await TestBed.compileComponents();
       store = TestBed.inject<Store<AppState>>(Store);
     });
 
