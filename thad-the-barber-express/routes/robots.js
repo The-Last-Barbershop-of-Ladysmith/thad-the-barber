@@ -2,29 +2,30 @@ var express = require('express');
 var fs = require('fs');
 var path = require('path');
 var angularDist = require('../lib/angular-dist');
+var { isNoIndex } = require('../lib/security-headers');
 var structuredData = require('../lib/structured-data');
 
 var router = express.Router();
 
 // Prod allows everything and names its sitemap, at the address the prerendered home page gives itself. Anywhere else
-// (NOINDEX, as in lib/security-headers.js) crawlers are told to stay out.
-function robotsTxt(isNoIndex, homeHtml) {
-  if (isNoIndex) {
+// (see isNoIndex) crawlers are told to stay out.
+function robotsTxt(isNoIndexed, sitemapUrl) {
+  if (isNoIndexed) {
     return 'User-agent: *\nDisallow: /\n';
   }
   var lines = ['User-agent: *', 'Allow: /'];
-  var homeUrl = structuredData.canonicalUrlOf(homeHtml);
-  if (homeUrl) {
-    lines.push('Sitemap: ' + new URL('/sitemap.xml', homeUrl).href);
+  if (sitemapUrl) {
+    lines.push('Sitemap: ' + sitemapUrl);
   }
   return lines.join('\n') + '\n';
 }
 
-// The build never changes while the server runs, so the home page is read once.
-var homeHtml = fs.readFileSync(path.join(angularDist, 'index.html'), 'utf8');
+// The build never changes while the server runs, so the address is read once.
+var homeUrl = structuredData.canonicalUrlOf(fs.readFileSync(path.join(angularDist, 'index.html'), 'utf8'));
+var sitemapUrl = homeUrl ? new URL('/sitemap.xml', homeUrl).href : null;
 
 router.get('/robots.txt', function(req, res) {
-  res.type('text/plain').set('Cache-Control', 'no-cache').send(robotsTxt(process.env.NOINDEX !== 'false', homeHtml));
+  res.type('text/plain').set('Cache-Control', 'no-cache').send(robotsTxt(isNoIndex(), sitemapUrl));
 });
 
 module.exports = router;

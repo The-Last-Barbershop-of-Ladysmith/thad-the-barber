@@ -36,4 +36,8 @@ function securityHeaders(noIndex) {
   };
 }
 
-module.exports = { securityHeaders };
+function isNoIndex() {
+  return process.env.NOINDEX !== 'false';
+}
+
+module.exports = { securityHeaders, isNoIndex };

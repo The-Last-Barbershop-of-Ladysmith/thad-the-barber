@@ -4,6 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createFakeDist } from './fake-dist.mjs';
 
 var CANONICAL_HOME = '<html><head><link rel="canonical" href="https://fake-shop.example/"></head><body>home</body></html>';
+var SITEMAP_URL = 'https://fake-shop.example/sitemap.xml';
 var fakeDist;
 var robotsTxt;
 
@@ -24,20 +25,20 @@ afterAll(function() {
 
 describe('robots.txt', function() {
   it('disallows everything outside prod, with no sitemap', function() {
-    var text = robotsTxt(true, CANONICAL_HOME);
+    var text = robotsTxt(true, SITEMAP_URL);
     expect(text).toContain('Disallow: /\n');
     expect(text).not.toContain('Sitemap');
   });
 
-  it('allows everything in prod and points to the sitemap on the home page address', function() {
-    var text = robotsTxt(false, CANONICAL_HOME);
+  it('allows everything in prod and points to the sitemap at the address it is given', function() {
+    var text = robotsTxt(false, SITEMAP_URL);
     expect(text).toContain('Allow: /');
     expect(text).not.toContain('Disallow');
     expect(text).toContain('Sitemap: https://fake-shop.example/sitemap.xml');
   });
 
-  it('leaves the sitemap line out when the home page has no canonical address', function() {
-    expect(robotsTxt(false, '<html><body>home</body></html>')).not.toContain('Sitemap');
+  it('leaves the sitemap line out when there is no address', function() {
+    expect(robotsTxt(false, null)).not.toContain('Sitemap');
   });
 
   it('is served as plain text, disallowing everything unless NOINDEX is "false"', async function() {
@@ -47,10 +48,11 @@ describe('robots.txt', function() {
     expect(response.text).toContain('Disallow: /');
   });
 
-  it('is served allowing everything when NOINDEX is "false"', async function() {
+  it('is served allowing everything, with the sitemap address from the home page, when NOINDEX is "false"', async function() {
     process.env.NOINDEX = 'false';
     var response = await request(fakeDist.app).get('/robots.txt');
     expect(response.text).toContain('Allow: /');
+    expect(response.text).toContain('Sitemap: https://fake-shop.example/sitemap.xml');
   });
 });
 
