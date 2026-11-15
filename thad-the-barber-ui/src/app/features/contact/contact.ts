@@ -7,7 +7,6 @@ import {
   WritableSignal,
   afterNextRender,
   computed,
-  effect,
   inject,
   signal,
 } from '@angular/core';
@@ -141,8 +140,8 @@ export class Contact {
   protected readonly isIssue: Signal<boolean> = computed((): boolean =>
     this.contactFormValue().category === ContactCategory.Issue);
 
-  // `invalid`, not `valid`: the form is disabled while sending, and a disabled form is never valid. Reading the
-  // form's value makes the check run again as the visitor types, since validity itself isn't a signal.
+  // `invalid`, not `valid`: a disabled form is never valid. Reading the form's value makes the check run again as the
+  // visitor types, since validity itself isn't a signal.
   protected readonly canSend: Signal<boolean> = computed((): boolean => {
     this.contactFormValue();
     return !this.contactForm.invalid && !this.isSending();
@@ -150,7 +149,6 @@ export class Contact {
 
   constructor() {
     this.fillFromNavigationState();
-    this.lockFormWhileSending();
   }
 
   protected send(): void {
@@ -159,6 +157,8 @@ export class Contact {
     }
     this.isSending.set(true);
     this.notice.set(null);
+    // Without events, so locking and unlocking doesn't count as the visitor typing.
+    this.contactForm.disable({ emitEvent: false });
     this.contactService.sendMessage(toContactRequest(this.contactForm.getRawValue()))
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
@@ -169,6 +169,7 @@ export class Contact {
         },
         error: (error: unknown): void => {
           this.isSending.set(false);
+          this.contactForm.enable({ emitEvent: false });
           this.notice.set(toProblemNotice(
             error,
             CONTACT_PROBLEM_NOTICES,
@@ -183,17 +184,6 @@ export class Contact {
     if (prefill) {
       this.contactForm.patchValue(prefill);
     }
-  }
-
-  // Without events, so locking and unlocking doesn't count as the visitor typing.
-  private lockFormWhileSending(): void {
-    effect((): void => {
-      if (this.isSending()) {
-        this.contactForm.disable({ emitEvent: false });
-      } else {
-        this.contactForm.enable({ emitEvent: false });
-      }
-    });
   }
 
   private focusSentNotice(): void {

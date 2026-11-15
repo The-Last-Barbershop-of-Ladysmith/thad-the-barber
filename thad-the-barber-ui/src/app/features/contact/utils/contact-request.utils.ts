@@ -1,24 +1,27 @@
 import { ContactRequest } from '../dtos/contact-request.dto';
 import { ContactFormValue } from '../models/contact-form-value.model';
-import { toE164 } from '../../../shared/utils/phone.utils';
+import { hasPhoneDigits, toE164 } from '../../../shared/utils/phone.utils';
 
 /** The API rejects a field it doesn't expect, so a field the visitor left empty is left out. */
 export function toContactRequest(value: ContactFormValue): ContactRequest {
+  const name: string = value.name.trim();
+  const email: string = value.email.trim();
+  const pageOrBooking: string = value.pageOrBooking.trim();
   const request: ContactRequest = {
     category: value.category,
     message: value.message.trim(),
   };
-  if (value.name.trim() !== '') {
-    request.name = value.name.trim();
+  if (name !== '') {
+    request.name = name;
   }
-  if (value.email.trim() !== '') {
-    request.email = value.email.trim();
+  if (email !== '') {
+    request.email = email;
   }
-  if (/\d/.test(value.phone)) {
+  if (hasPhoneDigits(value.phone)) {
     request.phone = toE164(value.phone);
   }
-  if (value.pageOrBooking.trim() !== '') {
-    request.pageOrBooking = value.pageOrBooking.trim();
+  if (pageOrBooking !== '') {
+    request.pageOrBooking = pageOrBooking;
   }
   return request;
 }

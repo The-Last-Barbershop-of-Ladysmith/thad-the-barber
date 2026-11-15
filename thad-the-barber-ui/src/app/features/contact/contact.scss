@@ -19,18 +19,14 @@
     }
   }
 
-  .contact-sent {
-    &:focus {
-      outline: none;
-    }
+  .contact-sent:focus {
+    outline: none;
   }
 
-  .contact-form {
-    .contact-details {
-      min-width: 0;
-      margin: 0;
-      padding: 0;
-      border: 0;
-    }
+  .contact-form .contact-details {
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
   }
 }

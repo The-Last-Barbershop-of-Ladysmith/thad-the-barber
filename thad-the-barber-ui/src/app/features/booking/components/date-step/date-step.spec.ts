@@ -1,6 +1,7 @@
 import { Signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl } from '@angular/forms';
+import { provideRouter } from '@angular/router';
 import { Action, ActionsSubject, Store, provideStore } from '@ngrx/store';
 import { DatePickerDateMeta, DatePickerMonthChangeEvent } from 'primeng/types/datepicker';
 import { testFirstMonth, testMonthView } from '../../../../../testing/test-availability';
@@ -55,6 +56,7 @@ describe(
             [shopFeature.name]: shopFeature.reducer,
             [bookingFeature.name]: bookingFeature.reducer,
           }),
+          provideRouter([]),
         ],
       });
       store = TestBed.inject<Store<AppState>>(Store);

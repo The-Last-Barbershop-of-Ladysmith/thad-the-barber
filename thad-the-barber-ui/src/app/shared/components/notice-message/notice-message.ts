@@ -41,14 +41,16 @@ export class NoticeMessage {
   protected readonly phone: Signal<PhoneLinks> = this.store.selectSignal(shopFeature.selectPhoneLinks);
   protected readonly bookingUrl: Signal<string> = this.store.selectSignal(shopFeature.selectBookingUrl);
 
-  /**
-   * The contact page opens as a problem report about this page.
-   * The address's fragment, which can hold a manage token, is left out.
-   */
-  protected readonly reportPrefill: ContactPrefill = {
-    category: ContactCategory.Issue,
-    pageOrBooking: this.router.url.split(/[?#]/)[0] ?? '',
-  };
+  /** The address's fragment, which can hold a manage token, is left out of the page the report names. */
+  protected readonly reportPrefill: Signal<ContactPrefill | undefined> = computed((): ContactPrefill | undefined => {
+    if (!this.notice().canReport) {
+      return undefined;
+    }
+    return {
+      category: ContactCategory.Issue,
+      pageOrBooking: this.router.url.split(/[?#]/)[0] ?? '',
+    };
+  });
 
   /** Every problem ends with the phone, text and Square's booking site, so a customer is never stuck (BR-14). */
   protected readonly isProblem: Signal<boolean> = computed((): boolean =>

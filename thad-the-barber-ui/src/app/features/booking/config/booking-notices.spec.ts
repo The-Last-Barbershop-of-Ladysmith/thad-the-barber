@@ -20,6 +20,7 @@ interface NoticeCase {
   error: unknown;
   severity: NoticeSeverity;
   canRetry: boolean;
+  canReport?: boolean;
 }
 
 function problem(status: number, code: string): HttpErrorResponse {
@@ -64,24 +65,28 @@ const bookingCases: NoticeCase[] = [
     error: problem(400, 'validation_failed'),
     severity: NoticeSeverity.Error,
     canRetry: true,
+    canReport: true,
   },
   {
     name: '503 square_unavailable',
     error: problem(503, 'square_unavailable'),
     severity: NoticeSeverity.Error,
     canRetry: true,
+    canReport: true,
   },
   {
     name: 'a network error',
     error: new HttpErrorResponse({ status: 0, error: new ProgressEvent('error') }),
     severity: NoticeSeverity.Error,
     canRetry: true,
+    canReport: true,
   },
   {
     name: 'a failed bot check before the request',
     error: new Error(RAW_DETAIL),
     severity: NoticeSeverity.Error,
     canRetry: true,
+    canReport: true,
   },
 ];
 
@@ -102,6 +107,7 @@ describe(
             severity: testCase.severity,
             text: expect.any(String) as string,
             canRetry: testCase.canRetry,
+            canReport: testCase.canReport,
           });
           expect(notice.text).not.toContain(RAW_DETAIL);
         },
