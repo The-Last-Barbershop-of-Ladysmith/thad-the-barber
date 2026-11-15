@@ -20,6 +20,7 @@ beforeAll(function() {
     'index.html': page('home'),
     'index.csr.html': page('shell'),
     '404/index.html': page('not found'),
+    'book/index.html': page('booking'),
     'assets/app.css': 'body {}',
     'csp-sources.json': JSON.stringify({
       'connect-src': ['https://api.example.com'],
@@ -40,9 +41,15 @@ describe('pages', function() {
     expect(response.text).toContain('home');
   });
 
+  it('serves /book as a prerendered page, with or without the trailing slash', async function() {
+    for (var path of ['/book', '/book/']) {
+      var response = await request(app).get(path);
+      expect(response.status, path).toBe(200);
+      expect(response.text, path).toContain('booking');
+    }
+  });
+
   it.each([
-    '/book',
-    '/book/',
     '/book/manage',
     '/book/manage/',
     '/book/manage/made-up_Booking-1',
