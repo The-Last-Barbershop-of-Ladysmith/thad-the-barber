@@ -21,7 +21,8 @@ function robotsTxt(isNoIndexed, sitemapUrl) {
 }
 
 // The build never changes while the server runs, so the address is read once.
-var homeUrl = structuredData.canonicalUrlOf(fs.readFileSync(path.join(angularDist, 'index.html'), 'utf8'));
+var homePath = path.join(angularDist, 'index.html');
+var homeUrl = fs.existsSync(homePath) ? structuredData.canonicalUrlOf(fs.readFileSync(homePath, 'utf8')) : null;
 var sitemapUrl = homeUrl ? new URL('/sitemap.xml', homeUrl).href : null;
 
 router.get('/robots.txt', function(req, res) {
