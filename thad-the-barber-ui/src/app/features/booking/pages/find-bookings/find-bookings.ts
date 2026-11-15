@@ -28,7 +28,7 @@ import { toE164 } from '../../../../shared/utils/phone.utils';
 import { LOOKUP_CODE_VALIDATORS, PHONE_VALIDATORS } from '../../../../shared/validators/form.validators';
 import { AppState } from '../../../../store/app.state';
 import { shopFeature } from '../../../shop/state/shop.feature';
-import { PhoneField } from '../../components/phone-field/phone-field';
+import { PhoneField } from '../../../../shared/components/phone-field/phone-field';
 import {
   CODE_SENT_NOTICE,
   LOOKUP_FAILED_NOTICE,
