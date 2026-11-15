@@ -4,11 +4,14 @@ var path = require('path');
 var angularDist = require('../lib/angular-dist');
 var csp = require('../lib/content-security-policy');
 var fontPreload = require('../lib/font-preload');
+var { createSiteData } = require('../lib/site-data');
+var structuredData = require('../lib/structured-data');
 
 var router = express.Router();
 
 var cspSources = JSON.parse(fs.readFileSync(path.join(angularDist, 'csp-sources.json'), 'utf8'));
 var fontHrefs = JSON.parse(fs.readFileSync(path.join(angularDist, 'font-preloads.json'), 'utf8'));
+var getSiteData = createSiteData(process.env.API_ORIGIN);
 var cspHeader = process.env.CSP_REPORT_ONLY === 'true' ? 'Content-Security-Policy-Report-Only' : 'Content-Security-Policy';
 
 // Client-rendered routes, served the app shell with a 200, from the app's CLIENT_ROUTES (client-routes.json, written by
@@ -90,13 +93,34 @@ function sendPage(res, status, page) {
     .send(csp.applyNonce(page.html, nonce));
 }
 
-router.get('/{*splat}', function(req, res, next) {
+// The home page carries the shop's structured data, built from the API at request time so Square's hours and address
+// never need editing here.
+async function homePageWithStructuredData(page) {
+  var pageUrl = structuredData.canonicalUrlOf(page.html);
+  var siteData = pageUrl ? await getSiteData() : null;
+  if (!siteData) {
+    return page;
+  }
+  try {
+    var hairSalon = structuredData.buildHairSalon(siteData.shop, siteData.reviews, pageUrl);
+    return { html: structuredData.injectJsonLd(page.html, hairSalon), styleHashes: page.styleHashes };
+  } catch (error) {
+    console.error('Structured data: building it failed:', error.message);
+    return page;
+  }
+}
+
+router.get('/{*splat}', async function(req, res, next) {
   if (path.extname(req.path)) {
     return next();
   }
   var route = req.path.length > 1 ? req.path.replace(/\/+$/, '') : req.path;
   if (pages.has(route)) {
-    return sendPage(res, 200, pages.get(route));
+    var page = pages.get(route);
+    if (route === '/') {
+      page = await homePageWithStructuredData(page);
+    }
+    return sendPage(res, 200, page);
   }
   if (appShell && isClientRoute(route)) {
     return sendPage(res, 200, appShell);
