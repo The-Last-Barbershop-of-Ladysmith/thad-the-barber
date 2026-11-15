@@ -14,6 +14,7 @@ export const selectbutton: SelectButtonDesignTokens = {
     .p-selectbutton .p-togglebutton,
     .p-selectbutton .p-togglebutton:first-child,
     .p-selectbutton .p-togglebutton:last-child { border-radius: 0.625rem; border-width: 1px; min-height: 3.25rem; }
+    .p-selectbutton:not(.option-list) .p-togglebutton-label { text-align: center; }
     .p-selectbutton.option-list { grid-template-columns: minmax(0, 1fr); }
     .p-selectbutton.option-list .p-togglebutton { min-height: 3.25rem; padding: 0.625rem 0.875rem; font-size: 0.9375rem; font-weight: 400; }
     .p-selectbutton.option-list .p-togglebutton-content { width: 100%; justify-content: space-between; gap: 0.75rem; }
