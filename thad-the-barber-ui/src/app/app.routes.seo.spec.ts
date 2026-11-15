@@ -38,6 +38,7 @@ describe(
           'book/manage/:id',
           'privacy',
           'accessibility',
+          'contact',
           '404',
           '**',
         ]);
@@ -108,7 +109,7 @@ describe(
     );
 
     it(
-      'indexes home, book, privacy and accessibility',
+      'indexes home, book, privacy, accessibility and contact',
       (): void => {
         const indexed: string[] = leaves
           .filter((leaf: RouteLeaf): boolean => leaf.seo?.isIndexed === true)
@@ -119,6 +120,7 @@ describe(
           'book',
           'privacy',
           'accessibility',
+          'contact',
         ]);
       },
     );

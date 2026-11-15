@@ -1,0 +1,36 @@
+// Phones stack the ways to reach the shop above the form; from lg they stand beside it.
+.contact-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+
+  @media (min-width: 64rem) {
+    display: grid;
+    grid-template-columns: 18rem minmax(0, 36rem);
+    align-items: start;
+    gap: 4rem;
+  }
+
+  .reach-options,
+  .contact-sent {
+    // A link's underline spans the element, so each takes its own width, not the column's.
+    a {
+      width: fit-content;
+    }
+  }
+
+  .contact-sent {
+    &:focus {
+      outline: none;
+    }
+  }
+
+  .contact-form {
+    .contact-details {
+      min-width: 0;
+      margin: 0;
+      padding: 0;
+      border: 0;
+    }
+  }
+}

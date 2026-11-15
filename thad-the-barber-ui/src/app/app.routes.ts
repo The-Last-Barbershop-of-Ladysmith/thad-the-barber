@@ -2,6 +2,7 @@ import { Route, Routes } from '@angular/router';
 import * as bookingRoutes from './features/booking/booking.routes';
 import { HOME_ROUTES } from './features/home/home.routes';
 import { RouteSeo } from './shared/models/route-seo.model';
+import * as contact from './features/contact/contact';
 import * as accessibility from './pages/accessibility/accessibility';
 import * as notFound from './pages/not-found/not-found';
 import * as privacy from './pages/privacy/privacy';
@@ -24,6 +25,13 @@ const accessibilitySeo: RouteSeo = {
   title: 'Accessibility Â· {shopName}',
   description: 'How {shopName} works to keep this website usable for everyone, '
     + 'the standard we aim for, and how to tell us about a problem you run into.',
+  isIndexed: true,
+};
+
+const contactSeo: RouteSeo = {
+  title: 'Contact · {shopName}',
+  description: 'Ask {shopName} a question, report a problem with the site or a booking, or leave feedback. '
+    + 'You can also call, text or book on Square.',
   isIndexed: true,
 };
 
@@ -68,6 +76,12 @@ export const routes: Routes = [
     loadComponent: (): Promise<typeof accessibility.Accessibility> =>
       import('./pages/accessibility/accessibility')
         .then((m: typeof accessibility): typeof accessibility.Accessibility => m.Accessibility),
+  },
+  {
+    path: 'contact',
+    data: { seo: contactSeo },
+    loadComponent: (): Promise<typeof contact.Contact> =>
+      import('./features/contact/contact').then((m: typeof contact): typeof contact.Contact => m.Contact),
   },
   { path: '404', ...notFoundRoute },
   { path: '**', ...notFoundRoute },
