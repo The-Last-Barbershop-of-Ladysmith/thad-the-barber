@@ -12,7 +12,7 @@ export const PRIVACY_SECTIONS: readonly PrivacySection[] = [
         {
           kind: PrivacyPartKind.Text,
           text: ' on this site, we ask for your name, your phone number and the time you pick. '
-            + "That's all: there's no account, no email address and no payment.",
+            + "That's all for a booking: there's no account and no payment.",
         },
       ],
     ],
@@ -95,14 +95,38 @@ export const PRIVACY_SECTIONS: readonly PrivacySection[] = [
     ],
   },
   {
+    label: 'Contact messages',
+    fragment: 'contact',
+    paragraphs: [
+      [
+        {
+          kind: PrivacyPartKind.Text,
+          text: 'If you write to the shop from the contact page, we keep your message and what you choose to give: '
+            + 'a name, an email address, a phone number and, for a problem, the page or booking involved. A question '
+            + 'or a problem needs a name and an email or phone number, so the shop can reply; feedback can be '
+            + 'anonymous.',
+        },
+      ],
+      [
+        {
+          kind: PrivacyPartKind.Text,
+          text: "Each message is saved privately, as its own file in the shop's Azure storage, and is used only to "
+            + 'answer you or fix the problem. A question or a problem also sends the shop an alert that names the '
+            + 'kind of message and its file, never your details. Messages are never shared or sold, and the shop '
+            + 'keeps one until it removes it. To have yours deleted, call or text the shop.',
+        },
+      ],
+    ],
+  },
+  {
     label: 'The bot check',
     fragment: 'bot',
     paragraphs: [
       [
         {
           kind: PrivacyPartKind.Text,
-          text: "When you open the home page, the booking page or a booking's manage link, Google reCAPTCHA checks that "
-            + "you're a person, not a bot. It uses Google cookies and sends information about your device and how you use "
+          text: "When you open the home page, the booking page, the contact page or a booking's manage link, Google "
+            + "reCAPTCHA checks that you're a person, not a bot. It uses Google cookies and sends information about your device and how you use "
             + 'the page to Google. The Google ',
         },
         {
