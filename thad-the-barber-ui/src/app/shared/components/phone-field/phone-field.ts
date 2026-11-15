@@ -16,6 +16,7 @@ export class PhoneField {
   protected readonly phoneMask: string = PHONE_MASK;
 
   readonly inputId: InputSignal<string> = input.required<string>();
+  readonly isRequiredMarked: InputSignal<boolean> = input<boolean>(false);
   readonly phoneControl: InputSignal<FormControl<string>> = input.required<FormControl<string>>();
 
   /**

@@ -109,6 +109,11 @@ describe(
       fixture.detectChanges();
     }
 
+    function requiredMarkCount(): number {
+      fixture.detectChanges();
+      return (fixture.nativeElement as HTMLElement).querySelectorAll('.required-mark').length;
+    }
+
     function isSendDisabled(): boolean {
       return buttonByTestId('contact-send')?.disabled ?? true;
     }
@@ -138,6 +143,16 @@ describe(
         beforeEach((): void => {
           openPage();
         });
+
+        it(
+          'marks the message, name, email and phone as required',
+          (): void => {
+            const noteMark: number = 1;
+            const requiredFields: number = 4;
+
+            expect(requiredMarkCount()).toBe(noteMark + requiredFields);
+          },
+        );
 
         it(
           'cannot be sent without a message',
@@ -200,6 +215,16 @@ describe(
         });
 
         it(
+          'marks only the message as required',
+          (): void => {
+            const noteMark: number = 1;
+            const requiredFields: number = 1;
+
+            expect(requiredMarkCount()).toBe(noteMark + requiredFields);
+          },
+        );
+
+        it(
           'can be sent anonymously',
           (): void => {
             type(textareaByTestId('contact-message'), 'Made-up feedback');
@@ -226,6 +251,16 @@ describe(
             pageOrBooking: '/book',
           });
         });
+
+        it(
+          'also marks the page or booking as required',
+          (): void => {
+            const noteMark: number = 1;
+            const requiredFields: number = 5;
+
+            expect(requiredMarkCount()).toBe(noteMark + requiredFields);
+          },
+        );
 
         it(
           'is prefilled with the page it came from',

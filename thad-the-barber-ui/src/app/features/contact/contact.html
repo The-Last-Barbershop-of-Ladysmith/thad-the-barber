@@ -39,6 +39,10 @@
           [formGroup]="contactForm"
           (ngSubmit)="send()"
         >
+          <p class="m-0 text-muted-color" data-testid="contact-required-note">
+            <span class="required-mark ms-0" aria-hidden="true">*</span> marks a required field.
+          </p>
+
           <div class="stack gap-1.5">
             <span id="contact-category-label" class="field-label">What is this about?</span>
             <p-selectbutton
@@ -53,11 +57,14 @@
           </div>
 
           <div class="stack gap-1.5">
-            <label class="field-label" for="contact-message">Message</label>
+            <label class="field-label" for="contact-message"
+              >Message<span class="required-mark" aria-hidden="true">*</span></label
+            >
             <textarea
               id="contact-message"
               pTextarea
               rows="6"
+              aria-required="true"
               data-testid="contact-message"
               [maxlength]="messageMaxLength"
               [fluid]="true"
@@ -67,9 +74,12 @@
 
           @if (isIssue()) {
             <div class="stack gap-1.5">
-              <label class="field-label" for="contact-page-or-booking">Page or booking involved</label>
+              <label class="field-label" for="contact-page-or-booking"
+                >Page or booking involved<span class="required-mark" aria-hidden="true">*</span></label
+              >
               <input
                 id="contact-page-or-booking"
+                aria-required="true"
                 pInputText
                 data-testid="contact-page-or-booking"
                 [maxlength]="pageOrBookingMaxLength"
@@ -83,10 +93,20 @@
             <legend class="field-label">
               {{ isAnonymousAllowed() ? 'Your details (optional)' : 'How can we reach you?' }}
             </legend>
+            <p id="contact-details-hint" class="m-0 text-muted-color" data-testid="contact-details-hint">
+              @if (isAnonymousAllowed()) {
+                Feedback can be anonymous. Add your details if you would like a reply.
+              } @else {
+                We need your name, plus an email or a phone number (or both), so the shop can reply.
+              }
+            </p>
             <div class="stack gap-1.5">
-              <label class="field-label" for="contact-name">Name</label>
+              <label class="field-label" for="contact-name"
+                >Name@if (!isAnonymousAllowed()) {<span class="required-mark" aria-hidden="true">*</span>}</label
+              >
               <input
                 id="contact-name"
+                [attr.aria-required]="!isAnonymousAllowed()"
                 pInputText
                 autocomplete="name"
                 data-testid="contact-name"
@@ -96,9 +116,12 @@
               />
             </div>
             <div class="stack gap-1.5">
-              <label class="field-label" for="contact-email">Email</label>
+              <label class="field-label" for="contact-email"
+                >Email@if (!isAnonymousAllowed()) {<span class="required-mark" aria-hidden="true">*</span>}</label
+              >
               <input
                 id="contact-email"
+                aria-describedby="contact-details-hint"
                 pInputText
                 type="email"
                 autocomplete="email"
@@ -108,10 +131,11 @@
                 [formControl]="contactForm.controls.email"
               />
             </div>
-            <app-phone-field inputId="contact-phone" [phoneControl]="contactForm.controls.phone" />
-            @if (!isAnonymousAllowed()) {
-              <p class="m-0 text-muted-color">A name, plus an email or a phone number.</p>
-            }
+            <app-phone-field
+              inputId="contact-phone"
+              [isRequiredMarked]="!isAnonymousAllowed()"
+              [phoneControl]="contactForm.controls.phone"
+            />
           </fieldset>
 
           <button pButton type="submit" data-testid="contact-send" [fluid]="true" [disabled]="!canSend()">
