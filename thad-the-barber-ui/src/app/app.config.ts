@@ -5,7 +5,6 @@ import {
   CSP_NONCE,
   ErrorHandler,
   inject,
-  isDevMode,
   provideBrowserGlobalErrorListeners,
   provideEnvironmentInitializer,
 } from '@angular/core';
@@ -59,7 +58,7 @@ export const appConfig: ApplicationConfig = {
       shopEffects,
       announcementsEffects,
     ),
-    provideStoreDevtools({ maxAge: 25, logOnly: !isDevMode() }),
+    ...(ngDevMode ? [provideStoreDevtools({ maxAge: 25 })] : []),
     providePrimeNG({
       ripple: false,
       theme: { preset: ThadPreset, options: themeOptions },
