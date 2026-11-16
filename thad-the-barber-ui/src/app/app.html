@@ -6,7 +6,9 @@
   >Skip to content</a
 >
 @if (isNavigating()) {
-  <p-progressbar class="page-loading" mode="indeterminate" aria-label="Loading page" />
+  <div class="page-loading" aria-hidden="true">
+    <p-progressbar mode="indeterminate" />
+  </div>
 }
 <app-header />
 <main id="main-content" #mainContent tabindex="-1" class="main-content relative">

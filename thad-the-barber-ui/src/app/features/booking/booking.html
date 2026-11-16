@@ -116,11 +116,9 @@
               }}</span>
             </p-step>
             @if (isSubmitting()) {
-              <p-progressbar
-                class="steps-progress"
-                mode="indeterminate"
-                [attr.aria-label]="isRescheduling() ? 'Moving' : 'Booking'"
-              />
+              <div class="steps-progress" aria-hidden="true">
+                <p-progressbar mode="indeterminate" />
+              </div>
             }
             <p-step-panel>
               <ng-template #content>
@@ -171,4 +169,4 @@
   }
 </app-titled-page>
 
-<p-confirmdialog key="leave-booking" />
+<p-confirmdialog key="leave-booking" [pt]="{ pcCloseButton: { root: { 'aria-label': 'Close' } } }" />
