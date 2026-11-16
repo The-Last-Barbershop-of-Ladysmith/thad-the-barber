@@ -12,12 +12,17 @@ interface Report {
   categories: Record<string, Category>;
 }
 
-// Performance is reported but not enforced yet: the backdrop frames sink it until #47 and #38 land,
-// and #91 sets the real budgets (LCP, CLS, INP).
+// Performance floors sit about 10 points under what CI last measured (home 69, book 61; home has read 80), since
+// runner noise is large; they are raised as the startup JavaScript shrinks (#287), and #91 sets the real budgets (LCP, CLS, INP).
 const minimums: Record<string, number> = {
   accessibility: 0.95,
   'best-practices': 0.9,
   seo: 0.9,
+};
+
+const performanceMinimums: Record<string, number> = {
+  '/': 0.6,
+  '/book': 0.5,
 };
 
 const reportDir: string = process.argv[2] ?? 'lighthouse-results';
@@ -38,7 +43,7 @@ for (const file of reportFiles) {
 
   for (const category of Object.values(report.categories)) {
     const score: number = Math.round((category.score ?? 0) * 100);
-    const minimum: number | undefined = minimums[category.id];
+    const minimum: number | undefined = category.id === 'performance' ? performanceMinimums[path] : minimums[category.id];
     const limit: number | undefined = minimum === undefined ? undefined : minimum * 100;
     const failed: boolean = limit !== undefined && score < limit;
     process.stdout.write(`${failed ? 'FAIL' : 'ok  '} ${path} ${category.id} ${score} (${limit === undefined ? 'not enforced' : `min ${limit}`})\n`);
