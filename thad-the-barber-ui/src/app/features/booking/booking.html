@@ -30,7 +30,9 @@
   } @else {
     <p pageSubtitle class="m-0 text-muted-color">
       Already booked?
-      <a class="inline-link" data-testid="find-bookings-link" routerLink="/book/manage">Find your bookings here</a>
+      <a class="inline-link" data-testid="find-bookings-link" routerLink="/book/manage"
+        >Find your bookings here</a
+      >
     </p>
   }
 
@@ -56,101 +58,110 @@
       <app-notice-message [notice]="failureNotice" (retry)="confirm()" />
     }
     <form class="relative" [formGroup]="bookingForm" (ngSubmit)="confirm()">
-      <p-stepper class="booking-steps" [(value)]="openStep" [pt]="stepperPt">
-        <p-step-item [value]="bookingStep.Day">
-          <p-step [pt]="stepPt" [class.is-done]="isDayDone()">
-            <span class="step-title">Pick a day</span>
-            @if (pickedDayLabel(); as pickedDay) {
-              <span class="step-pick">{{ pickedDay }}</span>
-            } @else {
-              <span class="step-pick is-empty">Not picked yet</span>
-            }
-          </p-step>
-          <p-step-panel>
-            <ng-template #content>
-              <div class="step-content stack gap-4">
-                <app-date-step [dateControl]="bookingForm.controls.date" />
-              </div>
-            </ng-template>
-          </p-step-panel>
-        </p-step-item>
+      <!-- Browser only: PrimeNG's p-motion leaves a prerendered open panel display:none after hydration (22.1.5). -->
+      @defer (on immediate) {
+        <p-stepper class="booking-steps" [(value)]="openStep" [pt]="stepperPt">
+          <p-step-item [value]="bookingStep.Day">
+            <p-step [pt]="stepPt" [class.is-done]="isDayDone()">
+              <span class="step-title">Pick a day</span>
+              @if (pickedDayLabel(); as pickedDay) {
+                <span class="step-pick">{{ pickedDay }}</span>
+              } @else {
+                <span class="step-pick is-empty">Not picked yet</span>
+              }
+            </p-step>
+            <p-step-panel>
+              <ng-template #content>
+                <div class="step-content stack gap-4">
+                  <app-date-step [dateControl]="bookingForm.controls.date" />
+                </div>
+              </ng-template>
+            </p-step-panel>
+          </p-step-item>
 
-        <p-step-item [value]="bookingStep.Time">
-          <p-step
-            [pt]="stepPt"
-            [class.is-done]="isTimeDone()"
-            [disabled]="!bookingFormValue().date"
-          >
-            <span class="step-title">Select a time</span>
-            @if (pickedTimeLabel(); as pickedTime) {
-              <span class="step-pick">{{ pickedTime }}</span>
-            } @else {
-              <span class="step-pick is-empty">Not picked yet</span>
-            }
-          </p-step>
-          <p-step-panel>
-            <ng-template #content>
-              <div class="step-content stack gap-4">
-                <app-time-step
-                  [startAtControl]="bookingForm.controls.startAt"
-                  [selectedDate]="bookingFormValue().date"
-                />
-              </div>
-            </ng-template>
-          </p-step-panel>
-        </p-step-item>
+          <p-step-item [value]="bookingStep.Time">
+            <p-step
+              [pt]="stepPt"
+              [class.is-done]="isTimeDone()"
+              [disabled]="!bookingFormValue().date"
+            >
+              <span class="step-title">Select a time</span>
+              @if (pickedTimeLabel(); as pickedTime) {
+                <span class="step-pick">{{ pickedTime }}</span>
+              } @else {
+                <span class="step-pick is-empty">Not picked yet</span>
+              }
+            </p-step>
+            <p-step-panel>
+              <ng-template #content>
+                <div class="step-content stack gap-4">
+                  <app-time-step
+                    [startAtControl]="bookingForm.controls.startAt"
+                    [selectedDate]="bookingFormValue().date"
+                  />
+                </div>
+              </ng-template>
+            </p-step-panel>
+          </p-step-item>
 
-        <p-step-item [value]="bookingStep.Confirm">
-          <p-step [pt]="stepPt" [disabled]="!bookingFormValue().startAt">
-            <span class="step-title">{{ isRescheduling() ? 'Confirm' : 'Details & confirm' }}</span>
-          </p-step>
-          @if (isSubmitting()) {
-            <p-progressbar
-              class="steps-progress"
-              mode="indeterminate"
-              [attr.aria-label]="isRescheduling() ? 'Moving' : 'Booking'"
-            />
-          }
-          <p-step-panel>
-            <ng-template #content>
-              <div class="step-content confirm-layout">
-                <div class="confirm-form stack gap-4">
-                  @if (!isRescheduling()) {
-                    <app-details-step
-                      [nameControl]="bookingForm.controls.name"
-                      [phoneControl]="bookingForm.controls.phone"
-                    />
-                  }
-                  <button
-                    pButton
-                    type="submit"
-                    class="confirm-booking"
-                    data-testid="confirm-booking"
-                    [fluid]="true"
-                    [disabled]="!canConfirm()"
-                  >
-                    @if (isSubmitting()) {
-                      <svg data-p-icon="spinner" class="animate-spin"></svg>
+          <p-step-item [value]="bookingStep.Confirm">
+            <p-step [pt]="stepPt" [disabled]="!bookingFormValue().startAt">
+              <span class="step-title">{{
+                isRescheduling() ? 'Confirm' : 'Details & confirm'
+              }}</span>
+            </p-step>
+            @if (isSubmitting()) {
+              <p-progressbar
+                class="steps-progress"
+                mode="indeterminate"
+                [attr.aria-label]="isRescheduling() ? 'Moving' : 'Booking'"
+              />
+            }
+            <p-step-panel>
+              <ng-template #content>
+                <div class="step-content confirm-layout">
+                  <div class="confirm-form stack gap-4">
+                    @if (!isRescheduling()) {
+                      <app-details-step
+                        [nameControl]="bookingForm.controls.name"
+                        [phoneControl]="bookingForm.controls.phone"
+                      />
                     }
-                    {{ confirmLabel() }}
-                  </button>
-                  @if (!isRescheduling()) {
-                    <p class="small-print" data-testid="booking-consent">
-                      By booking you agree to receive a text confirming your appointment. Message and data rates may
-                      apply. Reply STOP to opt out, HELP for help.
-                    </p>
+                    <button
+                      pButton
+                      type="submit"
+                      class="confirm-booking"
+                      data-testid="confirm-booking"
+                      [fluid]="true"
+                      [disabled]="!canConfirm()"
+                    >
+                      @if (isSubmitting()) {
+                        <svg data-p-icon="spinner" class="animate-spin"></svg>
+                      }
+                      {{ confirmLabel() }}
+                    </button>
+                    @if (!isRescheduling()) {
+                      <p class="small-print" data-testid="booking-consent">
+                        By booking you agree to receive a text confirming your appointment. Message
+                        and data rates may apply. Reply STOP to opt out, HELP for help.
+                      </p>
+                    }
+                  </div>
+                  @if (pickedDayLabel(); as pickedDay) {
+                    @if (pickedTimeLabel(); as pickedTime) {
+                      <app-appointment-summary [dayLabel]="pickedDay" [timeLabel]="pickedTime" />
+                    }
                   }
                 </div>
-                @if (pickedDayLabel(); as pickedDay) {
-                  @if (pickedTimeLabel(); as pickedTime) {
-                    <app-appointment-summary [dayLabel]="pickedDay" [timeLabel]="pickedTime" />
-                  }
-                }
-              </div>
-            </ng-template>
-          </p-step-panel>
-        </p-step-item>
-      </p-stepper>
+              </ng-template>
+            </p-step-panel>
+          </p-step-item>
+        </p-stepper>
+      } @placeholder {
+        <div class="steps-placeholder">
+          <p-skeleton width="100%" height="100%" />
+        </div>
+      }
     </form>
   }
 </app-titled-page>

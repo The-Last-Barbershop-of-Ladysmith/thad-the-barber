@@ -2,6 +2,7 @@ import { APIResponse, Locator, Page, Route } from '@playwright/test';
 import { expect, test } from '../support/fixtures';
 
 const APP_SCRIPT: string = '**/main*.js';
+const CLIENT_ONLY_PAGE: string = '/book/manage/mock-booking';
 
 async function holdAppScript(page: Page): Promise<() => Promise<void>> {
   let heldRoute: Route | undefined;
@@ -25,7 +26,7 @@ test.describe(
       async ({ page }: { page: Page; }): Promise<void> => {
         const release: () => Promise<void> = await holdAppScript(page);
         await page.goto(
-          '/book',
+          CLIENT_ONLY_PAGE,
           { waitUntil: 'commit' },
         );
         const loader: Locator = page.locator('#startup-loader');
@@ -36,7 +37,7 @@ test.describe(
 
         await release();
 
-        await expect(page.getByTestId('find-bookings-link')).toBeVisible();
+        await expect(page.locator('app-root')).not.toBeEmpty();
         await expect(loader).toBeHidden();
       },
     );
@@ -63,7 +64,7 @@ test.describe(
         await page.emulateMedia({ reducedMotion: 'reduce' });
         await holdAppScript(page);
         await page.goto(
-          '/book',
+          CLIENT_ONLY_PAGE,
           { waitUntil: 'commit' },
         );
 
@@ -76,7 +77,7 @@ test.describe(
       'shows the error message when the bootstrap fails',
       async ({ page }: { page: Page; }): Promise<void> => {
         await page.route(
-          (url: URL): boolean => url.pathname === '/book',
+          (url: URL): boolean => url.pathname === CLIENT_ONLY_PAGE,
           async (route: Route): Promise<void> => {
             const response: APIResponse = await route.fetch();
             const html: string = (await response.text()).replace(
@@ -89,7 +90,7 @@ test.describe(
             });
           },
         );
-        await page.goto('/book');
+        await page.goto(CLIENT_ONLY_PAGE);
 
         await expect(page.locator('#startup-loader .failed')).toBeVisible();
         await expect(page.locator('#startup-loader .spinner')).toBeHidden();

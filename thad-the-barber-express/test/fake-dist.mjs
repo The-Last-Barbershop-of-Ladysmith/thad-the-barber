@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
 var SHOP = { name: 'Test Shop', phone: { display: '(555) 010-0000', tel: 'tel:+15550100000', sms: 'sms:+15550100000' }, bookingUrl: 'https://test-shop.example' };
-var CLIENT_ROUTES = ['book', 'book/manage', 'book/manage/:id', 'book/manage/:id/reschedule'];
+var CLIENT_ROUTES = ['book/manage', 'book/manage/:id', 'book/manage/:id/reschedule'];
 var FONT_PRELOADS = ['/media/display-latin-ABCD1234.woff2', '/media/body-latin-EFGH5678.woff2'];
 
 // Writes a fake Angular build ({ 'relative/path': contents }, plus a shop.json, client-routes.json and

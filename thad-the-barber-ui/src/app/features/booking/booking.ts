@@ -20,6 +20,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { SpinnerIcon } from 'primeng/icons/spinner';
 import { MessageModule } from 'primeng/message';
 import { ProgressBarModule } from 'primeng/progressbar';
+import { SkeletonModule } from 'primeng/skeleton';
 import { StepperModule } from 'primeng/stepper';
 import { distinctUntilChanged, map } from 'rxjs';
 import { SessionService } from '../../core/services/session.service';
@@ -68,6 +69,7 @@ interface BookingFormValue {
     ConfirmDialogModule,
     MessageModule,
     ProgressBarModule,
+    SkeletonModule,
     SpinnerIcon,
     StepperModule,
     TitledPage,
