@@ -29,7 +29,8 @@ export type BackdropAnchor = string | null;
 /**
  * Fixed full-screen photo behind the page: the wireframe's video (see `FrameScrubber`), played from one section's
  * keyframe to the next. Keyframe k is the target once the title of `anchors[k]` (its top, for a section without a
- * title) has reached the trigger line; the last keyframe holds from its anchor to the footer.
+ * title) has reached the trigger line; the last keyframe holds from its anchor to the footer. A visitor who prefers
+ * reduced motion gets the first keyframe held still: scrolling never changes it.
  */
 @Component({
   selector: 'app-backdrop',
@@ -56,10 +57,11 @@ export class Backdrop {
       const isWideScreen: boolean = window.matchMedia('(min-width: 48rem)').matches;
       const variant: BackdropVariant = isWideScreen ? BackdropVariant.Desktop : BackdropVariant.Phone;
       const scrubber: FrameScrubber = new FrameScrubber(canvas, variant);
+      const isReducedMotion: boolean = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       let frameRequest: number = 0;
       const update: (fromScroll: boolean) => void = (fromScroll: boolean): void => {
         frameRequest = 0;
-        scrubber.setTarget(this.currentKeyframe(), fromScroll);
+        scrubber.setTarget(isReducedMotion ? 0 : this.currentKeyframe(), fromScroll);
       };
       const onScroll: () => void = (): void => {
         if (frameRequest === 0) {
@@ -73,11 +75,13 @@ export class Backdrop {
         update(false);
       };
 
-      window.addEventListener(
-        'scroll',
-        onScroll,
-        { passive: true },
-      );
+      if (!isReducedMotion) {
+        window.addEventListener(
+          'scroll',
+          onScroll,
+          { passive: true },
+        );
+      }
       window.addEventListener('resize', onResize);
       update(false);
 

@@ -109,6 +109,19 @@ describe(
     );
 
     it(
+      'stays put until every hold is released',
+      (): void => {
+        rotation.hold();
+        rotation.hold();
+        rotation.release();
+
+        step();
+
+        expect(rotation.shownIndex()).toBe(0);
+      },
+    );
+
+    it(
       'stays put while stopped',
       (): void => {
         isStopped.set(true);

@@ -4,6 +4,8 @@
     data-testid="announcement-strip"
     (pointerenter)="rotation.hold()"
     (pointerleave)="rotation.release()"
+    (focusin)="rotation.hold()"
+    (focusout)="rotation.release()"
   >
     <div class="message">
       <span class="tag">Shop update</span>

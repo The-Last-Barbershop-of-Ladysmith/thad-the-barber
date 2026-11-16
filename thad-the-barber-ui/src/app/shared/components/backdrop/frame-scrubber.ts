@@ -105,7 +105,6 @@ export class FrameScrubber {
   private target: number = 0;
   private position: number | null = null;
   private velocity: number = 0;
-  private readonly isReducedMotion: boolean = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   private animationFrame: number = 0;
   private lastTickTime: number = 0;
   private lastSignature: string = '';
@@ -261,8 +260,7 @@ export class FrameScrubber {
     const largestChange: number = ACCELERATION * elapsedSeconds;
     this.velocity += Math.min(largestChange, Math.max(-largestChange, wantedVelocity - this.velocity));
     const next: number = position + this.velocity * elapsedSeconds;
-    const hasArrived: boolean = this.isReducedMotion
-      || Math.abs(distance) < ARRIVED_DISTANCE
+    const hasArrived: boolean = Math.abs(distance) < ARRIVED_DISTANCE
       || (this.target - next) * distance <= 0;
     this.position = hasArrived ? this.target : next;
     this.draw(false);

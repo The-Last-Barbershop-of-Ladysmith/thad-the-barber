@@ -7,7 +7,7 @@ export function createRotation(options: RotationOptions): Rotation {
   const destroyRef: DestroyRef = inject(DestroyRef);
   const stepCount: WritableSignal<number> = signal(0);
   const isPaused: WritableSignal<boolean> = signal(false);
-  let isHeld: boolean = false;
+  let holdCount: number = 0;
 
   const shownIndex: Signal<number> = computed((): number => {
     const count: number = options.count();
@@ -28,6 +28,7 @@ export function createRotation(options: RotationOptions): Rotation {
     const timerId: ReturnType<typeof setInterval> = setInterval((): void => {
       const isOnlyOne: boolean = options.count() < 2;
       const isStopped: boolean = options.isStopped?.() === true;
+      const isHeld: boolean = holdCount > 0;
       if (document.hidden || isPaused() || isHeld || isStopped || isOnlyOne) {
         return;
       }
@@ -46,10 +47,10 @@ export function createRotation(options: RotationOptions): Rotation {
       isPaused.update((wasPaused: boolean): boolean => !wasPaused);
     },
     hold: (): void => {
-      isHeld = true;
+      holdCount++;
     },
     release: (): void => {
-      isHeld = false;
+      holdCount = Math.max(0, holdCount - 1);
     },
   };
 }
