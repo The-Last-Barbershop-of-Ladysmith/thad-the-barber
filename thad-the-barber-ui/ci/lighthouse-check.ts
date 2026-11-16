@@ -23,8 +23,8 @@ const minimums: Record<string, number> = {
 };
 
 const performanceMinimums: Record<string, number> = {
-  '/': 0.6,
-  '/book': 0.5,
+  '/': 0.7,
+  '/book': 0.65,
 };
 
 const reportDir: string = process.argv[2] ?? 'lighthouse-results';
