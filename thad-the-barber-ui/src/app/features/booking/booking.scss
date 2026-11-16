@@ -1,10 +1,12 @@
-// The smallest height the open stepper reaches at each width (its text wraps less as the screen widens; from lg the
-// steps are tabs). The form holds it while the stepper loads and while its first frames are still collapsed, so the
-// footer stays put.
+// The height of the first step open, at each width (its text wraps less as the screen widens; from lg the steps are
+// tabs). The form holds it while the first step is open, which covers the stepper loading and its first frames being
+// collapsed, so the footer stays put. Later steps are shorter, so the hold ends when the visitor moves on.
 .booking-form {
   --steps-height: 54rem;
 
-  min-height: var(--steps-height);
+  &.is-holding-height {
+    min-height: var(--steps-height);
+  }
 
   @media (min-width: 25rem) {
     --steps-height: 58rem;
