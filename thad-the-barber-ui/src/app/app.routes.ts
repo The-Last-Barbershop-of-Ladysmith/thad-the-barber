@@ -1,6 +1,6 @@
 import { Route, Routes } from '@angular/router';
 import * as bookingRoutes from './features/booking/booking.routes';
-import { HOME_ROUTES } from './features/home/home.routes';
+import * as homeRoutes from './features/home/home.routes';
 import { RouteSeo } from './shared/models/route-seo.model';
 import * as contact from './features/contact/contact';
 import * as accessibility from './pages/accessibility/accessibility';
@@ -48,16 +48,14 @@ const notFoundRoute: Route = {
     import('./pages/not-found/not-found').then((m: typeof notFound): typeof notFound.NotFound => m.NotFound),
 };
 
-/**
- * Home is the prerendered landing page, so its code ships with the app instead of a second download before a click
- * can navigate. Other features lazy-load. Each feature's routes register its store slice.
- */
+/** Every feature lazy-loads, so a page downloads only its own code. Each feature's routes register its store slice. */
 export const routes: Routes = [
   {
     path: '',
     pathMatch: 'full',
     data: { seo: homeSeo },
-    children: HOME_ROUTES,
+    loadChildren: (): Promise<Routes> =>
+      import('./features/home/home.routes').then((m: typeof homeRoutes): Routes => m.HOME_ROUTES),
   },
   {
     path: 'book',
