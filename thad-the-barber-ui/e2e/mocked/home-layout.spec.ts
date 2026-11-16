@@ -1,4 +1,5 @@
-import { Page } from '@playwright/test';
+import { Page, Route } from '@playwright/test';
+import { isNextTimesRequest } from '../support/booking';
 import { expect, test } from '../support/fixtures';
 
 const DESKTOP_WIDTHS: readonly number[] = [
@@ -9,6 +10,17 @@ const DESKTOP_WIDTHS: readonly number[] = [
 ];
 
 const SCREEN_HEIGHT: number = 900;
+const SKELETON_WIDTHS: readonly number[] = [
+  320,
+  390,
+  414,
+  448,
+  480,
+  544,
+  640,
+  1024,
+  1280,
+];
 const MIN_GUTTER_PIXELS: number = 16;
 const MAX_GUTTER_PIXELS: number = 48;
 const GUTTER_VIEWPORT_SHARE: number = 0.04;
@@ -50,6 +62,44 @@ test.describe(
           expect(railBox).not.toBeNull();
           expect((railBox?.x ?? 0) + (railBox?.width ?? 0)).toBeLessThanOrEqual(screenWidth);
           expect(railBox?.x ?? 0).toBeGreaterThanOrEqual(screenWidth - sectionPadding.right);
+        },
+      );
+    }
+  },
+);
+
+test.describe(
+  'hero facts placeholder',
+  (): void => {
+    for (const screenWidth of SKELETON_WIDTHS) {
+      test(
+        `${screenWidth}px: the placeholder is as tall as the facts that replace it`,
+        async ({ page }: { page: Page; }): Promise<void> => {
+          let releaseNextTimes: () => void = (): void => undefined;
+          const nextTimesHeld: Promise<void> = new Promise<void>((release: () => void): void => {
+            releaseNextTimes = release;
+          });
+          await page.route(
+            isNextTimesRequest,
+            async (route: Route): Promise<void> => {
+              await nextTimesHeld;
+              await route.fallback();
+            },
+          );
+          await page.setViewportSize({
+            width: screenWidth,
+            height: SCREEN_HEIGHT,
+          });
+          await page.goto('/');
+
+          const placeholderHeight: number = await page.getByTestId('next-open-chair-loading')
+            .evaluate((placeholder: Element): number => placeholder.getBoundingClientRect().height);
+          releaseNextTimes();
+          await expect(page.getByTestId('next-open-chair')).toBeVisible();
+          const factsHeight: number = await page.locator('.facts')
+            .evaluate((facts: Element): number => facts.getBoundingClientRect().height);
+
+          expect(placeholderHeight).toBeCloseTo(factsHeight, 0);
         },
       );
     }

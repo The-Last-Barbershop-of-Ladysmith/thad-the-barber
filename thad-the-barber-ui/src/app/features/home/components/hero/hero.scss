@@ -94,7 +94,7 @@
     .facts-loading {
       width: 100%;
       max-width: 34rem;
-      height: 4.59375rem;
+      height: 8.75rem;
       margin-top: 0.5rem;
     }
 
@@ -105,8 +105,7 @@
       padding-top: 0.875rem;
       border-top: 1px solid var(--p-brand-hairline);
       display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
+      flex-direction: column;
       gap: 0.5rem 2rem;
 
       dt {
@@ -115,6 +114,18 @@
         font-weight: 800;
         white-space: nowrap;
         color: var(--p-text-color);
+      }
+    }
+
+    @media (min-width: 28rem) {
+      .facts-loading {
+        height: 4.59375rem;
+      }
+
+      .facts {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: space-between;
       }
     }
 
