@@ -351,7 +351,7 @@ jobs:
       - name: Lighthouse
         run: |
           mkdir -p lighthouse-results
-          for page in home:/ book:/book; do
+          for page in home:/ book:/book privacy:/privacy accessibility:/accessibility contact:/contact; do
             name="${page%%:*}"
             echo "Lighthouse: $name"
             # Chrome sometimes fails to record the page-load trace (NO_NAVSTART); Lighthouse says to run it again.
@@ -379,7 +379,7 @@ jobs:
         run: |
           cat lighthouse-results/summary.md >> "$GITHUB_STEP_SUMMARY" || true
           if [[ -n "$REPORTS_RUN_URL" ]]; then
-            echo -e "\nLighthouse reports: [home]($REPORTS_RUN_URL/lighthouse/home.report.html) · [book]($REPORTS_RUN_URL/lighthouse/book.report.html)" >> "$GITHUB_STEP_SUMMARY"
+            echo -e "\nLighthouse reports: [home]($REPORTS_RUN_URL/lighthouse/home.report.html) · [book]($REPORTS_RUN_URL/lighthouse/book.report.html) · [privacy]($REPORTS_RUN_URL/lighthouse/privacy.report.html) · [accessibility]($REPORTS_RUN_URL/lighthouse/accessibility.report.html) · [contact]($REPORTS_RUN_URL/lighthouse/contact.report.html)" >> "$GITHUB_STEP_SUMMARY"
           fi
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -444,7 +444,7 @@ jobs:
           }
           publish e2e reports/playwright-report/playwright-report "[Playwright]($REPORTS_RUN_URL/e2e/)"
           publish lighthouse reports/lighthouse-reports \
-            "Lighthouse [home]($REPORTS_RUN_URL/lighthouse/home.report.html), [book]($REPORTS_RUN_URL/lighthouse/book.report.html)" '*.html'
+            "Lighthouse [home]($REPORTS_RUN_URL/lighthouse/home.report.html), [book]($REPORTS_RUN_URL/lighthouse/book.report.html), [privacy]($REPORTS_RUN_URL/lighthouse/privacy.report.html), [accessibility]($REPORTS_RUN_URL/lighthouse/accessibility.report.html), [contact]($REPORTS_RUN_URL/lighthouse/contact.report.html)" '*.html'
           publish coverage reports/api-coverage/coverage-report "[API coverage]($REPORTS_RUN_URL/coverage/)"
         env:
           ACCOUNT: ${{ vars.REPORTS_STORAGE_ACCOUNT }}
