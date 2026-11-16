@@ -13,9 +13,9 @@ interface Report {
   categories: Record<string, Category>;
 }
 
-// Performance floors sit about 10 points under what CI last measured, since runner noise is large, and apply to the
-// median of the repeated runs (CI runs `/` and `/book` five times, other pages once). They are raised as the startup
-// JavaScript shrinks (#287); #91 sets the real budgets (LCP, INP).
+// Performance floors sit about 10 points under what CI last measured (home 89, book 81 on 2026-11-16), since runner
+// noise is large, and apply to the median of the repeated runs (CI runs `/` and `/book` five times, other pages once).
+// #91 sets the real budgets (LCP, INP).
 const minimums: Record<string, number> = {
   accessibility: 0.95,
   'best-practices': 0.9,
@@ -23,8 +23,15 @@ const minimums: Record<string, number> = {
 };
 
 const performanceMinimums: Record<string, number> = {
-  '/': 0.7,
-  '/book': 0.65,
+  '/': 0.8,
+  '/book': 0.75,
+};
+
+// The web's "good" threshold. A page joins once CI shows it staying under it; `/accessibility` reads 0.47 in CI only
+// (one shift of its body, which the first captured frame already shows settled) and is tracked in the audit follow-ups.
+const layoutShiftMaximums: Record<string, number> = {
+  '/': 0.1,
+  '/book': 0.1,
 };
 
 const reportDir: string = process.argv[2] ?? 'lighthouse-results';
@@ -57,9 +64,15 @@ for (const file of reportFiles) {
     }
   }
 
+  const maximum: number | undefined = layoutShiftMaximums[path];
   const shift: string = medianRuns.layoutShift.toFixed(3);
-  process.stdout.write(`ok   ${path} layout shift ${shift} (not enforced)\n`);
-  cells.push(`${shift} (not enforced)`);
+  const isShiftOverBudget: boolean = maximum !== undefined && medianRuns.layoutShift > maximum;
+  const shiftLimit: string = maximum === undefined ? 'not enforced' : `max ${maximum}`;
+  process.stdout.write(`${isShiftOverBudget ? 'FAIL' : 'ok  '} ${path} layout shift ${shift} (${shiftLimit})\n`);
+  cells.push(maximum === undefined ? `${shift} (not enforced)` : `${isShiftOverBudget ? '❌' : '✅'} ${shift} (max ${maximum})`);
+  if (isShiftOverBudget) {
+    failures.push(`${path} layout shift ${shift} > ${maximum}`);
+  }
   rows.push(`| \`${path}\` | ${cells.join(' | ')} |`);
 }
 
