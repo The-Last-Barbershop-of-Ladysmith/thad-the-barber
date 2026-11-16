@@ -1,0 +1,19 @@
+.lightbox {
+  .lightbox-header {
+    justify-content: flex-end;
+  }
+
+  .lightbox-img {
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: 90vw;
+    max-height: calc(100svh - 12rem);
+  }
+
+  .lightbox-count {
+    font-size: 0.8125rem;
+    letter-spacing: 0.16em;
+    color: var(--p-surface-300);
+  }
+}

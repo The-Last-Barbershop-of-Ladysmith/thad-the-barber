@@ -36,6 +36,11 @@
     align-items: flex-start;
     gap: 1.25rem;
 
+    // Holds the pill's height, so the title doesn't move when the hours load or fail.
+    .status-slot {
+      min-height: 2.125rem;
+    }
+
     .status {
       display: flex;
       align-items: center;
@@ -91,17 +96,23 @@
       }
     }
 
+    // Holds the facts' height from the first paint, so nothing moves when they load, come back empty or fail.
+    .facts-area {
+      --facts-height: 8.75rem;
+      margin-top: 0.5rem;
+      min-height: var(--facts-height);
+    }
+
     .facts-loading {
       width: 100%;
       max-width: 34rem;
-      height: 8.75rem;
-      margin-top: 0.5rem;
+      height: var(--facts-height);
     }
 
     .facts {
       width: 100%;
       max-width: 34rem;
-      margin: 0.5rem 0 0;
+      margin: 0;
       padding-top: 0.875rem;
       border-top: 1px solid var(--p-brand-hairline);
       display: flex;
@@ -118,8 +129,8 @@
     }
 
     @media (min-width: 28rem) {
-      .facts-loading {
-        height: 4.59375rem;
+      .facts-area {
+        --facts-height: 4.59375rem;
       }
 
       .facts {
@@ -144,8 +155,8 @@
     }
 
     @media (min-width: 64rem) {
-      .facts-loading {
-        height: 5.90625rem;
+      .facts-area {
+        --facts-height: 5.90625rem;
       }
 
       .facts {
