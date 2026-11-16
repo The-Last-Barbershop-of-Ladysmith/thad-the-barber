@@ -57,6 +57,19 @@ describe(
     );
 
     it(
+      'offers smaller photo sizes to small screens, with the full size as the fallback',
+      (): void => {
+        const photo: Element | null = render(PlainTitleHost).querySelector('.title-band [data-testid="title-band-photo"]');
+        const candidates: string[] = (photo?.getAttribute('srcset') ?? '')
+          .split(',')
+          .map((candidate: string): string => candidate.trim().split(' ')[0] ?? '');
+
+        expect(candidates.length).toBeGreaterThan(1);
+        expect(candidates).toContain(photo?.getAttribute('src'));
+      },
+    );
+
+    it(
       'takes a projected eyebrow and heading in place of the inputs',
       (): void => {
         const element: HTMLElement = render(ProjectedTitleHost);
