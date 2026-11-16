@@ -1,17 +1,32 @@
 <section class="stack gap-3">
+  <p class="small-print" data-testid="details-required-note">
+    <span class="required-mark" aria-hidden="true">*</span> marks a required field.
+  </p>
   <div class="grid gap-2.5 sm:grid-cols-2">
     <div class="stack gap-1.5">
-      <label class="field-label" for="booking-name">Name</label>
+      <label class="field-label" for="booking-name"
+        >Name<span class="required-mark" aria-hidden="true">*</span></label
+      >
       <input
         id="booking-name"
         pInputText
+        aria-required="true"
+        [attr.aria-invalid]="isNameErrorShown() ? 'true' : null"
+        [attr.aria-describedby]="isNameErrorShown() ? 'booking-name-error' : null"
         [formControl]="nameControl()"
         placeholder="First & last name"
         autocomplete="name"
         [fluid]="true"
       />
+      @if (isNameErrorShown()) {
+        <app-field-error errorId="booking-name-error" text="Enter your name." />
+      }
     </div>
-    <app-phone-field inputId="booking-phone" [phoneControl]="phoneControl()" />
+    <app-phone-field
+      inputId="booking-phone"
+      [isRequiredMarked]="true"
+      [phoneControl]="phoneControl()"
+    />
   </div>
   <p class="small-print">
     Your name and phone go to the shop's Square account to book this appointment.

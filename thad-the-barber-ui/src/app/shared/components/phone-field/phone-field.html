@@ -6,10 +6,16 @@
     [inputId]="inputId()"
     [formControl]="phoneControl()"
     [mask]="phoneMask"
+    [pt]="inputPassThrough()"
+    [ariaRequired]="isRequiredMarked()"
     placeholder="(555) 555-5555"
     type="tel"
     autocomplete="tel"
     [fluid]="true"
     (click)="moveCaretToFirstDigit($event)"
   />
+  <span class="sr-only" [id]="hintId()">Ten digits. The brackets and dash are added for you.</span>
+  @if (isErrorShown()) {
+    <app-field-error [errorId]="errorId()" text="Enter a 10-digit phone number." />
+  }
 </div>
