@@ -243,7 +243,7 @@ Every Playwright, Lighthouse and API coverage report opens in the browser from a
 | `audit` | `npm audit --audit-level=high` on the UI and Express lockfiles, in its own job so an advisory doesn't skip the builds and tests |
 | `api` | `dotnet build` → `dotnet test` (xUnit) → report viewer tests → ReportGenerator coverage (line and branch per class) → line and branch coverage ≥ 80% |
 | `e2e` | Playwright with a mocked API and `@axe-core/playwright`, on Chromium + WebKit, desktop + mobile, against the `ui` job's `test` build served by Express (real CSP header and 404s) |
-| `lighthouse` | Lighthouse on `/` and `/book` of the `ui` job's build, served by Express with prod's headers (`NOINDEX=false`): accessibility ≥ 95, best practices and SEO ≥ 90, performance reported only |
+| `lighthouse` | Lighthouse on `/` and `/book` of the `ui` job's build, served by Express with prod's headers (`NOINDEX=false`): accessibility ≥ 95, best practices and SEO ≥ 90, performance ≥ 70 on `/` and ≥ 60 on `/book` |
 
 All five checks must pass before a merge. The `report` job publishes the Playwright, Lighthouse and coverage reports to the [CI reports](#ci-reports) viewer and links them from the PR comment and each job summary. The same reports, plus traces, screenshots and video, are also uploaded as zip artifacts.
 
