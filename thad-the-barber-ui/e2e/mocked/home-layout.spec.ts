@@ -15,6 +15,8 @@ const SKELETON_WIDTHS: readonly number[] = [
   390,
   414,
   448,
+  480,
+  544,
   640,
   1024,
   1280,
