@@ -58,6 +58,8 @@ describe(
         find(fixture, 'notice-retry')?.click();
 
         expect(find(fixture, 'notice-booking-site')?.getAttribute('href')).toBe(bookingUrl);
+        expect(find(fixture, 'notice-booking-site')?.getAttribute('target')).toBe('_blank');
+        expect(find(fixture, 'notice-booking-site')?.getAttribute('rel')).toBe('noopener');
         expect(find(fixture, 'notice-call')?.getAttribute('href')).toBe(phone.tel);
         expect(find(fixture, 'notice-text')?.getAttribute('href')).toBe(phone.sms);
         expect(retries).toBe(1);

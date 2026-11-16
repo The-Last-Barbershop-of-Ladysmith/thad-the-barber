@@ -43,7 +43,9 @@ describe(
       (): void => {
         reporter.report = undefined;
 
-        expect((): void => reporter.reportLoadFailure('gallery', new Error('made-up'))).not.toThrow();
+        expect((): void => {
+          reporter.reportLoadFailure('gallery', new Error('made-up'));
+        }).not.toThrow();
       },
     );
   },
