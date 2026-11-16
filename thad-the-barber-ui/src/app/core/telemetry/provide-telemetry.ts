@@ -6,7 +6,7 @@ import {
   provideAppInitializer,
 } from '@angular/core';
 import { Router } from '@angular/router';
-import { ErrorToastService } from './error-toast.service';
+import { ExceptionReporter } from './exception-reporter';
 import * as StartTelemetry from './start-telemetry';
 import { TelemetrySettings } from './telemetry-settings.model';
 
@@ -21,7 +21,7 @@ export function provideTelemetry(settings: TelemetrySettings): EnvironmentProvid
   return makeEnvironmentProviders([
     provideAppInitializer((): void => {
       const router: Router = inject(Router);
-      const errorToast: ErrorToastService = inject(ErrorToastService);
+      const exceptionReporter: ExceptionReporter = inject(ExceptionReporter);
       afterNextRender(
         (): void => {
           void import('./start-telemetry')
@@ -29,7 +29,7 @@ export function provideTelemetry(settings: TelemetrySettings): EnvironmentProvid
               telemetry.startTelemetry(
                 settings,
                 router,
-                errorToast,
+                exceptionReporter,
               );
             })
             .catch((): void => undefined);

@@ -3,6 +3,8 @@ import { TestBed } from '@angular/core/testing';
 import { Actions } from '@ngrx/effects';
 import { Action } from '@ngrx/store';
 import { Observable, Subject, of, throwError } from 'rxjs';
+import { MockInstance } from 'vitest';
+import { ExceptionReporter } from '../../../core/telemetry/exception-reporter';
 import * as HomeActions from '../../home/state/home.actions';
 import { GalleryPhoto } from '../models/gallery-photo.model';
 import { GalleryService } from '../services/gallery.service';
@@ -82,7 +84,12 @@ describe(
         const failing: () => Observable<GalleryPhoto[]> = (): Observable<GalleryPhoto[]> =>
           throwError((): Error => new Error('503'));
 
+        const reportLoadFailure: MockInstance<ExceptionReporter['reportLoadFailure']> =
+          vi.spyOn(ExceptionReporter.prototype, 'reportLoadFailure').mockReturnValue(undefined);
+
         expect(run(failing)).toEqual([GalleryActions.GalleryRequestFailure()]);
+        expect(reportLoadFailure).toHaveBeenCalledExactlyOnceWith('gallery', expect.any(Error));
+        reportLoadFailure.mockRestore();
       },
     );
   },
