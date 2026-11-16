@@ -1,4 +1,5 @@
 import { Locator, Page } from '@playwright/test';
+import { Rgba, contrastRatio } from '../../src/testing/contrast';
 import { expect, test } from '../support/fixtures';
 
 interface FocusIndicator {
@@ -118,26 +119,14 @@ async function readIndicator(target: Locator): Promise<FocusIndicator> {
   });
 }
 
-function luminance(color: string): number {
-  const [
-    red = 0,
-    green = 0,
-    blue = 0]: number[
-  ] = (color.match(/[\d.]+/gu) ?? []).map(Number);
-  const toLinear: (channel: number) => number = (channel: number): number => {
-    const share: number = channel / 255;
-    if (share <= 0.04045) {
-      return share / 12.92;
-    }
-    return ((share + 0.055) / 1.055) ** 2.4;
+function toRgba(color: string): Rgba {
+  const channels: number[] = (color.match(/[\d.]+/gu) ?? []).map(Number);
+  return {
+    red: channels[0] ?? 0,
+    green: channels[1] ?? 0,
+    blue: channels[2] ?? 0,
+    alpha: channels[3] ?? 1,
   };
-  return 0.2126 * toLinear(red) + 0.7152 * toLinear(green) + 0.0722 * toLinear(blue);
-}
-
-function contrast(first: string, second: string): number {
-  const lighter: number = Math.max(luminance(first), luminance(second));
-  const darker: number = Math.min(luminance(first), luminance(second));
-  return (lighter + 0.05) / (darker + 0.05);
 }
 
 test.describe(
@@ -168,7 +157,8 @@ test.describe(
 
           expect(indicator.style).not.toBe('none');
           expect(indicator.width).toBeGreaterThanOrEqual(MINIMUM_WIDTH_PX);
-          expect(contrast(indicator.color, indicator.surroundings)).toBeGreaterThanOrEqual(MINIMUM_CONTRAST);
+          const ratio: number = contrastRatio(toRgba(indicator.color), toRgba(indicator.surroundings));
+          expect(ratio).toBeGreaterThanOrEqual(MINIMUM_CONTRAST);
         },
       );
     }
