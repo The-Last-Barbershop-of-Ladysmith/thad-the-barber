@@ -125,6 +125,7 @@ describe(
       (): void => {
         const heroElement: HTMLElement = render(SATURDAY_NOON_AT_SHOP, (store: Store<AppState>): void => {
           store.dispatch(HomeActions.NextTimesRequestSuccess({ startAts: ['2026-09-27T20:00:00Z'] }));
+          store.dispatch(ReviewsActions.ReviewsRequestFailure());
         });
 
         expect(heroElement.querySelector('[data-testid="next-open-chair"]')?.textContent).toMatch(/\d/);
@@ -145,6 +146,7 @@ describe(
       (): void => {
         const heroElement: HTMLElement = render(SATURDAY_NOON_AT_SHOP, (store: Store<AppState>): void => {
           store.dispatch(HomeActions.NextTimesRequestSuccess({ startAts: ['2026-09-27T20:00:00Z'] }));
+          store.dispatch(ReviewsActions.ReviewsRequestFailure());
         });
 
         expect(heroElement.querySelector('[data-testid="next-open-chair-loading"]')).toBeNull();
