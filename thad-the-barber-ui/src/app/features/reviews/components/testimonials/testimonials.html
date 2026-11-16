@@ -5,7 +5,7 @@
       @if (rating(); as listingRating) {
         <span class="score" data-testid="reviews-rating">
           <span class="stars" role="img" [attr.aria-label]="listingRating.score + ' out of 5 stars'" data-testid="reviews-rating-stars">
-            <p-rating [ngModel]="summaryStars()" [readonly]="true" [allowHalf]="true" />
+            <p-rating inert [ngModel]="summaryStars()" [readonly]="true" [allowHalf]="true" />
           </span>
           {{ listingRating.score }} from {{ listingRating.count }} Google reviews
         </span>
@@ -24,7 +24,7 @@
             <figcaption class="author">
               <strong class="author-name">{{ testimonial.author }}</strong>
               <span class="stars" role="img" [attr.aria-label]="testimonial.rating + ' out of 5 stars'">
-                <p-rating [ngModel]="testimonial.rating" [readonly]="true" />
+                <p-rating inert [ngModel]="testimonial.rating" [readonly]="true" />
               </span>
               <span class="source">{{ testimonial.source }}</span>
             </figcaption>
