@@ -49,6 +49,8 @@ export const stepper: StepperDesignTokens = {
     .p-steppanel > .p-motion,
     .p-steppanel-content-wrapper,
     .p-steppanel-content { min-width: 0; }
+    /* p-motion is display:none for its first frame, so the open step would pop in and push the headers below it. */
+    .p-steppanel-active > .p-motion { display: block !important; }
     .p-stepitem .p-steppanel-content { margin-inline-start: 0; }
     .p-stepitem:last-of-type .p-steppanel { padding-inline-start: 0; }
     .p-steppanel .p-stepper-separator { display: none; }
