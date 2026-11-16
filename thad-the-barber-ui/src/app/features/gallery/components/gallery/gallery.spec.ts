@@ -18,13 +18,15 @@ describe(
       return fixture;
     }
 
-    function openPrint(fixture: ComponentFixture<Gallery>, index: number): HTMLButtonElement {
+    async function openPrint(fixture: ComponentFixture<Gallery>, index: number): Promise<HTMLButtonElement> {
       const prints: HTMLButtonElement[] = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>('.print-button'));
       const print: HTMLButtonElement | undefined = prints[index];
       if (!print) {
         throw new Error(`No print ${index} rendered`);
       }
       print.click();
+      fixture.detectChanges();
+      await fixture.whenStable();
       fixture.detectChanges();
       return print;
     }
@@ -61,8 +63,8 @@ describe(
 
     it(
       'opens the lightbox on the print that was clicked, and counts from it',
-      (): void => {
-        openPrint(render(photos), 1);
+      async (): Promise<void> => {
+        await openPrint(render(photos), 1);
 
         expect(document.querySelector('[data-testid="lightbox-count"]')?.textContent.trim()).toBe('2 / 2');
       },
@@ -70,9 +72,9 @@ describe(
 
     it(
       'closes the lightbox on Escape and returns focus to the print that opened it',
-      (): void => {
+      async (): Promise<void> => {
         const fixture: ComponentFixture<Gallery> = render(photos);
-        const opener: HTMLButtonElement = openPrint(fixture, 1);
+        const opener: HTMLButtonElement = await openPrint(fixture, 1);
 
         pressEscape(fixture);
 

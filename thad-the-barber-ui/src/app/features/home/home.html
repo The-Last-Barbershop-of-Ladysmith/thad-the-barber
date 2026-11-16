@@ -7,7 +7,11 @@
   <div class="below-hero">
     <app-next-times [id]="sections.OpenTimes" />
     <app-hours [id]="sections.Hours" />
-    <app-announcements-carousel [id]="sections.Announcements" />
+    <div [id]="sections.Announcements">
+      @defer (on idle) {
+        <app-announcements-carousel />
+      }
+    </div>
     <app-gallery [id]="sections.Gallery" />
     <app-testimonials [id]="sections.Reviews" />
     <app-visit [id]="sections.Visit" />
