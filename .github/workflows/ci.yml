@@ -350,25 +350,42 @@ jobs:
       # Mobile emulation, Lighthouse's default. Uses the runner's preinstalled Chrome.
       - name: Lighthouse
         run: |
-          mkdir -p lighthouse-results
+          mkdir -p lighthouse-results/runs
+          # Chrome sometimes fails to record the page-load trace (NO_NAVSTART); Lighthouse says to run it again.
+          # One retry, with a warning that names the page, so a flake shows up in the run instead of passing silently.
+          run_lighthouse() {
+            local label="$1" url="$2" categories="$3"
+            shift 3
+            for attempt in 1 2; do
+              if npx lighthouse "$url" \
+                --quiet \
+                --chrome-flags="--headless=new --no-sandbox" \
+                --only-categories="$categories" \
+                "$@"; then
+                return 0
+              fi
+              if [ "$attempt" = 2 ]; then
+                return 1
+              fi
+              echo "::warning::Lighthouse failed on $label; trying it once more"
+            done
+          }
+
           for page in home:/ book:/book privacy:/privacy accessibility:/accessibility contact:/contact; do
             name="${page%%:*}"
             echo "Lighthouse: $name"
-            # Chrome sometimes fails to record the page-load trace (NO_NAVSTART); Lighthouse says to run it again.
-            # One retry, with a warning that names the page, so a flake shows up in the run instead of passing silently.
-            for attempt in 1 2; do
-              if npx lighthouse "http://localhost:4200${page#*:}" \
-                --quiet \
-                --chrome-flags="--headless=new --no-sandbox" \
-                --only-categories=performance,accessibility,best-practices,seo \
-                --output=json --output=html \
-                --output-path="lighthouse-results/$name"; then
-                break
-              fi
-              if [ "$attempt" = 2 ]; then
-                exit 1
-              fi
-              echo "::warning::Lighthouse failed on $name; trying it once more"
+            run_lighthouse "$name" "http://localhost:4200${page#*:}" performance,accessibility,best-practices,seo \
+              --output=json --output=html --output-path="lighthouse-results/$name"
+          done
+
+          # A single run on a shared runner swings by 10 points or more, so the enforced performance score and layout
+          # shift are the median of five runs on the two pages that have a floor.
+          for page in home:/ book:/book; do
+            name="${page%%:*}"
+            for run in 1 2 3 4 5; do
+              echo "Lighthouse: $name run $run"
+              run_lighthouse "$name run $run" "http://localhost:4200${page#*:}" performance \
+                --output=json --output-path="lighthouse-results/runs/$name-$run.report.json"
             done
           done
 
