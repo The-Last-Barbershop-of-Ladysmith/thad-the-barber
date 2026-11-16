@@ -9,3 +9,11 @@
 .grecaptcha-badge {
   visibility: hidden;
 }
+
+/* Links and anything else PrimeNG doesn't style get the same ring as PrimeNG's own controls, from the same tokens. */
+@layer base {
+  :focus-visible {
+    outline: var(--p-focus-ring-width) var(--p-focus-ring-style) var(--p-focus-ring-color);
+    outline-offset: var(--p-focus-ring-offset);
+  }
+}

@@ -56,7 +56,7 @@ export const semantic: TokenSection = {
   text: {
     color: '{espresso.50}',
     hoverColor: '{espresso.0}',
-    mutedColor: '{espresso.400}',
+    mutedColor: '{espresso.300}',
     hoverMutedColor: '{espresso.200}',
   },
 
@@ -89,6 +89,13 @@ export const semantic: TokenSection = {
     floatLabelFocusColor: '{primary.color}',
     floatLabelActiveColor: '{espresso.400}',
     iconColor: '{espresso.400}',
+    focusRing: {
+      width: '2px',
+      style: 'solid',
+      color: '{primary.color}',
+      offset: '2px',
+      shadow: 'none',
+    },
     shadow: 'none',
   },
 
