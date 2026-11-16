@@ -35,5 +35,7 @@
       [(activeIndex)]="activeIndex"
       (closed)="closeLightbox()"
     />
+  } @error {
+    <span #loadFailure hidden></span>
   }
 }
