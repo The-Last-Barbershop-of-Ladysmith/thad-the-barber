@@ -7,7 +7,6 @@ interface RunReport {
 }
 
 interface MedianRuns {
-  runCount: number;
   performance: number;
   layoutShift: number;
 }
@@ -18,25 +17,22 @@ function median(values: number[]): number {
 }
 
 /**
- * Median performance score and layout shift over the repeated runs of one page (`runs/<name>-<n>.report.json`),
- * because a single run on a shared CI runner swings by 10 points or more. Undefined when the page has no repeated runs.
+ * Median performance score and layout shift of one page over its full report (`<name>.report.json`) and any repeat
+ * runs (`runs/<name>-<n>.report.json`), because a single run on a shared CI runner swings by 10 points or more.
  */
-export function readMedianRuns(reportDir: string, name: string): MedianRuns | undefined {
+export function readMedianRuns(reportDir: string, name: string): MedianRuns {
   const runDir: string = join(reportDir, 'runs');
-  if (!existsSync(runDir)) {
-    return undefined;
-  }
-  const runFiles: string[] = readdirSync(runDir).filter(
-    (file: string): boolean => file.startsWith(`${name}-`) && file.endsWith('.report.json'),
-  );
-  if (runFiles.length === 0) {
-    return undefined;
-  }
-  const reports: RunReport[] = runFiles.map(
-    (file: string): RunReport => JSON.parse(readFileSync(join(runDir, file), 'utf8')) as RunReport,
+  const repeatFiles: string[] = existsSync(runDir)
+    ? readdirSync(runDir).filter((file: string): boolean => file.startsWith(`${name}-`) && file.endsWith('.report.json'))
+    : [];
+  const reportPaths: string[] = [
+    join(reportDir, `${name}.report.json`),
+    ...repeatFiles.map((file: string): string => join(runDir, file)),
+  ];
+  const reports: RunReport[] = reportPaths.map(
+    (reportPath: string): RunReport => JSON.parse(readFileSync(reportPath, 'utf8')) as RunReport,
   );
   return {
-    runCount: reports.length,
     performance: median(reports.map((report: RunReport): number => report.categories.performance.score ?? 0)),
     layoutShift: median(reports.map((report: RunReport): number => report.audits['cumulative-layout-shift'].numericValue)),
   };

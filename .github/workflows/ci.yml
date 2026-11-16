@@ -378,11 +378,11 @@ jobs:
               --output=json --output=html --output-path="lighthouse-results/$name"
           done
 
-          # A single run on a shared runner swings by 10 points or more, so the enforced performance score and layout
-          # shift are the median of five runs on the two pages that have a floor.
+          # A single run on a shared runner swings by 10 points or more, so the enforced performance score is the median
+          # of five runs on the two pages that have a floor: the full run above plus these four.
           for page in home:/ book:/book; do
             name="${page%%:*}"
-            for run in 1 2 3 4 5; do
+            for run in 2 3 4 5; do
               echo "Lighthouse: $name run $run"
               run_lighthouse "$name run $run" "http://localhost:4200${page#*:}" performance \
                 --output=json --output-path="lighthouse-results/runs/$name-$run.report.json"
