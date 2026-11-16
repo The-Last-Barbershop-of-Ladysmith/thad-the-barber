@@ -3,73 +3,63 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideStore } from '@ngrx/store';
 import { MessageService } from 'primeng/api';
-import { MockInstance } from 'vitest';
+import { TEST_TELEMETRY_SETTINGS } from '../../../testing/test-telemetry-settings';
 import { shopFeature } from '../../features/shop/state/shop.feature';
-import { ErrorToastService } from './error-toast.service';
 import { provideTelemetry } from './provide-telemetry';
-import { TelemetrySettings } from './telemetry-settings.model';
+import { ErrorToastService } from './error-toast.service';
 
-const SETTINGS: TelemetrySettings = {
-  appInsightsConnectionString: 'InstrumentationKey=00000000-0000-0000-0000-000000000000;IngestionEndpoint=https://ingest.example.com/',
-  apiBaseUrl: 'https://api.example.com/api',
-};
+vi.mock(
+  '@microsoft/applicationinsights-web',
+  (): Record<string, unknown> => ({
+    DistributedTracingModes: { W3C: 2 },
+    ApplicationInsights: class {
+      loadAppInsights: () => void = vi.fn();
+      addTelemetryInitializer: () => void = vi.fn();
+      getTraceCtx: () => void = vi.fn();
+      trackPageView: () => void = vi.fn();
+    },
+  }),
+);
 
-function configure(settings: TelemetrySettings): MockInstance<ErrorToastService['addReporter']> {
-  const addReporter: MockInstance<ErrorToastService['addReporter']> = vi.spyOn(ErrorToastService.prototype, 'addReporter');
+function configure(appInsightsConnectionString: string): void {
   TestBed.configureTestingModule({
     providers: [
       provideRouter([]),
       provideStore({ [shopFeature.name]: shopFeature.reducer }),
       { provide: MessageService, useValue: { add: vi.fn() } },
-      provideTelemetry(settings),
+      provideTelemetry({ ...TEST_TELEMETRY_SETTINGS, appInsightsConnectionString }),
     ],
   });
-  return addReporter;
 }
 
 describe(
   'provideTelemetry',
   (): void => {
-    afterEach((): void => {
-      vi.restoreAllMocks();
-    });
-
     it(
       'does not load the SDK when the connection string is empty',
       async (): Promise<void> => {
-        const addReporter: MockInstance<ErrorToastService['addReporter']> = configure({
-          ...SETTINGS,
-          appInsightsConnectionString: '',
-        });
+        configure('');
 
         TestBed.inject(ApplicationRef).tick();
-        await TestBed.inject(ApplicationRef).whenStable();
+        await vi.dynamicImportSettled();
 
-        expect(addReporter).not.toHaveBeenCalled();
+        expect(TestBed.inject(ErrorToastService).reportError).toBeUndefined();
       },
     );
 
     it(
-      'does not load the SDK before the first render',
-      (): void => {
-        const addReporter: MockInstance<ErrorToastService['addReporter']> = configure(SETTINGS);
-
-        TestBed.inject(ApplicationRef);
-
-        expect(addReporter).not.toHaveBeenCalled();
-      },
-    );
-
-    it(
-      'loads the SDK after the first render and reports errors to it',
+      'loads the SDK after the first render, not before',
       async (): Promise<void> => {
-        const addReporter: MockInstance<ErrorToastService['addReporter']> = configure(SETTINGS);
+        configure(TEST_TELEMETRY_SETTINGS.appInsightsConnectionString);
+
+        await vi.dynamicImportSettled();
+        expect(TestBed.inject(ErrorToastService).reportError).toBeUndefined();
 
         TestBed.inject(ApplicationRef).tick();
 
         await vi.waitFor((): void => {
-          expect(addReporter).toHaveBeenCalledOnce();
-        }, 15000);
+          expect(TestBed.inject(ErrorToastService).reportError).toBeDefined();
+        });
       },
     );
   },

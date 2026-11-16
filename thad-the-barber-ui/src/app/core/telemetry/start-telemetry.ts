@@ -16,7 +16,7 @@ function trackPageView(appInsights: ApplicationInsights, urlAfterRedirects: stri
   appInsights.trackPageView({ uri: url.href });
 }
 
-/** Runs after the first render, so the page the visitor landed on is tracked here and later ones on NavigationEnd. */
+/** Runs after the first render: a landing page that has already loaded is tracked here, the rest on NavigationEnd. */
 export function startTelemetry(
   settings: TelemetrySettings,
   router: Router,
@@ -25,10 +25,16 @@ export function startTelemetry(
   const appInsights: ApplicationInsights = new ApplicationInsights({ config: telemetryConfig(settings) });
   appInsights.loadAppInsights();
   appInsights.addTelemetryInitializer(stripUrlQueries);
-  errorToast.addReporter((error: unknown): void => {
-    appInsights.trackException({ exception: error instanceof Error ? error : new Error(String(error)) });
-  });
-  trackPageView(appInsights, router.url);
+  errorToast.reportError = (error: unknown): void => {
+    let exception: Error = new Error(String(error));
+    if (error instanceof Error) {
+      exception = error;
+    }
+    appInsights.trackException({ exception });
+  };
+  if (router.navigated) {
+    trackPageView(appInsights, router.url);
+  }
   router.events
     .pipe(filter((event: unknown): event is NavigationEnd => event instanceof NavigationEnd))
     .subscribe((event: NavigationEnd): void => {

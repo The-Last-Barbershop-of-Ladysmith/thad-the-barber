@@ -1,6 +1,5 @@
 import {
   EnvironmentProviders,
-  Injector,
   afterNextRender,
   inject,
   makeEnvironmentProviders,
@@ -23,18 +22,18 @@ export function provideTelemetry(settings: TelemetrySettings): EnvironmentProvid
     provideAppInitializer((): void => {
       const router: Router = inject(Router);
       const errorToast: ErrorToastService = inject(ErrorToastService);
-      const injector: Injector = inject(Injector);
       afterNextRender(
         (): void => {
-          void import('./start-telemetry').then((telemetry: typeof StartTelemetry): void => {
-            telemetry.startTelemetry(
-              settings,
-              router,
-              errorToast,
-            );
-          });
+          void import('./start-telemetry')
+            .then((telemetry: typeof StartTelemetry): void => {
+              telemetry.startTelemetry(
+                settings,
+                router,
+                errorToast,
+              );
+            })
+            .catch((): void => undefined);
         },
-        { injector },
       );
     }),
   ]);

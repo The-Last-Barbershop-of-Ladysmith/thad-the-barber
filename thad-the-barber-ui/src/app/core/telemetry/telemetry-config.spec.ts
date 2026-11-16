@@ -1,11 +1,6 @@
 import { DistributedTracingModes, IConfig, IConfiguration } from '@microsoft/applicationinsights-web';
+import { TEST_TELEMETRY_SETTINGS } from '../../../testing/test-telemetry-settings';
 import { telemetryConfig } from './telemetry-config';
-import { TelemetrySettings } from './telemetry-settings.model';
-
-const SETTINGS: TelemetrySettings = {
-  appInsightsConnectionString: 'InstrumentationKey=00000000-0000-0000-0000-000000000000;IngestionEndpoint=https://ingest.example.com/',
-  apiBaseUrl: 'https://api.example.com/api',
-};
 
 describe(
   'telemetryConfig',
@@ -13,7 +8,7 @@ describe(
     let config: IConfiguration & IConfig;
 
     beforeEach((): void => {
-      config = telemetryConfig(SETTINGS);
+      config = telemetryConfig(TEST_TELEMETRY_SETTINGS);
     });
 
     it(

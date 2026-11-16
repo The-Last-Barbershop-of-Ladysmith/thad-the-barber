@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { MockInstance } from 'vitest';
+import { Mock, MockInstance } from 'vitest';
 import { Store, provideStore } from '@ngrx/store';
 import { ToastMessageOptions, MessageService } from 'primeng/api';
 import { TEST_SHOP } from '../../../testing/test-shop';
@@ -59,6 +59,21 @@ describe(
         service.handleError(new Error('boom'));
 
         expect(JSON.stringify(added)).not.toContain('boom');
+      },
+    );
+
+    it(
+      'passes the error to the reporter once one is set, after the toast',
+      (): void => {
+        const reportError: Mock<(error: unknown) => void> = vi.fn();
+        service.reportError = reportError;
+        vi.spyOn(console, 'error').mockReturnValue(undefined);
+        const error: Error = new Error('made-up error');
+
+        service.handleError(error);
+
+        expect(added).toHaveLength(1);
+        expect(reportError).toHaveBeenCalledExactlyOnceWith(error);
       },
     );
   },

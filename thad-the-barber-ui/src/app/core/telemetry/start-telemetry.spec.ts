@@ -3,10 +3,10 @@ import { Router, provideRouter } from '@angular/router';
 import { provideStore } from '@ngrx/store';
 import { MessageService } from 'primeng/api';
 import { Mock } from 'vitest';
+import { TEST_TELEMETRY_SETTINGS } from '../../../testing/test-telemetry-settings';
 import { shopFeature } from '../../features/shop/state/shop.feature';
 import { ErrorToastService } from './error-toast.service';
 import { startTelemetry } from './start-telemetry';
-import { TelemetrySettings } from './telemetry-settings.model';
 
 interface SdkSpies {
   trackException: Mock;
@@ -31,11 +31,6 @@ vi.mock(
     },
   }),
 );
-
-const SETTINGS: TelemetrySettings = {
-  appInsightsConnectionString: 'InstrumentationKey=00000000-0000-0000-0000-000000000000;IngestionEndpoint=https://ingest.example.com/',
-  apiBaseUrl: 'https://api.example.com/api',
-};
 
 describe(
   'startTelemetry',
@@ -67,7 +62,7 @@ describe(
       (): void => {
         const error: Error = new Error('made-up error');
         startTelemetry(
-          SETTINGS,
+          TEST_TELEMETRY_SETTINGS,
           router,
           errorToast,
         );
@@ -82,7 +77,7 @@ describe(
       'wraps a thrown value that is not an Error',
       (): void => {
         startTelemetry(
-          SETTINGS,
+          TEST_TELEMETRY_SETTINGS,
           router,
           errorToast,
         );
@@ -99,7 +94,7 @@ describe(
         await router.navigateByUrl('/made-up-landing?secret=1');
 
         startTelemetry(
-          SETTINGS,
+          TEST_TELEMETRY_SETTINGS,
           router,
           errorToast,
         );
@@ -110,11 +105,27 @@ describe(
     );
 
     it(
+      'leaves the landing page to NavigationEnd while the first navigation is still running',
+      async (): Promise<void> => {
+        startTelemetry(
+          TEST_TELEMETRY_SETTINGS,
+          router,
+          errorToast,
+        );
+
+        expect(sdk.trackPageView).not.toHaveBeenCalled();
+        await router.navigateByUrl('/made-up-landing');
+
+        expect(sdk.trackPageView).toHaveBeenCalledOnce();
+      },
+    );
+
+    it(
       'tracks each later navigation once',
       async (): Promise<void> => {
         await router.navigateByUrl('/made-up-landing');
         startTelemetry(
-          SETTINGS,
+          TEST_TELEMETRY_SETTINGS,
           router,
           errorToast,
         );
