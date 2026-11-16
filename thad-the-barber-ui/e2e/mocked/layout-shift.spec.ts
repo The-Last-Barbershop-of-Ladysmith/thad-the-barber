@@ -15,6 +15,7 @@ const PHONE_WIDTHS: readonly number[] = [
   412,
 ];
 const PHONE_HEIGHT: number = 800;
+const PHONE_SCALE: number = 3;
 const MAX_TOTAL_SHIFT: number = 0.02;
 
 const SHIFT_PAGES: readonly string[] = [
@@ -52,36 +53,48 @@ test.describe(
       'Only Chromium reports layout shifts',
     );
 
-    for (const isApiDown of [false, true]) {
-      for (const screenWidth of PHONE_WIDTHS) {
-        for (const path of SHIFT_PAGES) {
-          test(
-            `${path} at ${screenWidth}px with the API ${isApiDown ? 'down' : 'up'} stays put`,
-            async ({ page }: { page: Page; }): Promise<void> => {
-              await page.setViewportSize({
-                width: screenWidth,
-                height: PHONE_HEIGHT,
-              });
-              if (isApiDown) {
-                await page.route(
-                  (url: URL): boolean => url.pathname.startsWith('/api/'),
-                  (route: Route): Promise<void> => route.abort(),
-                );
-              }
-              await observeShifts(page);
-
-              await page.goto(path);
-              await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-              await page.waitForLoadState('networkidle');
-              await page.evaluate((): Promise<void> => new Promise((resolve: () => void): void => {
-                requestAnimationFrame((): number => requestAnimationFrame(resolve));
-              }));
-
-              expect(await totalShift(page)).toBeLessThanOrEqual(MAX_TOTAL_SHIFT);
+    for (const screenWidth of PHONE_WIDTHS) {
+      // A phone, so the page has no classic scrollbar: one takes 15px of the width, and the lines wrap differently.
+      test.describe(
+        `${screenWidth}px phone`,
+        (): void => {
+          test.use({
+            viewport: {
+              width: screenWidth,
+              height: PHONE_HEIGHT,
             },
-          );
-        }
-      }
+            isMobile: true,
+            hasTouch: true,
+            deviceScaleFactor: PHONE_SCALE,
+          });
+
+          for (const isApiDown of [false, true]) {
+            for (const path of SHIFT_PAGES) {
+              test(
+                `${path} with the API ${isApiDown ? 'down' : 'up'} stays put`,
+                async ({ page }: { page: Page; }): Promise<void> => {
+                  if (isApiDown) {
+                    await page.route(
+                      (url: URL): boolean => url.pathname.startsWith('/api/'),
+                      (route: Route): Promise<void> => route.abort(),
+                    );
+                  }
+                  await observeShifts(page);
+
+                  await page.goto(path);
+                  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+                  await page.waitForLoadState('networkidle');
+                  await page.evaluate((): Promise<void> => new Promise((resolve: () => void): void => {
+                    requestAnimationFrame((): number => requestAnimationFrame(resolve));
+                  }));
+
+                  expect(await totalShift(page)).toBeLessThanOrEqual(MAX_TOTAL_SHIFT);
+                },
+              );
+            }
+          }
+        },
+      );
     }
   },
 );

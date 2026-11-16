@@ -1,3 +1,13 @@
+// On the narrowest phones this line sits right at the edge of wrapping, and the web font arriving can tip it onto a
+// second line. Two lines are held there so the page doesn't jump; from 24rem it is always one.
+.find-bookings-prompt {
+  min-height: 3rem;
+
+  @media (min-width: 24rem) {
+    min-height: 0;
+  }
+}
+
 // The height of the first step open, at each width (its text wraps less as the screen widens; from lg the steps are
 // tabs). The form holds it while the first step is open, which covers the stepper loading and its first frames being
 // collapsed, so the footer stays put. Later steps are shorter, so the hold ends when the visitor moves on.
