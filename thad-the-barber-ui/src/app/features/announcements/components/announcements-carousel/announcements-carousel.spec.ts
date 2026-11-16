@@ -88,6 +88,27 @@ describe(
     );
 
     it(
+      'names each indicator button by its place in the list and marks the shown one as current',
+      (): void => {
+        const host: HTMLElement = render([
+          base,
+          base,
+          base,
+        ]);
+        const indicators: Element[] = Array.from(host.querySelectorAll('.p-carousel-indicator-button'));
+
+        expect(indicators.map((indicator: Element): string | null => indicator.getAttribute('aria-label'))).toEqual(
+          [
+            'Go to announcement 1 of 3',
+            'Go to announcement 2 of 3',
+            'Go to announcement 3 of 3',
+          ],
+        );
+        expect(indicators.filter((indicator: Element): boolean => indicator.hasAttribute('aria-current'))).toHaveLength(1);
+      },
+    );
+
+    it(
       'labels a multi-day announcement by its last day and a one-day one by its day',
       (): void => {
         const host: HTMLElement = render([

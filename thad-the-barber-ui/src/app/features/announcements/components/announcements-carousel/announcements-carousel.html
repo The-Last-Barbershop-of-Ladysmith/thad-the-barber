@@ -70,7 +70,17 @@
 
       @if (announcements().length > 1) {
         <div class="controls">
-          <p-carousel-indicators />
+          <div class="p-carousel-indicator-list">
+            @for (item of announcements(); track $index; let i = $index) {
+              <button
+                type="button"
+                pCarouselIndicator
+                [page]="i"
+                [attr.aria-label]="'Go to announcement ' + (i + 1) + ' of ' + announcements().length"
+                [attr.aria-current]="i === shownIndex() ? 'true' : null"
+              ></button>
+            }
+          </div>
           <span class="count">{{ shownIndex() + 1 | number: "2.0-0" }} / {{ announcements().length | number: "2.0-0" }}</span>
           <button
             pButton
