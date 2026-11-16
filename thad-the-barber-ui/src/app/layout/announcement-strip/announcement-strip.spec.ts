@@ -3,6 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { Store, provideStore } from '@ngrx/store';
+import { expectNoAxeViolations } from '../../../testing/axe';
 import { TEST_ANNOUNCEMENT } from '../../../testing/test-announcement';
 import { Announcement } from '../../features/announcements/models/announcement.model';
 import * as AnnouncementsActions from '../../features/announcements/state/announcements.actions';
@@ -203,6 +204,27 @@ describe(
         const fixture: ComponentFixture<AnnouncementStrip> = render(threeAnnouncements);
 
         expect(hostOf(fixture).querySelector('[aria-live], [role="status"], [role="alert"]')).toBeNull();
+      },
+    );
+
+    it(
+      'has no axe violations with announcements, paused or cycling',
+      async (): Promise<void> => {
+        const fixture: ComponentFixture<AnnouncementStrip> = render(threeAnnouncements);
+        vi.useRealTimers();
+        await expectNoAxeViolations(hostOf(fixture));
+
+        click(fixture, 'announcement-strip-pause');
+        await expectNoAxeViolations(hostOf(fixture));
+      },
+    );
+    it(
+      'has no axe violations with no announcements',
+      async (): Promise<void> => {
+        const fixture: ComponentFixture<AnnouncementStrip> = render([]);
+        vi.useRealTimers();
+
+        await expectNoAxeViolations(hostOf(fixture));
       },
     );
   },

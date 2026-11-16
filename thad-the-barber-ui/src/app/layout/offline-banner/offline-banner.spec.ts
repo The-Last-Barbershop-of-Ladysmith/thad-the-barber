@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockInstance } from 'vitest';
+import { expectNoAxeViolations } from '../../../testing/axe';
 import { OfflineBanner } from './offline-banner';
 
 describe(
@@ -56,6 +57,16 @@ describe(
 
         window.dispatchEvent(new Event('online'));
         expect(banner()).toBeNull();
+      },
+    );
+
+    it(
+      'has no axe violations while offline',
+      async (): Promise<void> => {
+        create(false);
+        await fixture.whenStable();
+
+        await expectNoAxeViolations(fixture.nativeElement as HTMLElement);
       },
     );
   },

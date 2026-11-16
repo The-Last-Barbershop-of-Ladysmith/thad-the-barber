@@ -3,6 +3,7 @@ import { MockInstance } from 'vitest';
 import { Router, provideRouter } from '@angular/router';
 import { Store, provideStore } from '@ngrx/store';
 import { TEST_SHOP } from '../../../../testing/test-shop';
+import { expectNoAxeViolations } from '../../../../testing/axe';
 import { PhoneLinks } from '../../models/phone-links.model';
 import { AppState } from '../../../store/app.state';
 import * as ShopActions from '../../../features/shop/state/shop.actions';
@@ -162,6 +163,38 @@ describe(
         expect(iconFor(NoticeSeverity.Warn)).toContain('pi-exclamation-triangle');
         expect(iconFor(NoticeSeverity.Error)).toContain('pi-exclamation-circle');
         expect(iconFor(NoticeSeverity.Info)).toContain('pi-info-circle');
+      },
+    );
+
+    it(
+      'has no axe violations for each severity',
+      async (): Promise<void> => {
+        for (const severity of Object.values(NoticeSeverity)) {
+          const fixture: ComponentFixture<NoticeMessage> = render({
+            severity,
+            title: 'Made-up title',
+            text: 'Made-up notice',
+            canRetry: false,
+          });
+          await fixture.whenStable();
+
+          await expectNoAxeViolations(fixture.nativeElement as HTMLElement);
+        }
+      },
+    );
+    it(
+      'has no axe violations for a failure with the call, text, booking site, retry and report links',
+      async (): Promise<void> => {
+        const fixture: ComponentFixture<NoticeMessage> = render({
+          severity: NoticeSeverity.Error,
+          text: 'Made-up failure',
+          link: { label: 'Made-up link', path: '/made-up/path' },
+          canRetry: true,
+          canReport: true,
+        });
+        await fixture.whenStable();
+
+        await expectNoAxeViolations(fixture.nativeElement as HTMLElement);
       },
     );
   },
