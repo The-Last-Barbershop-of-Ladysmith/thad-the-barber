@@ -57,7 +57,7 @@
     @if (submitNotice(); as failureNotice) {
       <app-notice-message [notice]="failureNotice" (retry)="confirm()" />
     }
-    <form class="relative" [formGroup]="bookingForm" (ngSubmit)="confirm()">
+    <form class="booking-form relative" [formGroup]="bookingForm" (ngSubmit)="confirm()">
       <!-- Browser only: PrimeNG's p-motion leaves a prerendered open panel display:none after hydration (22.1.5). -->
       @defer (on immediate) {
         <p-stepper class="booking-steps" [(value)]="openStep" [pt]="stepperPt">

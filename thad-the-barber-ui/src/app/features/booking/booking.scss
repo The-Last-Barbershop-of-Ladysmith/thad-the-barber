@@ -1,11 +1,30 @@
-// The height of the open stepper, so the footer stays put when it replaces the placeholder: about 55rem on phones and
-// tablets, 40rem from lg, where the steps are tabs.
-.steps-placeholder {
-  height: 55rem;
+// The smallest height the open stepper reaches at each width (its text wraps less as the screen widens; from lg the
+// steps are tabs). The form holds it while the stepper loads and while its first frames are still collapsed, so the
+// footer stays put.
+.booking-form {
+  --steps-height: 54rem;
+
+  min-height: var(--steps-height);
+
+  @media (min-width: 25rem) {
+    --steps-height: 58rem;
+  }
+
+  @media (min-width: 30rem) {
+    --steps-height: 62rem;
+  }
 
   @media (min-width: 64rem) {
-    height: 40rem;
+    --steps-height: 38rem;
   }
+
+  @media (min-width: 80rem) {
+    --steps-height: 40.5rem;
+  }
+}
+
+.steps-placeholder {
+  height: var(--steps-height);
 }
 
 .booking-steps {
