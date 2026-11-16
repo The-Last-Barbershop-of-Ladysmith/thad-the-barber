@@ -19,6 +19,7 @@ const FAIL_ON_VIOLATIONS: boolean = false;
  * (contrast over the backdrop, images, glass) are attached for a manual check.
  */
 export async function expectNoA11yViolations(page: Page): Promise<void> {
+  await waitForFiniteAnimations(page);
   const results: AxeResults = await new AxeBuilder({ page })
     .options({
       runOnly: {
@@ -109,4 +110,16 @@ async function findKnownIssue(page: Page, violation: ViolationSummary): Promise<
     }
   }
   return undefined;
+}
+
+/** axe reads the colors mid-fade otherwise: a notice or panel still opening measures as low contrast. */
+async function waitForFiniteAnimations(page: Page): Promise<void> {
+  await page.evaluate(async (): Promise<void> => {
+    await Promise.all(
+      document.getAnimations()
+        .filter((animation: Animation): boolean => animation.effect?.getComputedTiming().iterations !== Infinity)
+        .map((animation: Animation): Promise<Animation | undefined> =>
+          animation.finished.catch((): undefined => undefined)),
+    );
+  });
 }
