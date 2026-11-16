@@ -38,6 +38,15 @@ const TEXT_ON_PAGE: Record<string, string> = {
   'muted text': '{text.muted.color}',
 };
 
+const LIGHTEST_BACKDROP_CELL: string = '#fffae4';
+
+const BACKDROP_PANELS: Record<string, string> = {
+  'page tint': '{brand.pageTint}',
+  glass: '{content.background}',
+  'strong glass': '{brand.glass.strongBackground}',
+  header: '{brand.header.background}',
+};
+
 const SEVERITIES: ('info' | 'success' | 'warn' | 'error')[] = [
   'info',
   'success',
@@ -63,6 +72,36 @@ describe(
                 };
 
                 expect(ratio(pair, background)).toBeGreaterThanOrEqual(TEXT_MINIMUM);
+              },
+            );
+          }
+        }
+      },
+    );
+
+    describe(
+      'text over the lightest backdrop cell (the 32 x 18 average, brightest across every frame)',
+      (): void => {
+        const textOnBackdrop: Record<string, string> = {
+          'primary text': '{text.color}',
+          'body copy': '{espresso.100}',
+          label: '{espresso.200}',
+          'muted text': '{text.muted.color}',
+          'copper 300 text': '{copper.300}',
+        };
+
+        for (const [panel, panelColor] of Object.entries(BACKDROP_PANELS)) {
+          for (const [name, foreground] of Object.entries(textOnBackdrop)) {
+            it(
+              `${name} on ${panel} is at least ${TEXT_MINIMUM}:1`,
+              (): void => {
+                const pair: ColorPair = {
+                  name,
+                  foreground,
+                  background: panelColor,
+                };
+
+                expect(ratio(pair, LIGHTEST_BACKDROP_CELL)).toBeGreaterThanOrEqual(TEXT_MINIMUM);
               },
             );
           }
