@@ -3,6 +3,7 @@ import { PLATFORM_ID, inject } from '@angular/core';
 import { Actions, FunctionalEffect, createEffect, ofType } from '@ngrx/effects';
 import { Action } from '@ngrx/store';
 import { Observable, catchError, filter, map, of, switchMap } from 'rxjs';
+import { ExceptionReporter } from '../../../core/telemetry/exception-reporter';
 import * as HomeActions from '../../home/state/home.actions';
 import { ReviewsResponse } from '../dtos/reviews-response.dto';
 import { ReviewsService } from '../services/reviews.service';
@@ -26,6 +27,7 @@ export const loadReviews: FunctionalEffect = createEffect(
   (
     actions$: Actions = inject<Actions>(Actions),
     reviews: ReviewsService = inject(ReviewsService),
+    exceptionReporter: ExceptionReporter = inject(ExceptionReporter),
   ): Observable<Action> =>
     actions$.pipe(
       ofType(ReviewsActions.ReviewsRequest),
@@ -33,7 +35,10 @@ export const loadReviews: FunctionalEffect = createEffect(
         reviews.getReviews().pipe(
           map(({ testimonials, rating }: ReviewsResponse): Action =>
             ReviewsActions.ReviewsRequestSuccess({ testimonials, rating })),
-          catchError((): Observable<Action> => of(ReviewsActions.ReviewsRequestFailure())),
+          catchError((error: unknown): Observable<Action> => {
+            exceptionReporter.reportLoadFailure('reviews', error);
+            return of(ReviewsActions.ReviewsRequestFailure());
+          }),
         )),
     ),
   { functional: true },

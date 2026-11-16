@@ -6,6 +6,7 @@ import { Mock } from 'vitest';
 import { TEST_TELEMETRY_SETTINGS } from '../../../testing/test-telemetry-settings';
 import { shopFeature } from '../../features/shop/state/shop.feature';
 import { ErrorToastService } from './error-toast.service';
+import { ExceptionReporter } from './exception-reporter';
 import { startTelemetry } from './start-telemetry';
 
 interface SdkSpies {
@@ -37,6 +38,7 @@ describe(
   (): void => {
     let router: Router;
     let errorToast: ErrorToastService;
+    let exceptionReporter: ExceptionReporter;
 
     beforeEach((): void => {
       sdk.trackException.mockClear();
@@ -50,6 +52,7 @@ describe(
       });
       router = TestBed.inject(Router);
       errorToast = TestBed.inject(ErrorToastService);
+      exceptionReporter = TestBed.inject(ExceptionReporter);
       vi.spyOn(console, 'error').mockReturnValue(undefined);
     });
 
@@ -64,7 +67,7 @@ describe(
         startTelemetry(
           TEST_TELEMETRY_SETTINGS,
           router,
-          errorToast,
+          exceptionReporter,
         );
 
         errorToast.handleError(error);
@@ -79,7 +82,7 @@ describe(
         startTelemetry(
           TEST_TELEMETRY_SETTINGS,
           router,
-          errorToast,
+          exceptionReporter,
         );
 
         errorToast.handleError('made-up failure');
@@ -96,7 +99,7 @@ describe(
         startTelemetry(
           TEST_TELEMETRY_SETTINGS,
           router,
-          errorToast,
+          exceptionReporter,
         );
 
         expect(sdk.trackPageView).toHaveBeenCalledOnce();
@@ -110,7 +113,7 @@ describe(
         startTelemetry(
           TEST_TELEMETRY_SETTINGS,
           router,
-          errorToast,
+          exceptionReporter,
         );
 
         expect(sdk.trackPageView).not.toHaveBeenCalled();
@@ -127,7 +130,7 @@ describe(
         startTelemetry(
           TEST_TELEMETRY_SETTINGS,
           router,
-          errorToast,
+          exceptionReporter,
         );
 
         await router.navigateByUrl('/made-up-next');

@@ -6,7 +6,7 @@ import { MessageService } from 'primeng/api';
 import { TEST_TELEMETRY_SETTINGS } from '../../../testing/test-telemetry-settings';
 import { shopFeature } from '../../features/shop/state/shop.feature';
 import { provideTelemetry } from './provide-telemetry';
-import { ErrorToastService } from './error-toast.service';
+import { ExceptionReporter } from './exception-reporter';
 
 vi.mock(
   '@microsoft/applicationinsights-web',
@@ -43,7 +43,7 @@ describe(
         TestBed.inject(ApplicationRef).tick();
         await vi.dynamicImportSettled();
 
-        expect(TestBed.inject(ErrorToastService).reportError).toBeUndefined();
+        expect(TestBed.inject(ExceptionReporter).report).toBeUndefined();
       },
     );
 
@@ -53,12 +53,12 @@ describe(
         configure(TEST_TELEMETRY_SETTINGS.appInsightsConnectionString);
 
         await vi.dynamicImportSettled();
-        expect(TestBed.inject(ErrorToastService).reportError).toBeUndefined();
+        expect(TestBed.inject(ExceptionReporter).report).toBeUndefined();
 
         TestBed.inject(ApplicationRef).tick();
 
         await vi.waitFor((): void => {
-          expect(TestBed.inject(ErrorToastService).reportError).toBeDefined();
+          expect(TestBed.inject(ExceptionReporter).report).toBeDefined();
         });
       },
     );

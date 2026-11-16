@@ -4,6 +4,7 @@ import { Event, NavigationEnd, Router } from '@angular/router';
 import { Actions, FunctionalEffect, createEffect, ofType } from '@ngrx/effects';
 import { Action, Store } from '@ngrx/store';
 import { Observable, catchError, exhaustMap, filter, map, of, withLatestFrom } from 'rxjs';
+import { ExceptionReporter } from '../../../core/telemetry/exception-reporter';
 import { Announcement } from '../models/announcement.model';
 import { AnnouncementsService } from '../services/announcements.service';
 import { RequestStatus } from '../../../shared/models/request.models';
@@ -54,6 +55,7 @@ export const loadAnnouncements: FunctionalEffect = createEffect(
   (
     actions$: Actions = inject<Actions>(Actions),
     announcementsService: AnnouncementsService = inject(AnnouncementsService),
+    exceptionReporter: ExceptionReporter = inject(ExceptionReporter),
   ): Observable<Action> =>
     actions$.pipe(
       ofType(AnnouncementsActions.AnnouncementsRequest),
@@ -61,7 +63,10 @@ export const loadAnnouncements: FunctionalEffect = createEffect(
         announcementsService.getAnnouncements().pipe(
           map((announcements: Announcement[]): Action =>
             AnnouncementsActions.AnnouncementsRequestSuccess({ announcements })),
-          catchError((): Observable<Action> => of(AnnouncementsActions.AnnouncementsRequestFailure())),
+          catchError((error: unknown): Observable<Action> => {
+            exceptionReporter.reportLoadFailure('announcements', error);
+            return of(AnnouncementsActions.AnnouncementsRequestFailure());
+          }),
         )),
     ),
   { functional: true },

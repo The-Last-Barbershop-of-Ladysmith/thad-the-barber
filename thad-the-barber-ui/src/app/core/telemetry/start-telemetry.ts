@@ -1,7 +1,7 @@
 import { NavigationEnd, Router } from '@angular/router';
 import { ApplicationInsights } from '@microsoft/applicationinsights-web';
 import { filter } from 'rxjs';
-import { ErrorToastService } from './error-toast.service';
+import { ExceptionReporter } from './exception-reporter';
 import { stripUrlQueries } from './strip-url-queries';
 import { telemetryConfig } from './telemetry-config';
 import { TelemetrySettings } from './telemetry-settings.model';
@@ -20,12 +20,12 @@ function trackPageView(appInsights: ApplicationInsights, urlAfterRedirects: stri
 export function startTelemetry(
   settings: TelemetrySettings,
   router: Router,
-  errorToast: ErrorToastService,
+  exceptionReporter: ExceptionReporter,
 ): void {
   const appInsights: ApplicationInsights = new ApplicationInsights({ config: telemetryConfig(settings) });
   appInsights.loadAppInsights();
   appInsights.addTelemetryInitializer(stripUrlQueries);
-  errorToast.reportError = (error: unknown): void => {
+  exceptionReporter.report = (error: unknown): void => {
     let exception: Error = new Error(String(error));
     if (error instanceof Error) {
       exception = error;

@@ -3,6 +3,8 @@ import { TestBed } from '@angular/core/testing';
 import { Actions } from '@ngrx/effects';
 import { Action } from '@ngrx/store';
 import { Observable, Subject, of, throwError } from 'rxjs';
+import { MockInstance } from 'vitest';
+import { ExceptionReporter } from '../../../core/telemetry/exception-reporter';
 import * as HomeActions from '../../home/state/home.actions';
 import { ReviewsResponse } from '../dtos/reviews-response.dto';
 import { ReviewsService } from '../services/reviews.service';
@@ -98,7 +100,12 @@ describe(
         const failing: () => Observable<ReviewsResponse> = (): Observable<ReviewsResponse> =>
           throwError((): Error => new Error('404'));
 
+        const reportLoadFailure: MockInstance<ExceptionReporter['reportLoadFailure']> =
+          vi.spyOn(ExceptionReporter.prototype, 'reportLoadFailure').mockReturnValue(undefined);
+
         expect(run(failing)).toEqual([ReviewsActions.ReviewsRequestFailure()]);
+        expect(reportLoadFailure).toHaveBeenCalledExactlyOnceWith('reviews', expect.any(Error));
+        reportLoadFailure.mockRestore();
       },
     );
   },

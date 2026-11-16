@@ -5,6 +5,7 @@ import { ToastMessageOptions, MessageService } from 'primeng/api';
 import { TEST_SHOP } from '../../../testing/test-shop';
 import * as ShopActions from '../../features/shop/state/shop.actions';
 import { shopFeature } from '../../features/shop/state/shop.feature';
+import { ExceptionReporter } from './exception-reporter';
 import { ErrorToastService } from './error-toast.service';
 
 describe(
@@ -66,7 +67,7 @@ describe(
       'passes the error to the reporter once one is set, after the toast',
       (): void => {
         const reportError: Mock<(error: unknown) => void> = vi.fn();
-        service.reportError = reportError;
+        TestBed.inject(ExceptionReporter).report = reportError;
         vi.spyOn(console, 'error').mockReturnValue(undefined);
         const error: Error = new Error('made-up error');
 

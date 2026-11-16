@@ -313,7 +313,11 @@ test.describe(
 
         const notice: Locator = page.getByTestId('booking-notice');
         await expect(notice).toHaveClass(/p-message-error/);
+        await expect(notice).toHaveAttribute('role', 'alert');
+        await expect(notice.getByTestId('notice-call')).toHaveAttribute('href', /^tel:/);
         await expect(notice.getByTestId('notice-booking-site')).toHaveAttribute('href', TEST_SHOP.squareBookingSiteUrl ?? '');
+        await expect(notice.getByTestId('notice-booking-site')).toHaveAttribute('target', '_blank');
+        await expect(notice.getByTestId('notice-booking-site')).toHaveAttribute('rel', 'noopener');
         await expect(openDays(page)).toHaveCount(0);
         await expectNoA11yViolations(page);
         await notice.getByTestId('notice-retry').click();

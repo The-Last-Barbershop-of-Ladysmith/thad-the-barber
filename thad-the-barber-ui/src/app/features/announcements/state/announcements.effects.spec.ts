@@ -5,6 +5,8 @@ import { Actions } from '@ngrx/effects';
 import { Action, Store, provideStore } from '@ngrx/store';
 import { Observable, Subject, of, throwError } from 'rxjs';
 import { TEST_ANNOUNCEMENT } from '../../../../testing/test-announcement';
+import { MockInstance } from 'vitest';
+import { ExceptionReporter } from '../../../core/telemetry/exception-reporter';
 import { Announcement } from '../models/announcement.model';
 import { AnnouncementsService } from '../services/announcements.service';
 import * as HomeActions from '../../home/state/home.actions';
@@ -175,7 +177,12 @@ describe(
         const failing: () => Observable<Announcement[]> = (): Observable<Announcement[]> =>
           throwError((): Error => new Error('404'));
 
+        const reportLoadFailure: MockInstance<ExceptionReporter['reportLoadFailure']> =
+          vi.spyOn(ExceptionReporter.prototype, 'reportLoadFailure').mockReturnValue(undefined);
+
         expect(run(failing)).toEqual([AnnouncementsActions.AnnouncementsRequestFailure()]);
+        expect(reportLoadFailure).toHaveBeenCalledExactlyOnceWith('announcements', expect.any(Error));
+        reportLoadFailure.mockRestore();
       },
     );
   },
