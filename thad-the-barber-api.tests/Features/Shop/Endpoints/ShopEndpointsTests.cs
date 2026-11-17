@@ -24,6 +24,7 @@ public sealed class ShopEndpointsTests
         Assert.Equal(3, body.GetProperty("hours").GetArrayLength());
         Assert.Equal(365, body.GetProperty("bookingSettings").GetProperty("maxAdvanceDays").GetInt32());
         Assert.Equal(30, body.GetProperty("bookingSettings").GetProperty("slotMinutes").GetInt32());
+        Assert.Equal("Men's haircut", body.GetProperty("bookingSettings").GetProperty("serviceName").GetString());
     }
 
     [Fact]

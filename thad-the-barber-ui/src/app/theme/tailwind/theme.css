@@ -31,7 +31,7 @@
 
 @layer base {
   html {
-    scroll-padding-top: 9rem;
+    scroll-padding-top: var(--p-brand-page-top-offset);
 
     @media (prefers-reduced-motion: no-preference) {
       scroll-behavior: smooth;

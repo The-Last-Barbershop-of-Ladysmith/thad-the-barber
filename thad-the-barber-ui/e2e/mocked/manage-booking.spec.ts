@@ -78,7 +78,7 @@ test.describe(
 
         expect(download.suggestedFilename()).toBe('appointment.ics');
         expect(icsFile).toContain('BEGIN:VEVENT');
-        expect(icsFile).toContain(`SUMMARY:Appointment at ${TEST_SHOP.name}`);
+        expect(icsFile).toContain(`SUMMARY:${TEST_SHOP.bookingSettings.serviceName}`);
       },
     );
 
