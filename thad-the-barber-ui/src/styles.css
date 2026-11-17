@@ -16,4 +16,9 @@
     outline: var(--p-focus-ring-width) var(--p-focus-ring-style) var(--p-focus-ring-color);
     outline-offset: var(--p-focus-ring-offset);
   }
+
+  /* A long word breaks instead of widening its box past a narrow screen when text is enlarged. */
+  main :is(h1, h2, h3, p, dt, dd, li) {
+    overflow-wrap: anywhere;
+  }
 }

@@ -123,7 +123,6 @@
         font-family: var(--p-font-family-display);
         font-size: 1.5rem;
         font-weight: 800;
-        white-space: nowrap;
         color: var(--p-text-color);
       }
     }
@@ -137,6 +136,10 @@
         flex-direction: row;
         flex-wrap: wrap;
         justify-content: space-between;
+
+        dt {
+          white-space: nowrap;
+        }
       }
     }
 
