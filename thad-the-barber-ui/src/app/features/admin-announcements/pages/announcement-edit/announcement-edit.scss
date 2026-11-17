@@ -52,6 +52,7 @@
   }
 
   .text,
+  .text,
   .textarea,
   .date {
     width: 100%;
@@ -67,6 +68,11 @@
     display: flex;
     flex-wrap: wrap;
     gap: 1rem;
+  }
+
+  .file {
+    font: inherit;
+    color: inherit;
   }
 
   .photo {

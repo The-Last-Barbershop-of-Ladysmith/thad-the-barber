@@ -10,6 +10,7 @@ import {
   adminSession,
   fulfillProblem,
   mockAdminAnnouncements,
+  mockAnnouncementImageUpload,
   mockGoogleSignIn,
 } from '../support/admin';
 import { expectNoA11yViolations } from '../support/axe';
@@ -120,6 +121,37 @@ test.describe(
         await expect(page).toHaveURL(/\/admin\/announcements$/);
         await expect(page.getByTestId('announcement-item')).toHaveCount(1);
         expect(mocked.saves[1]).toHaveLength(1);
+      },
+    );
+
+    test(
+      'adds a photo to an announcement, then asks for its description before saving',
+      async ({ page }: { page: Page; }): Promise<void> => {
+        const mocked: MockedAnnouncements = await mockAdminAnnouncements(page, []);
+        await mockAnnouncementImageUpload(page);
+        await signInAndOpenList(page);
+        await page.getByTestId('new-announcement').click();
+
+        await page.getByLabel('Title').fill('Big sale');
+        await page.getByLabel('Add a photo').setInputFiles({
+          name: 'sale sign.jpg',
+          mimeType: 'image/jpeg',
+          buffer: Buffer.from('not really a photo'),
+        });
+        await expect(page.getByLabel('Description for screen readers')).toBeVisible();
+        await page.getByTestId('save-announcement').click();
+        await expect(page.getByTestId('alt-error')).toBeVisible();
+        expect(mocked.saves).toHaveLength(0);
+
+        await page.getByLabel('Description for screen readers').fill('A sign that says sale');
+        await page.getByTestId('save-announcement').click();
+
+        await expect(page).toHaveURL(/\/admin\/announcements$/);
+        expect(mocked.saves[0]?.[0]?.image).toEqual({
+          fileName: 'sale-sign-1a2b3c4d.jpg',
+          altText: 'A sign that says sale',
+          position: 'right',
+        });
       },
     );
 

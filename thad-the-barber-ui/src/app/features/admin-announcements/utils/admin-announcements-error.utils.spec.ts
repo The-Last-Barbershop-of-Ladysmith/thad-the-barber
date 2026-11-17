@@ -9,6 +9,8 @@ describe('toAdminAnnouncementsError', (): void => {
       .toBe(AdminAnnouncementsError.Unavailable);
     expect(toAdminAnnouncementsError(new HttpErrorResponse({ status: 400, error: { code: 'validation_failed' } })))
       .toBe(AdminAnnouncementsError.Invalid);
+    expect(toAdminAnnouncementsError(new HttpErrorResponse({ status: 400, error: { code: 'invalid_image' } })))
+      .toBe(AdminAnnouncementsError.InvalidImage);
     expect(toAdminAnnouncementsError(new Error('boom'))).toBe(AdminAnnouncementsError.Failed);
   });
 });

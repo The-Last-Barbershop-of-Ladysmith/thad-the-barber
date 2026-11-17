@@ -104,8 +104,8 @@
         <div class="field">
           <label for="announcement-alt">Description for screen readers</label>
           <input
-            pInputText
             id="announcement-alt"
+            class="text"
             maxlength="250"
             [value]="imageAltText()"
             (input)="onInput(imageAltText, $event)"
@@ -143,8 +143,26 @@
           Remove photo
         </button>
       } @else {
-        <span class="help">No photo. Uploading photos comes with the gallery update.</span>
+        <span class="help">No photo yet.</span>
       }
+      <div class="field">
+        <label for="announcement-photo">{{ image() ? 'Replace the photo' : 'Add a photo' }}</label>
+        <input
+          id="announcement-photo"
+          class="file"
+          type="file"
+          data-testid="announcement-photo"
+          [accept]="accept"
+          [disabled]="isUploadingImage()"
+          (change)="onPhoto($event)"
+        />
+        <span class="help">JPEG, PNG, WebP or AVIF, under 8 MB.</span>
+        @if (photoProblem(); as photoText) {
+          <p-message severity="error" variant="simple" size="small" data-testid="photo-error">{{
+            photoText
+          }}</p-message>
+        }
+      </div>
     </fieldset>
 
     <fieldset class="field">

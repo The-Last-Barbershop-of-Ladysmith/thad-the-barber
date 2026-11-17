@@ -24,6 +24,7 @@ export const ADMIN_NAV: readonly AdminNavItem[] = [
   {
     label: 'Gallery',
     icon: 'pi-images',
+    path: '/admin/gallery',
   },
 ];
 

@@ -9,6 +9,7 @@ import { AdminAnnouncementsState } from './admin-announcements.state';
 export type AdminAnnouncementsExtraSelectors = {
   selectIsLoading: MemoizedSelector<object, boolean>;
   selectIsSaving: MemoizedSelector<object, boolean>;
+  selectIsImageUploading: MemoizedSelector<object, boolean>;
   /** True once a list has arrived, so a page can tell "none yet" from "not loaded". */
   selectIsLoaded: MemoizedSelector<object, boolean>;
   selectItems: MemoizedSelector<object, AdminAnnouncementDto[]>;
@@ -25,6 +26,7 @@ export const adminAnnouncementsFeature = createFeature({
     {
       selectLoadStatus,
       selectSaveStatus,
+      selectImageUploadStatus,
       selectItems,
     }: FeatureSelectors<AdminAnnouncementsState>,
   ): AdminAnnouncementsExtraSelectors => ({
@@ -35,6 +37,10 @@ export const adminAnnouncementsFeature = createFeature({
     selectIsSaving: createSelector(
       selectSaveStatus,
       (saveStatus: RequestStatus): boolean => saveStatus === RequestStatus.Pending,
+    ),
+    selectIsImageUploading: createSelector(
+      selectImageUploadStatus,
+      (imageUploadStatus: RequestStatus): boolean => imageUploadStatus === RequestStatus.Pending,
     ),
     selectIsLoaded: createSelector(
       selectLoadStatus,

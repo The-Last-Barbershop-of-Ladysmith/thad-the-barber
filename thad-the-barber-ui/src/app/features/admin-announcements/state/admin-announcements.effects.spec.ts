@@ -4,13 +4,19 @@ import { Router } from '@angular/router';
 import { Actions } from '@ngrx/effects';
 import { Action } from '@ngrx/store';
 import { Observable, Subject, of, throwError } from 'rxjs';
+import { AdminAnnouncementImageUploadDto } from '../dtos/admin-announcement-image-upload.dto';
 import { AdminAnnouncementDto } from '../dtos/admin-announcement.dto';
 import { AnnouncementInputDto } from '../dtos/announcements-save-request.dto';
 import { AdminAnnouncementStatus } from '../models/admin-announcement-status.model';
 import { AdminAnnouncementsError } from '../models/admin-announcements-error.model';
 import { AdminAnnouncementsService } from '../services/admin-announcements.service';
 import * as AdminAnnouncementsActions from './admin-announcements.actions';
-import { loadAdminAnnouncements, saveAdminAnnouncements, showListAfterSave } from './admin-announcements.effects';
+import {
+  loadAdminAnnouncements,
+  saveAdminAnnouncements,
+  showListAfterSave,
+  uploadAdminAnnouncementImage,
+} from './admin-announcements.effects';
 
 const ITEM: AdminAnnouncementDto = {
   title: 'Holiday hours',
@@ -30,6 +36,7 @@ describe('admin announcements effects', (): void => {
   let service: {
     getAll: () => Observable<AdminAnnouncementDto[]>;
     save: (items: AnnouncementInputDto[]) => Observable<AdminAnnouncementDto[]>;
+    uploadImage: (file: File) => Observable<AdminAnnouncementImageUploadDto>;
   };
   let navigations: string[];
 
@@ -39,6 +46,7 @@ describe('admin announcements effects', (): void => {
     service = {
       getAll: (): Observable<AdminAnnouncementDto[]> => of([ITEM]),
       save: (): Observable<AdminAnnouncementDto[]> => of([ITEM]),
+      uploadImage: (): Observable<AdminAnnouncementImageUploadDto> => of({ fileName: 'a.jpg', src: 'https://example.test/a.jpg' }),
     };
     TestBed.configureTestingModule({
       providers: [
@@ -129,5 +137,41 @@ describe('admin announcements effects', (): void => {
     emitted(showListAfterSave, AdminAnnouncementsActions.AdminAnnouncementsSaveSuccess({ items: [] }));
 
     expect(navigations).toEqual(['/admin/announcements']);
+  });
+
+  it('sends a photo for an announcement and answers with where it was stored', (): void => {
+    const stored: AdminAnnouncementImageUploadDto = {
+      fileName: 'sign-1a2b3c4d.webp',
+      src: 'https://example.test/announcements/sign-1a2b3c4d.webp',
+    };
+    const sent: File[] = [];
+    service.uploadImage = (file: File): Observable<AdminAnnouncementImageUploadDto> => {
+      sent.push(file);
+      return of(stored);
+    };
+    const file: File = new File(['x'], 'sign.webp');
+
+    const results: Action[] = emitted(
+      uploadAdminAnnouncementImage,
+      AdminAnnouncementsActions.AdminAnnouncementsImageUpload({ file }),
+    );
+
+    expect(sent).toEqual([file]);
+    expect(results).toEqual([AdminAnnouncementsActions.AdminAnnouncementsImageUploadSuccess({ image: stored })]);
+  });
+
+  it('says a refused photo could not be used', (): void => {
+    service.uploadImage = (): Observable<AdminAnnouncementImageUploadDto> =>
+      throwError((): HttpErrorResponse => problem('invalid_image', 400));
+    const failure: Action = AdminAnnouncementsActions.AdminAnnouncementsImageUploadFailure({
+      error: AdminAnnouncementsError.InvalidImage,
+    });
+
+    const results: Action[] = emitted(
+      uploadAdminAnnouncementImage,
+      AdminAnnouncementsActions.AdminAnnouncementsImageUpload({ file: new File([], 'a.jpg') }),
+    );
+
+    expect(results).toEqual([failure]);
   });
 });

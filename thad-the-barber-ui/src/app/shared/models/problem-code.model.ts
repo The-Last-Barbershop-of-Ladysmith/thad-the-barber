@@ -17,4 +17,7 @@ export enum ProblemCode {
   AdminUnavailable = 'admin_unavailable',
   AnnouncementsUnavailable = 'announcements_unavailable',
   ShopInfoUnavailable = 'shop_info_unavailable',
+  GalleryUnavailable = 'gallery_unavailable',
+  InvalidImage = 'invalid_image',
+  PhotoNotFound = 'photo_not_found',
 }

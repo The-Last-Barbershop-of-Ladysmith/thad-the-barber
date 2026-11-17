@@ -1,5 +1,6 @@
 import { Page, Route } from '@playwright/test';
 import { AdminSessionDto } from '../../src/app/features/admin/dtos/admin-session.dto';
+import { AdminGalleryPhotoDto } from '../../src/app/features/admin-gallery/dtos/admin-gallery-photo.dto';
 import { AdminShopInfoDto } from '../../src/app/features/admin-shop/dtos/admin-shop-info.dto';
 import { ShopInfoSaveRequestDto } from '../../src/app/features/admin-shop/dtos/shop-info-save-request.dto';
 import { AdminAnnouncementDto } from '../../src/app/features/admin-announcements/dtos/admin-announcement.dto';
@@ -104,7 +105,7 @@ export async function mockAdminAnnouncements(page: Page, items: AdminAnnouncemen
             ? null
             : {
               ...input.image,
-              src: `https://example.test/announcements/${input.image.fileName}`,
+              src: MOCK_IMAGE_SRC,
             },
           status: AdminAnnouncementStatus.Showing,
         }));
@@ -144,4 +145,74 @@ export async function mockAdminShop(page: Page, info: AdminShopInfoDto): Promise
     },
   );
   return mocked;
+}
+
+/** A one pixel image inline: the site's CSP only lets images load from its own sources and the media container. */
+export const MOCK_IMAGE_SRC: string = 'data:image/gif;base64,R0lGODlhAQABAAAAACw=';
+
+export const ADMIN_GALLERY_URL: string = `${servedEnvironment.apiBaseUrl}/admin/gallery`;
+export const ADMIN_ANNOUNCEMENT_IMAGES_URL: string = `${servedEnvironment.apiBaseUrl}/admin/announcements/images`;
+
+/** The photos the mocked gallery holds, and each description sent with an upload and each file name deleted. */
+export interface MockedGallery {
+  photos: AdminGalleryPhotoDto[];
+  uploads: string[];
+  deletes: string[];
+}
+
+/**
+ * Stands in for the admin gallery calls: `GET` lists, `POST` stores the photo under its description (as the API does,
+ * lower case and hyphenated) at the top, `DELETE` removes one.
+ */
+export async function mockAdminGallery(page: Page, photos: AdminGalleryPhotoDto[]): Promise<MockedGallery> {
+  const mocked: MockedGallery = {
+    photos,
+    uploads: [],
+    deletes: [],
+  };
+  await page.route(
+    (url: URL): boolean => url.href === ADMIN_GALLERY_URL || url.href.startsWith(`${ADMIN_GALLERY_URL}/`),
+    async (route: Route): Promise<void> => {
+      const method: string = route.request().method();
+      if (method === 'POST') {
+        const altText: string = /name="altText"\r\n\r\n([^\r]*)/.exec(route.request().postData() ?? '')?.[1] ?? '';
+        const fileName: string = `${altText.toLowerCase().replaceAll(/[^a-z0-9]+/g, '-').replaceAll(/^-|-$/g, '')}.jpg`;
+        const photo: AdminGalleryPhotoDto = {
+          fileName,
+          src: MOCK_IMAGE_SRC,
+          altText,
+          uploadedAt: new Date().toISOString(),
+        };
+        mocked.uploads.push(altText);
+        mocked.photos = [photo, ...mocked.photos];
+        await route.fulfill({ status: 201, json: photo });
+        return;
+      }
+      if (method === 'DELETE') {
+        const fileName: string = decodeURIComponent(new URL(route.request().url()).pathname.split('/').at(-1) ?? '');
+        mocked.deletes.push(fileName);
+        mocked.photos = mocked.photos.filter((photo: AdminGalleryPhotoDto): boolean => photo.fileName !== fileName);
+        await route.fulfill({ status: 204 });
+        return;
+      }
+      await route.fulfill({ json: mocked.photos });
+    },
+  );
+  return mocked;
+}
+
+/** Stands in for `POST /api/admin/announcements/images`: every photo is stored under a fixed name. */
+export async function mockAnnouncementImageUpload(page: Page): Promise<void> {
+  await page.route(
+    (url: URL): boolean => url.href === ADMIN_ANNOUNCEMENT_IMAGES_URL,
+    async (route: Route): Promise<void> => {
+      await route.fulfill({
+        status: 201,
+        json: {
+          fileName: 'sale-sign-1a2b3c4d.jpg',
+          src: MOCK_IMAGE_SRC,
+        },
+      });
+    },
+  );
 }

@@ -57,6 +57,11 @@ export const ADMIN_ROUTES: Routes = [
               .then((module: { ADMIN_SHOP_ROUTES: Routes; }): Routes => module.ADMIN_SHOP_ROUTES),
           },
           {
+            path: 'gallery',
+            loadChildren: (): Promise<Routes> => import('../admin-gallery/admin-gallery.routes')
+              .then((module: { ADMIN_GALLERY_ROUTES: Routes; }): Routes => module.ADMIN_GALLERY_ROUTES),
+          },
+          {
             path: 'overview',
             data: { seo: overviewSeo },
             component: Overview,
