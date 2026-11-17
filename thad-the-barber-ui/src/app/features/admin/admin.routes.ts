@@ -47,6 +47,11 @@ export const ADMIN_ROUTES: Routes = [
         canActivate: [adminGuard],
         children: [
           {
+            path: 'announcements',
+            loadChildren: (): Promise<Routes> => import('../admin-announcements/admin-announcements.routes')
+              .then((module: { ADMIN_ANNOUNCEMENTS_ROUTES: Routes; }): Routes => module.ADMIN_ANNOUNCEMENTS_ROUTES),
+          },
+          {
             path: 'overview',
             data: { seo: overviewSeo },
             component: Overview,
