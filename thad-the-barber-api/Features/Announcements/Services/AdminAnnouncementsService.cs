@@ -2,9 +2,11 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Options;
 using ThadTheBarber.Api.Features.Announcements.Exceptions;
+using ThadTheBarber.Api.Features.Gallery.Mappers;
 using ThadTheBarber.Api.Features.Announcements.Mappers;
 using ThadTheBarber.Api.Features.Announcements.Models;
 using ThadTheBarber.Api.Infrastructure.Storage.Configuration;
+using ThadTheBarber.Api.Infrastructure.Storage.Models;
 using ThadTheBarber.Api.Infrastructure.Storage.Services;
 
 namespace ThadTheBarber.Api.Features.Announcements.Services;
@@ -58,6 +60,29 @@ public sealed class AdminAnnouncementsService(
 
         announcements.MarkStale();
         return await GetAllAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Stores an image for an announcement in the media container's <c>announcements/</c> folder, under a name made from
+    /// the file's own (letters, digits and hyphens) with a short random suffix, so one never replaces another.
+    /// </summary>
+    public async Task<AdminAnnouncementImageUpload> UploadImageAsync(byte[] bytes, string? originalName, CancellationToken cancellationToken)
+    {
+        ImageKind kind = ImageUploads.InspectOrThrow(bytes);
+        string stem = GalleryFileNameMapper.ToStem(Path.GetFileNameWithoutExtension(originalName ?? string.Empty));
+        stem = stem.Length == 0 ? "image" : stem[..Math.Min(stem.Length, 60)].TrimEnd('-');
+        string fileName = $"{stem}-{Guid.NewGuid().ToString("N")[..8]}{kind.Extension}";
+        MediaStorageSettings media = settings.Value;
+        try
+        {
+            await storage.WriteNewBytesAsync(media.MediaContainerName, AnnouncementsFileMapper.ImageFolder + fileName, bytes, kind.ContentType, cancellationToken);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            throw new AnnouncementsUnavailableException("The image couldn't be saved.", exception);
+        }
+
+        return new AdminAnnouncementImageUpload(fileName, media.GetMediaUrl(AnnouncementsFileMapper.ImageFolder + Uri.EscapeDataString(fileName)));
     }
 
     private async Task<List<Announcement>> ReadAsync(MediaStorageSettings media, CancellationToken cancellationToken)

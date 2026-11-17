@@ -137,4 +137,46 @@ public sealed class AdminAnnouncementsEndpointsTests
         await ProblemAssert.IsProblemAsync(read, 503, "announcements_unavailable");
         await ProblemAssert.IsProblemAsync(save, 503, "announcements_unavailable");
     }
+
+    [Fact]
+    public async Task AnImageUploadIs201WithItsFileNameAndUrl()
+    {
+        FakeMediaStorage storage = new();
+        using ApiFactory api = new(media: storage);
+        using HttpClient client = AdminClient(api);
+        using MultipartFormDataContent form = ImageForm(ImageBytes.Png, "sale sign.png");
+
+        using HttpResponseMessage response = await client.PostAsync("/api/admin/announcements/images", form, Cancellation);
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        JsonElement body = await response.Content.ReadFromJsonAsync<JsonElement>(Cancellation);
+        string fileName = body.GetProperty("fileName").GetString()!;
+        Assert.StartsWith("sale-sign-", fileName, StringComparison.Ordinal);
+        Assert.EndsWith("/announcements/" + fileName, body.GetProperty("src").GetString(), StringComparison.Ordinal);
+        Assert.True(storage.MediaFiles.ContainsKey("announcements/" + fileName));
+    }
+
+    [Fact]
+    public async Task AnImageUploadThatIsNotAnImageIs400AndOnlyAnAdminMayUpload()
+    {
+        FakeMediaStorage storage = new();
+        using ApiFactory api = new(media: storage);
+        using HttpClient client = AdminClient(api);
+        using MultipartFormDataContent script = ImageForm(ImageBytes.Script, "evil.png");
+        using MultipartFormDataContent visitorForm = ImageForm(ImageBytes.Png, "a.png");
+
+        using HttpResponseMessage bad = await client.PostAsync("/api/admin/announcements/images", script, Cancellation);
+        using HttpResponseMessage visitor = await api.CreateClient().PostAsync("/api/admin/announcements/images", visitorForm, Cancellation);
+
+        await ProblemAssert.IsProblemAsync(bad, 400, "invalid_image");
+        Assert.Equal(HttpStatusCode.Forbidden, visitor.StatusCode);
+        Assert.Empty(storage.MediaFiles);
+    }
+
+    private static MultipartFormDataContent ImageForm(byte[] bytes, string fileName)
+    {
+        MultipartFormDataContent form = [];
+        form.Add(new ByteArrayContent(bytes), "file", fileName);
+        return form;
+    }
 }

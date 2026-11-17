@@ -20,4 +20,10 @@ public interface IMediaStorage
 
     /// <summary>Saves a text blob, replacing any with the same name.</summary>
     Task WriteTextAsync(string container, string blobName, string text, CancellationToken cancellationToken);
+
+    /// <summary>Saves a new file (an image), and fails instead of replacing one that has the same name.</summary>
+    Task WriteNewBytesAsync(string container, string blobName, byte[] bytes, string contentType, CancellationToken cancellationToken);
+
+    /// <summary>Removes a blob; false when there was none.</summary>
+    Task<bool> DeleteAsync(string container, string blobName, CancellationToken cancellationToken);
 }

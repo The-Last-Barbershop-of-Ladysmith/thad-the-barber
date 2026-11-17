@@ -324,13 +324,16 @@ resource adminMedia 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!
   }
 }
 
-resource apiMediaReader 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(mediaContainer.id, apiAppName, storageBlobDataReader)
+// Reads the gallery and announcement images, and (from the admin area) adds and deletes them. The API checks every file
+// it stores is a JPEG, PNG, WebP or AVIF under 8 MB, and only an allowed Google account can ask. The earlier Reader
+// assignment is left in place by an incremental deployment; it can be removed by hand.
+resource apiMediaWriter 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(mediaContainer.id, apiAppName, storageBlobDataContributor)
   scope: mediaContainer
   properties: {
     principalId: api.outputs.principalId
     principalType: 'ServicePrincipal'
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageBlobDataReader)
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageBlobDataContributor)
   }
 }
 

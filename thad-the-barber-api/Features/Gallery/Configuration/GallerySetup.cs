@@ -7,6 +7,7 @@ public static class GallerySetup
     public static IServiceCollection AddGallery(this IServiceCollection services)
     {
         services.AddSingleton<GalleryService>();
+        services.AddSingleton<AdminGalleryService>();
         return services;
     }
 }
