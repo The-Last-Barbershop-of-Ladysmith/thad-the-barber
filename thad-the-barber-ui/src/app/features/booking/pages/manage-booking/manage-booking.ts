@@ -147,6 +147,7 @@ export class ManageBooking implements OnInit {
         addressLine: this.addressLine(),
         slotMinutes: bookingSettings.slotMinutes,
         serviceName: bookingSettings.serviceName,
+        directionsUrl: this.directionsUrl(),
       },
       manageLink,
     );

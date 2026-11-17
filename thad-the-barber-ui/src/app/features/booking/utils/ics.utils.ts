@@ -5,6 +5,8 @@ interface CalendarShop {
   addressLine: string | null;
   slotMinutes: number;
   serviceName: string;
+  /** A Google Maps directions link, put in the description because calendar apps only link plain URLs there. */
+  directionsUrl: string | null;
 }
 
 /** iCalendar lines end in CRLF (RFC 5545 §3.1). */
@@ -27,6 +29,10 @@ export function toIcsFile(
 ): string {
   const startAt: Date = new Date(booking.startAt);
   const endAt: Date = new Date(startAt.getTime() + shop.slotMinutes * 60_000);
+  const descriptionLines: string[] = [
+    `Change or cancel: ${manageLink}`,
+    ...(shop.directionsUrl ? [`Directions: ${shop.directionsUrl}`] : []),
+  ];
   const locationLines: string[] = shop.addressLine ? [`LOCATION:${escapeText(shop.addressLine)}`] : [];
   const lines: string[] = [
     'BEGIN:VCALENDAR',
@@ -40,7 +46,7 @@ export function toIcsFile(
     `DTEND:${toIcsDateTime(endAt)}`,
     `SUMMARY:${escapeText(shop.serviceName || `Appointment at ${shop.name}`)}`,
     ...locationLines,
-    `DESCRIPTION:${escapeText(`Change or cancel: ${manageLink}`)}`,
+    `DESCRIPTION:${escapeText(descriptionLines.join('\n'))}`,
     `URL:${manageLink}`,
     'END:VEVENT',
     'END:VCALENDAR',
