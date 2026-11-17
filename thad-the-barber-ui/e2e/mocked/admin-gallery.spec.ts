@@ -3,6 +3,7 @@ import { AdminGalleryPhotoDto } from '../../src/app/features/admin-gallery/dtos/
 import {
   ADMIN_GALLERY_URL,
   ADMIN_SESSION_URL,
+  MOCK_IMAGE_SRC,
   MockedGallery,
   adminSession,
   fulfillProblem,
@@ -12,18 +13,16 @@ import {
 import { expectNoA11yViolations } from '../support/axe';
 import { expect, test } from '../support/fixtures';
 
-const IMAGE_SRC: string = 'data:image/gif;base64,R0lGODlhAQABAAAAACw=';
-
 const FADE: AdminGalleryPhotoDto = {
   fileName: 'skin-fade.jpg',
-  src: IMAGE_SRC,
+  src: MOCK_IMAGE_SRC,
   altText: 'Skin fade',
   uploadedAt: '2026-10-05T10:00:00Z',
 };
 
 const BEARD: AdminGalleryPhotoDto = {
   fileName: 'beard-trim.jpg',
-  src: IMAGE_SRC,
+  src: MOCK_IMAGE_SRC,
   altText: 'Beard trim',
   uploadedAt: '2026-10-01T10:00:00Z',
 };

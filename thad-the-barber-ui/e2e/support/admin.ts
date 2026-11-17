@@ -105,7 +105,7 @@ export async function mockAdminAnnouncements(page: Page, items: AdminAnnouncemen
             ? null
             : {
               ...input.image,
-              src: `https://example.test/announcements/${input.image.fileName}`,
+              src: MOCK_IMAGE_SRC,
             },
           status: AdminAnnouncementStatus.Showing,
         }));
@@ -147,6 +147,9 @@ export async function mockAdminShop(page: Page, info: AdminShopInfoDto): Promise
   return mocked;
 }
 
+/** A one pixel image inline: the site's CSP only lets images load from its own sources and the media container. */
+export const MOCK_IMAGE_SRC: string = 'data:image/gif;base64,R0lGODlhAQABAAAAACw=';
+
 export const ADMIN_GALLERY_URL: string = `${servedEnvironment.apiBaseUrl}/admin/gallery`;
 export const ADMIN_ANNOUNCEMENT_IMAGES_URL: string = `${servedEnvironment.apiBaseUrl}/admin/announcements/images`;
 
@@ -176,7 +179,7 @@ export async function mockAdminGallery(page: Page, photos: AdminGalleryPhotoDto[
         const fileName: string = `${altText.toLowerCase().replaceAll(/[^a-z0-9]+/g, '-').replaceAll(/^-|-$/g, '')}.jpg`;
         const photo: AdminGalleryPhotoDto = {
           fileName,
-          src: `https://example.test/gallery/${fileName}`,
+          src: MOCK_IMAGE_SRC,
           altText,
           uploadedAt: new Date().toISOString(),
         };
@@ -207,7 +210,7 @@ export async function mockAnnouncementImageUpload(page: Page): Promise<void> {
         status: 201,
         json: {
           fileName: 'sale-sign-1a2b3c4d.jpg',
-          src: 'data:image/gif;base64,R0lGODlhAQABAAAAACw=',
+          src: MOCK_IMAGE_SRC,
         },
       });
     },
