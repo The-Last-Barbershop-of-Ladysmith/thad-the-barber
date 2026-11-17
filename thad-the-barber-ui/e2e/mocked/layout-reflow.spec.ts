@@ -8,6 +8,8 @@ const PAGES: readonly string[] = [
   '/privacy',
 ];
 const TEXT_ZOOM_PAGES: readonly string[] = [
+  '/',
+  '/book',
   '/contact',
   '/privacy',
 ];
@@ -15,6 +17,17 @@ const TEXT_ZOOM_PERCENT: number = 200;
 
 async function readHorizontalOverflow(page: Page): Promise<number> {
   return page.evaluate((): number => document.documentElement.scrollWidth - window.innerWidth);
+}
+
+async function readClippedContentCount(page: Page): Promise<number> {
+  return page.evaluate(
+    (): number => [...document.querySelectorAll('main *')].filter(
+      (element: Element): boolean => {
+        const box: DOMRect = element.getBoundingClientRect();
+        return box.width > 0 && box.right > window.innerWidth + 1 && !element.closest('.p-carousel');
+      },
+    ).length,
+  );
 }
 
 test.describe(
@@ -48,6 +61,7 @@ test.describe(
           );
 
           expect(await readHorizontalOverflow(page)).toBeLessThanOrEqual(0);
+          expect(await readClippedContentCount(page)).toBe(0);
         },
       );
     }
