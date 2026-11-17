@@ -69,6 +69,14 @@
         .status-dot {
           background: var(--p-brand-error);
         }
+
+        // The dot breathes while the hours load, so the pill reads as busy. A visitor who asks for less motion gets
+        // the still pill. Only opacity and scale change, so the pill's size and the title below it never move.
+        @media (prefers-reduced-motion: no-preference) {
+          .status-dot {
+            animation: hours-loading 1.2s ease-in-out infinite;
+          }
+        }
       }
     }
 
@@ -171,5 +179,12 @@
         }
       }
     }
+  }
+}
+
+@keyframes hours-loading {
+  50% {
+    opacity: 0.35;
+    transform: scale(0.7);
   }
 }
