@@ -30,7 +30,11 @@ describe(
         const titles: string[] = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('.card-title'))
           .map((title: Element): string => title.textContent);
 
-        expect(titles).toEqual(['Announcements', 'Gallery']);
+        expect(titles).toEqual([
+          'Announcements',
+          'Shop info',
+          'Gallery',
+        ]);
       },
     );
 

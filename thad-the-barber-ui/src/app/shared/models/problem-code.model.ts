@@ -16,4 +16,5 @@ export enum ProblemCode {
   NotAuthorized = 'not_authorized',
   AdminUnavailable = 'admin_unavailable',
   AnnouncementsUnavailable = 'announcements_unavailable',
+  ShopInfoUnavailable = 'shop_info_unavailable',
 }

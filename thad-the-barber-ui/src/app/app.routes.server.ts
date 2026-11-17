@@ -15,6 +15,7 @@ export const CLIENT_ROUTES: string[] = [
   'admin/announcements',
   'admin/announcements/new',
   'admin/announcements/:index',
+  'admin/shop',
 ];
 
 /** The routes search engines should find; the build writes them to the sitemap (`scripts/write-express-files.ts`). */

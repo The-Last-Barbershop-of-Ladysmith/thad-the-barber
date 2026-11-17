@@ -52,6 +52,11 @@ export const ADMIN_ROUTES: Routes = [
               .then((module: { ADMIN_ANNOUNCEMENTS_ROUTES: Routes; }): Routes => module.ADMIN_ANNOUNCEMENTS_ROUTES),
           },
           {
+            path: 'shop',
+            loadChildren: (): Promise<Routes> => import('../admin-shop/admin-shop.routes')
+              .then((module: { ADMIN_SHOP_ROUTES: Routes; }): Routes => module.ADMIN_SHOP_ROUTES),
+          },
+          {
             path: 'overview',
             data: { seo: overviewSeo },
             component: Overview,

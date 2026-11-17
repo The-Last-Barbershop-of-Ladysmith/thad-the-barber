@@ -57,6 +57,7 @@ describe(
         expect(links).toEqual([
           '/admin/overview',
           '/admin/announcements',
+          '/admin/shop',
         ]);
         expect(soon).toEqual([
           'Gallery',

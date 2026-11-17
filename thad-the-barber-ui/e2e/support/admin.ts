@@ -1,5 +1,7 @@
 import { Page, Route } from '@playwright/test';
 import { AdminSessionDto } from '../../src/app/features/admin/dtos/admin-session.dto';
+import { AdminShopInfoDto } from '../../src/app/features/admin-shop/dtos/admin-shop-info.dto';
+import { ShopInfoSaveRequestDto } from '../../src/app/features/admin-shop/dtos/shop-info-save-request.dto';
 import { AdminAnnouncementDto } from '../../src/app/features/admin-announcements/dtos/admin-announcement.dto';
 import {
   AnnouncementInputDto,
@@ -108,6 +110,37 @@ export async function mockAdminAnnouncements(page: Page, items: AdminAnnouncemen
         }));
       }
       await route.fulfill({ json: mocked.items });
+    },
+  );
+  return mocked;
+}
+
+export const ADMIN_SHOP_URL: string = `${servedEnvironment.apiBaseUrl}/admin/shop`;
+
+/** The shop info the mocked admin API holds, and every body the page saved (`PUT`). */
+export interface MockedShopInfo {
+  info: AdminShopInfoDto;
+  saves: ShopInfoSaveRequestDto[];
+}
+
+/** Stands in for `GET` and `PUT /api/admin/shop`: a save is read back as saved, next to Square's description. */
+export async function mockAdminShop(page: Page, info: AdminShopInfoDto): Promise<MockedShopInfo> {
+  const mocked: MockedShopInfo = {
+    info,
+    saves: [],
+  };
+  await page.route(
+    (url: URL): boolean => url.href === ADMIN_SHOP_URL,
+    async (route: Route): Promise<void> => {
+      if (route.request().method() === 'PUT') {
+        const saved: ShopInfoSaveRequestDto = route.request().postDataJSON() as ShopInfoSaveRequestDto;
+        mocked.saves.push(saved);
+        mocked.info = {
+          ...saved,
+          squareNotice: info.squareNotice,
+        };
+      }
+      await route.fulfill({ json: mocked.info });
     },
   );
   return mocked;
