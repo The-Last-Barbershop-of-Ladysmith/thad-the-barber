@@ -117,6 +117,7 @@ Anyone can type any phone number into a public form, so the API **never returns 
 - ✅ **Sign-in: Google** (decided 2026-09-28), through Google Identity Services in Angular.
   - The API verifies the Google ID token and checks the email against **`Admin:AllowedEmails`, an array in Key Vault**, then issues a short-lived admin JWT (role `admin`) that the interceptor sends on `/api/admin/*`.
   - Every admin endpoint enforces an `Admin` policy server-side.
+  - ✅ API side built (#95, 2026-11-17): `POST /api/admin/session`, the `Admin` policy and `GET /api/admin/me`. The sign-in works only once `Admin--GoogleClientId` and `Admin--AllowedEmails--N` are in the environment's Key Vault; without them it answers 503 `admin_unavailable` and the rest of the API is unaffected.
   - It uses the same Google Cloud project as the reviews API and reCAPTCHA, and costs $0.
   - Not App Service Easy Auth: it's cookie-based per domain and clashes with the separate web/API origins and the no-cookie design.
 - It can split into its own Angular project or app later without a backend rewrite.
