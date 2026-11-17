@@ -7,6 +7,7 @@ public static class AnnouncementsSetup
     public static IServiceCollection AddAnnouncements(this IServiceCollection services)
     {
         services.AddSingleton<AnnouncementsService>();
+        services.AddSingleton<AdminAnnouncementsService>();
         return services;
     }
 }

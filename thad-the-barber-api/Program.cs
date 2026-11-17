@@ -104,6 +104,7 @@ api.MapReviewsEndpoints();
 api.MapContactEndpoints();
 api.MapGalleryEndpoints();
 api.MapAnnouncementsEndpoints();
+api.MapAdminAnnouncementsEndpoints();
 api.MapBookingEndpoints();
 api.MapSquareWebhookEndpoints();
 api.MapMediaWebhookEndpoints();

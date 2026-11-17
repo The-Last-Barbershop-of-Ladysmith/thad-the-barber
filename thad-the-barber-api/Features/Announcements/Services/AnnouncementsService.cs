@@ -43,8 +43,7 @@ public sealed partial class AnnouncementsService(
         DateOnly today;
         try
         {
-            ShopDetails shop = await square.GetShopDetailsAsync(cancellationToken);
-            today = TimeZoneInfo.FindSystemTimeZoneById(shop.TimeZone).ToLocalDate(time.GetUtcNow());
+            today = await GetShopTodayAsync(cancellationToken);
         }
         catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
         {
@@ -55,6 +54,13 @@ public sealed partial class AnnouncementsService(
         return announcements
             .Where(announcement => announcement.StartDate <= today && today <= announcement.EndDate)
             .ToList();
+    }
+
+    /// <summary>Today on the shop's calendar, from Square's timezone (BR-30).</summary>
+    public async Task<DateOnly> GetShopTodayAsync(CancellationToken cancellationToken)
+    {
+        ShopDetails shop = await square.GetShopDetailsAsync(cancellationToken);
+        return TimeZoneInfo.FindSystemTimeZoneById(shop.TimeZone).ToLocalDate(time.GetUtcNow());
     }
 
     public void MarkStale() => cache.MarkStale<List<Announcement>>(CacheKey);

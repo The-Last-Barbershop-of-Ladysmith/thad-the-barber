@@ -74,7 +74,8 @@ The API reads all its secrets through the Key Vault configuration provider, so t
 | you (`TTB_ADMIN_OBJECT_ID`) | Key Vault Secrets Officer | each vault |
 | `id-ttb-deploy-<env>-<region>` (GitHub, #10) | Website Contributor | its environment's web and API apps only |
 | `id-ttb-deploy-<env>-<region>` (GitHub, #10) | Storage Blob Data Contributor | its environment's media container only |
-| api identity | Storage Blob Data Reader | its environment's `media-<env>` and `content-<env>` containers (#204) |
+| api identity | Storage Blob Data Reader | its environment's `media-<env>` container (#204) |
+| api identity | Storage Blob Data Contributor | its environment's `content-<env>` container: reads `announcements.json` and `reviews.json`, writes contact messages (#286) and saves announcements from the admin area |
 | you (`TTB_ADMIN_OBJECT_ID`) | Storage Blob Data Contributor (`canAdminWriteMedia`, else Reader) | the media and content containers |
 | `id-ttb-preview-nonprod-<region>` (GitHub PRs, #10) | Reader + `TTB What-If Previewer` (custom: what-if and validate only) | the subscription |
 
