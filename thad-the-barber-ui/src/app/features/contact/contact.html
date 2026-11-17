@@ -125,10 +125,15 @@
                 type="email"
                 autocomplete="email"
                 data-testid="contact-email"
+                [attr.aria-invalid]="isEmailErrorShown() ? 'true' : null"
+                [attr.aria-describedby]="isEmailErrorShown() ? 'contact-email-error' : null"
                 [maxlength]="emailMaxLength"
                 [fluid]="true"
                 [formControl]="contactForm.controls.email"
               />
+              @if (isEmailErrorShown()) {
+                <app-field-error errorId="contact-email-error" text="Enter an email address like name@example.com." />
+              }
             </div>
             <app-phone-field
               inputId="contact-phone"

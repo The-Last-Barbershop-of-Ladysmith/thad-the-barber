@@ -25,6 +25,8 @@ import { TitledPage } from '../../shared/components/titled-page/titled-page';
 import { Notice } from '../../shared/models/notice.model';
 import { PhoneLinks } from '../../shared/models/phone-links.model';
 import { toProblemNotice } from '../../shared/utils/problem.utils';
+import { FieldError } from '../../shared/components/field-error/field-error';
+import { toIsErrorShown } from '../../shared/utils/form-error.utils';
 import { PHONE_PATTERN_VALIDATOR } from '../../shared/validators/form.validators';
 import { AppState } from '../../store/app.state';
 import { shopFeature } from '../shop/state/shop.feature';
@@ -69,6 +71,7 @@ type ContactForm = FormGroup<{
     TitledPage,
     NoticeMessage,
     PhoneField,
+    FieldError,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './contact.html',
@@ -130,6 +133,7 @@ export class Contact {
     },
     { validators: contactDetailsValidator },
   );
+  protected readonly isEmailErrorShown: Signal<boolean> = toIsErrorShown(signal(this.contactForm.controls.email));
   private readonly contactFormValue: Signal<ContactFormValue> = toSignal(
     this.contactForm.valueChanges.pipe(map((): ContactFormValue => this.contactForm.getRawValue())),
     { initialValue: this.contactForm.getRawValue() },

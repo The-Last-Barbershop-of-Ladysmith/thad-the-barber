@@ -14,6 +14,7 @@
             pcPrevButton: { root: { disabled: isFirstMonth() } },
             pcNextButton: { root: { disabled: isLastMonth() } },
             day: { 'aria-selected': null },
+            panel: { role: 'group' },
           }"
           [inline]="true"
           [formControl]="dateControl()"
