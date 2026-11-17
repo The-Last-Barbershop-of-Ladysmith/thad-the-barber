@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using ThadTheBarber.Api.Features.Admin.Services;
 using ThadTheBarber.Api.Infrastructure.Storage.Services;
 using ThadTheBarber.Api.Features.Session.Services;
 using ThadTheBarber.Api.Recaptcha.Services;
@@ -72,6 +73,9 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
 
     public FakeSessionSigningKey SigningKey { get; } = new();
 
+    /// <summary>The keys that "Google" signs ID tokens with; see <see cref="GoogleIdTokens"/>.</summary>
+    public FakeGoogleSigningKeys GoogleKeys { get; } = new();
+
     /// <summary>This host with its logs collected; read them from <c>Services.GetFakeLogCollector()</c>.</summary>
     public WebApplicationFactory<Program> WithFakeLogging() =>
         WithWebHostBuilder(builder => builder.ConfigureServices(services => services.AddLogging(logging => logging.AddFakeLogging())));
@@ -102,6 +106,8 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
         builder.UseSetting("Recaptcha:SiteKey", "fake-site-key");
         builder.UseSetting("Recaptcha:ApiKey", "fake-api-key");
         builder.UseSetting("ManageLink:HmacKey", ManageLinkHmacKey);
+        builder.UseSetting("Admin:GoogleClientId", AdminHarness.GoogleClientId);
+        builder.UseSetting("Admin:AllowedEmails:0", AdminHarness.AllowedEmail);
         builder.UseSetting("MediaWebhook:Key", MediaWebhookKey);
         builder.UseSetting("MediaStorage:AccountName", "fakeaccount");
         builder.UseSetting("MediaStorage:MediaContainerName", "media-fake");
@@ -117,6 +123,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
             services.AddSingleton(_time);
             services.AddSingleton<IRecaptchaService>(_recaptcha);
             services.AddSingleton<ISessionSigningKey>(SigningKey);
+            services.AddSingleton<IGoogleSigningKeys>(GoogleKeys);
             services.AddSingleton<IMediaStorage>(_media);
             services.AddSingleton<ITwilioVerifyService>(_twilio);
         });

@@ -56,6 +56,8 @@ The API reads all its secrets through the Key Vault configuration provider, so t
 | Name | Kind | Set by |
 | --- | --- | --- |
 | `Cors--AllowedOrigins--0…N` | secret | Bicep: the environment's web origin, then `extraCorsOrigins` (dev adds `http://localhost:4200` for local runs). If you remove an origin, delete its leftover secret by hand |
+| `Admin--GoogleClientId` | secret | By hand (the Google Cloud OAuth client from #36). The admin sign-in page's button uses it and the API checks ID tokens against it. Until it is set, `POST /api/admin/session` answers 503 and nothing else changes |
+| `Admin--AllowedEmails--0…N` | secret | By hand: the Google accounts that may sign in to `/admin` (the owner's). A change needs an API restart |
 | `session-jwt-signing` | EC P-256 key (ES256) | Bicep. Generated in the vault and never exported; re-runs don't rotate it |
 | `Square--RefreshToken` | secret | `tools/square-connect` (one-time connect, #23), under your `az login`. The API only reads it: Square's code flow never rotates it |
 | `ManageLink--HmacKey` | secret | You, with `infra/scripts/Set-TtbSecrets.ps1 -Generate` (64 random bytes; it never replaces an existing key). Signs manage links (#29), and the API won't start without it. Replacing it breaks every manage link already sent |
