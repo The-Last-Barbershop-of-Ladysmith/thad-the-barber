@@ -2,7 +2,8 @@
   display: flex;
   min-height: 100svh;
   align-items: flex-end;
-  padding-block: 6rem 4rem;
+  // Starts below the fixed strip and header, which together are taller than the old 6rem on a phone.
+  padding-block: var(--p-brand-page-top-offset) 4rem;
   position: relative;
   isolation: isolate;
   // Fades into the tint the sections below start with, so the hero's bottom edge has no seam.

@@ -137,6 +137,9 @@ export const semantic: TokenSection = {
       // The content width the footer, the `page` utility and the 404 page share, and the gutter beside it.
       pageWidth: '75rem',
       pageGutter: '1.5rem',
+      // The fixed announcement strip and header, plus a little air: how far down the first content starts, and how far
+      // the page scrolls a focused element or an anchor clear of them.
+      pageTopOffset: '9rem',
       // The flat tint behind every home section below the hero; the hero fades into it.
       pageTint: alpha('{espresso.950}', 84),
       header: { background: alpha('{ink}', 94), borderColor: alpha('{copper.500}', 12) },

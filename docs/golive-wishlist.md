@@ -11,7 +11,7 @@ Stated 2026-11-15, updates wanted before go-live:
 - **Admin shell** (added 2026-11-15). An admin area with announcements and gallery management. Today both live only in the storage account; admin sign-in was planned via Google (architecture decisions). Scope, auth and layout not yet discussed: ask before designing.
 - **Loading-hours animation** (added 2026-11-16). The home hero pill shows "Loading hours" as plain text today; the owner wants an animation there while hours load. Keep the placeholder height unchanged (hero layout-shift e2e in `home-layout.spec.ts`) and respect `prefers-reduced-motion`.
 - ✅ **Footer always at the bottom** (done; the 404 page still fills one full screen by design) (added 2026-11-16). The app layout becomes a flex column so the footer sits at the bottom of the page when content is short (min-height on the root, main grows). Check /contact, /privacy, /accessibility, the 404 page and /book at tall viewports.
-- **Mobile announcement bar covers the open/closed pill** above the hero title (added 2026-11-16). When the bar is visible on a phone it blocks the pill. Reproduce at 390px with an announcement showing; fix the offset (header/bar height vs hero top padding) and add a geometry e2e that fails without the fix.
+- ✅ **Mobile announcement bar covers the open/closed pill** (done; hero starts below `--p-brand-page-top-offset`) above the hero title (added 2026-11-16). When the bar is visible on a phone it blocks the pill. Reproduce at 390px with an announcement showing; fix the offset (header/bar height vs hero top padding) and add a geometry e2e that fails without the fix.
 
 ## Order (owner, 2026-11-15)
 
