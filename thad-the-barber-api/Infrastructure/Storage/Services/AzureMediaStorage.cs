@@ -59,4 +59,14 @@ public sealed class AzureMediaStorage(BlobServiceClient blobService) : IMediaSto
         };
         await blob.UploadAsync(BinaryData.FromString(text), options, cancellationToken);
     }
+
+    public async Task WriteTextAsync(string container, string blobName, string text, CancellationToken cancellationToken)
+    {
+        BlobClient blob = blobService.GetBlobContainerClient(container).GetBlobClient(blobName);
+        BlobUploadOptions options = new()
+        {
+            HttpHeaders = new BlobHttpHeaders { ContentType = "application/json" },
+        };
+        await blob.UploadAsync(BinaryData.FromString(text), options, cancellationToken);
+    }
 }

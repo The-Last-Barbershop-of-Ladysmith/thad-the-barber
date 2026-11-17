@@ -59,4 +59,16 @@ public sealed class FakeMediaStorage : IMediaStorage
 
         return Task.CompletedTask;
     }
+
+    public Task WriteTextAsync(string container, string blobName, string text, CancellationToken cancellationToken)
+    {
+        Calls++;
+        if (Failure is not null)
+        {
+            throw Failure;
+        }
+
+        ContentFiles[blobName] = text;
+        return Task.CompletedTask;
+    }
 }
