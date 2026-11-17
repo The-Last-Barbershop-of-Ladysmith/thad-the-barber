@@ -138,7 +138,7 @@ export const semantic: TokenSection = {
       pageWidth: '75rem',
       pageGutter: '1.5rem',
       // The flat tint behind every home section below the hero; the hero fades into it.
-      pageTint: alpha('{espresso.950}', 72),
+      pageTint: alpha('{espresso.950}', 84),
       header: { background: alpha('{ink}', 94), borderColor: alpha('{copper.500}', 12) },
       cta: {
         glow: `0 4px 24px -2px ${alpha('{copper.500}', 45)}`,
