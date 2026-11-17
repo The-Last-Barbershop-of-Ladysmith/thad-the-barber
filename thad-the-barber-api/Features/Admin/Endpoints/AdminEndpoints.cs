@@ -21,6 +21,12 @@ public static class AdminEndpoints
             .RequireRateLimiting(RateLimitSetup.SessionPolicy)
             .NoStore();
 
+        // Also behind the visitor session token only: the sign-in page asks for it before anyone is signed in.
+        api.MapGet("/admin/config", GetConfig)
+            .WithName("GetAdminConfig")
+            .WithTags("Admin")
+            .NoStore();
+
         RouteGroupBuilder admin = api.MapGroup("/admin").RequireAuthorization(AdminPolicy).WithTags("Admin");
         admin.MapGet("/me", GetProfile)
             .WithName("GetAdminProfile")
@@ -37,6 +43,10 @@ public static class AdminEndpoints
         AdminService admin,
         CancellationToken cancellationToken) =>
         TypedResults.Ok(await admin.SignInAsync(request?.IdToken, cancellationToken));
+
+    /// <summary>The OAuth client ID for Google's button, or 503 <c>admin_unavailable</c> while sign-in isn't set up.</summary>
+    internal static Ok<AdminConfig> GetConfig(AdminService admin) =>
+        TypedResults.Ok(admin.GetConfig());
 
     internal static Ok<AdminProfile> GetProfile(ClaimsPrincipal user) =>
         TypedResults.Ok(new AdminProfile(user.FindFirstValue("email") ?? string.Empty));

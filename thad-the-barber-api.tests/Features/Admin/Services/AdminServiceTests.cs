@@ -89,6 +89,22 @@ public sealed class AdminServiceTests
         Assert.Equal("Admin sign-in denied for s***@e***.com.", record.Message);
     }
 
+    [Fact]
+    public void TheConfigIsTheGoogleClientId()
+    {
+        AdminService service = CreateService(AdminHarness.AllowedEmail);
+
+        Assert.Equal(AdminHarness.GoogleClientId, service.GetConfig().GoogleClientId);
+    }
+
+    [Fact]
+    public void WithoutAClientIdThereIsNoConfig()
+    {
+        AdminService service = CreateService(AdminHarness.AllowedEmail, clientId: null);
+
+        Assert.Throws<AdminUnavailableException>(() => service.GetConfig());
+    }
+
     [Theory]
     [InlineData("jordan@example.com", "j***@e***.com")]
     [InlineData("a@b.co", "a***@b***.co")]

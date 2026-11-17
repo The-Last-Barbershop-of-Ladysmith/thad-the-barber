@@ -15,13 +15,15 @@ public sealed partial class AdminService(
     IOptions<AdminSettings> settings,
     ILogger<AdminService> logger)
 {
+    /// <summary>The Google client ID for the sign-in button, or <see cref="AdminUnavailableException"/> while it isn't set.</summary>
+    public AdminConfig GetConfig() =>
+        settings.Value.IsConfigured
+            ? new AdminConfig(settings.Value.GoogleClientId!)
+            : throw new AdminUnavailableException("Admin:GoogleClientId or Admin:AllowedEmails isn't set.");
+
     public async Task<AdminSession> SignInAsync(string? idToken, CancellationToken cancellationToken)
     {
-        if (!settings.Value.IsConfigured)
-        {
-            throw new AdminUnavailableException("Admin:GoogleClientId or Admin:AllowedEmails isn't set.");
-        }
-
+        _ = GetConfig();
         if (string.IsNullOrWhiteSpace(idToken))
         {
             throw new InvalidIdTokenException("The request has no Google ID token.");
