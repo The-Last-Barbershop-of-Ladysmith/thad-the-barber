@@ -98,6 +98,40 @@ public sealed class AdminEndpointsTests
     }
 
     [Fact]
+    public async Task TheSignInPageCanReadTheGoogleClientIdWithOnlyAVisitorSession()
+    {
+        using ApiFactory api = new();
+
+        using HttpResponseMessage response = await api.CreateClient().GetAsync("/api/admin/config", Cancellation);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.True(response.Headers.CacheControl?.NoStore);
+        JsonElement config = await response.Content.ReadFromJsonAsync<JsonElement>(Cancellation);
+        Assert.Equal(AdminHarness.GoogleClientId, config.GetProperty("googleClientId").GetString());
+    }
+
+    [Fact]
+    public async Task TheConfigIs503WhileSignInIsNotSetUp()
+    {
+        using ApiFactory api = new();
+        using WebApplicationFactory<Program> unconfigured = api.WithWebHostBuilder(builder => builder.UseSetting("Admin:GoogleClientId", ""));
+
+        using HttpResponseMessage response = await unconfigured.CreateClient().GetAsync("/api/admin/config", Cancellation);
+
+        await ProblemAssert.IsProblemAsync(response, 503, "admin_unavailable");
+    }
+
+    [Fact]
+    public async Task TheConfigNeedsAVisitorSession()
+    {
+        using ApiFactory api = new();
+
+        using HttpResponseMessage response = await api.CreateClientWithoutToken().GetAsync("/api/admin/config", Cancellation);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
     public async Task AdminCallsWithNoTokenAre401()
     {
         using ApiFactory api = new();

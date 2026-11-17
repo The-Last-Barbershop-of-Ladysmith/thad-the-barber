@@ -11,11 +11,15 @@
   </div>
 }
 <div class="app-shell">
-  <app-header />
+  @if (!isAdminArea()) {
+    <app-header />
+  }
   <main id="main-content" #mainContent tabindex="-1" class="main-content relative">
     <router-outlet />
   </main>
-  <app-footer />
+  @if (!isAdminArea()) {
+    <app-footer />
+  }
 </div>
 <p-toast
   position="bottom-right"

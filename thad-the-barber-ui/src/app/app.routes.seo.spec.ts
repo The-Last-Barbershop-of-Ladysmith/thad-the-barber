@@ -36,6 +36,8 @@ describe(
           'book/manage',
           'book/manage/:id/reschedule',
           'book/manage/:id',
+          'admin',
+          'admin/overview',
           'privacy',
           'accessibility',
           'contact',
@@ -92,7 +94,7 @@ describe(
     );
 
     it(
-      'hides the manage pages and the 404 from search',
+      'hides the manage pages, the admin pages and the 404 from search',
       (): void => {
         const hidden: string[] = leaves
           .filter((leaf: RouteLeaf): boolean => leaf.seo?.isIndexed === false)
@@ -102,6 +104,8 @@ describe(
           'book/manage',
           'book/manage/:id/reschedule',
           'book/manage/:id',
+          'admin',
+          'admin/overview',
           '404',
           '**',
         ]);

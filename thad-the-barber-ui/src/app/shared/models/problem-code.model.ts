@@ -12,4 +12,7 @@ export enum ProblemCode {
   LookupExpired = 'lookup_expired',
   ValidationFailed = 'validation_failed',
   ContactUnavailable = 'contact_unavailable',
+  InvalidIdToken = 'invalid_id_token',
+  NotAuthorized = 'not_authorized',
+  AdminUnavailable = 'admin_unavailable',
 }

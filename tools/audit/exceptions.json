@@ -1,0 +1,8 @@
+[
+  {
+    "advisory": "GHSA-fc5q-39xc-vjpf",
+    "package": "picomatch",
+    "reason": "ReDoS in picomatch <=4.0.7, no patched release yet. Reached only through vitest, vite and tinyglobby (dev and test tooling), never in the shipped site or API.",
+    "expires": "2026-12-15"
+  }
+]

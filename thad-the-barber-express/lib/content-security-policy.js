@@ -28,8 +28,16 @@ function styleAttributeHashes(html) {
   });
 }
 
-// sources is the build's csp-sources.json.
-function contentSecurityPolicy(nonce, sources, styleHashes = []) {
+// What Google Identity Services needs to draw its sign-in button and take the answer, from its CSP guide. Only admin
+// pages get them: the public site never talks to accounts.google.com.
+var GOOGLE_SIGN_IN = {
+  'connect-src': 'https://accounts.google.com/gsi/',
+  'frame-src': 'https://accounts.google.com/gsi/',
+  'style-src': 'https://accounts.google.com/gsi/style',
+};
+
+// sources is the build's csp-sources.json. isAdminPage adds Google's sign-in sources.
+function contentSecurityPolicy(nonce, sources, styleHashes = [], isAdminPage = false) {
   var directives = {
     'default-src': ["'self'"],
     'script-src': ["'nonce-" + nonce + "'", "'strict-dynamic'"],
@@ -45,6 +53,11 @@ function contentSecurityPolicy(nonce, sources, styleHashes = []) {
     'base-uri': ["'self'"],
     'form-action': ["'self'"],
   };
+  if (isAdminPage) {
+    Object.entries(GOOGLE_SIGN_IN).forEach(function([name, source]) {
+      directives[name].push(source);
+    });
+  }
   if (styleHashes.length > 0) {
     directives['style-src-attr'] = ["'unsafe-hashes'"].concat(styleHashes);
   }

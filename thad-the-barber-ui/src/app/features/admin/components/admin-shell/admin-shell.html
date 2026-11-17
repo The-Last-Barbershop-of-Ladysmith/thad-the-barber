@@ -1,0 +1,53 @@
+<div class="admin">
+  <aside class="side" aria-label="Admin">
+    <div class="brand">
+      <span class="brand-name">THAD</span>
+      <span class="brand-tag">Admin</span>
+    </div>
+
+    <nav class="menu" aria-label="Admin sections">
+      @for (item of nav; track item.label) {
+        @if (item.path) {
+          <a class="menu-link" [routerLink]="item.path" routerLinkActive="is-current" ariaCurrentWhenActive="page">
+            <i class="pi" [class]="item.icon" aria-hidden="true"></i>{{ item.label }}
+          </a>
+        } @else {
+          <span class="menu-link is-soon" aria-disabled="true">
+            <i class="pi" [class]="item.icon" aria-hidden="true"></i>{{ item.label }}
+            <span class="soon">Soon</span>
+          </span>
+        }
+      }
+    </nav>
+
+    <div class="menu">
+      <span class="menu-group">Coming later</span>
+      @for (item of planned; track item.label) {
+        <span class="menu-link is-soon" aria-disabled="true">
+          <i class="pi" [class]="item.icon" aria-hidden="true"></i>{{ item.label }}
+          <span class="soon">Soon</span>
+        </span>
+      }
+    </div>
+
+    <div class="who">
+      <div class="who-row">
+        <span class="avatar" aria-hidden="true">{{ email().charAt(0).toUpperCase() }}</span>
+        <div class="who-text">
+          <span class="who-email" data-testid="admin-email">{{ email() }}</span>
+          <span class="who-note">Signed in with Google</span>
+        </div>
+      </div>
+      <div class="who-actions">
+        <button pButton type="button" size="small" severity="secondary" [outlined]="true" data-testid="admin-sign-out" (click)="signOut()">
+          Sign out
+        </button>
+        <a pButton size="small" severity="secondary" [outlined]="true" routerLink="/">View site</a>
+      </div>
+    </div>
+  </aside>
+
+  <div class="content">
+    <router-outlet />
+  </div>
+</div>

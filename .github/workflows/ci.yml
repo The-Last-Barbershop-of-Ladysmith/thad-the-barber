@@ -111,12 +111,12 @@ jobs:
 
       - name: Audit the UI
         working-directory: thad-the-barber-ui
-        run: npm audit --audit-level=high
+        run: node ../tools/audit/npm-audit.mjs
 
       - name: Audit Express
         if: ${{ !cancelled() }}
         working-directory: thad-the-barber-express
-        run: npm audit --audit-level=high
+        run: node ../tools/audit/npm-audit.mjs
 
   api:
     runs-on: ubuntu-latest

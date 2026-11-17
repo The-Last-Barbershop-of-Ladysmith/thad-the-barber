@@ -242,7 +242,7 @@ Every Playwright, Lighthouse and API coverage report opens in the browser from a
 | --- | --- |
 | `ui` | `npm ci` → `ng lint` → `ng test` (Vitest) → `build:express:test`, uploaded for `e2e` and `lighthouse` |
 | `express` | Express `npm ci` → `npm test` (Vitest + supertest) |
-| `audit` | `npm audit --audit-level=high` on the UI and Express lockfiles, in its own job so an advisory doesn't skip the builds and tests |
+| `audit` | `node tools/audit/npm-audit.mjs` (`npm audit`, failing on high or critical) on the UI and Express lockfiles, minus the dated exceptions in `tools/audit/exceptions.json`, in its own job so an advisory does not skip the builds and tests |
 | `api` | `dotnet build` → `dotnet test` (xUnit) → report viewer tests → ReportGenerator coverage (line and branch per class) → line and branch coverage ≥ 80% |
 | `e2e` | Playwright with a mocked API and `@axe-core/playwright`, on Chromium + WebKit, desktop + mobile, against the `ui` job's `test` build served by Express (real CSP header and 404s) |
 | `lighthouse` | Lighthouse on `/`, `/book`, `/privacy`, `/accessibility` and `/contact` of the `ui` job's build, served by Express with prod's headers (`NOINDEX=false`): accessibility ≥ 95, best practices and SEO ≥ 90, performance ≥ 60 on `/` and ≥ 50 on `/book` (the other pages report performance only); noindex pages (`/book/manage`, 404) are left out because they cannot pass SEO |

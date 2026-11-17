@@ -1,4 +1,5 @@
 import { Route, Routes } from '@angular/router';
+import * as adminRoutes from './features/admin/admin.routes';
 import * as bookingRoutes from './features/booking/booking.routes';
 import { HOME_ROUTES } from './features/home/home.routes';
 import { RouteSeo } from './shared/models/route-seo.model';
@@ -63,6 +64,11 @@ export const routes: Routes = [
     path: 'book',
     loadChildren: (): Promise<Routes> =>
       import('./features/booking/booking.routes').then((m: typeof bookingRoutes): Routes => m.BOOKING_ROUTES),
+  },
+  {
+    path: 'admin',
+    loadChildren: (): Promise<Routes> =>
+      import('./features/admin/admin.routes').then((m: typeof adminRoutes): Routes => m.ADMIN_ROUTES),
   },
   {
     path: 'privacy',

@@ -45,6 +45,16 @@ describe('content security policy', function() {
     ]);
   });
 
+  it("gives admin pages, and only them, Google's sign-in sources", function() {
+    var admin = csp.contentSecurityPolicy('abc', sources, [], true);
+    expect(directive(admin, 'connect-src')).toContain('https://accounts.google.com/gsi/');
+    expect(directive(admin, 'frame-src')).toContain('https://accounts.google.com/gsi/');
+    expect(directive(admin, 'style-src')).toEqual(["'self'", "'nonce-abc'", 'https://accounts.google.com/gsi/style']);
+    expect(directive(admin, 'script-src')).toEqual(["'nonce-abc'", "'strict-dynamic'"]);
+    var site = csp.contentSecurityPolicy('abc', sources);
+    expect(site).not.toContain('accounts.google.com');
+  });
+
   it("loads images from the build's media host", function() {
     expect(directive(csp.contentSecurityPolicy('abc', sources), 'img-src')).toEqual(["'self'", 'data:', 'https://media.example.com']);
   });

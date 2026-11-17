@@ -136,3 +136,33 @@ describe('static files', function() {
     expect(response.text).not.toContain('not found</body>');
   });
 });
+
+describe('admin pages', function() {
+  it('serves the app shell for the admin pages', async function() {
+    for (var path of ['/admin', '/admin/', '/admin/overview']) {
+      var response = await request(app).get(path);
+      expect(response.status, path).toBe(200);
+      expect(response.text, path).toContain('shell');
+    }
+  });
+
+  it("lets Google's sign-in work there, and tells search engines to stay away even in prod", async function() {
+    var response = await request(app).get('/admin');
+    expect(response.headers['content-security-policy']).toContain('https://accounts.google.com/gsi/');
+    expect(response.headers['cross-origin-opener-policy']).toBe('same-origin-allow-popups');
+    expect(response.headers['x-robots-tag']).toBe('noindex');
+  });
+
+  it("keeps Google's sign-in off every other page", async function() {
+    for (var path of ['/', '/book', '/book/manage']) {
+      var response = await request(app).get(path);
+      expect(response.headers['content-security-policy'], path).not.toContain('accounts.google.com');
+      expect(response.headers['cross-origin-opener-policy'], path).toBe('same-origin');
+    }
+  });
+
+  it('does not treat other unknown paths under /admin as pages of the app', async function() {
+    var response = await request(app).get('/admin/overview/extra');
+    expect(response.status).toBe(404);
+  });
+});

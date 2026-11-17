@@ -41,6 +41,15 @@ export class App {
     { initialValue: false },
   );
 
+  // The admin area has its own frame, so the public header, strip and footer stay out of it.
+  protected readonly isAdminArea: Signal<boolean> = toSignal(
+    inject(Router).events.pipe(
+      filter((routerEvent: Event): routerEvent is NavigationStart => routerEvent instanceof NavigationStart),
+      map((routerEvent: NavigationStart): boolean => /^\/admin(\/|\?|#|$)/.test(routerEvent.url)),
+    ),
+    { initialValue: false },
+  );
+
   /** Full width along the bottom on phones, clear of the fixed header and the menu drawer. */
   protected readonly toastBreakpoints: Record<string, Record<string, string>> = {
     '40rem': {

@@ -1,0 +1,34 @@
+<div class="sign-in">
+  <section class="intro" aria-label="About the admin area">
+    <span class="brand"><span class="brand-name">THAD</span><span class="brand-tag">Admin</span></span>
+    <div class="pitch">
+      <h1 class="h1" tabindex="-1">Keep the site fresh.</h1>
+      <p class="pitch-text">Post announcements and manage the gallery. Bookings stay in Square.</p>
+    </div>
+    <span class="fine">Only the shop owner’s Google account can sign in here.</span>
+  </section>
+
+  <section class="card" aria-labelledby="sign-in-heading">
+    <span class="eyebrow">Sign in</span>
+    <h2 id="sign-in-heading" class="title">Manage the site</h2>
+
+    @if (message(); as text) {
+      <p-message
+        [severity]="isSessionEnd() ? 'info' : 'error'"
+        variant="simple"
+        size="small"
+        [icon]="isSessionEnd() ? 'pi pi-info-circle' : 'pi pi-exclamation-circle'"
+        role="alert"
+        data-testid="admin-sign-in-message"
+      >{{ text }}</p-message>
+    }
+
+    @if (isButtonShown()) {
+      <div class="google-button" #googleButton data-testid="google-button"></div>
+    }
+    @if (isSigningIn()) {
+      <p class="status" role="status" data-testid="admin-signing-in">Signing you in…</p>
+    }
+    <p class="fine">You go to Google to sign in and come straight back. Nothing is posted to your account.</p>
+  </section>
+</div>
