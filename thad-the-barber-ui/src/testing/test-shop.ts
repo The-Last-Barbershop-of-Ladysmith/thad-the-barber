@@ -36,6 +36,7 @@ export const TEST_SHOP: ShopInfo = {
     minNoticeMinutes: 120,
     maxAdvanceDays: 45,
     slotMinutes: 30,
+    serviceName: 'Haircut with Thad',
     canCustomersCancel: true,
   },
 };

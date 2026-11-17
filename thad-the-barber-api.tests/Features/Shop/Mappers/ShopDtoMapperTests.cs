@@ -60,6 +60,7 @@ public sealed class ShopDtoMapperTests
                 MinNoticeMinutes: 0,
                 MaxAdvanceDays: 365,
                 SlotMinutes: 30,
+                ServiceName: "Men's haircut",
                 CanCustomersCancel: true
             ),
             shop.BookingSettings);

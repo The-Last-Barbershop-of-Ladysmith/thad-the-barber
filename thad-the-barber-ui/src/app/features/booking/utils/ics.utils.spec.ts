@@ -9,12 +9,14 @@ interface TestShop {
   name: string;
   addressLine: string | null;
   slotMinutes: number;
+  serviceName: string;
 }
 
 const shop: TestShop = {
   name: 'Made-Up Fades, Inc; "Café"',
   addressLine: '12 Pretend Pl, Faketown, HI 96999-0001',
   slotMinutes: 45,
+  serviceName: 'Haircut with Thad, "Classic"',
 };
 
 const NOW: Date = new Date('2026-10-01T12:00:00.123Z');
@@ -58,8 +60,22 @@ describe(
           NOW,
         ));
 
-        expect(lines).toContain('SUMMARY:Appointment at Made-Up Fades\\, Inc\\; "Café"');
+        expect(lines).toContain('SUMMARY:Haircut with Thad\\, "Classic"');
         expect(lines).toContain('LOCATION:12 Pretend Pl\\, Faketown\\, HI 96999-0001');
+      },
+    );
+
+    it(
+      'falls back to the shop name for the title when the service has no name',
+      (): void => {
+        const lines: string[] = unfold(toIcsFile(
+          booking,
+          { ...shop, serviceName: '' },
+          MANAGE_LINK,
+          NOW,
+        ));
+
+        expect(lines).toContain('SUMMARY:Appointment at Made-Up Fades\\, Inc\\; "Café"');
       },
     );
 
@@ -82,7 +98,7 @@ describe(
       (): void => {
         const icsFile: string = toIcsFile(
           booking,
-          { ...shop, name: `${'é'.repeat(60)} Made-Up Fades` },
+          { ...shop, serviceName: `${'é'.repeat(60)} Made-Up Fades` },
           MANAGE_LINK,
           NOW,
         );
@@ -92,7 +108,7 @@ describe(
         for (const line of lines) {
           expect(new TextEncoder().encode(line).length).toBeLessThanOrEqual(75);
         }
-        expect(unfold(icsFile)).toContain(`SUMMARY:Appointment at ${'é'.repeat(60)} Made-Up Fades`);
+        expect(unfold(icsFile)).toContain(`SUMMARY:${'é'.repeat(60)} Made-Up Fades`);
       },
     );
   },

@@ -30,6 +30,7 @@ public static class ShopDtoMapper
                 (int)bookingProfile.MinimumNotice.TotalMinutes,
                 (int)bookingProfile.MaximumAdvance.TotalDays,
                 (int)bookableService.Duration.TotalMinutes,
+                bookableService.Name,
                 bookingProfile.CanCustomersCancel
             )
         );

@@ -343,7 +343,7 @@ describe(
         expect(icsFile).toContain('DTSTART:20301005T200000Z');
         // The test shop's appointments are 30 minutes long.
         expect(icsFile).toContain('DTEND:20301005T203000Z');
-        expect(icsFile).toContain(`SUMMARY:Appointment at ${TEST_SHOP.name}`);
+        expect(icsFile).toContain(`SUMMARY:${TEST_SHOP.bookingSettings.serviceName}`);
         vi.restoreAllMocks();
       },
     );

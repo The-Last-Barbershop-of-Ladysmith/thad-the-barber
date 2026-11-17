@@ -4,7 +4,7 @@ Start these only after M4 is done (the owner's order). Ask before starting any o
 
 Stated 2026-11-15, updates wanted before go-live:
 
-- **Calendar invite event title.** First said "Haircut w/ Thad", then clarified it is the same as the Square service name, "Haircut with Thad". Take it from the Square service name (one source of truth, no hardcoded string); check how the manage page gets the service name. Today `SUMMARY` in `features/booking/utils/ics.utils.ts` says "Appointment at <shop name>"; update its spec too.
+- ✅ **Calendar invite event title** (done; title comes from `bookingSettings.serviceName`). First said "Haircut w/ Thad", then clarified it is the same as the Square service name, "Haircut with Thad". Take it from the Square service name (one source of truth, no hardcoded string); check how the manage page gets the service name. Today `SUMMARY` in `features/booking/utils/ics.utils.ts` says "Appointment at <shop name>"; update its spec too.
 - **Maps link on desktop.** A location/address link does not open Google Maps on desktop for some places, but does on mobile (directions links: footer, visit section, manage-booking; `directionsUrl` selector in `shop.feature.ts`). Which place and browser is still unknown.
 - **Console errors.** Console errors on the site need addressing (page, browser and message still unknown).
 - **Text-message consent checkbox.** The booking form needs one, visible on the site so Twilio's reviewers can see it and approve the A2P campaign (stated 2026-11-15). The privacy page already has a booking texts section; keep wording in sync.

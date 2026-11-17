@@ -4,6 +4,7 @@ interface CalendarShop {
   name: string;
   addressLine: string | null;
   slotMinutes: number;
+  serviceName: string;
 }
 
 /** iCalendar lines end in CRLF (RFC 5545 §3.1). */
@@ -14,7 +15,10 @@ const MAX_LINE_OCTETS: number = 75;
 
 const encoder: TextEncoder = new TextEncoder();
 
-/** An .ics file holding one appointment at the shop, for one slot, in UTC, with the link to change or cancel it. */
+/**
+ * An .ics file holding one appointment at the shop, for one slot, in UTC, with the link to change or cancel it. The
+ * event is titled with the Square service's name; without one it falls back to the shop's name.
+ */
 export function toIcsFile(
   booking: Pick<ManagedBooking, 'id' | 'startAt'>,
   shop: CalendarShop,
@@ -34,7 +38,7 @@ export function toIcsFile(
     `DTSTAMP:${toIcsDateTime(now)}`,
     `DTSTART:${toIcsDateTime(startAt)}`,
     `DTEND:${toIcsDateTime(endAt)}`,
-    `SUMMARY:${escapeText(`Appointment at ${shop.name}`)}`,
+    `SUMMARY:${escapeText(shop.serviceName || `Appointment at ${shop.name}`)}`,
     ...locationLines,
     `DESCRIPTION:${escapeText(`Change or cancel: ${manageLink}`)}`,
     `URL:${manageLink}`,
