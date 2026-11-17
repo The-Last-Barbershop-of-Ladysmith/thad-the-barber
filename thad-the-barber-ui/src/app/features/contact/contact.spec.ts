@@ -207,8 +207,8 @@ describe(
             const errorId: string | null = email?.getAttribute('aria-describedby') ?? null;
             expect(email?.getAttribute('aria-invalid')).toBe('true');
             expect(errorId).not.toBeNull();
-            expect(fixture.nativeElement.querySelector(`#${errorId}`)).not.toBeNull();
-            await expectNoAxeViolations(fixture.nativeElement);
+            expect((fixture.nativeElement as HTMLElement).querySelector(`#${errorId}`)).not.toBeNull();
+            await expectNoAxeViolations(fixture.nativeElement as HTMLElement);
           },
         );
 
