@@ -1,0 +1,115 @@
+.sign-in {
+  display: flex;
+  flex-wrap: wrap;
+  min-height: 100svh;
+
+  .intro {
+    display: flex;
+    min-width: 0;
+    flex: 1 1 26rem;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 2.5rem;
+    padding: 3.5rem;
+    background: linear-gradient(160deg, var(--p-surface-950) 0%, var(--p-surface-900) 55%, var(--p-ink) 100%);
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+
+      .brand-name {
+        font-family: var(--p-font-family-display);
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--p-primary-color);
+      }
+
+      .brand-tag {
+        padding: 0.125rem 0.4375rem;
+        border: 1px solid color-mix(in srgb, var(--p-primary-color) 55%, transparent);
+        border-radius: 0.25rem;
+        font-size: 0.6875rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--p-primary-hover-color);
+      }
+    }
+
+    .pitch {
+      display: flex;
+      max-width: 30ch;
+      flex-direction: column;
+      gap: 1rem;
+
+      .h1 {
+        margin: 0;
+        font-family: var(--p-font-family-display);
+        font-size: 2.875rem;
+        font-weight: 800;
+        line-height: 1.05;
+
+        &:focus {
+          outline: none;
+        }
+      }
+
+      .pitch-text {
+        margin: 0;
+        font-size: 1.0625rem;
+        line-height: 1.6;
+        color: var(--p-surface-100);
+      }
+    }
+  }
+
+  .card {
+    display: flex;
+    min-width: 0;
+    flex: 1 1 26rem;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 1.5rem;
+    padding: 3.5rem;
+
+    > * {
+      width: 100%;
+      max-width: 26rem;
+    }
+
+    .eyebrow {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--p-primary-color);
+    }
+
+    .title {
+      margin: 0;
+      font-family: var(--p-font-family-display);
+      font-size: 1.875rem;
+      font-weight: 800;
+      line-height: 1.1;
+    }
+
+    .google-button {
+      min-height: 2.75rem;
+    }
+
+    .status {
+      margin: 0;
+      font-size: 0.9375rem;
+      color: var(--p-text-muted-color);
+    }
+  }
+
+  .fine {
+    margin: 0;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: var(--p-text-muted-color);
+  }
+}

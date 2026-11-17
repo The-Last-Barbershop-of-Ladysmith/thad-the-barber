@@ -1,0 +1,71 @@
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+
+  .eyebrow {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--p-primary-color);
+  }
+
+  .h1 {
+    margin: 0;
+    font-family: var(--p-font-family-display);
+    font-size: 2.125rem;
+    font-weight: 800;
+    line-height: 1.1;
+
+    &:focus {
+      outline: none;
+    }
+  }
+
+  .lead {
+    max-width: 40rem;
+    margin: 0;
+    color: var(--p-text-muted-color);
+  }
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 1rem;
+
+  .card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+    padding: 1.375rem;
+    border: 1px solid var(--p-brand-divider);
+    border-radius: 0.875rem;
+    background: var(--p-surface-900);
+
+    .card-title {
+      margin: 0;
+      font-size: 1.125rem;
+    }
+
+    .card-text {
+      margin: 0;
+      font-size: 0.9375rem;
+      line-height: 1.6;
+      color: var(--p-text-muted-color);
+    }
+
+    .card-note {
+      align-self: flex-start;
+      margin-top: auto;
+      padding: 0.125rem 0.625rem;
+      border: 1px solid var(--p-surface-700);
+      border-radius: 99px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--p-text-muted-color);
+    }
+  }
+}

@@ -128,3 +128,85 @@ describe(
     );
   },
 );
+
+describe(
+  'App frame',
+  (): void => {
+    let fixture: ComponentFixture<App>;
+    let router: Router;
+
+    function has(tag: string): boolean {
+      fixture.detectChanges();
+      return (fixture.nativeElement as HTMLElement).querySelector(tag) !== null;
+    }
+
+    beforeEach(async (): Promise<void> => {
+      TestBed.configureTestingModule({
+        providers: [
+          provideRouter([
+            {
+              path: '',
+              pathMatch: 'full',
+              component: SlowPage,
+            },
+            {
+              path: 'admin',
+              component: SlowPage,
+            },
+            {
+              path: 'admin/overview',
+              component: SlowPage,
+            },
+            {
+              path: 'book',
+              component: SlowPage,
+            },
+          ]),
+          MessageService,
+        ],
+      });
+      TestBed.overrideComponent(App, { remove: { imports: [Header, Footer] }, add: { schemas: [NO_ERRORS_SCHEMA] } });
+      fixture = TestBed.createComponent(App);
+      router = TestBed.inject(Router);
+      fixture.detectChanges();
+      await router.navigateByUrl('/');
+    });
+
+    it(
+      'shows the public header and footer on the public pages',
+      async (): Promise<void> => {
+        expect(has('app-header')).toBe(true);
+        expect(has('app-footer')).toBe(true);
+
+        await router.navigateByUrl('/book');
+
+        expect(has('app-header')).toBe(true);
+        expect(has('app-footer')).toBe(true);
+      },
+    );
+
+    it(
+      'leaves them out of the admin area, which has its own frame',
+      async (): Promise<void> => {
+        await router.navigateByUrl('/admin');
+        expect(has('app-header')).toBe(false);
+        expect(has('app-footer')).toBe(false);
+
+        await router.navigateByUrl('/admin/overview');
+        expect(has('app-header')).toBe(false);
+        expect(has('app-footer')).toBe(false);
+      },
+    );
+
+    it(
+      'brings them back when the admin goes back to the site',
+      async (): Promise<void> => {
+        await router.navigateByUrl('/admin');
+        await router.navigateByUrl('/');
+
+        expect(has('app-header')).toBe(true);
+        expect(has('app-footer')).toBe(true);
+      },
+    );
+  },
+);
