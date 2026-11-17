@@ -24,6 +24,11 @@ const CANCELLED: string = 'net::ERR_ABORTED';
 
 const MAX_TEXT: number = 300;
 
+/** Text for a markdown table cell: backslashes first, so the escape added for a pipe is not itself undone. */
+function toTableCell(text: string): string {
+  return text.replace(/\\/g, '\\\\').replace(/\|/g, '\\|').replace(/\n/g, ' ');
+}
+
 /**
  * An audit, not a gate (yet): visits every page of the deployed site, and the booking steps, with its real reCAPTCHA,
  * telemetry and API, and lists every console warning and error, page error and failed request. The list goes to the
@@ -111,7 +116,7 @@ test.describe(
         const summaryFile: string | undefined = process.env['GITHUB_STEP_SUMMARY'];
         if (summaryFile) {
           const rows: string[] = unique.map(
-            (finding: Finding): string => `| \`${finding.where}\` | ${finding.kind} | ${finding.text.replace(/\|/g, '\\|').replace(/\n/g, ' ')} |`,
+            (finding: Finding): string => `| \`${finding.where}\` | ${finding.kind} | ${toTableCell(finding.text)} |`,
           );
           appendFileSync(
             summaryFile,
