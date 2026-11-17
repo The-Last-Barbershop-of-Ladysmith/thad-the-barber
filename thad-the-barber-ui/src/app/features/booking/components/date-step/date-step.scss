@@ -2,7 +2,6 @@
 // on a wide screen would tower over the page.
 .date-step {
   display: flex;
-  flex-wrap: wrap;
   flex-direction: column;
   gap: 1.5rem;
 
@@ -77,6 +76,7 @@
 
   @media (min-width: 64rem) {
     flex-direction: row;
+    flex-wrap: wrap;
     align-items: flex-start;
     gap: 4rem;
 

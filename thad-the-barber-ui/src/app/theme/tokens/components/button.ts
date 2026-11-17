@@ -121,6 +121,9 @@ export const button: ButtonDesignTokens = {
     /* Outlined: text flips to contrast when the fill comes in */
     .p-button-outlined:not(:disabled):hover { color: var(--p-primary-contrast-color); }
 
+    /* A label can wrap, so a button never outgrows a narrow screen when text is enlarged */
+    .p-button:not(.p-button-icon-only) { white-space: normal; }
+
     /* Glass circle controls */
     .p-button-secondary { backdrop-filter: blur(6px); }
   `,
