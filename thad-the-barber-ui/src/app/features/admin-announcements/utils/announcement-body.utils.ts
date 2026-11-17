@@ -1,3 +1,5 @@
+import { linkKind } from '../../../shared/utils/link.utils';
+
 const ALLOWED_TAGS: ReadonlySet<string> = new Set([
   'p',
   'br',
@@ -8,14 +10,6 @@ const ALLOWED_TAGS: ReadonlySet<string> = new Set([
   'a',
 ]);
 
-const ENTITIES: Readonly<Record<string, string>> = {
-  '&amp;': '&',
-  '&lt;': '<',
-  '&gt;': '>',
-  '&quot;': '"',
-  '&#39;': '\'',
-};
-
 const LINK_TARGET: string = String.raw`(?:https:\/\/[^\s)]+|\/[^\s)]*|tel:[^\s)]+|mailto:[^\s)]+)`;
 
 function escapeHtml(text: string): string {
@@ -24,10 +18,6 @@ function escapeHtml(text: string): string {
     .replaceAll('<', '&lt;')
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;');
-}
-
-function unescapeHtml(text: string): string {
-  return text.replaceAll(/&(?:amp|lt|gt|quot|#39);/g, (entity: string): string => ENTITIES[entity] ?? entity);
 }
 
 /**
@@ -56,17 +46,57 @@ export function textToBodyHtml(text: string): string {
     .join('');
 }
 
-/** The stored `bodyHtml` → the text the form edits, the reverse of `textToBodyHtml` for the markup it can make. */
+/** One node as the form edits it: the markup the form can make becomes its typed form, the rest its words. */
+function nodeToText(node: Node): string {
+  if (node.nodeType === Node.TEXT_NODE) {
+    return node.textContent ?? '';
+  }
+  if (!(node instanceof Element)) {
+    return '';
+  }
+  const inner: string = Array.from(node.childNodes).map(nodeToText).join('');
+  switch (node.tagName.toLowerCase()) {
+    case 'br':
+      return '\n';
+    case 'strong':
+    case 'b':
+      return `**${inner}**`;
+    case 'em':
+    case 'i':
+      return `*${inner}*`;
+    case 'a': {
+      const href: string = node.getAttribute('href') ?? '';
+      return linkKind(href) === null ? inner : `[${inner}](${href})`;
+    }
+    default:
+      return inner;
+  }
+}
+
+/**
+ * The stored `bodyHtml` → the text the form edits, the reverse of `textToBodyHtml` for the markup it can make. The HTML
+ * is read into an inert document (nothing in it runs or loads) and walked, so no markup is ever pattern-stripped.
+ */
 export function bodyHtmlToText(html: string): string {
-  const text: string = html
-    .replaceAll(/<br\s*\/?>/gi, '\n')
-    .replaceAll(/<\/p>\s*<p[^>]*>/gi, '\n\n')
-    .replaceAll(/<\/?p[^>]*>/gi, '')
-    .replaceAll(/<(?:strong|b)>(.*?)<\/(?:strong|b)>/gis, '**$1**')
-    .replaceAll(/<(?:em|i)>(.*?)<\/(?:em|i)>/gis, '*$1*')
-    .replaceAll(/<a\s[^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/gis, '[$2]($1)')
-    .replaceAll(/<[^>]+>/g, '');
-  return unescapeHtml(text).trim();
+  const body: HTMLElement = new DOMParser().parseFromString(html, 'text/html').body;
+  const blocks: string[] = [];
+  let inline: string = '';
+  const endInline: () => void = (): void => {
+    if (inline.trim() !== '') {
+      blocks.push(inline.trim());
+    }
+    inline = '';
+  };
+  body.childNodes.forEach((node: ChildNode): void => {
+    if (node instanceof Element && node.tagName.toLowerCase() === 'p') {
+      endInline();
+      blocks.push(nodeToText(node).trim());
+    } else {
+      inline += nodeToText(node);
+    }
+  });
+  endInline();
+  return blocks.filter((block: string): boolean => block !== '').join('\n\n');
 }
 
 /** Whether the stored HTML has markup the form can't keep (a list, a heading…), which saving would flatten to text. */
