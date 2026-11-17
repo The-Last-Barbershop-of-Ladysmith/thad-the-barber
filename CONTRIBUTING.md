@@ -65,7 +65,7 @@ The rules live in [`.github/policy/`](.github/policy/). Run their tests with `np
 ## Security checks
 
 - `gitleaks` (in `ci.yml`) scans each PR's commits for secrets. [`.gitleaks.toml`](.gitleaks.toml) extends the default rules and allows only the public Azure role IDs in `infra/`. GitHub secret scanning and push protection are on too.
-- `npm audit --audit-level=high` runs on the UI and Express in the `audit` check. NuGet audit (`NuGetAuditLevel` in [`Directory.Build.props`](Directory.Build.props)) fails the .NET restore on a high or critical advisory, transitive packages included.
+- `tools/audit/npm-audit.mjs` runs `npm audit` on the UI and Express in the `audit` check and fails on a high or critical advisory. An advisory with no patched release can be excepted in [`tools/audit/exceptions.json`](tools/audit/exceptions.json) with a reason and an expiry date; once that date passes it fails again. NuGet audit (`NuGetAuditLevel` in [`Directory.Build.props`](Directory.Build.props)) fails the .NET restore on a high or critical advisory, transitive packages included.
 - [Dependabot](.github/dependabot.yml) opens weekly grouped PRs for npm, NuGet and Actions into the active dev branch. Update its `target-branch` when a new `dev/*` branch is cut. Its `dependabot/*` branches squash into dev like topic branches.
 - [CodeQL](.github/workflows/codeql.yml) scans TypeScript and C# on PRs, pushes and weekly.
 - Every action is pinned to a commit SHA with its version in a comment, every workflow declares `permissions`, and `pull_request_target` isn't allowed. `npm run workflows` in `.github/policy/` checks this, and `policy-tests` runs it on every `.github` change.
