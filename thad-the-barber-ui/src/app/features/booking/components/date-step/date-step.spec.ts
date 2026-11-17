@@ -107,6 +107,17 @@ describe(
     );
 
     it(
+      'names the calendar as a group, so its label is announced',
+      (): void => {
+        show(NOVEMBER);
+        const panel: HTMLElement | null = (fixture.nativeElement as HTMLElement).querySelector<HTMLElement>('.p-datepicker-panel');
+
+        expect(panel?.getAttribute('role')).toBe('group');
+        expect(panel?.getAttribute('aria-label')).toBeTruthy();
+      },
+    );
+
+    it(
       'marks only an open day with fewer than 5 times as filling up',
       (): void => {
         show(NOVEMBER);
