@@ -116,7 +116,7 @@ describe('AnnouncementEdit', (): void => {
   it('starts a new announcement with a first day and a last day 30 days on', async (): Promise<void> => {
     await open(undefined, []);
 
-    expect(host().querySelector('h1')?.textContent).toBe('New announcement');
+    expect(host().querySelector('h1')?.textContent.trim()).toBe('New announcement');
     const start: string = input('#announcement-start').value;
     const end: string = input('#announcement-end').value;
     expect(start).toMatch(/^\d{4}-\d{2}-\d{2}$/);
