@@ -103,6 +103,29 @@ test.describe(
     );
 
     test(
+      'announces that the cancel is in progress while the request is held',
+      async ({ page }: { page: Page; }): Promise<void> => {
+        let release: () => void = (): void => undefined;
+        const released: Promise<void> = new Promise<void>((resolve: () => void): void => {
+          release = resolve;
+        });
+        await page.route(isBookingActionRequest('cancel'), async (route: Route): Promise<void> => {
+          await released;
+          await route.fulfill({ json: toManagedBooking(route, { isCancelled: true, canChange: false }) });
+        });
+        await page.goto('/book/manage/made-up-booking#t=made-up-link-token');
+        await expect(page.getByTestId('cancel-status')).toBeEmpty();
+
+        await page.getByTestId('cancel-booking').click();
+        await page.locator('.p-confirmdialog .p-confirmdialog-accept-button').click();
+
+        await expect(page.getByTestId('cancel-status')).not.toBeEmpty();
+        release();
+        await expect(page.getByTestId('booking-status')).toBeVisible();
+      },
+    );
+
+    test(
       'cancels after asking, then shows the booking as cancelled with a toast',
       async ({ page }: { page: Page; }): Promise<void> => {
         const cancels: Request[] = [];

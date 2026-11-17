@@ -101,5 +101,34 @@ describe(
         expect(render('2026-12-01').querySelectorAll('[data-testid="time-list"] [role="button"]')).toHaveLength(0);
       },
     );
+
+    it(
+      'names the group of times after the picked day, so a screen reader hears which day they are for',
+      (): void => {
+        const host: HTMLElement = render('2026-11-02');
+        const group: HTMLElement | null = host.querySelector('[data-testid="time-list"]');
+        const labelId: string | null = group?.getAttribute('aria-labelledby') ?? null;
+
+        expect(group?.getAttribute('role')).toBe('group');
+        expect(host.querySelector(`#${labelId}`)?.textContent).toContain('Monday, November 2');
+      },
+    );
+
+    it(
+      'makes each time a button named by its time, not pressed until picked',
+      (): void => {
+        const times: HTMLElement[] = Array.from(
+          render('2026-11-02').querySelectorAll<HTMLElement>('[data-testid="time-list"] [role="button"]'),
+        );
+
+        expect(times.map((time: HTMLElement): string | null => time.getAttribute('aria-label')))
+          .toEqual([
+            '10:00 AM',
+            '10:30 AM',
+            '11:00 AM',
+          ]);
+        expect(times.every((time: HTMLElement): boolean => time.getAttribute('aria-pressed') === 'false')).toBe(true);
+      },
+    );
   },
 );

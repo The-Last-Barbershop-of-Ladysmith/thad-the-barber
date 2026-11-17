@@ -1,6 +1,6 @@
 <section class="time-step">
   @if (selectedDateLabel(); as pickedDateLabel) {
-    <span class="open-count">{{ pickedDateLabel }} · {{ timeSlots().length }} open</span>
+    <span id="time-list-label" class="open-count">{{ pickedDateLabel }} · {{ timeSlots().length }} open</span>
     @if (fillingUpNote(); as fillingUp) {
       <div class="filling-up-note">
         <p-message severity="warn" size="small" icon="pi pi-clock" data-testid="filling-up-note">{{
@@ -10,6 +10,7 @@
     }
     <p-selectbutton
       data-testid="time-list"
+      ariaLabelledBy="time-list-label"
       [formControl]="startAtControl()"
       [options]="timeSlots()"
       optionLabel="label"

@@ -184,5 +184,28 @@ describe(
         expect(dispatched).toEqual([BookingActions.AvailabilityRequest({ dayRange: NOVEMBER })]);
       },
     );
+
+    it(
+      'announces that the open days are loading in a status that is there before the load starts',
+      (): void => {
+        expect(byTestId('dates-status')?.getAttribute('role')).toBe('status');
+        expect(byTestId('dates-status')?.textContent.trim()).toBe('');
+
+        show(NOVEMBER);
+        expect(byTestId('dates-status')?.textContent.trim()).toBe('Loading open days');
+
+        load(OPEN_DAYS);
+        expect(byTestId('dates-status')?.textContent.trim()).toBe('');
+      },
+    );
+
+    it(
+      'hides the loading overlay from assistive technology, so its spinner is not a nameless progress bar',
+      (): void => {
+        show(NOVEMBER);
+
+        expect(byTestId('dates-loading')?.getAttribute('aria-hidden')).toBe('true');
+      },
+    );
   },
 );
