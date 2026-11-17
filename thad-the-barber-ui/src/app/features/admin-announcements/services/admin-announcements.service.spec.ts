@@ -35,4 +35,18 @@ describe('AdminAnnouncementsService', (): void => {
     expect(request.request.body).toEqual({ items });
     request.flush([]);
   });
+
+  it('posts a photo for an announcement as a form', (): void => {
+    const file: File = new File(
+      ['x'],
+      'sign.webp',
+      { type: 'image/webp' },
+    );
+    service.uploadImage(file).subscribe();
+
+    const request: ReturnType<HttpTestingController['expectOne']> = http.expectOne(`${ADMIN_ANNOUNCEMENTS_URL}/images`);
+    expect(request.request.method).toBe('POST');
+    expect((request.request.body as FormData).get('file')).toBeInstanceOf(File);
+    request.flush({ fileName: 'a.webp', src: 'https://example.test/a.webp' });
+  });
 });

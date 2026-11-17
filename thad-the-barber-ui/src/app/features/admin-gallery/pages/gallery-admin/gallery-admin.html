@@ -1,0 +1,119 @@
+<header class="head">
+  <span class="eyebrow">Gallery</span>
+  <h1 class="h1" tabindex="-1" data-testid="admin-heading">The photos on the site</h1>
+  <p class="lead">
+    Add a photo and describe it in a few words. The description is the photo's alt text, and it
+    names the file. Changes show on the site on the next page load.
+  </p>
+</header>
+
+@if (problem(); as problemText) {
+  <p-message severity="error" data-testid="gallery-error">{{ problemText }}</p-message>
+}
+
+@if (isLoading() && !isLoaded()) {
+  <p class="note" role="status" data-testid="gallery-loading">Loading the gallery…</p>
+} @else if (isLoaded()) {
+  <form class="upload" novalidate (submit)="$event.preventDefault(); upload()">
+    <h2 class="upload-title">Add a photo</h2>
+    <div class="field">
+      <label for="gallery-file">Photo</label>
+      <input
+        id="gallery-file"
+        #fileInput
+        class="file"
+        type="file"
+        [accept]="accept"
+        (change)="onFile($event)"
+      />
+      <span class="help">JPEG, PNG, WebP or AVIF, under 8 MB.</span>
+    </div>
+    <div class="field">
+      <label for="gallery-alt">Description</label>
+      <input
+        pInputText
+        id="gallery-alt"
+        #altInput
+        [attr.maxlength]="maxAltTextLength"
+        [value]="altText()"
+        (input)="onAltText($event)"
+      />
+      <span class="help"
+        >For example “Skin fade with a beard trim”. Screen readers say this out loud.</span
+      >
+    </div>
+    @if (uploadProblem(); as uploadText) {
+      <p-message severity="error" variant="simple" size="small" data-testid="upload-error">{{
+        uploadText
+      }}</p-message>
+    }
+    <div class="actions">
+      <button pButton type="submit" data-testid="upload-photo" [disabled]="isUploading()">
+        Add photo
+      </button>
+    </div>
+  </form>
+
+  @if (photos().length === 0) {
+    <p class="note" data-testid="gallery-empty">No photos yet. Add the first one above.</p>
+  } @else {
+    <ul class="grid">
+      @for (photo of photos(); track photo.fileName) {
+        <li class="photo" data-testid="gallery-photo">
+          <img
+            class="photo-image"
+            [src]="photo.src"
+            [alt]="photo.altText"
+            loading="lazy"
+            width="320"
+            height="240"
+          />
+          <div class="photo-text">
+            <span class="photo-alt">{{ photo.altText }}</span>
+            <span class="photo-date">Added {{ photo.uploadedAt | date: 'mediumDate' }}</span>
+          </div>
+          @if (confirmingFileName() === photo.fileName) {
+            <div class="photo-actions">
+              <button
+                pButton
+                type="button"
+                size="small"
+                severity="danger"
+                data-testid="confirm-delete-photo"
+                [disabled]="isDeleting()"
+                (click)="delete(photo.fileName)"
+              >
+                Yes, delete it
+              </button>
+              <button
+                pButton
+                type="button"
+                size="small"
+                severity="secondary"
+                [outlined]="true"
+                (click)="confirmingFileName.set(null)"
+              >
+                Keep it
+              </button>
+            </div>
+          } @else {
+            <div class="photo-actions">
+              <button
+                pButton
+                type="button"
+                size="small"
+                severity="danger"
+                [outlined]="true"
+                data-testid="delete-photo"
+                [attr.aria-label]="'Delete ' + photo.altText"
+                (click)="confirmingFileName.set(photo.fileName)"
+              >
+                Delete
+              </button>
+            </div>
+          }
+        </li>
+      }
+    </ul>
+  }
+}

@@ -1,0 +1,131 @@
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+
+  .eyebrow {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--p-primary-color);
+  }
+
+  .h1 {
+    margin: 0;
+    font-family: var(--p-font-family-display);
+    font-size: 2.125rem;
+    font-weight: 800;
+    line-height: 1.1;
+
+    &:focus {
+      outline: none;
+    }
+  }
+
+  .lead {
+    max-width: 40rem;
+    margin: 0;
+    color: var(--p-text-muted-color);
+  }
+}
+
+.note {
+  color: var(--p-text-muted-color);
+}
+
+.upload {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 40rem;
+  margin-bottom: 2rem;
+  padding: 1.25rem;
+  border: 1px solid var(--p-brand-divider);
+  border-radius: 0.875rem;
+  background: var(--p-surface-900);
+
+  .upload-title {
+    margin: 0;
+    font-size: 1.0625rem;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+
+    label {
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+
+    .help {
+      font-size: 0.8125rem;
+      color: var(--p-text-muted-color);
+    }
+
+    .file {
+      font: inherit;
+      color: inherit;
+    }
+  }
+
+  .actions {
+    display: flex;
+    gap: 0.75rem;
+  }
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  .photo {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+    padding: 0.75rem;
+    border: 1px solid var(--p-brand-divider);
+    border-radius: 0.875rem;
+    background: var(--p-surface-900);
+
+    .photo-image {
+      width: 100%;
+      height: auto;
+      aspect-ratio: 4 / 3;
+      border-radius: 0.5rem;
+      object-fit: cover;
+    }
+
+    .photo-text {
+      display: flex;
+      flex-direction: column;
+      gap: 0.125rem;
+      min-width: 0;
+    }
+
+    .photo-alt {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      overflow-wrap: anywhere;
+    }
+
+    .photo-date {
+      font-size: 0.8125rem;
+      color: var(--p-text-muted-color);
+    }
+
+    .photo-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: auto;
+    }
+  }
+}

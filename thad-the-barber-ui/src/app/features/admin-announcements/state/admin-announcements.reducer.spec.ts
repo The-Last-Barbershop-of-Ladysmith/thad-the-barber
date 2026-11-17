@@ -5,6 +5,7 @@ import { AdminAnnouncementsError } from '../models/admin-announcements-error.mod
 import * as AdminAnnouncementsActions from './admin-announcements.actions';
 import { adminAnnouncementsReducer } from './admin-announcements.reducer';
 import { AdminAnnouncementsState, initialAdminAnnouncementsState } from './admin-announcements.state';
+import { AdminAnnouncementImageUploadDto } from '../dtos/admin-announcement-image-upload.dto';
 
 const ITEM: AdminAnnouncementDto = {
   title: 'Holiday hours',
@@ -80,5 +81,43 @@ describe('adminAnnouncementsReducer', (): void => {
     expect(failed.saveStatus).toBe(RequestStatus.Error);
     expect(failed.error).toBe(AdminAnnouncementsError.Invalid);
     expect(dismissed.error).toBeNull();
+  });
+});
+
+describe('adminAnnouncementsReducer photo upload', (): void => {
+  const IMAGE: AdminAnnouncementImageUploadDto = {
+    fileName: 'sign-1a2b3c4d.webp',
+    src: 'https://example.test/announcements/sign-1a2b3c4d.webp',
+  };
+
+  it('holds an uploaded photo until the form takes it', (): void => {
+    const uploading: AdminAnnouncementsState = adminAnnouncementsReducer(
+      initialAdminAnnouncementsState,
+      AdminAnnouncementsActions.AdminAnnouncementsImageUpload({ file: new File([], 'a.jpg') }),
+    );
+    const uploaded: AdminAnnouncementsState = adminAnnouncementsReducer(
+      uploading,
+      AdminAnnouncementsActions.AdminAnnouncementsImageUploadSuccess({ image: IMAGE }),
+    );
+    const taken: AdminAnnouncementsState = adminAnnouncementsReducer(
+      uploaded,
+      AdminAnnouncementsActions.AdminAnnouncementsImageTaken(),
+    );
+
+    expect(uploading.imageUploadStatus).toBe(RequestStatus.Pending);
+    expect(uploaded.uploadedImage).toEqual(IMAGE);
+    expect(uploaded.imageUploadStatus).toBe(RequestStatus.Success);
+    expect(taken.uploadedImage).toBeNull();
+    expect(taken.imageUploadStatus).toBe(RequestStatus.Idle);
+  });
+
+  it('says why a photo could not be used', (): void => {
+    const failed: AdminAnnouncementsState = adminAnnouncementsReducer(
+      initialAdminAnnouncementsState,
+      AdminAnnouncementsActions.AdminAnnouncementsImageUploadFailure({ error: AdminAnnouncementsError.InvalidImage }),
+    );
+
+    expect(failed.imageUploadStatus).toBe(RequestStatus.Error);
+    expect(failed.error).toBe(AdminAnnouncementsError.InvalidImage);
   });
 });

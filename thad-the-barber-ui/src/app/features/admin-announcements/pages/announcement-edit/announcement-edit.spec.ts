@@ -265,4 +265,73 @@ describe('AnnouncementEdit', (): void => {
 
     await expectNoAxeViolations(host());
   });
+
+  function choosePhoto(file: File): void {
+    const picker: HTMLInputElement = input('#announcement-photo');
+    const files: FileList = { length: 1, item: (): File => file } as unknown as FileList;
+    Object.defineProperty(
+      picker,
+      'files',
+      { value: files, configurable: true },
+    );
+    picker.dispatchEvent(new Event('change'));
+  }
+
+  it('sends a chosen photo, and says so when it is not an image or is too big', async (): Promise<void> => {
+    await open(undefined, []);
+    const before: number = dispatchSpy.mock.calls.length;
+
+    choosePhoto(new File(
+      ['x'],
+      'sign.gif',
+      { type: 'image/gif' },
+    ));
+    fixture.detectChanges();
+    expect(element('[data-testid="photo-error"]').textContent).toContain('JPEG, PNG, WebP or AVIF');
+    expect(dispatchSpy.mock.calls.length).toBe(before);
+
+    const big: File = new File(
+      ['x'],
+      'sign.png',
+      { type: 'image/png' },
+    );
+    Object.defineProperty(
+      big,
+      'size',
+      { value: 9 * 1024 * 1024 },
+    );
+    choosePhoto(big);
+    fixture.detectChanges();
+    expect(element('[data-testid="photo-error"]').textContent).toContain('too big');
+
+    const good: File = new File(
+      ['x'],
+      'sign.webp',
+      { type: 'image/webp' },
+    );
+    choosePhoto(good);
+    fixture.detectChanges();
+    expect(host().querySelector('[data-testid="photo-error"]')).toBeNull();
+    const action: unknown = dispatchSpy.mock.calls.at(-1)?.[0];
+    expect((action as { file?: File; }).file).toBe(good);
+  });
+
+  it('puts a stored photo on the announcement, asking for its description', async (): Promise<void> => {
+    await open('0', [SAVED]);
+
+    store.dispatch(AdminAnnouncementsActions.AdminAnnouncementsImageUploadSuccess({
+      image: { fileName: 'new-1a2b3c4d.webp', src: 'https://example.test/announcements/new-1a2b3c4d.webp' },
+    }));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    element('[data-testid="save-announcement"]').click();
+    fixture.detectChanges();
+
+    expect(element('[data-testid="alt-error"]')).toBeTruthy();
+    type('#announcement-alt', 'A new sign');
+    element('[data-testid="save-announcement"]').click();
+    expect(lastSaved()[0]?.image?.fileName).toBe('new-1a2b3c4d.webp');
+    expect(lastSaved()[0]?.image?.altText).toBe('A new sign');
+  });
 });

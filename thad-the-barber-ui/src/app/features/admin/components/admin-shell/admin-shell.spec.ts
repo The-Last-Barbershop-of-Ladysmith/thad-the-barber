@@ -58,9 +58,9 @@ describe(
           '/admin/overview',
           '/admin/announcements',
           '/admin/shop',
+          '/admin/gallery',
         ]);
         expect(soon).toEqual([
-          'Gallery',
           'Bookings',
           'Customers',
           'Reviews',

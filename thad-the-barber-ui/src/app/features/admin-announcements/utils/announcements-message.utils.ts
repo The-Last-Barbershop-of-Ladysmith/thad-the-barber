@@ -7,6 +7,8 @@ export function toAnnouncementsMessage(error: AdminAnnouncementsError): string {
       return 'The announcements file could not be reached. Nothing was changed. Try again in a minute.';
     case AdminAnnouncementsError.Invalid:
       return 'Something in that announcement was not accepted. Check the title, the dates, the picture and the button links.';
+    case AdminAnnouncementsError.InvalidImage:
+      return 'That file could not be used. Use a JPEG, PNG, WebP or AVIF photo under 8 MB.';
     case AdminAnnouncementsError.Failed:
       return 'That did not work. Nothing was changed. Try again.';
   }

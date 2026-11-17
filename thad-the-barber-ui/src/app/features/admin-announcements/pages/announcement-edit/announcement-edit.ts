@@ -25,7 +25,9 @@ import {
   AdminAnnouncementDto,
   AdminAnnouncementImageDto,
 } from '../../dtos/admin-announcement.dto';
+import { AdminAnnouncementImageUploadDto } from '../../dtos/admin-announcement-image-upload.dto';
 import { AnnouncementInputDto } from '../../dtos/announcements-save-request.dto';
+import { ACCEPTED_PHOTO_TYPES, MAX_PHOTO_BYTES } from '../../../admin-gallery/utils/gallery-upload.utils';
 import { AdminAnnouncementsError } from '../../models/admin-announcements-error.model';
 import { AnnouncementButtonVariant } from '../../models/announcement-button-variant.model';
 import { AnnouncementFormValue } from '../../models/announcement-form-value.model';
@@ -63,6 +65,7 @@ export class AnnouncementEdit implements OnInit {
 
   protected readonly listPath: string = ANNOUNCEMENTS_PATH;
   protected readonly maxButtons: number = MAX_BUTTONS;
+  protected readonly accept: string = ACCEPTED_PHOTO_TYPES.join(',');
   protected readonly positions: AnnouncementImagePosition[] = Object.values(AnnouncementImagePosition);
   protected readonly variants: AnnouncementButtonVariant[] = Object.values(AnnouncementButtonVariant);
 
@@ -83,6 +86,8 @@ export class AnnouncementEdit implements OnInit {
 
   protected readonly submitted: WritableSignal<boolean> = signal<boolean>(false);
   protected readonly isConfirmingDelete: WritableSignal<boolean> = signal<boolean>(false);
+  /** Why the chosen photo can't be sent, found before anything is sent. */
+  protected readonly photoProblem: WritableSignal<string | null> = signal<string | null>(null);
   protected readonly hasLostMarkup: WritableSignal<boolean> = signal<boolean>(false);
 
   private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
@@ -93,6 +98,12 @@ export class AnnouncementEdit implements OnInit {
   private isFormReady: boolean = false;
 
   protected readonly isLoaded: Signal<boolean> = this.store.selectSignal(adminAnnouncementsFeature.selectIsLoaded);
+  protected readonly isUploadingImage: Signal<boolean> = this.store.selectSignal(
+    adminAnnouncementsFeature.selectIsImageUploading,
+  );
+  private readonly uploadedImage: Signal<AdminAnnouncementImageUploadDto | null> = this.store.selectSignal(
+    adminAnnouncementsFeature.selectUploadedImage,
+  );
   protected readonly isSaving: Signal<boolean> = this.store.selectSignal(adminAnnouncementsFeature.selectIsSaving);
   private readonly error: Signal<AdminAnnouncementsError | null> = this.store.selectSignal(
     adminAnnouncementsFeature.selectError,
@@ -130,6 +141,20 @@ export class AnnouncementEdit implements OnInit {
     this.buttons().some((button: AdminAnnouncementButtonDto): boolean => this.isBadButton(button)));
 
   constructor() {
+    // A photo that was stored becomes the announcement's photo; it has no description yet, which the form asks for.
+    effect((): void => {
+      const uploaded: AdminAnnouncementImageUploadDto | null = this.uploadedImage();
+      if (uploaded !== null) {
+        this.image.set({
+          fileName: uploaded.fileName,
+          src: uploaded.src,
+          altText: '',
+          position: this.imagePosition(),
+        });
+        this.imageAltText.set('');
+        this.store.dispatch(AdminAnnouncementsActions.AdminAnnouncementsImageTaken());
+      }
+    });
     effect((): void => {
       if (this.isLoaded() && !this.isFormReady && !this.isMissing()) {
         this.isFormReady = true;
@@ -176,6 +201,23 @@ export class AnnouncementEdit implements OnInit {
   protected removeButton(position: number): void {
     this.buttons.update((buttons: AdminAnnouncementButtonDto[]): AdminAnnouncementButtonDto[] =>
       removeAt(buttons, position));
+  }
+
+  protected onPhoto(event: Event): void {
+    const input: HTMLInputElement = event.target as HTMLInputElement;
+    const file: File | null = input.files?.item(0) ?? null;
+    input.value = '';
+    if (file === null) {
+      return;
+    }
+    if (!ACCEPTED_PHOTO_TYPES.includes(file.type)) {
+      this.photoProblem.set('Use a JPEG, PNG, WebP or AVIF photo.');
+    } else if (file.size > MAX_PHOTO_BYTES) {
+      this.photoProblem.set('That photo is too big. Use one under 8 MB.');
+    } else {
+      this.photoProblem.set(null);
+      this.store.dispatch(AdminAnnouncementsActions.AdminAnnouncementsImageUpload({ file }));
+    }
   }
 
   protected removeImage(): void {

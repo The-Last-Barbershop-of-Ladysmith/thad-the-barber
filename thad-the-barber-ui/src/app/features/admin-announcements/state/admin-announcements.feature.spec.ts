@@ -30,4 +30,14 @@ describe('adminAnnouncementsFeature selectors', (): void => {
     expect(adminAnnouncementsFeature.selectIsSaving(loading)).toBe(true);
     expect(adminAnnouncementsFeature.selectIsLoaded(loaded)).toBe(true);
   });
+
+  it('says when a photo is uploading', (): void => {
+    const state: Record<string, AdminAnnouncementsState> = stateOf({
+      ...initialAdminAnnouncementsState,
+      imageUploadStatus: RequestStatus.Pending,
+    });
+
+    expect(adminAnnouncementsFeature.selectIsImageUploading(state)).toBe(true);
+    expect(adminAnnouncementsFeature.selectIsImageUploading(stateOf(initialAdminAnnouncementsState))).toBe(false);
+  });
 });

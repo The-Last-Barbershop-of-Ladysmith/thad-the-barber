@@ -7,6 +7,8 @@ export function toAdminAnnouncementsError(error: unknown): AdminAnnouncementsErr
   switch (getProblemCode(error)) {
     case ProblemCode.AnnouncementsUnavailable:
       return AdminAnnouncementsError.Unavailable;
+    case ProblemCode.InvalidImage:
+      return AdminAnnouncementsError.InvalidImage;
     case ProblemCode.ValidationFailed:
       return AdminAnnouncementsError.Invalid;
     default:

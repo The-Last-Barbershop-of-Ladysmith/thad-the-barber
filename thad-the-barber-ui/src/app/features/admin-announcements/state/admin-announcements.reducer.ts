@@ -1,5 +1,6 @@
 import { ActionReducer, createReducer, on } from '@ngrx/store';
 import { RequestStatus } from '../../../shared/models/request.models';
+import { AdminAnnouncementImageUploadDto } from '../dtos/admin-announcement-image-upload.dto';
 import { AdminAnnouncementDto } from '../dtos/admin-announcement.dto';
 import { AdminAnnouncementsError } from '../models/admin-announcements-error.model';
 import * as AdminAnnouncementsActions from './admin-announcements.actions';
@@ -60,6 +61,42 @@ export const adminAnnouncementsReducer: ActionReducer<AdminAnnouncementsState> =
     (state: AdminAnnouncementsState): AdminAnnouncementsState => ({
       ...state,
       error: null,
+    }),
+  ),
+  on(
+    AdminAnnouncementsActions.AdminAnnouncementsImageUpload,
+    (state: AdminAnnouncementsState): AdminAnnouncementsState => ({
+      ...state,
+      imageUploadStatus: RequestStatus.Pending,
+      uploadedImage: null,
+      error: null,
+    }),
+  ),
+  on(
+    AdminAnnouncementsActions.AdminAnnouncementsImageUploadSuccess,
+    (
+      state: AdminAnnouncementsState,
+      { image }: { image: AdminAnnouncementImageUploadDto; },
+    ): AdminAnnouncementsState => ({
+      ...state,
+      imageUploadStatus: RequestStatus.Success,
+      uploadedImage: image,
+    }),
+  ),
+  on(
+    AdminAnnouncementsActions.AdminAnnouncementsImageUploadFailure,
+    (state: AdminAnnouncementsState, { error }: { error: AdminAnnouncementsError; }): AdminAnnouncementsState => ({
+      ...state,
+      imageUploadStatus: RequestStatus.Error,
+      error,
+    }),
+  ),
+  on(
+    AdminAnnouncementsActions.AdminAnnouncementsImageTaken,
+    (state: AdminAnnouncementsState): AdminAnnouncementsState => ({
+      ...state,
+      imageUploadStatus: RequestStatus.Idle,
+      uploadedImage: null,
     }),
   ),
 );

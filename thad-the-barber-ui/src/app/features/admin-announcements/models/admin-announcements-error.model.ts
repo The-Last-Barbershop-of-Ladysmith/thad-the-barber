@@ -4,5 +4,7 @@ export enum AdminAnnouncementsError {
   Unavailable = 'unavailable',
   /** The save was refused as invalid (`validation_failed`). */
   Invalid = 'invalid',
+  /** The photo was refused as an image (`invalid_image`). */
+  InvalidImage = 'invalid_image',
   Failed = 'failed',
 }
