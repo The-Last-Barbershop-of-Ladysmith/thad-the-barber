@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { expectNoAxeViolations } from '../../../../testing/axe';
 import { HeadingLevel } from '../../models/heading-level.model';
 import { SectionHeading } from './section-heading';
 
@@ -52,6 +53,18 @@ describe(
         fixture.detectChanges();
         expect(root.querySelector('h4')?.textContent).toContain('Test title');
         expect(root.querySelector('h2')).toBeNull();
+      },
+    );
+
+    it(
+      'has no axe violations at each heading level',
+      async (): Promise<void> => {
+        for (const level of Object.values(HeadingLevel)) {
+          fixture.componentRef.setInput('level', level);
+          fixture.detectChanges();
+
+          await expectNoAxeViolations(root);
+        }
       },
     );
   },

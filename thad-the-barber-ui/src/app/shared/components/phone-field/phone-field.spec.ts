@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl } from '@angular/forms';
+import { expectNoAxeViolations } from '../../../../testing/axe';
 import { PhoneField } from './phone-field';
 
 describe(
@@ -50,6 +51,14 @@ describe(
         phoneInput.click();
 
         expect(phoneInput.selectionStart).toBe(9);
+      },
+    );
+
+    it(
+      'has no axe violations, empty or filled',
+      async (): Promise<void> => {
+        await expectNoAxeViolations(render('').closest('div') as HTMLElement);
+        await expectNoAxeViolations(render('(540) 555-0100').closest('div') as HTMLElement);
       },
     );
   },

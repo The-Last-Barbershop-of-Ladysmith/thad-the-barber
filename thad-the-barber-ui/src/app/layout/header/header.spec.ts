@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { provideStore } from '@ngrx/store';
+import { expectNoAxeViolations } from '../../../testing/axe';
 import { announcementsFeature } from '../../features/announcements/state/announcements.feature';
 import { shopFeature } from '../../features/shop/state/shop.feature';
 import { layoutFeature } from '../../store/app.feature';
@@ -88,6 +89,35 @@ describe(
         expect(host().querySelector('[data-testid="header-book"]')).toBeNull();
         expect(host().querySelector('[data-testid="menu-toggle"]')).toBeNull();
         expect(host().querySelector('a.back-link')?.getAttribute('href')).toBe('/');
+      },
+    );
+
+    it(
+      'has no axe violations on the home page',
+      async (): Promise<void> => {
+        await fixture.whenStable();
+
+        await expectNoAxeViolations(host());
+      },
+    );
+    it(
+      'has no axe violations with the menu open',
+      async (): Promise<void> => {
+        host().querySelector<HTMLButtonElement>('[data-testid="menu-toggle"]')?.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        await expectNoAxeViolations(document.body);
+      },
+    );
+    it(
+      'has no axe violations on the booking pages',
+      async (): Promise<void> => {
+        await TestBed.inject(Router).navigateByUrl('/book');
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        await expectNoAxeViolations(host());
       },
     );
   },

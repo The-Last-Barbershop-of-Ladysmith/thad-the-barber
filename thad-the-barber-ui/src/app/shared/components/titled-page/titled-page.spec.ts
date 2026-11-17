@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { expectNoAxeViolations } from '../../../../testing/axe';
 import { TitledPage } from './titled-page';
 
 @Component({
@@ -78,6 +79,14 @@ describe(
         expect(band?.querySelector('[data-testid="eyebrow"]')).not.toBeNull();
         expect(band?.querySelector('[data-testid="heading"]')).not.toBeNull();
         expect(band?.querySelectorAll('h1')).toHaveLength(1);
+      },
+    );
+
+    it(
+      'has no axe violations with inputs or projected title parts',
+      async (): Promise<void> => {
+        await expectNoAxeViolations(render(PlainTitleHost));
+        await expectNoAxeViolations(render(ProjectedTitleHost));
       },
     );
   },
