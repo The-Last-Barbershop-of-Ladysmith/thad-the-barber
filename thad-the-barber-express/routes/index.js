@@ -25,6 +25,10 @@ var clientRoutes = JSON.parse(fs.readFileSync(path.join(angularDist, 'client-rou
     return new RegExp('^\\/' + pattern + '$');
   });
 
+function isAdminRoute(route) {
+  return route === '/admin' || route.startsWith('/admin/');
+}
+
 function isClientRoute(route) {
   return clientRoutes.some(function(clientRoute) {
     return clientRoute.test(route);
@@ -83,11 +87,16 @@ var appShell = fs.existsSync(path.join(angularDist, 'index.csr.html')) ? loadPag
 var notFoundPage = loadPage(path.join('404', 'index.html'));
 
 // Every HTML response gets a fresh nonce and the matching header, and is never cached, which would replay a nonce.
-function sendPage(res, status, page) {
+function sendPage(res, status, page, isAdminPage = false) {
   var nonce = csp.createNonce();
   res.removeHeader('Content-Security-Policy');
+  if (isAdminPage) {
+    // Google's sign-in opens a popup that reports back to this page, which the default same-origin policy would cut off.
+    // The admin area is never for search engines, in prod too.
+    res.set('Cross-Origin-Opener-Policy', 'same-origin-allow-popups').set('X-Robots-Tag', 'noindex');
+  }
   res.status(status)
-    .set(cspHeader, csp.contentSecurityPolicy(nonce, cspSources, page.styleHashes))
+    .set(cspHeader, csp.contentSecurityPolicy(nonce, cspSources, page.styleHashes, isAdminPage))
     .set('Cache-Control', 'no-cache')
     .type('html')
     .send(csp.applyNonce(page.html, nonce));
@@ -123,7 +132,7 @@ router.get('/{*splat}', async function(req, res, next) {
     return sendPage(res, 200, page);
   }
   if (appShell && isClientRoute(route)) {
-    return sendPage(res, 200, appShell);
+    return sendPage(res, 200, appShell, isAdminRoute(route));
   }
   sendPage(res, 404, notFoundPage);
 });
