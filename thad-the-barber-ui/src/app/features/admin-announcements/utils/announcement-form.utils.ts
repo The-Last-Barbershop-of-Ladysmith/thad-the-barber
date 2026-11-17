@@ -1,4 +1,3 @@
-import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { addDays, fromIsoDate, toIsoDate } from '../../../shared/utils/date.utils';
 import { linkKind } from '../../../shared/utils/link.utils';
 import { AdminAnnouncementDto, AdminAnnouncementImageDto } from '../dtos/admin-announcement.dto';
@@ -74,21 +73,12 @@ export function withAnnouncement(
     place === index ? input : existing);
 }
 
-/** The last day can't be before the first (compared as ISO days, which sort as text). */
-export const endNotBeforeStart: ValidatorFn = (group: AbstractControl): ValidationErrors | null => {
-  const start: unknown = group.get('startDate')?.value;
-  const end: unknown = group.get('endDate')?.value;
-  if (typeof start === 'string' && typeof end === 'string' && start !== '' && end !== '' && end < start) {
-    return { endBeforeStart: true };
-  }
-  return null;
-};
+/** The last day can't be before the first (ISO days sort as text). Blank days are for the required check to catch. */
+export function isEndBeforeStart(startDate: string, endDate: string): boolean {
+  return startDate !== '' && endDate !== '' && endDate < startDate;
+}
 
 /** A button link is a site path, https, tel: or mailto:, the same as the API accepts. */
-export const allowedLink: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
-  const url: unknown = control.value;
-  if (typeof url !== 'string' || url.trim() === '' || linkKind(url.trim()) !== null) {
-    return null;
-  }
-  return { link: true };
-};
+export function isAllowedButtonLink(url: string): boolean {
+  return linkKind(url.trim()) !== null;
+}

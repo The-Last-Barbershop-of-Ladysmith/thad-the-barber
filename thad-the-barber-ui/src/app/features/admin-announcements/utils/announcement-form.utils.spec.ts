@@ -1,12 +1,11 @@
-import { FormControl, FormGroup } from '@angular/forms';
 import { AdminAnnouncementDto } from '../dtos/admin-announcement.dto';
 import { AnnouncementInputDto } from '../dtos/announcements-save-request.dto';
 import { AdminAnnouncementStatus } from '../models/admin-announcement-status.model';
 import { AnnouncementButtonVariant } from '../models/announcement-button-variant.model';
 import { AnnouncementImagePosition } from '../models/announcement-image-position.model';
 import {
-  allowedLink,
-  endNotBeforeStart,
+  isAllowedButtonLink,
+  isEndBeforeStart,
   toAnnouncementInput,
   toFormValue,
   withAnnouncement,
@@ -103,24 +102,21 @@ describe('withAnnouncement', (): void => {
   });
 });
 
-describe('validators', (): void => {
-  it('refuses a last day before the first', (): void => {
-    const group: FormGroup = new FormGroup({
-      startDate: new FormControl('2026-11-20'),
-      endDate: new FormControl('2026-11-19'),
-    });
-
-    expect(endNotBeforeStart(group)).toEqual({ endBeforeStart: true });
-    group.patchValue({ endDate: '2026-11-20' });
-    expect(endNotBeforeStart(group)).toBeNull();
+describe('isEndBeforeStart', (): void => {
+  it('is true only for a last day before the first', (): void => {
+    expect(isEndBeforeStart('2026-11-20', '2026-11-19')).toBe(true);
+    expect(isEndBeforeStart('2026-11-20', '2026-11-20')).toBe(false);
+    expect(isEndBeforeStart('', '2026-11-19')).toBe(false);
   });
+});
 
+describe('isAllowedButtonLink', (): void => {
   it('accepts a site path, https, tel and mailto links, and refuses the rest', (): void => {
-    expect(allowedLink(new FormControl('/book'))).toBeNull();
-    expect(allowedLink(new FormControl('https://example.test'))).toBeNull();
-    expect(allowedLink(new FormControl('tel:+15550100'))).toBeNull();
-    expect(allowedLink(new FormControl('javascript:alert(1)'))).toEqual({ link: true });
-    expect(allowedLink(new FormControl('//evil.test'))).toEqual({ link: true });
-    expect(allowedLink(new FormControl(''))).toBeNull();
+    expect(isAllowedButtonLink('/book')).toBe(true);
+    expect(isAllowedButtonLink(' https://example.test ')).toBe(true);
+    expect(isAllowedButtonLink('tel:+15550100')).toBe(true);
+    expect(isAllowedButtonLink('javascript:alert(1)')).toBe(false);
+    expect(isAllowedButtonLink('//evil.test')).toBe(false);
+    expect(isAllowedButtonLink('')).toBe(false);
   });
 });

@@ -11,7 +11,6 @@ import {
   input,
   signal,
 } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { ButtonModule } from 'primeng/button';
@@ -36,8 +35,8 @@ import { adminAnnouncementsFeature } from '../../state/admin-announcements.featu
 import { hasUnsupportedMarkup } from '../../utils/announcement-body.utils';
 import {
   MAX_BUTTONS,
-  allowedLink,
-  endNotBeforeStart,
+  isAllowedButtonLink,
+  isEndBeforeStart,
   toAnnouncementInput,
   toFormValue,
   withAnnouncement,
@@ -45,26 +44,10 @@ import {
 import { removeAt, toInputs } from '../../utils/announcement-list.utils';
 import { toAnnouncementsMessage } from '../../utils/announcements-message.utils';
 
-interface ButtonControls {
-  label: FormControl<string>;
-  url: FormControl<string>;
-  variant: FormControl<AnnouncementButtonVariant>;
-}
-
-interface AnnouncementControls {
-  title: FormControl<string>;
-  message: FormControl<string>;
-  startDate: FormControl<string>;
-  endDate: FormControl<string>;
-  imageAltText: FormControl<string>;
-  imagePosition: FormControl<AnnouncementImagePosition>;
-}
-
 /** Writes a new announcement, or edits (and can delete) the one at `index` in the saved list. */
 @Component({
   selector: 'app-admin-announcement-edit',
   imports: [
-    ReactiveFormsModule,
     RouterLink,
     ButtonModule,
     InputTextModule,
@@ -82,29 +65,25 @@ export class AnnouncementEdit implements OnInit {
   protected readonly maxButtons: number = MAX_BUTTONS;
   protected readonly positions: AnnouncementImagePosition[] = Object.values(AnnouncementImagePosition);
   protected readonly variants: AnnouncementButtonVariant[] = Object.values(AnnouncementButtonVariant);
-  /** One group per button; a plain list (not a `FormArray`) keeps the page's form code out of the initial bundle. */
-  protected readonly buttons: WritableSignal<FormGroup<ButtonControls>[]> = signal<FormGroup<ButtonControls>[]>([]);
-  protected readonly submitted: WritableSignal<boolean> = signal<boolean>(false);
-  protected readonly isConfirmingDelete: WritableSignal<boolean> = signal<boolean>(false);
+
+  // The fields are signals read from native inputs, not Angular forms: the page's form code would otherwise land in the
+  // initial bundle, which is nearly at its budget.
+  protected readonly title: WritableSignal<string> = signal<string>('');
+  protected readonly message: WritableSignal<string> = signal<string>('');
+  protected readonly startDate: WritableSignal<string> = signal<string>('');
+  protected readonly endDate: WritableSignal<string> = signal<string>('');
+  protected readonly imageAltText: WritableSignal<string> = signal<string>('');
+  protected readonly imagePosition: WritableSignal<AnnouncementImagePosition> = signal<AnnouncementImagePosition>(
+    AnnouncementImagePosition.Right,
+  );
+  protected readonly buttons: WritableSignal<AdminAnnouncementButtonDto[]> = signal<AdminAnnouncementButtonDto[]>([]);
   protected readonly image: WritableSignal<AdminAnnouncementImageDto | null> = signal<AdminAnnouncementImageDto | null>(
     null,
   );
-  protected readonly hasLostMarkup: WritableSignal<boolean> = signal<boolean>(false);
 
-  protected readonly form: FormGroup<AnnouncementControls> = new FormGroup<AnnouncementControls>(
-    {
-      title: new FormControl<string>('', { nonNullable: true, validators: [Validators.required, Validators.maxLength(120)] }),
-      message: new FormControl<string>('', { nonNullable: true, validators: [Validators.maxLength(4000)] }),
-      startDate: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
-      endDate: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
-      imageAltText: new FormControl<string>('', { nonNullable: true, validators: [Validators.maxLength(250)] }),
-      imagePosition: new FormControl<AnnouncementImagePosition>(
-        AnnouncementImagePosition.Right,
-        { nonNullable: true },
-      ),
-    },
-    { validators: [endNotBeforeStart] },
-  );
+  protected readonly submitted: WritableSignal<boolean> = signal<boolean>(false);
+  protected readonly isConfirmingDelete: WritableSignal<boolean> = signal<boolean>(false);
+  protected readonly hasLostMarkup: WritableSignal<boolean> = signal<boolean>(false);
 
   private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
   private readonly items: Signal<AdminAnnouncementDto[]> = this.store.selectSignal(
@@ -115,11 +94,11 @@ export class AnnouncementEdit implements OnInit {
 
   protected readonly isLoaded: Signal<boolean> = this.store.selectSignal(adminAnnouncementsFeature.selectIsLoaded);
   protected readonly isSaving: Signal<boolean> = this.store.selectSignal(adminAnnouncementsFeature.selectIsSaving);
-  protected readonly error: Signal<AdminAnnouncementsError | null> = this.store.selectSignal(
+  private readonly error: Signal<AdminAnnouncementsError | null> = this.store.selectSignal(
     adminAnnouncementsFeature.selectError,
   );
 
-  protected readonly message: Signal<string | null> = computed((): string | null => {
+  protected readonly problem: Signal<string | null> = computed((): string | null => {
     const error: AdminAnnouncementsError | null = this.error();
     return error === null ? null : toAnnouncementsMessage(error);
   });
@@ -138,6 +117,18 @@ export class AnnouncementEdit implements OnInit {
     return this.isLoaded() && place !== null && this.items()[place] === undefined;
   });
 
+  protected readonly isTitleMissing: Signal<boolean> = computed((): boolean => this.title().trim() === '');
+
+  protected readonly hasBadDates: Signal<boolean> = computed((): boolean =>
+    this.startDate() === '' || this.endDate() === '' || isEndBeforeStart(this.startDate(), this.endDate()));
+
+  /** A picture needs a description for screen readers before it can be saved. */
+  protected readonly isAltTextMissing: Signal<boolean> = computed((): boolean =>
+    this.image() !== null && this.imageAltText().trim() === '');
+
+  protected readonly hasBadButton: Signal<boolean> = computed((): boolean =>
+    this.buttons().some((button: AdminAnnouncementButtonDto): boolean => this.isBadButton(button)));
+
   constructor() {
     effect((): void => {
       if (this.isLoaded() && !this.isFormReady && !this.isMissing()) {
@@ -151,38 +142,63 @@ export class AnnouncementEdit implements OnInit {
     this.store.dispatch(AdminAnnouncementsActions.AdminAnnouncementsRequest());
   }
 
+  protected onInput(field: WritableSignal<string>, event: Event): void {
+    field.set((event.target as HTMLInputElement).value);
+  }
+
+  protected onButtonInput(
+    position: number,
+    field: 'label' | 'url',
+    event: Event,
+  ): void {
+    this.changeButton(position, { [field]: (event.target as HTMLInputElement).value });
+  }
+
+  protected changeButton(position: number, change: Partial<AdminAnnouncementButtonDto>): void {
+    this.buttons.update((buttons: AdminAnnouncementButtonDto[]): AdminAnnouncementButtonDto[] =>
+      buttons.map((button: AdminAnnouncementButtonDto, place: number): AdminAnnouncementButtonDto =>
+        place === position ? { ...button, ...change } : button));
+  }
+
   protected addButton(): void {
     if (this.buttons().length < MAX_BUTTONS) {
-      this.buttons.update((groups: FormGroup<ButtonControls>[]): FormGroup<ButtonControls>[] => [
-        ...groups,
-        this.buttonGroup({
+      this.buttons.update((buttons: AdminAnnouncementButtonDto[]): AdminAnnouncementButtonDto[] => [
+        ...buttons,
+        {
           label: '',
           url: '',
           variant: AnnouncementButtonVariant.Primary,
-        }),
+        },
       ]);
     }
   }
 
   protected removeButton(position: number): void {
-    this.buttons.update((groups: FormGroup<ButtonControls>[]): FormGroup<ButtonControls>[] =>
-      groups.filter((_group: FormGroup<ButtonControls>, place: number): boolean => place !== position));
+    this.buttons.update((buttons: AdminAnnouncementButtonDto[]): AdminAnnouncementButtonDto[] =>
+      removeAt(buttons, position));
   }
 
   protected removeImage(): void {
     this.image.set(null);
   }
 
+  protected isBadButton(button: AdminAnnouncementButtonDto): boolean {
+    return button.label.trim() === '' || !isAllowedButtonLink(button.url);
+  }
+
   protected save(): void {
     this.submitted.set(true);
-    if (this.form.invalid || this.hasInvalidButton() || this.isAltTextMissing()) {
+    if (this.isTitleMissing() || this.hasBadDates() || this.hasBadButton() || this.isAltTextMissing()) {
       return;
     }
     const value: AnnouncementFormValue = {
-      ...this.form.getRawValue(),
-      buttons: this.buttons().map(
-        (group: FormGroup<ButtonControls>): AdminAnnouncementButtonDto => group.getRawValue(),
-      ),
+      title: this.title(),
+      message: this.message(),
+      startDate: this.startDate(),
+      endDate: this.endDate(),
+      imageAltText: this.imageAltText(),
+      imagePosition: this.imagePosition(),
+      buttons: this.buttons(),
     };
     const input: AnnouncementInputDto = toAnnouncementInput(value, this.image());
     this.store.dispatch(AdminAnnouncementsActions.AdminAnnouncementsSave({
@@ -203,36 +219,20 @@ export class AnnouncementEdit implements OnInit {
     }
   }
 
-  protected hasInvalidButton(): boolean {
-    return this.buttons().some((group: FormGroup<ButtonControls>): boolean => group.invalid);
-  }
-
-  /** A picture needs a description for screen readers before it can be saved. */
-  protected isAltTextMissing(): boolean {
-    return this.image() !== null && this.form.controls.imageAltText.value.trim() === '';
-  }
-
   private fill(): void {
     const place: number | null = this.place();
     const item: AdminAnnouncementDto | null = place === null ? null : this.items()[place] ?? null;
     const timeZone: string | null = this.timeZone();
     const today: string = timeZone === null ? toIsoDate(new Date()) : toIsoDateIn(timeZone, new Date());
     const value: AnnouncementFormValue = toFormValue(item, today);
-    this.form.patchValue(value);
-    this.buttons.set(value.buttons.map((button: AdminAnnouncementButtonDto): FormGroup<ButtonControls> =>
-      this.buttonGroup(button)));
+    this.title.set(value.title);
+    this.message.set(value.message);
+    this.startDate.set(value.startDate);
+    this.endDate.set(value.endDate);
+    this.imageAltText.set(value.imageAltText);
+    this.imagePosition.set(value.imagePosition);
+    this.buttons.set(value.buttons);
     this.image.set(item?.image ?? null);
     this.hasLostMarkup.set(item !== null && hasUnsupportedMarkup(item.bodyHtml));
-  }
-
-  private buttonGroup(button: AdminAnnouncementButtonDto): FormGroup<ButtonControls> {
-    return new FormGroup<ButtonControls>({
-      label: new FormControl<string>(
-        button.label,
-        { nonNullable: true, validators: [Validators.required, Validators.maxLength(40)] },
-      ),
-      url: new FormControl<string>(button.url, { nonNullable: true, validators: [Validators.required, allowedLink] }),
-      variant: new FormControl<AnnouncementButtonVariant>(button.variant, { nonNullable: true }),
-    });
   }
 }
