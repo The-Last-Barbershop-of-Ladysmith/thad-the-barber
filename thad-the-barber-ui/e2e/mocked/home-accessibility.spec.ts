@@ -84,7 +84,7 @@ test.describe(
         expect(stops.map((stop: FocusStop): string => stop.description)).toEqual(expectedStops);
         for (const stop of stops) {
           const hasOutline: boolean = stop.outlineStyle !== 'none' && stop.outlineWidth >= 2;
-          expect(hasOutline || stop.hasBoxShadow, `focus ring on ${stop.description}`).toBe(true);
+          expect(hasOutline, `focus ring on ${stop.description}`).toBe(true);
         }
       },
     );
