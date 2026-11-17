@@ -206,6 +206,19 @@ describe(
     );
 
     it(
+      'keeps the star controls out of the keyboard and accessibility tree, so the labelled image has no interactive child',
+      (): void => {
+        const fixture: ComponentFixture<Testimonials> = render(testimonials);
+        const ratings: Element[] = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('.stars p-rating'));
+
+        expect(ratings.length).toBeGreaterThan(0);
+        for (const rating of ratings) {
+          expect(rating.hasAttribute('inert')).toBe(true);
+        }
+      },
+    );
+
+    it(
       'shows no rating line when the reviews file has none',
       (): void => {
         const fixture: ComponentFixture<Testimonials> = render(testimonials);
