@@ -54,9 +54,11 @@ describe(
         const soon: string[] = Array.from(host.querySelectorAll('.menu-link.is-soon'))
           .map((item: Element): string => item.textContent.replace('Soon', '').trim());
 
-        expect(links).toEqual(['/admin/overview']);
+        expect(links).toEqual([
+          '/admin/overview',
+          '/admin/announcements',
+        ]);
         expect(soon).toEqual([
-          'Announcements',
           'Gallery',
           'Bookings',
           'Customers',

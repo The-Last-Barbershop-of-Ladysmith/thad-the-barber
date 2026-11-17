@@ -15,4 +15,5 @@ export enum ProblemCode {
   InvalidIdToken = 'invalid_id_token',
   NotAuthorized = 'not_authorized',
   AdminUnavailable = 'admin_unavailable',
+  AnnouncementsUnavailable = 'announcements_unavailable',
 }

@@ -57,6 +57,13 @@
       color: var(--p-text-muted-color);
     }
 
+    .card-link {
+      align-self: flex-start;
+      margin-top: auto;
+      font-weight: 600;
+      color: var(--p-primary-color);
+    }
+
     .card-note {
       align-self: flex-start;
       margin-top: auto;

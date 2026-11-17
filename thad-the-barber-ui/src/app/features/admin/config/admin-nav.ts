@@ -14,6 +14,7 @@ export const ADMIN_NAV: readonly AdminNavItem[] = [
   {
     label: 'Announcements',
     icon: 'pi-megaphone',
+    path: '/admin/announcements',
   },
   {
     label: 'Gallery',

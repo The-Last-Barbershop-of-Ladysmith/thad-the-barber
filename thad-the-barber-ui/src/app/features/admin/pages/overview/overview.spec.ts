@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { expectNoAxeViolations } from '../../../../../testing/axe';
 import { Overview } from './overview';
 
@@ -8,6 +9,7 @@ describe(
     let fixture: ComponentFixture<Overview>;
 
     beforeEach((): void => {
+      TestBed.configureTestingModule({ providers: [provideRouter([])] });
       fixture = TestBed.createComponent(Overview);
       fixture.detectChanges();
     });

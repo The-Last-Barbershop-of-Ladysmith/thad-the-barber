@@ -1,0 +1,246 @@
+<a class="back" [routerLink]="listPath">← All announcements</a>
+
+@if (isMissing()) {
+  <p-message severity="warn" data-testid="announcement-missing"
+    >That announcement is no longer in the list.</p-message
+  >
+} @else if (!isLoaded()) {
+  <p class="note" role="status">Loading…</p>
+} @else {
+  <header class="head">
+    <h1 class="h1" tabindex="-1" data-testid="admin-heading">
+      {{ isNew() ? 'New announcement' : 'Edit announcement' }}
+    </h1>
+  </header>
+
+  @if (message(); as problem) {
+    <p-message severity="error" data-testid="announcements-error">{{ problem }}</p-message>
+  }
+
+  <form class="form" [formGroup]="form" novalidate (ngSubmit)="save()">
+    <div class="field">
+      <label for="announcement-title">Title</label>
+      <input
+        pInputText
+        id="announcement-title"
+        formControlName="title"
+        maxlength="120"
+        aria-describedby="announcement-title-help"
+        [attr.aria-invalid]="submitted() && form.controls.title.invalid"
+      />
+      <span class="help" id="announcement-title-help"
+        >Shows in the ticker at the top of the site, so keep it short.</span
+      >
+      @if (submitted() && form.controls.title.invalid) {
+        <p-message severity="error" variant="simple" size="small" data-testid="title-error"
+          >Give the announcement a title.</p-message
+        >
+      }
+    </div>
+
+    <div class="field">
+      <label for="announcement-message">Message</label>
+      <textarea
+        id="announcement-message"
+        class="textarea"
+        rows="6"
+        formControlName="message"
+        maxlength="4000"
+        aria-describedby="announcement-message-help"
+      ></textarea>
+      <span class="help" id="announcement-message-help">
+        A blank line starts a new paragraph. Use **bold**, *italic* and [label](link) for
+        formatting.
+      </span>
+      @if (hasLostMarkup()) {
+        <p-message severity="warn" variant="simple" size="small" data-testid="markup-warning">
+          This message had formatting the editor can't keep, such as a list or a heading. Saving
+          keeps the words and drops that formatting.
+        </p-message>
+      }
+    </div>
+
+    <fieldset class="field dates">
+      <legend>When it shows</legend>
+      <div class="dates-row">
+        <div class="field">
+          <label for="announcement-start">First day</label>
+          <input id="announcement-start" class="date" type="date" formControlName="startDate" />
+        </div>
+        <div class="field">
+          <label for="announcement-end">Last day</label>
+          <input id="announcement-end" class="date" type="date" formControlName="endDate" />
+        </div>
+      </div>
+      <span class="help"
+        >It starts at midnight on the first day and ends after the last, on the shop's calendar.
+        Every announcement ends.</span
+      >
+      @if (
+        submitted() &&
+        (form.controls.startDate.invalid ||
+          form.controls.endDate.invalid ||
+          form.hasError('endBeforeStart'))
+      ) {
+        <p-message severity="error" variant="simple" size="small" data-testid="dates-error">
+          Pick both days, and make the last day the same as or after the first.
+        </p-message>
+      }
+    </fieldset>
+
+    <fieldset class="field">
+      <legend>Photo</legend>
+      @if (image(); as photo) {
+        <img class="photo" [src]="photo.src" alt="" width="160" height="120" />
+        <div class="field">
+          <label for="announcement-alt">Description for screen readers</label>
+          <input pInputText id="announcement-alt" formControlName="imageAltText" maxlength="250" />
+          @if (submitted() && isAltTextMissing()) {
+            <p-message severity="error" variant="simple" size="small" data-testid="alt-error"
+              >Describe the photo so everyone can enjoy it.</p-message
+            >
+          }
+        </div>
+        <div class="field" role="group" aria-label="On wide screens, the photo goes">
+          <span class="legend">On wide screens, the photo goes</span>
+          <div class="segments">
+            @for (position of positions; track position) {
+              <button
+                type="button"
+                class="segment"
+                [attr.aria-pressed]="form.controls.imagePosition.value === position"
+                (click)="form.controls.imagePosition.setValue(position)"
+              >
+                {{ position }}
+              </button>
+            }
+          </div>
+          <span class="help">On phones it always sits below the text.</span>
+        </div>
+        <button
+          pButton
+          type="button"
+          size="small"
+          severity="secondary"
+          [outlined]="true"
+          (click)="removeImage()"
+        >
+          Remove photo
+        </button>
+      } @else {
+        <span class="help">No photo. Uploading photos comes with the gallery update.</span>
+      }
+    </fieldset>
+
+    <fieldset class="field">
+      <legend>Buttons</legend>
+      @for (button of buttons(); track button) {
+        <div class="button-row" [formGroup]="button" data-testid="button-row">
+          <div class="field">
+            <label [for]="'button-label-' + $index">Label</label>
+            <input
+              pInputText
+              [id]="'button-label-' + $index"
+              formControlName="label"
+              maxlength="40"
+            />
+          </div>
+          <div class="field">
+            <label [for]="'button-url-' + $index">Link</label>
+            <input pInputText [id]="'button-url-' + $index" formControlName="url" maxlength="500" />
+          </div>
+          <div class="field" role="group" aria-label="Button style">
+            <span class="legend">Style</span>
+            <div class="segments">
+              @for (variant of variants; track variant) {
+                <button
+                  type="button"
+                  class="segment"
+                  [attr.aria-pressed]="button.controls.variant.value === variant"
+                  (click)="button.controls.variant.setValue(variant)"
+                >
+                  {{ variant }}
+                </button>
+              }
+            </div>
+          </div>
+          <button
+            pButton
+            type="button"
+            size="small"
+            severity="secondary"
+            [outlined]="true"
+            (click)="removeButton($index)"
+          >
+            Remove
+          </button>
+          @if (submitted() && button.invalid) {
+            <p-message severity="error" variant="simple" size="small" data-testid="button-error">
+              Give the button a label and a link: a page on this site starting with /, an https
+              link, tel: or mailto:.
+            </p-message>
+          }
+        </div>
+      }
+      @if (buttons().length < maxButtons) {
+        <button
+          pButton
+          type="button"
+          size="small"
+          severity="secondary"
+          [outlined]="true"
+          data-testid="add-button"
+          (click)="addButton()"
+        >
+          Add a button
+        </button>
+      }
+    </fieldset>
+
+    <div class="actions">
+      <a pButton severity="secondary" [outlined]="true" [routerLink]="listPath">Cancel</a>
+      <button pButton type="submit" data-testid="save-announcement" [disabled]="isSaving()">
+        Save changes
+      </button>
+    </div>
+  </form>
+
+  @if (!isNew()) {
+    <section class="danger" aria-label="Delete this announcement">
+      <h2 class="danger-title">Delete this announcement</h2>
+      <p class="help">It disappears from the site on the next page load. This can't be undone.</p>
+      @if (isConfirmingDelete()) {
+        <button
+          pButton
+          type="button"
+          severity="danger"
+          data-testid="confirm-delete"
+          [disabled]="isSaving()"
+          (click)="delete()"
+        >
+          Yes, delete it
+        </button>
+        <button
+          pButton
+          type="button"
+          severity="secondary"
+          [outlined]="true"
+          (click)="isConfirmingDelete.set(false)"
+        >
+          Keep it
+        </button>
+      } @else {
+        <button
+          pButton
+          type="button"
+          severity="danger"
+          [outlined]="true"
+          data-testid="delete-announcement"
+          (click)="isConfirmingDelete.set(true)"
+        >
+          Delete announcement
+        </button>
+      }
+    </section>
+  }
+}

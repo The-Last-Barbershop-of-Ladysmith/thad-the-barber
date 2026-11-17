@@ -139,7 +139,7 @@ describe('static files', function() {
 
 describe('admin pages', function() {
   it('serves the app shell for the admin pages', async function() {
-    for (var path of ['/admin', '/admin/', '/admin/overview']) {
+    for (var path of ['/admin', '/admin/', '/admin/overview', '/admin/announcements', '/admin/announcements/new', '/admin/announcements/3']) {
       var response = await request(app).get(path);
       expect(response.status, path).toBe(200);
       expect(response.text, path).toContain('shell');

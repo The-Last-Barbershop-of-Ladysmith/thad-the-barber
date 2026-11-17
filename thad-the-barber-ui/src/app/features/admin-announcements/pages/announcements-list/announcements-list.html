@@ -1,0 +1,74 @@
+<header class="head">
+  <div class="head-text">
+    <span class="eyebrow">Announcements</span>
+    <h1 class="h1" tabindex="-1" data-testid="admin-heading">What's new at the shop</h1>
+    <p class="lead">
+      Every announcement ends, so the board never fills with old news. Changes show on the site on
+      the next page load.
+    </p>
+  </div>
+  <a pButton [routerLink]="newPath" data-testid="new-announcement">New announcement</a>
+</header>
+
+@if (message(); as problem) {
+  <p-message severity="error" data-testid="announcements-error">{{ problem }}</p-message>
+}
+
+@if (isLoading() && !isLoaded()) {
+  <p class="note" role="status" data-testid="announcements-loading">Loading announcements…</p>
+} @else if (isLoaded()) {
+  <nav class="tabs" aria-label="Filter announcements">
+    @for (tab of tabs(); track tab.filter) {
+      <button
+        type="button"
+        class="tab"
+        [class.is-on]="filter() === tab.filter"
+        [attr.aria-pressed]="filter() === tab.filter"
+        (click)="filter.set(tab.filter)"
+      >
+        {{ tab.label }} {{ tab.count }}
+      </button>
+    }
+  </nav>
+
+  @if (visible().length === 0) {
+    <p class="note" data-testid="announcements-empty">Nothing here yet.</p>
+  } @else {
+    <ul class="list">
+      @for (entry of visible(); track entry.index) {
+        <li class="item" data-testid="announcement-item">
+          <div class="item-top">
+            <span class="chip" [class]="'chip is-' + entry.item.status">{{
+              entry.item.status
+            }}</span>
+            <span class="dates">{{ dates(entry.item) }}</span>
+          </div>
+          <h2 class="item-title">{{ entry.item.title }}</h2>
+          <div class="item-actions">
+            <a
+              pButton
+              size="small"
+              severity="secondary"
+              [outlined]="true"
+              [routerLink]="editPath(entry.index)"
+              >Edit</a
+            >
+            @if (entry.item.status === Status.Showing) {
+              <button
+                pButton
+                type="button"
+                size="small"
+                severity="secondary"
+                [outlined]="true"
+                [disabled]="isSaving()"
+                (click)="end(entry.index)"
+              >
+                End now
+              </button>
+            }
+          </div>
+        </li>
+      }
+    </ul>
+  }
+}
