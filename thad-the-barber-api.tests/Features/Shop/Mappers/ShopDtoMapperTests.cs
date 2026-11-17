@@ -19,7 +19,7 @@ public sealed class ShopDtoMapperTests
     [Fact]
     public void DetailsProfileAndServiceBecomeShopInfo()
     {
-        ShopInfo shop = _square.ShopDetails.ToShopInfoDto(_square.BookingProfile, _square.BookableServices.Single());
+        ShopInfo shop = _square.ShopDetails.ToShopInfoDto(_square.BookingProfile, _square.BookableServices.Single(), ShopNoticeSettings.Default);
 
         Assert.Equal("O'Neil & Søn Barbershop", shop.Name);
         Assert.Equal("+15550100199", shop.Phone);
@@ -72,8 +72,35 @@ public sealed class ShopDtoMapperTests
         using ApiFactory api = new();
         JsonSerializerOptions json = api.Services.GetRequiredService<IOptions<JsonOptions>>().Value.SerializerOptions;
 
-        JsonNode hours = JsonSerializer.SerializeToNode(_square.ShopDetails.ToShopInfoDto(_square.BookingProfile, _square.BookableServices.Single()), json)!["hours"]![2]!;
+        JsonNode hours = JsonSerializer.SerializeToNode(_square.ShopDetails.ToShopInfoDto(_square.BookingProfile, _square.BookableServices.Single(), ShopNoticeSettings.Default), json)!["hours"]![2]!;
 
         Assert.Equal("""{"day":6,"opens":"13:00:00","closes":"19:45:00"}""", hours.ToJsonString());
+    }
+
+    [Fact]
+    public void AnOwnerNoticeReplacesSquaresDescription()
+    {
+        ShopInfo shop = _square.ShopDetails.ToShopInfoDto(
+            _square.BookingProfile,
+            _square.BookableServices.Single(),
+            new ShopNoticeSettings("Closed Monday.", true));
+
+        Assert.Equal("Closed Monday.", shop.Notice);
+    }
+
+    [Fact]
+    public void ANoticeTurnedOffIsNullWhateverTheTextIs()
+    {
+        ShopInfo own = _square.ShopDetails.ToShopInfoDto(
+            _square.BookingProfile,
+            _square.BookableServices.Single(),
+            new ShopNoticeSettings("Closed Monday.", false));
+        ShopInfo square = _square.ShopDetails.ToShopInfoDto(
+            _square.BookingProfile,
+            _square.BookableServices.Single(),
+            new ShopNoticeSettings(null, false));
+
+        Assert.Null(own.Notice);
+        Assert.Null(square.Notice);
     }
 }

@@ -3,7 +3,7 @@ namespace ThadTheBarber.Api.Features.Shop.Models;
 /// <summary>
 /// The shop's details from Square. <see cref="Phone"/> is E.164 and <see cref="TimeZone"/> an IANA id: the UI formats
 /// the phone, builds its links, and shows every time in that timezone. <see cref="Notice"/> is the location's
-/// description (BR-42).
+/// description (BR-42), unless the owner saved their own text or turned the notice off (<see cref="ShopNoticeSettings"/>).
 /// </summary>
 public sealed record ShopInfo(
     string Name,

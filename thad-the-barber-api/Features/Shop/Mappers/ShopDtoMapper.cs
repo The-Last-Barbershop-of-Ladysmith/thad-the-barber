@@ -5,7 +5,11 @@ namespace ThadTheBarber.Api.Features.Shop.Mappers;
 
 public static class ShopDtoMapper
 {
-    public static ShopInfo ToShopInfoDto(this ShopDetails shopDetails, BookingProfile bookingProfile, BookableService bookableService)
+    public static ShopInfo ToShopInfoDto(
+        this ShopDetails shopDetails,
+        BookingProfile bookingProfile,
+        BookableService bookableService,
+        ShopNoticeSettings notice)
     {
         return new ShopInfo(
             shopDetails.Name,
@@ -18,7 +22,7 @@ public static class ShopDtoMapper
                 shopDetails.Address.State,
                 shopDetails.Address.PostalCode
             ),
-            shopDetails.Description,
+            notice.IsNoticeShown ? notice.Notice ?? shopDetails.Description : null,
             shopDetails.InstagramUsername,
             shopDetails.FacebookUrl,
             [.. shopDetails.Hours.Select(openingPeriod => new OpeningHours(
