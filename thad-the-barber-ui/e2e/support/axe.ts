@@ -10,11 +10,8 @@ interface ViolationSummary {
   targets: string[];
 }
 
-/** Off until the M4 WCAG 2.2 AA audit; until then violations are attached to the report instead of failing. */
-const FAIL_ON_VIOLATIONS: boolean = false;
-
 /**
- * Checks for WCAG 2.2 A/AA violations not listed in KNOWN_A11Y_ISSUES (fails only with FAIL_ON_VIOLATIONS).
+ * Checks for WCAG 2.2 A/AA violations not listed in KNOWN_A11Y_ISSUES (any other violation fails the test).
  * `region` is a best-practice rule outside those tags, so it is turned on by name. `incomplete` results
  * (contrast over the backdrop, images, glass) are attached for a manual check.
  */
@@ -81,21 +78,7 @@ export async function expectNoA11yViolations(page: Page): Promise<void> {
     );
   }
 
-  if (FAIL_ON_VIOLATIONS) {
-    expect(unknown, `axe violations on ${page.url()}`).toEqual([]);
-  } else if (unknown.length > 0) {
-    await test.info().attach(
-      `axe violations (not failing until the M4 audit): ${page.url()}`,
-      {
-        body: JSON.stringify(
-          unknown,
-          null,
-          2,
-        ),
-        contentType: 'application/json',
-      },
-    );
-  }
+  expect(unknown, `axe violations on ${page.url()}`).toEqual([]);
 }
 
 async function findKnownIssue(page: Page, violation: ViolationSummary): Promise<KnownA11yIssue | undefined> {

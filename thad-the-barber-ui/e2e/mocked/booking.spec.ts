@@ -105,6 +105,7 @@ test.describe(
 
         await page.goto('/book');
         await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+        await expect(page.getByTestId('dates-loading')).toHaveCount(0);
         await expectNoA11yViolations(page);
         await book(page);
 
