@@ -379,8 +379,8 @@ jobs:
           done
 
           # A single run on a shared runner swings by 10 points or more, so the enforced performance score is the median
-          # of five runs on the two pages that have a floor: the full run above plus these four.
-          for page in home:/ book:/book; do
+          # of five runs on the pages that have a floor: the full run above plus these four.
+          for page in home:/ book:/book contact:/contact privacy:/privacy; do
             name="${page%%:*}"
             for run in 2 3 4 5; do
               echo "Lighthouse: $name run $run"

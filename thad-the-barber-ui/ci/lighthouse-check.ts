@@ -13,8 +13,9 @@ interface Report {
   categories: Record<string, Category>;
 }
 
-// Performance floors sit about 10 points under what CI last measured (home 89, book 81 on 2026-11-16), since runner
-// noise is large, and apply to the median of the repeated runs (CI runs `/` and `/book` five times, other pages once).
+// Performance floors sit about 10 points under what CI last measured (home 89, book 81, contact 82, privacy 80 on
+// 2026-11-16), since runner noise is large, and apply to the median of the repeated runs (CI runs each of these
+// pages five times, other pages once).
 // #91 sets the real budgets (LCP, INP).
 const minimums: Record<string, number> = {
   accessibility: 0.95,
@@ -25,6 +26,8 @@ const minimums: Record<string, number> = {
 const performanceMinimums: Record<string, number> = {
   '/': 0.8,
   '/book': 0.75,
+  '/contact': 0.7,
+  '/privacy': 0.7,
 };
 
 // The web's "good" threshold. A page joins once CI shows it staying under it; `/accessibility` reads 0.47 in CI only
@@ -32,6 +35,8 @@ const performanceMinimums: Record<string, number> = {
 const layoutShiftMaximums: Record<string, number> = {
   '/': 0.1,
   '/book': 0.1,
+  '/contact': 0.1,
+  '/privacy': 0.1,
 };
 
 const reportDir: string = process.argv[2] ?? 'lighthouse-results';
