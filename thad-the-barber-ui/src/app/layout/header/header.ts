@@ -4,6 +4,7 @@ import { Event, NavigationEnd, Router, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { ButtonModule } from 'primeng/button';
 import { DrawerModule } from 'primeng/drawer';
+import { DrawerPassThrough } from 'primeng/types/drawer';
 import { filter, map } from 'rxjs';
 import { NavItem } from '../../shared/models/nav-item.model';
 import { PhoneLinks } from '../../shared/models/phone-links.model';
@@ -33,6 +34,13 @@ export class Header {
   private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
   private readonly router: Router = inject(Router);
 
+  protected readonly drawerPt: DrawerPassThrough = {
+    root: {
+      role: 'dialog',
+      'aria-modal': 'true',
+      'aria-label': 'Menu',
+    },
+  };
   protected readonly shopName: Signal<string> = this.store.selectSignal(shopFeature.selectShopName);
   protected readonly phone: Signal<PhoneLinks> = this.store.selectSignal(shopFeature.selectPhoneLinks);
   protected readonly sections: Signal<readonly NavItem[]> =

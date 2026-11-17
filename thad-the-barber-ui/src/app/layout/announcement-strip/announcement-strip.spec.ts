@@ -166,6 +166,37 @@ describe(
     );
 
     it(
+      'stays on the same announcement while a control in the strip has focus',
+      (): void => {
+        const fixture: ComponentFixture<AnnouncementStrip> = render(threeAnnouncements);
+        const strip: DebugElement = fixture.debugElement.query(By.css('.strip'));
+
+        strip.triggerEventHandler('focusin');
+        waitOneInterval(fixture);
+        expect(shownTitle(fixture)).toBe('Newest special');
+
+        strip.triggerEventHandler('focusout');
+        waitOneInterval(fixture);
+        expect(shownTitle(fixture)).toBe('Middle special');
+      },
+    );
+
+    it(
+      'keeps holding when the pointer leaves while a control still has focus',
+      (): void => {
+        const fixture: ComponentFixture<AnnouncementStrip> = render(threeAnnouncements);
+        const strip: DebugElement = fixture.debugElement.query(By.css('.strip'));
+
+        strip.triggerEventHandler('focusin');
+        strip.triggerEventHandler('pointerenter');
+        strip.triggerEventHandler('pointerleave');
+        waitOneInterval(fixture);
+
+        expect(shownTitle(fixture)).toBe('Newest special');
+      },
+    );
+
+    it(
       'removes the strip when closed',
       (): void => {
         const fixture: ComponentFixture<AnnouncementStrip> = render(threeAnnouncements);

@@ -1,4 +1,10 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import {
+  ComponentFixture,
+  DeferBlockBehavior,
+  DeferBlockFixture,
+  DeferBlockState,
+  TestBed,
+} from '@angular/core/testing';
 import { Store, provideStore } from '@ngrx/store';
 import { GalleryPhoto } from '../../models/gallery-photo.model';
 import * as GalleryActions from '../../state/gallery.actions';
@@ -79,6 +85,33 @@ describe(
         pressEscape(fixture);
 
         expect(document.querySelector('[data-testid="lightbox-count"]')).toBeNull();
+        expect(document.activeElement).toBe(opener);
+      },
+    );
+
+    it(
+      'closes the lightbox and puts focus back on the print when its code fails to load',
+      async (): Promise<void> => {
+        TestBed.configureTestingModule({
+          providers: [provideStore({ [galleryFeature.name]: galleryFeature.reducer })],
+          deferBlockBehavior: DeferBlockBehavior.Manual,
+        });
+        TestBed.inject(Store).dispatch(GalleryActions.GalleryRequestSuccess({ photos }));
+        const fixture: ComponentFixture<Gallery> = TestBed.createComponent(Gallery);
+        fixture.detectChanges();
+        const opener: HTMLButtonElement | null = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('.print-button');
+        if (!opener) {
+          throw new Error('No print rendered');
+        }
+        opener.click();
+        fixture.detectChanges();
+        const [lightboxLoad]: DeferBlockFixture[] = await fixture.getDeferBlocks();
+
+        await lightboxLoad?.render(DeferBlockState.Error);
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(await fixture.getDeferBlocks()).toEqual([]);
         expect(document.activeElement).toBe(opener);
       },
     );

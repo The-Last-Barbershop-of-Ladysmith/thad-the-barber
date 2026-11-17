@@ -60,6 +60,52 @@ test.describe(
     );
 
     test(
+      'keyboard round trip: Enter opens the lightbox with focus inside, arrows step, Tab stays inside, Escape returns focus',
+      async ({ page, browserName }: { page: Page; browserName: string; }): Promise<void> => {
+        await page.goto('/#gallery');
+        const opener: Locator = page.getByTestId('gallery').getByRole('button').nth(1);
+        const dialog: Locator = page.getByRole('dialog', { name: 'Photo viewer' });
+        await opener.focus();
+
+        await page.keyboard.press('Enter');
+
+        await expect(dialog).toBeVisible();
+        await expect(dialog).toHaveAttribute('aria-modal', 'true');
+        await expect(page.locator('[role="dialog"]:focus-within')).toHaveCount(1);
+        await expect(page.getByTestId('lightbox-count-label')).toHaveText(`Photo 2 of ${TEST_GALLERY.length}`);
+
+        await page.keyboard.press('ArrowLeft');
+
+        await expect(page.getByTestId('lightbox-count-label')).toHaveText(`Photo 1 of ${TEST_GALLERY.length}`);
+
+        if (browserName !== 'webkit') {
+          for (let stop: number = 0; stop < 6; stop++) {
+            await page.keyboard.press('Tab');
+            await expect(page.locator('[role="dialog"]:focus-within')).toHaveCount(1);
+          }
+        }
+
+        await page.keyboard.press('Escape');
+
+        await expect(dialog).toHaveCount(0);
+        await expect(opener).toBeFocused();
+      },
+    );
+
+    test(
+      'names the lightbox buttons',
+      async ({ page }: { page: Page; }): Promise<void> => {
+        await page.goto('/#gallery');
+        await page.getByTestId('gallery').getByRole('button').first().click();
+        const dialog: Locator = page.getByRole('dialog', { name: 'Photo viewer' });
+
+        await expect(dialog.getByRole('button', { name: 'Close' })).toBeVisible();
+        await expect(dialog.getByRole('button', { name: 'Previous photo' })).toBeVisible();
+        await expect(dialog.getByRole('button', { name: 'Next photo' })).toBeVisible();
+      },
+    );
+
+    test(
       'holds the section with a placeholder while the gallery loads',
       async ({ page }: { page: Page; }): Promise<void> => {
         let releaseGallery: () => void = (): void => undefined;

@@ -1,12 +1,15 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  ElementRef,
   Injector,
   Signal,
   WritableSignal,
   afterNextRender,
+  effect,
   inject,
   signal,
+  viewChild,
 } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { SkeletonModule } from 'primeng/skeleton';
@@ -42,7 +45,17 @@ export class Gallery {
   protected readonly activeIndex: WritableSignal<number> = signal(0);
 
   private readonly injector: Injector = inject(Injector);
+  private readonly lightboxLoadFailure: Signal<ElementRef<HTMLElement> | undefined> = viewChild('loadFailure', { read: ElementRef<HTMLElement> });
   private lightboxOpener: HTMLElement | null = null;
+
+  constructor() {
+    effect((): void => {
+      const hasLoadFailed: boolean = this.lightboxLoadFailure() !== undefined;
+      if (hasLoadFailed) {
+        this.closeLightbox();
+      }
+    });
+  }
 
   protected open(index: number, opener: HTMLElement): void {
     this.lightboxOpener = opener;

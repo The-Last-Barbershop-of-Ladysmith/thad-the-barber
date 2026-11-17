@@ -29,8 +29,9 @@
     </button>
   </p-gallery-content>
   <p-gallery-footer>
-    <span class="lightbox-count" data-testid="lightbox-count" aria-live="polite"
-      >{{ activeIndex() + 1 }} / {{ photos().length }}</span
-    >
+    <span class="lightbox-count" aria-live="polite">
+      <span aria-hidden="true" data-testid="lightbox-count">{{ activeIndex() + 1 }} / {{ photos().length }}</span>
+      <span class="sr-only" data-testid="lightbox-count-label">Photo {{ activeIndex() + 1 }} of {{ photos().length }}</span>
+    </span>
   </p-gallery-footer>
 </p-gallery>

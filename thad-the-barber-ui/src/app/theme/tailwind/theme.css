@@ -31,7 +31,11 @@
 
 @layer base {
   html {
-    scroll-behavior: smooth;
+    scroll-padding-top: 9rem;
+
+    @media (prefers-reduced-motion: no-preference) {
+      scroll-behavior: smooth;
+    }
   }
 
   body {
@@ -47,6 +51,7 @@
   h2,
   h3 {
     font-family: var(--p-font-family-display);
+    overflow-wrap: break-word;
   }
 }
 
