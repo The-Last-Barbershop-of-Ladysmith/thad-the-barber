@@ -20,6 +20,7 @@ using ThadTheBarber.Api.Features.Reviews.Configuration;
 using ThadTheBarber.Api.Features.Reviews.Endpoints;
 using ThadTheBarber.Api.Features.Session.Configuration;
 using ThadTheBarber.Api.Features.Session.Endpoints;
+using ThadTheBarber.Api.Features.Shop.Configuration;
 using ThadTheBarber.Api.Features.Shop.Endpoints;
 using ThadTheBarber.Api.Infrastructure.Auth.Configuration;
 using ThadTheBarber.Api.Infrastructure.Cors.Configuration;
@@ -66,6 +67,7 @@ builder.Services.AddContact();
 builder.Services.AddMediaStorage(builder.Configuration);
 builder.Services.AddGallery();
 builder.Services.AddAnnouncements();
+builder.Services.AddShop();
 builder.Services.AddMediaWebhook(builder.Configuration);
 builder.Services.AddOpenApi(options =>
 {
@@ -105,6 +107,7 @@ api.MapContactEndpoints();
 api.MapGalleryEndpoints();
 api.MapAnnouncementsEndpoints();
 api.MapAdminAnnouncementsEndpoints();
+api.MapAdminShopEndpoints();
 api.MapBookingEndpoints();
 api.MapSquareWebhookEndpoints();
 api.MapMediaWebhookEndpoints();

@@ -8,6 +8,7 @@ using ThadTheBarber.Api.Features.Media.Configuration;
 using ThadTheBarber.Api.Features.Media.Exceptions;
 using ThadTheBarber.Api.Features.Media.Services;
 using ThadTheBarber.Api.Features.Reviews.Services;
+using ThadTheBarber.Api.Features.Shop.Services;
 using ThadTheBarber.Api.Infrastructure.Storage.Configuration;
 using ThadTheBarber.Api.Infrastructure.Storage.Models;
 using ThadTheBarber.Api.Tests.TestSupport.Fakes;
@@ -24,6 +25,7 @@ public sealed class MediaWebhookServiceTests
     private readonly GalleryService _gallery;
     private readonly AnnouncementsService _announcements;
     private readonly ReviewsService _reviews;
+    private readonly ShopContentService _shopContent;
     private readonly MediaWebhookService _webhooks;
 
     public MediaWebhookServiceTests()
@@ -41,10 +43,12 @@ public sealed class MediaWebhookServiceTests
             NullLogger<AnnouncementsService>.Instance
         );
         _reviews = new ReviewsService(_storage, cache, storageSettings);
+        _shopContent = new ShopContentService(_storage, cache, storageSettings);
         _webhooks = new MediaWebhookService(
             _gallery,
             _announcements,
             _reviews,
+            _shopContent,
             storageSettings,
             Options.Create(new MediaWebhookSettings { Key = Key }),
             NullLogger<MediaWebhookService>.Instance
@@ -68,6 +72,7 @@ public sealed class MediaWebhookServiceTests
         await _gallery.GetAsync(Cancellation);
         await _announcements.GetActiveAsync(Cancellation);
         await _reviews.GetAsync(Cancellation);
+        await _shopContent.GetAsync(Cancellation);
         _storage.Calls = 0;
     }
 
@@ -111,6 +116,17 @@ public sealed class MediaWebhookServiceTests
 
         _webhooks.Handle(Batch(Event(Created, "/blobServices/default/containers/content-fake/blobs/reviews.json")), Key);
         await _reviews.GetAsync(Cancellation);
+
+        Assert.Equal(1, _storage.Calls);
+    }
+
+    [Fact]
+    public async Task AChangeToTheShopInfoFileMakesTheNextShopInfoLoadReadItAgain()
+    {
+        await WarmCachesAsync();
+
+        _webhooks.Handle(Batch(Event(Created, "/blobServices/default/containers/content-fake/blobs/shop-info.json")), Key);
+        await _shopContent.GetAsync(Cancellation);
 
         Assert.Equal(1, _storage.Calls);
     }
@@ -240,6 +256,7 @@ public sealed class MediaWebhookServiceTests
             _gallery,
             _announcements,
             _reviews,
+            _shopContent,
             Options.Create(FakeMediaStorageSettings.Create()),
             Options.Create(new MediaWebhookSettings { Key = configuredKey }),
             NullLogger<MediaWebhookService>.Instance

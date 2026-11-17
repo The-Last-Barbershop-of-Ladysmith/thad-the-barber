@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using ThadTheBarber.Api.Features.Shop.Mappers;
 using ThadTheBarber.Api.Features.Shop.Models;
+using ThadTheBarber.Api.Features.Shop.Services;
 using ThadTheBarber.Api.Square.Models;
 using ThadTheBarber.Api.Square.Services;
 
@@ -20,12 +21,14 @@ public static class ShopEndpoints
     internal static async Task<Ok<ShopInfo>> GetShopAsync(
         ISquareService square,
         BookableServiceResolver resolver,
+        ShopContentService content,
         CancellationToken cancellationToken)
     {
         ShopDetails shopDetails = await square.GetShopDetailsAsync(cancellationToken);
         BookingProfile bookingProfile = await square.GetBookingProfileAsync(shopDetails.LocationId, cancellationToken);
         BookableService bookableService = await resolver.ResolveAsync(cancellationToken);
+        ShopNoticeSettings notice = await content.GetAsync(cancellationToken);
 
-        return TypedResults.Ok(shopDetails.ToShopInfoDto(bookingProfile, bookableService));
+        return TypedResults.Ok(shopDetails.ToShopInfoDto(bookingProfile, bookableService, notice));
     }
 }

@@ -8,13 +8,14 @@ using ThadTheBarber.Api.Features.Gallery.Services;
 using ThadTheBarber.Api.Features.Media.Configuration;
 using ThadTheBarber.Api.Features.Media.Exceptions;
 using ThadTheBarber.Api.Features.Reviews.Services;
+using ThadTheBarber.Api.Features.Shop.Services;
 using ThadTheBarber.Api.Infrastructure.Storage.Configuration;
 
 namespace ThadTheBarber.Api.Features.Media.Services;
 
 /// <summary>
 /// Event Grid's notifications about the storage account: a photo added to or removed from <c>gallery/</c>, or
-/// <c>announcements.json</c> or <c>reviews.json</c> written or deleted, marks that cached copy stale so the next read lists it again instead of
+/// <c>announcements.json</c>, <c>reviews.json</c> or <c>shop-info.json</c> written or deleted, marks that cached copy stale so the next read lists it again instead of
 /// waiting out the cache time. Every call but Event Grid's subscription handshake must carry the subscription's secret
 /// header.
 /// </summary>
@@ -22,6 +23,7 @@ public sealed partial class MediaWebhookService(
     GalleryService gallery,
     AnnouncementsService announcements,
     ReviewsService reviews,
+    ShopContentService shopContent,
     IOptions<MediaStorageSettings> storage,
     IOptions<MediaWebhookSettings> settings,
     ILogger<MediaWebhookService> logger)
@@ -141,6 +143,11 @@ public sealed partial class MediaWebhookService(
         {
             reviews.MarkStale();
             LogMarkedStale(logger, "reviews", eventType);
+        }
+        else if (container == media.ContentContainerName && blobName == ShopContentService.FileName)
+        {
+            shopContent.MarkStale();
+            LogMarkedStale(logger, "shop info", eventType);
         }
     }
 
