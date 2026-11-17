@@ -115,6 +115,11 @@
                 isRescheduling() ? 'Confirm' : 'Details & confirm'
               }}</span>
             </p-step>
+            <p class="sr-only" role="status" data-testid="submit-status">
+              @if (isSubmitting()) {
+                {{ isRescheduling() ? 'Moving your appointment' : 'Booking your appointment' }}
+              }
+            </p>
             @if (isSubmitting()) {
               <div class="steps-progress" aria-hidden="true">
                 <p-progressbar mode="indeterminate" />

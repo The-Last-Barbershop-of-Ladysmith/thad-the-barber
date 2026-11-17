@@ -122,6 +122,29 @@ test.describe(
     );
 
     test(
+      'announces that the booking is in progress while the request is held, and clears it once answered',
+      async ({ page }: { page: Page; }): Promise<void> => {
+        let release: () => void = (): void => undefined;
+        const released: Promise<void> = new Promise<void>((resolve: () => void): void => {
+          release = resolve;
+        });
+        await page.route(isBookingRequest, async (route: Route): Promise<void> => {
+          await released;
+          await route.fulfill({ status: 201, json: confirm(route.request()) });
+        });
+        await page.goto('/book');
+        await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+        await expect(page.getByTestId('submit-status')).toBeEmpty();
+
+        await book(page);
+
+        await expect(page.getByTestId('submit-status')).not.toBeEmpty();
+        release();
+        await expect(page).toHaveURL(/\/book\/manage\/made-up-booking$/);
+      },
+    );
+
+    test(
       'keeps a notice above the steps clear of the title band, so its top border shows',
       async ({ page }: { page: Page; }): Promise<void> => {
         await page.goto('/book/manage/made-up-booking/reschedule');

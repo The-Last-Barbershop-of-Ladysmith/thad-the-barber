@@ -60,6 +60,11 @@
       @if (booking.canChange && manageLink()) {
         <aside class="manage-actions stack gap-3" aria-label="Change this appointment">
           <span class="field-label">Change or cancel</span>
+          <p class="sr-only" role="status" data-testid="cancel-status">
+            @if (isCancelling()) {
+              Cancelling your appointment
+            }
+          </p>
           @if (isCancelling()) {
             <div aria-hidden="true">
               <p-progressbar mode="indeterminate" />
