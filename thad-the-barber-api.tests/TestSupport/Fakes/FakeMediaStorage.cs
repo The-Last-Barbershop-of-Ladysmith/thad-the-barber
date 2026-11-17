@@ -18,6 +18,9 @@ public sealed class FakeMediaStorage : IMediaStorage
     /// <summary>Text files by name; a name with no entry doesn't exist.</summary>
     public Dictionary<string, string> ContentFiles { get; } = [];
 
+    /// <summary>Image files written through <see cref="WriteNewBytesAsync"/> by blob name, with the content type given.</summary>
+    public Dictionary<string, (byte[] Bytes, string ContentType)> MediaFiles { get; } = [];
+
     public Exception? Failure { get; set; }
 
     public int Calls { get; set; }
@@ -70,5 +73,35 @@ public sealed class FakeMediaStorage : IMediaStorage
 
         ContentFiles[blobName] = text;
         return Task.CompletedTask;
+    }
+
+    public Task WriteNewBytesAsync(string container, string blobName, byte[] bytes, string contentType, CancellationToken cancellationToken)
+    {
+        Calls++;
+        if (Failure is not null)
+        {
+            throw Failure;
+        }
+
+        if (!MediaFiles.TryAdd(blobName, (bytes, contentType)))
+        {
+            throw new InvalidOperationException($"{blobName} already exists.");
+        }
+
+        GalleryBlobs.Add(new StoredBlob(blobName, DateTimeOffset.UtcNow));
+        return Task.CompletedTask;
+    }
+
+    public Task<bool> DeleteAsync(string container, string blobName, CancellationToken cancellationToken)
+    {
+        Calls++;
+        if (Failure is not null)
+        {
+            throw Failure;
+        }
+
+        bool removed = MediaFiles.Remove(blobName);
+        removed |= GalleryBlobs.RemoveAll(blob => blob.Name == blobName) > 0;
+        return Task.FromResult(removed);
     }
 }

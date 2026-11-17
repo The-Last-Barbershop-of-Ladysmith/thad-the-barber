@@ -3,10 +3,12 @@ using System.Text.Json;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
+using ThadTheBarber.Api.Common.Exceptions;
 using ThadTheBarber.Api.Features.Announcements.Exceptions;
 using ThadTheBarber.Api.Features.Announcements.Models;
 using ThadTheBarber.Api.Features.Announcements.Services;
 using ThadTheBarber.Api.Infrastructure.Storage.Configuration;
+using ThadTheBarber.Api.Tests.TestSupport;
 using ThadTheBarber.Api.Tests.TestSupport.Fakes;
 
 namespace ThadTheBarber.Api.Tests.Features.Announcements.Services;
@@ -137,5 +139,42 @@ public sealed class AdminAnnouncementsServiceTests
 
         Assert.Empty(saved);
         Assert.Empty(await _announcements.GetActiveAsync(Cancellation));
+    }
+
+    [Fact]
+    public async Task AnImageIsStoredInTheAnnouncementsFolderUnderASafeUniqueName()
+    {
+        AdminAnnouncementImageUpload first = await _admin.UploadImageAsync(ImageBytes.Webp, "../My Holiday Sign!.PNG", Cancellation);
+        AdminAnnouncementImageUpload second = await _admin.UploadImageAsync(ImageBytes.Webp, "../My Holiday Sign!.PNG", Cancellation);
+
+        Assert.Matches("^my-holiday-sign-[0-9a-f]{8}\\.webp$", first.FileName);
+        Assert.NotEqual(first.FileName, second.FileName);
+        Assert.Equal("image/webp", _storage.MediaFiles["announcements/" + first.FileName].ContentType);
+        Assert.EndsWith("/announcements/" + first.FileName, first.Src, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task AnImageWithNoUsableNameIsCalledImage()
+    {
+        AdminAnnouncementImageUpload image = await _admin.UploadImageAsync(ImageBytes.Jpeg, "!!!.jpg", Cancellation);
+
+        Assert.StartsWith("image-", image.FileName, StringComparison.Ordinal);
+        Assert.EndsWith(".jpg", image.FileName, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task AFileThatIsNotAnImageIsRefusedAndNothingIsStored()
+    {
+        await Assert.ThrowsAsync<InvalidImageException>(() => _admin.UploadImageAsync(ImageBytes.Script, "a.jpg", Cancellation));
+
+        Assert.Empty(_storage.MediaFiles);
+    }
+
+    [Fact]
+    public async Task StorageBeingDownIsUnavailableOnImageUpload()
+    {
+        _storage.Failure = new IOException("down");
+
+        await Assert.ThrowsAsync<AnnouncementsUnavailableException>(() => _admin.UploadImageAsync(ImageBytes.Jpeg, "a.jpg", Cancellation));
     }
 }

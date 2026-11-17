@@ -105,6 +105,7 @@ api.MapShopEndpoints();
 api.MapReviewsEndpoints();
 api.MapContactEndpoints();
 api.MapGalleryEndpoints();
+api.MapAdminGalleryEndpoints();
 api.MapAnnouncementsEndpoints();
 api.MapAdminAnnouncementsEndpoints();
 api.MapAdminShopEndpoints();

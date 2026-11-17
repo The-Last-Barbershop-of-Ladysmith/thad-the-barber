@@ -69,4 +69,22 @@ public sealed class AzureMediaStorage(BlobServiceClient blobService) : IMediaSto
         };
         await blob.UploadAsync(BinaryData.FromString(text), options, cancellationToken);
     }
+
+    public async Task WriteNewBytesAsync(string container, string blobName, byte[] bytes, string contentType, CancellationToken cancellationToken)
+    {
+        BlobClient blob = blobService.GetBlobContainerClient(container).GetBlobClient(blobName);
+        BlobUploadOptions options = new()
+        {
+            Conditions = new BlobRequestConditions { IfNoneMatch = ETag.All },
+            HttpHeaders = new BlobHttpHeaders { ContentType = contentType },
+        };
+        await blob.UploadAsync(BinaryData.FromBytes(bytes), options, cancellationToken);
+    }
+
+    public async Task<bool> DeleteAsync(string container, string blobName, CancellationToken cancellationToken)
+    {
+        BlobClient blob = blobService.GetBlobContainerClient(container).GetBlobClient(blobName);
+        Azure.Response<bool> deleted = await blob.DeleteIfExistsAsync(cancellationToken: cancellationToken);
+        return deleted.Value;
+    }
 }

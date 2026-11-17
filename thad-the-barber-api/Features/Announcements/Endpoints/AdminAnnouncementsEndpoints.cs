@@ -3,6 +3,7 @@ using ThadTheBarber.Api.Features.Admin.Endpoints;
 using ThadTheBarber.Api.Features.Announcements.Models;
 using ThadTheBarber.Api.Features.Announcements.Services;
 using ThadTheBarber.Api.Infrastructure.Headers.Middleware;
+using ThadTheBarber.Api.Infrastructure.Storage.Services;
 
 namespace ThadTheBarber.Api.Features.Announcements.Endpoints;
 
@@ -19,6 +20,11 @@ public static class AdminAnnouncementsEndpoints
         group.MapPut("/", SaveAnnouncementsAsync)
             .WithName("SaveAdminAnnouncements")
             .NoStore();
+        // The admin token is a bearer header, not a cookie, so a form post can't be forged from another site.
+        group.MapPost("/images", UploadImageAsync)
+            .DisableAntiforgery()
+            .WithName("UploadAdminAnnouncementImage")
+            .NoStore();
         return api;
     }
 
@@ -34,4 +40,18 @@ public static class AdminAnnouncementsEndpoints
         AdminAnnouncementsService announcements,
         CancellationToken cancellationToken) =>
         TypedResults.Ok(await announcements.SaveAsync(request.Items, cancellationToken));
+
+    /// <summary>
+    /// Stores an image (form field <c>file</c>) for an announcement and answers 201 with its file name and URL; 400
+    /// <c>invalid_image</c> for a file that isn't a JPEG, PNG, WebP or AVIF or is too big.
+    /// </summary>
+    internal static async Task<Created<AdminAnnouncementImageUpload>> UploadImageAsync(
+        IFormFile? file,
+        AdminAnnouncementsService announcements,
+        CancellationToken cancellationToken)
+    {
+        byte[] bytes = await ImageUploads.ReadAsync(file, cancellationToken);
+        AdminAnnouncementImageUpload image = await announcements.UploadImageAsync(bytes, file?.FileName, cancellationToken);
+        return TypedResults.Created(image.Src, image);
+    }
 }

@@ -11,7 +11,7 @@ namespace ThadTheBarber.Api.Features.Announcements.Mappers;
 /// </summary>
 public static class AnnouncementsFileMapper
 {
-    private const string ImageFolder = "announcements/";
+    public const string ImageFolder = "announcements/";
     private const string DayFormat = "yyyy-MM-dd";
 
     public static List<Announcement> ToAnnouncements(this JsonElement file, MediaStorageSettings storage)
