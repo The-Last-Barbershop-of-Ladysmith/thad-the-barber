@@ -195,7 +195,7 @@ test.describe(
           .click();
         await page.getByTestId('time-list').locator('[role="button"]').first().click();
         await expect(page.locator('#booking-name')).toHaveCount(0);
-        await expect(page.getByTestId('booking-consent')).toHaveCount(0);
+        await expect(page.getByTestId('text-consent')).toHaveCount(0);
         await expectNoA11yViolations(page);
         await page.getByTestId('confirm-booking').click();
 

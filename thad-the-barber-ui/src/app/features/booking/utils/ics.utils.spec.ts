@@ -5,11 +5,14 @@ const MANAGE_LINK: string =
 
 const booking: { id: string; startAt: string; } = { id: 'made-up-booking', startAt: '2026-10-03T20:30:00Z' };
 
+const DIRECTIONS_URL: string = 'https://www.google.com/maps/dir/?api=1&destination=12+Pretend+Pl';
+
 interface TestShop {
   name: string;
   addressLine: string | null;
   slotMinutes: number;
   serviceName: string;
+  directionsUrl: string | null;
 }
 
 const shop: TestShop = {
@@ -17,6 +20,7 @@ const shop: TestShop = {
   addressLine: '12 Pretend Pl, Faketown, HI 96999-0001',
   slotMinutes: 45,
   serviceName: 'Haircut with Thad, "Classic"',
+  directionsUrl: DIRECTIONS_URL,
 };
 
 const NOW: Date = new Date('2026-10-01T12:00:00.123Z');
@@ -44,7 +48,7 @@ describe(
         expect(lines).toContain('DTSTAMP:20261001T120000Z');
         expect(lines).toContain('DTSTART:20261003T203000Z');
         expect(lines).toContain('DTEND:20261003T211500Z');
-        expect(lines).toContain(`DESCRIPTION:Change or cancel: ${MANAGE_LINK}`);
+        expect(lines).toContain(`DESCRIPTION:Change or cancel: ${MANAGE_LINK}\\nDirections: ${DIRECTIONS_URL}`);
         expect(lines).toContain(`URL:${MANAGE_LINK}`);
         expect(lines.at(-1)).toBe('');
       },
@@ -76,6 +80,20 @@ describe(
         ));
 
         expect(lines).toContain('SUMMARY:Appointment at Made-Up Fades\\, Inc\\; "Café"');
+      },
+    );
+
+    it(
+      'leaves the directions line out when the shop has no directions link',
+      (): void => {
+        const lines: string[] = unfold(toIcsFile(
+          booking,
+          { ...shop, directionsUrl: null },
+          MANAGE_LINK,
+          NOW,
+        ));
+
+        expect(lines).toContain(`DESCRIPTION:Change or cancel: ${MANAGE_LINK}`);
       },
     );
 

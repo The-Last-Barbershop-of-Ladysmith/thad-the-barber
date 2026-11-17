@@ -1,7 +1,8 @@
-import { Route } from '@playwright/test';
+import { Page, Route } from '@playwright/test';
 import { AvailableDay } from '../../src/app/features/booking/dtos/available-day.dto';
 import { ManagedBooking } from '../../src/app/features/booking/dtos/managed-booking.dto';
 import { TEST_SHOP } from '../../src/testing/test-shop';
+import { expect } from '@playwright/test';
 import { servedEnvironment } from './served-environment';
 
 const AVAILABILITY_URL: string = `${servedEnvironment.apiBaseUrl}/bookings/availability`;
@@ -109,4 +110,10 @@ export async function fulfillNextTimes(route: Route): Promise<void> {
 export async function fulfillAvailability(route: Route): Promise<void> {
   const { searchParams }: URL = new URL(route.request().url());
   await route.fulfill({ json: toAvailableDays(searchParams.get('from') ?? '', searchParams.get('to') ?? '') });
+}
+
+/** Ticks the required box for the booking texts, by its label as a customer would. */
+export async function tickTextConsent(page: Page): Promise<void> {
+  await page.locator('label[for="booking-text-consent"]').click();
+  await expect(page.locator('#booking-text-consent')).toBeChecked();
 }
