@@ -19,6 +19,7 @@ async function readHorizontalOverflow(page: Page): Promise<number> {
   return page.evaluate((): number => document.documentElement.scrollWidth - window.innerWidth);
 }
 
+// The carousel's other slides wait off-screen on purpose, so they aren't cut-off content.
 async function readClippedContentCount(page: Page): Promise<number> {
   return page.evaluate(
     (): number => [...document.querySelectorAll('main *')].filter(

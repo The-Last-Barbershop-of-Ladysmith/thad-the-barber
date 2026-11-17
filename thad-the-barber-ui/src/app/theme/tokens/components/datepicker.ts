@@ -32,7 +32,7 @@ export const datepicker: DatePickerDesignTokens = {
     .p-datepicker-inline { width: 100%; }
     .p-datepicker-day-view { width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 4px; }
     .p-datepicker-day-cell { padding: 0; }
-    .p-datepicker-header { flex-wrap: wrap; justify-content: center; }
+    .p-datepicker-header { flex-wrap: wrap; }
     .p-datepicker-title { flex-wrap: wrap; justify-content: center; min-width: 0; }
     .p-datepicker-day { aspect-ratio: 1; width: 100%; }
     .p-datepicker-day:not(.p-datepicker-day-selected) { background: var(--p-brand-day-open-background); }
