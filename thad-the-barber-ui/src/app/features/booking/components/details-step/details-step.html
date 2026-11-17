@@ -28,6 +28,36 @@
       [phoneControl]="phoneControl()"
     />
   </div>
+  <div class="stack gap-1.5">
+    <div class="consent-row">
+      <p-checkbox
+        inputId="booking-text-consent"
+        data-testid="text-consent"
+        [binary]="true"
+        [required]="true"
+        [formControl]="consentControl()"
+        [attr.aria-describedby]="isConsentErrorShown() ? 'booking-text-consent-error' : null"
+      />
+      <label class="consent-label" for="booking-text-consent">
+        <span
+          >Text me to confirm this appointment and send a reminder.<span
+            class="required-mark"
+            aria-hidden="true"
+            >*</span
+          ></span
+        >
+        <span class="small-print"
+          >Message and data rates may apply. Reply STOP to opt out, HELP for help.</span
+        >
+      </label>
+    </div>
+    @if (isConsentErrorShown()) {
+      <app-field-error
+        errorId="booking-text-consent-error"
+        text="Tick the box so we can text your confirmation."
+      />
+    }
+  </div>
   <p class="small-print">
     Your name and phone go to the shop's Square account to book this appointment.
     <a

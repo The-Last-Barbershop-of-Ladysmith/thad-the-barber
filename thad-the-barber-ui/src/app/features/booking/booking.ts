@@ -54,6 +54,8 @@ import { NAME_VALIDATORS, PHONE_VALIDATORS } from '../../shared/validators/form.
 interface BookingFormValue {
   name: string;
   phone: string;
+  /** Ticked to get the booking texts, which the shop's booking system sends. */
+  hasTextConsent: boolean;
   /** The picked day on the shop's calendar ("2026-10-27"). */
   date: string | null;
   /** One of the picked day's UTC start times. */
@@ -123,6 +125,11 @@ export class Booking implements LeaveConfirmable {
       nonNullable: true,
       validators: PHONE_VALIDATORS,
     }),
+    // Required and unticked at first: the customer opts in to the confirmation and reminder texts by ticking it.
+    hasTextConsent: new FormControl(false, {
+      nonNullable: true,
+      validators: Validators.requiredTrue,
+    }),
     date: new FormControl<string | null>(null, [Validators.required]),
     startAt: new FormControl<string | null>(null, [Validators.required]),
   });
@@ -163,7 +170,11 @@ export class Booking implements LeaveConfirmable {
     const { date, startAt }: BookingFormValue = this.bookingFormValue();
     // `invalid`, not `valid`: the form is disabled while sending, and disabled controls are never valid.
     const areDetailsValid: boolean = this.isRescheduling()
-      || (!this.bookingForm.controls.name.invalid && !this.bookingForm.controls.phone.invalid);
+      || (
+        !this.bookingForm.controls.name.invalid
+        && !this.bookingForm.controls.phone.invalid
+        && !this.bookingForm.controls.hasTextConsent.invalid
+      );
     const canSend: boolean = !this.isSubmitting() && !this.isSubmitDone() && !this.isBotCheckFailed();
     return date !== null && startAt !== null && areDetailsValid && canSend;
   });
