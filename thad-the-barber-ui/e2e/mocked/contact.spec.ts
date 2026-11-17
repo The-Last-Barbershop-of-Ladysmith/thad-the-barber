@@ -102,6 +102,60 @@ test.describe(
     );
 
     test(
+      'an email that is not one gets a linked error after leaving the field, with no a11y violations',
+      async ({ page }: { page: Page; }): Promise<void> => {
+        await openContactPage(page);
+        const email: Locator = page.getByTestId('contact-email');
+
+        await email.fill('not-an-email');
+        await expect(email).not.toHaveAttribute('aria-invalid', 'true');
+        await email.blur();
+
+        await expect(email).toHaveAttribute('aria-invalid', 'true');
+        const errorId: string | null = await email.getAttribute('aria-describedby');
+        expect(errorId).not.toBeNull();
+        await expect(page.locator(`#${errorId}`)).toBeVisible();
+        await expectNoA11yViolations(page);
+      },
+    );
+
+    test(
+      'reporting a problem shows its extra field without a11y violations',
+      async ({ page }: { page: Page; }): Promise<void> => {
+        await openContactPage(page);
+
+        await page.getByTestId('contact-category').getByRole('button').nth(1).click();
+
+        await expect(page.getByTestId('contact-page-or-booking')).toBeVisible();
+        await expectNoA11yViolations(page);
+      },
+    );
+
+    test(
+      'while a message is being sent the form has no a11y violations',
+      async ({ page }: { page: Page; }): Promise<void> => {
+        let releaseRequest: () => void = (): void => undefined;
+        const requestHeld: Promise<void> = new Promise<void>((release: () => void): void => {
+          releaseRequest = release;
+        });
+        await page.route(isContactRequest, async (route: Route): Promise<void> => {
+          await requestHeld;
+          await route.fulfill({ status: 201, json: { id: 'made-up-receipt' } });
+        });
+        await openContactPage(page);
+        await page.getByTestId('contact-category').getByRole('button').nth(2).click();
+        await page.getByTestId('contact-message').fill('Made-up feedback');
+
+        await page.getByTestId('contact-send').click();
+        await expect(page.getByTestId('contact-message')).toBeDisabled();
+        await expectNoA11yViolations(page);
+
+        releaseRequest();
+        await expect(page.getByTestId('contact-sent')).toBeVisible();
+      },
+    );
+
+    test(
       'a booking error links to a problem report about that page',
       async ({ page }: { page: Page; }): Promise<void> => {
         await page.route(isAvailabilityRequest, (route: Route): Promise<void> => route.fulfill({ status: 500 }));
