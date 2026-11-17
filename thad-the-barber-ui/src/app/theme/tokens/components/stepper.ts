@@ -56,8 +56,8 @@ export const stepper: StepperDesignTokens = {
     .p-steppanel .p-stepper-separator { display: none; }
 
     .p-step { align-items: stretch; }
-    .p-step-header { width: 100%; text-align: start; }
-    .p-step-title { display: flex; flex-direction: column; align-items: flex-start; gap: 0.125rem; }
+    .p-step-header { width: 100%; min-width: 0; text-align: start; }
+    .p-step-title { display: flex; flex-direction: column; align-items: flex-start; gap: 0.125rem; min-width: 0; white-space: normal; }
 
     /* A step with its pick (the booking page adds is-done) shows a check where its number was */
     .p-step.is-done .p-step-number {
