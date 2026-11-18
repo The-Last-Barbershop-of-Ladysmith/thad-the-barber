@@ -1,4 +1,4 @@
-export enum PrivacyPartKind {
+export enum LegalPartKind {
   Text = 'text',
   ShopName = 'shop-name',
   Phone = 'phone',

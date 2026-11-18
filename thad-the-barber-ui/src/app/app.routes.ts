@@ -7,6 +7,8 @@ import * as contact from './features/contact/contact';
 import * as accessibility from './pages/accessibility/accessibility';
 import * as notFound from './pages/not-found/not-found';
 import * as privacy from './pages/privacy/privacy';
+import * as terms from './pages/terms/terms';
+import * as textUpdates from './pages/text-updates/text-updates';
 
 const homeSeo: RouteSeo = {
   title: '{shopName} · Barber in {city}',
@@ -19,6 +21,20 @@ const privacySeo: RouteSeo = {
   title: 'Privacy policy · {shopName}',
   description: 'What {shopName} collects when you book online or visit the site, '
     + 'how your name and phone number are used, and how long they are kept.',
+  isIndexed: true,
+};
+
+const termsSeo: RouteSeo = {
+  title: 'Terms and conditions · {shopName}',
+  description: 'The terms for booking online with {shopName}: how bookings, changes and cancellations work, '
+    + 'and what to expect from booking texts and shop news texts.',
+  isIndexed: true,
+};
+
+const textUpdatesSeo: RouteSeo = {
+  title: 'Text updates · {shopName}',
+  description: 'Get news from {shopName} by text: openings, closures, special hours and offers. '
+    + 'Optional, separate from booking texts, and you can reply STOP any time.',
   isIndexed: true,
 };
 
@@ -75,6 +91,19 @@ export const routes: Routes = [
     data: { seo: privacySeo },
     loadComponent: (): Promise<typeof privacy.Privacy> =>
       import('./pages/privacy/privacy').then((m: typeof privacy): typeof privacy.Privacy => m.Privacy),
+  },
+  {
+    path: 'terms',
+    data: { seo: termsSeo },
+    loadComponent: (): Promise<typeof terms.Terms> =>
+      import('./pages/terms/terms').then((m: typeof terms): typeof terms.Terms => m.Terms),
+  },
+  {
+    path: 'text-updates',
+    data: { seo: textUpdatesSeo },
+    loadComponent: (): Promise<typeof textUpdates.TextUpdates> =>
+      import('./pages/text-updates/text-updates')
+        .then((m: typeof textUpdates): typeof textUpdates.TextUpdates => m.TextUpdates),
   },
   {
     path: 'accessibility',

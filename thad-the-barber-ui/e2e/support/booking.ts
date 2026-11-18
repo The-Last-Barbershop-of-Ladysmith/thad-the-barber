@@ -112,8 +112,10 @@ export async function fulfillAvailability(route: Route): Promise<void> {
   await route.fulfill({ json: toAvailableDays(searchParams.get('from') ?? '', searchParams.get('to') ?? '') });
 }
 
-/** Ticks the required box for the booking texts, by its label as a customer would. */
+/** Makes sure the required box for the booking texts is ticked (it starts ticked), by its label as a customer would. */
 export async function tickTextConsent(page: Page): Promise<void> {
-  await page.locator('label[for="booking-text-consent"]').click();
+  if (!(await page.locator('#booking-text-consent').isChecked())) {
+    await page.locator('label[for="booking-text-consent"]').click();
+  }
   await expect(page.locator('#booking-text-consent')).toBeChecked();
 }

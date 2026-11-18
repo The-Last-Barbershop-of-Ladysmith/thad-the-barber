@@ -26,6 +26,7 @@ describe(
           startAt: '2026-10-03T20:30:00Z',
           name: 'Test',
           phone: '+15550100199',
+          hasMarketingConsent: true,
           idempotencyKey: '00000000-0000-4000-8000-000000000001',
         };
         const confirmation: BookingConfirmation = {

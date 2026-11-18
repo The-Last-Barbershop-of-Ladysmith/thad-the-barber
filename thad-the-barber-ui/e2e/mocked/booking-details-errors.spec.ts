@@ -44,15 +44,17 @@ test.describe(
     );
 
     test(
-      'asks for the text-message box to be ticked: unticked at first, explained once it is left, cleared when ticked',
+      'asks for the text-message box to be ticked: ticked at first, explained once it is unticked and left, cleared when ticked',
       async ({ page }: { page: Page; }): Promise<void> => {
         await openDetailsStep(page);
         const consent: Locator = page.locator('#booking-text-consent');
-        await expect(consent).not.toBeChecked();
+        await expect(consent).toBeChecked();
         await expect(page.locator('label[for="booking-text-consent"] .required-mark')).toHaveAttribute('aria-hidden', 'true');
         await expect(page.locator('#booking-text-consent-error')).toHaveCount(0);
 
         await tabUntilFocused(page, '#booking-text-consent');
+        await page.keyboard.press('Space');
+        await expect(consent).not.toBeChecked();
         await page.keyboard.press('Tab');
         await expect(page.locator('#booking-text-consent-error')).toHaveAttribute('role', 'alert');
         await expect(page.getByTestId('confirm-booking')).toBeDisabled();

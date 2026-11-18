@@ -6,7 +6,7 @@ import { Observable, catchError, exhaustMap, filter, map, of, switchMap, takeUnt
 import { pollWhileVisible } from '../../../shared/utils/poll-while-visible.utils';
 import { NEXT_TIMES_POLL_INTERVAL_MS } from '../config/next-times';
 import { NextTimesService } from '../services/next-times.service';
-import { SmsSignupService } from '../services/sms-signup.service';
+import { SmsSignupService } from '../../text-updates/services/sms-signup.service';
 import * as HomeActions from './home.actions';
 
 /**

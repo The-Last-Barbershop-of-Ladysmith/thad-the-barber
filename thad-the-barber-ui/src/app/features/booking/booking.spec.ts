@@ -254,16 +254,32 @@ describe(
       (): void => {
         openPage();
         expect(page.canConfirm()).toBe(false);
-        expect(page.bookingForm.controls.hasTextConsent.value).toBe(false);
+        expect(page.bookingForm.controls.hasTextConsent.value).toBe(true);
 
         pick(FIRST_TIME);
         expect(page.canConfirm()).toBe(false);
         page.bookingForm.controls.name.setValue('Test Customer');
         page.bookingForm.controls.phone.setValue('(555) 010-0199');
-        expect(page.canConfirm()).toBe(false);
-
-        page.bookingForm.controls.hasTextConsent.setValue(true);
         expect(page.canConfirm()).toBe(true);
+
+        page.bookingForm.controls.hasTextConsent.setValue(false);
+        expect(page.canConfirm()).toBe(false);
+      },
+    );
+
+    it(
+      'sends the shop news choice, unticked unless the customer ticks it, and never needs it to book',
+      (): void => {
+        openPage();
+        expect(page.bookingForm.controls.hasMarketingConsent.value).toBe(false);
+        fillInAndConfirm(FIRST_TIME);
+        store.dispatch(BookingActions.BookingRequestFailure({ notice: failedNotice, takenStartAt: null }));
+        page.bookingForm.controls.hasMarketingConsent.setValue(true);
+        page.confirm();
+
+        const [first, ticked]: BookingRequestAction[] = sentBookings();
+        expect(first?.bookingRequest.hasMarketingConsent).toBe(false);
+        expect(ticked?.bookingRequest.hasMarketingConsent).toBe(true);
       },
     );
 

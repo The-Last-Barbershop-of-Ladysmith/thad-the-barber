@@ -2,6 +2,7 @@ import { Environment } from './environment.model';
 
 export const environment: Environment = {
   production: false,
+  isComingSoon: false,
   apiBaseUrl: 'https://as-ttb-api-dev-eastus.azurewebsites.net/api',
   siteUrl: 'https://as-ttb-ui-dev-eastus.azurewebsites.net',
   mediaBaseUrl: 'https://storttbnonprodeastus.blob.core.windows.net/media-dev',

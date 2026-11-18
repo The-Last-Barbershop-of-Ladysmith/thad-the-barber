@@ -3,10 +3,13 @@ import { provideEffects } from '@ngrx/effects';
 import { provideState } from '@ngrx/store';
 import { ConfirmationService } from 'primeng/api';
 import { RouteSeo } from '../../shared/models/route-seo.model';
+import { inject } from '@angular/core';
+import { IS_COMING_SOON } from '../../core/config/coming-soon.token';
 import * as bookingEffects from './state/booking.effects';
 import { Booking } from './booking';
 import { leaveBookingGuard } from './guards/leave-booking.guard';
 import { bookingFeature } from './state/booking.feature';
+import { BookingComingSoon } from './pages/booking-coming-soon/booking-coming-soon';
 import { FindBookings } from './pages/find-bookings/find-bookings';
 import { ManageBooking } from './pages/manage-booking/manage-booking';
 
@@ -53,8 +56,13 @@ export const BOOKING_ROUTES: Routes = [
         path: '',
         data: { seo: bookSeo },
         canDeactivate: [leaveBookingGuard],
-        loadComponent: (): Promise<typeof Booking> =>
-          import('./booking').then((m: { Booking: typeof Booking; }): typeof Booking => m.Booking),
+        loadComponent: (): Promise<typeof Booking | typeof BookingComingSoon> => {
+          if (inject(IS_COMING_SOON)) {
+            return import('./pages/booking-coming-soon/booking-coming-soon')
+              .then((m: { BookingComingSoon: typeof BookingComingSoon; }): typeof BookingComingSoon => m.BookingComingSoon);
+          }
+          return import('./booking').then((m: { Booking: typeof Booking; }): typeof Booking => m.Booking);
+        },
       },
       {
         path: 'manage',

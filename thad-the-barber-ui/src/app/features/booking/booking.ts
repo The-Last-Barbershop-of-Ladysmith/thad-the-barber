@@ -60,6 +60,8 @@ interface BookingFormValue {
   phone: string;
   /** Ticked to get the booking texts, which the shop's booking system sends. */
   hasTextConsent: boolean;
+  /** Ticked to also get the shop's news texts, which is optional and never needed to book. */
+  hasMarketingConsent: boolean;
   /** The picked day on the shop's calendar ("2026-10-27"). */
   date: string | null;
   /** One of the picked day's UTC start times. */
@@ -133,6 +135,7 @@ export class Booking implements LeaveConfirmable {
       nonNullable: true,
       validators: Validators.requiredTrue,
     }),
+    hasMarketingConsent: new FormControl(false, { nonNullable: true }),
     date: new FormControl<string | null>(null, [Validators.required]),
     startAt: new FormControl<string | null>(null, [Validators.required]),
   });
@@ -230,6 +233,7 @@ export class Booking implements LeaveConfirmable {
     const {
       name,
       phone,
+      hasMarketingConsent,
       startAt,
     }: BookingFormValue = this.bookingForm.getRawValue();
     const bookingId: string | null = this.bookingId();
@@ -250,6 +254,7 @@ export class Booking implements LeaveConfirmable {
           startAt,
           name: name.trim(),
           phone: toE164(phone),
+          hasMarketingConsent,
           idempotencyKey: this.idempotencyKey,
         },
       }));

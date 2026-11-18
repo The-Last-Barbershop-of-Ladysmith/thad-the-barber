@@ -44,6 +44,8 @@ describe(
           'admin/gallery',
           'admin/overview',
           'privacy',
+          'terms',
+          'text-updates',
           'accessibility',
           'contact',
           '404',
@@ -123,7 +125,7 @@ describe(
     );
 
     it(
-      'indexes home, book, privacy, accessibility and contact',
+      'indexes home, book, privacy, terms, text updates, accessibility and contact',
       (): void => {
         const indexed: string[] = leaves
           .filter((leaf: RouteLeaf): boolean => leaf.seo?.isIndexed === true)
@@ -133,6 +135,8 @@ describe(
           '',
           'book',
           'privacy',
+          'terms',
+          'text-updates',
           'accessibility',
           'contact',
         ]);

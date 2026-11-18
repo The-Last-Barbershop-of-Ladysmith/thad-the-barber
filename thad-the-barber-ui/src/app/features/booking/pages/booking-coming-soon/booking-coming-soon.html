@@ -1,0 +1,29 @@
+<app-titled-page eyebrow="Book an appointment" heading="Online booking opens soon">
+  <p pageSubtitle class="m-0 text-muted-color">
+    Call or text the shop to book in the meantime.
+  </p>
+
+  <div class="stack gap-4 max-w-xl" data-testid="booking-coming-soon">
+    <p-message severity="info" data-testid="booking-coming-soon-notice"
+      >Booking on this site isn't open yet. Below is how it will work. To book now, call or text the shop.</p-message
+    >
+    <div class="stack gap-2 items-start">
+      <a class="inline-link font-semibold" data-testid="coming-soon-call" [href]="phone().tel"
+        >Call {{ phone().display }}</a
+      >
+      <a class="inline-link font-semibold" data-testid="coming-soon-text" [href]="phone().sms"
+        >Text {{ phone().display }}</a
+      >
+    </div>
+
+    <app-details-step
+      [nameControl]="nameControl"
+      [phoneControl]="phoneControl"
+      [consentControl]="consentControl"
+      [marketingConsentControl]="marketingConsentControl"
+    />
+    <button pButton type="button" data-testid="coming-soon-book" [fluid]="true" [disabled]="true">
+      Book appointment
+    </button>
+  </div>
+</app-titled-page>

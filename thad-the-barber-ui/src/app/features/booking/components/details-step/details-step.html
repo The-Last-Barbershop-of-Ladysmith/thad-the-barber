@@ -57,15 +57,38 @@
         text="Tick the box so we can text your confirmation."
       />
     }
+    <div class="consent-row">
+      <p-checkbox
+        inputId="booking-marketing-consent"
+        data-testid="marketing-consent"
+        [binary]="true"
+        [formControl]="marketingConsentControl()"
+      />
+      <label class="consent-label" for="booking-marketing-consent">
+        <span>Also text me shop news, like openings, closures and offers (optional).</span>
+        <span class="small-print"
+          >Up to 4 a month. Message and data rates may apply. Reply STOP to opt out, HELP for help.
+          Not needed to book.</span
+        >
+      </label>
+    </div>
   </div>
   <p class="small-print">
-    Your name and phone go to the shop's Square account to book this appointment.
+    Your name and phone go to the shop's Square account to book this appointment. By booking you agree to the
+    <a
+      class="inline-link external-link"
+      routerLink="/terms"
+      target="_blank"
+      data-testid="details-terms"
+      >Terms and conditions<span class="sr-only"> (opens in a new tab)</span></a
+    >
+    and the
     <a
       class="inline-link external-link"
       routerLink="/privacy"
       target="_blank"
       data-testid="details-privacy"
       >Privacy policy<span class="sr-only"> (opens in a new tab)</span></a
-    >
+    >.
   </p>
 </section>

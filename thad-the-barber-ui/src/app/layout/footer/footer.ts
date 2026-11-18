@@ -7,6 +7,7 @@ import { HoursListVariant } from '../../features/shop/models/hours-list-variant.
 import { ShopAddress } from '../../features/shop/models/shop-address.model';
 import { SocialLink } from '../../features/shop/models/social-link.model';
 import { announcementsFeature } from '../../features/announcements/state/announcements.feature';
+import { TextUpdatesDialog } from '../../features/text-updates/components/text-updates-dialog/text-updates-dialog';
 import { HoursList } from '../../features/shop/components/hours-list/hours-list';
 import { AppState } from '../../store/app.state';
 import { shopFeature } from '../../features/shop/state/shop.feature';
@@ -16,6 +17,7 @@ import { shopFeature } from '../../features/shop/state/shop.feature';
   imports: [
     RouterLink,
     HoursList,
+    TextUpdatesDialog,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './footer.html',

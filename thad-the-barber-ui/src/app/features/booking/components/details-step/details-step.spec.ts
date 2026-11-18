@@ -13,6 +13,7 @@ describe(
       fixture.componentRef.setInput('nameControl', new FormControl<string>('', { nonNullable: true }));
       fixture.componentRef.setInput('phoneControl', new FormControl<string>(phone, { nonNullable: true }));
       fixture.componentRef.setInput('consentControl', new FormControl<boolean>(false, { nonNullable: true }));
+      fixture.componentRef.setInput('marketingConsentControl', new FormControl<boolean>(false, { nonNullable: true }));
       fixture.detectChanges();
       const phoneInput: HTMLInputElement | null = (fixture.nativeElement as HTMLElement)
         .querySelector<HTMLInputElement>('#booking-phone');
@@ -37,12 +38,24 @@ describe(
       },
     );
 
+    it(
+      'links to the terms in a new tab, so the booking in progress stays open',
+      (): void => {
+        const termsLink: HTMLAnchorElement | null = render('').closest('section')
+          ?.querySelector<HTMLAnchorElement>('[data-testid="details-terms"]') ?? null;
+
+        expect(termsLink?.getAttribute('href')).toBe('/terms');
+        expect(termsLink?.target).toBe('_blank');
+      },
+    );
+
     describe(
       'accessibility',
       (): void => {
         let fixture: ComponentFixture<DetailsStep>;
         let nameControl: FormControl<string>;
         let consentControl: FormControl<boolean>;
+        let marketingConsentControl: FormControl<boolean>;
 
         function field(selector: string): HTMLInputElement | null {
           return (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>(selector);
@@ -53,6 +66,7 @@ describe(
             nonNullable: true,
             validators: Validators.required,
           });
+          marketingConsentControl = new FormControl<boolean>(false, { nonNullable: true });
           fixture = TestBed.createComponent(DetailsStep);
           fixture.componentRef.setInput('nameControl', nameControl);
           fixture.componentRef.setInput('phoneControl', new FormControl<string>('', {
@@ -64,6 +78,7 @@ describe(
             validators: Validators.requiredTrue,
           });
           fixture.componentRef.setInput('consentControl', consentControl);
+          fixture.componentRef.setInput('marketingConsentControl', marketingConsentControl);
           fixture.detectChanges();
         });
 
@@ -109,6 +124,21 @@ describe(
             await fixture.whenStable();
             fixture.detectChanges();
             expect(field('#booking-text-consent-error')).toBeNull();
+          },
+        );
+
+        it(
+          'offers the shop news texts as an optional box, unticked, apart from the required booking texts',
+          (): void => {
+            const box: HTMLInputElement | null = field('#booking-marketing-consent');
+            const label: string = (fixture.nativeElement as HTMLElement)
+              .querySelector('label[for="booking-marketing-consent"]')?.textContent ?? '';
+
+            expect(box?.checked).toBe(false);
+            expect(box?.hasAttribute('required')).toBe(false);
+            expect(label).toContain('optional');
+            expect(label).toContain('Not needed to book');
+            expect(label).toContain('Reply STOP to opt out');
           },
         );
 
