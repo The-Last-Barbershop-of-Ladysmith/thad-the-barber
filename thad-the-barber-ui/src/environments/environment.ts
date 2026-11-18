@@ -3,8 +3,8 @@ import { Environment } from './environment.model';
 export const environment: Environment = {
   production: true,
   isComingSoon: true,
-  apiBaseUrl: 'https://as-ttb-api-prod-eastus.azurewebsites.net/api',
-  siteUrl: 'https://as-ttb-ui-prod-eastus.azurewebsites.net',
+  apiBaseUrl: 'https://api.thad-the-barber.com/api',
+  siteUrl: 'https://thad-the-barber.com',
   mediaBaseUrl: 'https://storttbprodeastus.blob.core.windows.net/media-prod',
   recaptchaSiteKey: '',
   staticMapApiKey: 'AIzaSyAY_UceiUsEtgAlBBceYVO-HeXex65bWdU',

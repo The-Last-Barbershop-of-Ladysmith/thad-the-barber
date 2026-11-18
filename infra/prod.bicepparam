@@ -5,7 +5,6 @@
 //   TTB_ADMIN_OBJECT_ID      (optional) your Entra object ID, for Key Vault Secrets Officer and media container access
 //   TTB_ALLOWED_IPS          your public IP(s), comma-separated, for the Key Vault firewall (the apps themselves are public)
 //   TTB_MEDIA_WEBHOOK_KEY_PROD (optional) the MediaWebhook--Key value of the prod vault; with it, the prod Event Grid subscription is created
-//   TTB_PROD_ORIGINS         (optional) the custom domain's browser origins, comma-separated, e.g. https://www.example.com
 using 'main.bicep'
 
 param restrictAppAccess = false
@@ -23,7 +22,11 @@ param environments = [
     name: 'prod'
     aspnetEnvironment: 'Production'
     githubEnvironment: 'production'
-    extraCorsOrigins: filter(map(split(readEnvironmentVariable('TTB_PROD_ORIGINS', ''), ','), origin => trim(origin)), origin => !empty(origin))
+    // The custom domain: the site on the apex and www, the API on api.thad-the-barber.com. Browsers only ever send the site's origin.
+    extraCorsOrigins: [
+      'https://thad-the-barber.com'
+      'https://www.thad-the-barber.com'
+    ]
     squareAlerts: true
     canAdminWriteMedia: true
     restrictMediaListing: true
