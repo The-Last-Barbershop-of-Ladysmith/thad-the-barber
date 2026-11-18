@@ -147,6 +147,7 @@ export const semantic: TokenSection = {
         glow: `0 4px 24px -2px ${alpha('{copper.500}', 45)}`,
         glowHover: `0 6px 32px 0 ${alpha('{copper.500}', 60)}`,
       },
+      info: '{sky}',
       success: '{mint}',
       warn: '{amber}',
       error: '{coral}',

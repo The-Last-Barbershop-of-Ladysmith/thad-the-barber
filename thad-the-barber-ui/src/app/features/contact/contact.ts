@@ -17,6 +17,7 @@ import { Store } from '@ngrx/store';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectButtonModule } from 'primeng/selectbutton';
+import { NoParentForm } from '../../shared/directives/no-parent-form';
 import { TextareaModule } from 'primeng/textarea';
 import { map } from 'rxjs';
 import { NoticeMessage } from '../../shared/components/notice-message/notice-message';
@@ -67,6 +68,7 @@ type ContactForm = FormGroup<{
     ButtonModule,
     InputTextModule,
     SelectButtonModule,
+    NoParentForm,
     TextareaModule,
     TitledPage,
     NoticeMessage,

@@ -49,7 +49,11 @@ import { BookingState } from './state/booking.state';
 import { BOOKING_NOT_FOUND_NOTICE, BOT_CHECK_FAILED_NOTICE } from './config/booking-notices';
 import { toLongDateTime, toTimeLabel } from './utils/booking-time.utils';
 import { toManagePath } from './utils/manage-link.utils';
+import { scrollToElementStart } from '../../shared/utils/scroll.utils';
 import { NAME_VALIDATORS, PHONE_VALIDATORS } from '../../shared/validators/form.validators';
+
+/** Longer than the 0.2 s a step takes to collapse and open, so the page has its final height before it scrolls. */
+const STEP_MOTION_MS: number = 300;
 
 interface BookingFormValue {
   name: string;
@@ -359,7 +363,14 @@ export class Booking implements LeaveConfirmable {
     this.openStep.set(step);
     afterNextRender(
       (): void => {
-        document.querySelector<HTMLElement>('.p-step-active .p-step-header')?.focus();
+        const header: HTMLElement | null = document.querySelector<HTMLElement>('.p-step-active .p-step-header');
+        // Focus without scrolling: the page is about to change height, so the scroll waits until the steps have moved.
+        header?.focus({ preventScroll: true });
+        if (header !== null) {
+          setTimeout((): void => {
+            scrollToElementStart(header);
+          }, STEP_MOTION_MS);
+        }
       },
       { injector: this.injector },
     );

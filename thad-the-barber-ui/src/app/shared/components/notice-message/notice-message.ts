@@ -1,6 +1,8 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  ElementRef,
+  afterRenderEffect,
   computed,
   inject,
   input,
@@ -20,6 +22,7 @@ import { ContactCategory } from '../../models/contact-category.model';
 import { ContactPrefill } from '../../models/contact-prefill.model';
 import { Notice } from '../../models/notice.model';
 import { NoticeSeverity } from '../../models/notice-severity.model';
+import { scrollBackToElement } from '../../utils/scroll.utils';
 
 /** An inline message. Every problem ends with call, text and Square booking links, and maybe a retry. */
 @Component({
@@ -38,6 +41,7 @@ export class NoticeMessage {
 
   private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
   private readonly router: Router = inject(Router);
+  private readonly host: HTMLElement = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
   protected readonly phone: Signal<PhoneLinks> = this.store.selectSignal(shopFeature.selectPhoneLinks);
   protected readonly bookingUrl: Signal<string> = this.store.selectSignal(shopFeature.selectBookingUrl);
 
@@ -76,4 +80,16 @@ export class NoticeMessage {
 
   protected readonly noticeSeverityToButtonSeverity: Signal<ButtonSeverity> = computed((): ButtonSeverity =>
     this.buttonSeverities[this.notice().severity]);
+
+  constructor() {
+    // A notice that shows up while the visitor is further down the page (a failed booking, with its button at the
+    // bottom) would otherwise be out of sight above them.
+    afterRenderEffect((): void => {
+      this.notice();
+      const box: HTMLElement | null = this.host.querySelector<HTMLElement>('.p-message');
+      if (box !== null) {
+        scrollBackToElement(box);
+      }
+    });
+  }
 }
