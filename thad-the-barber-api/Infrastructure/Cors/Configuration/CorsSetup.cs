@@ -6,7 +6,8 @@ namespace ThadTheBarber.Api.Infrastructure.Cors.Configuration;
 
 /// <summary>
 /// CORS lives only here, never in App Service's platform CORS (that would override it). The default policy allows the
-/// configured frontend origins, GET/POST and the headers the frontend sends; no credentials and no wildcards.
+/// configured frontend origins, the methods the frontend uses (GET and POST for the site, PUT and DELETE for the admin
+/// saves and deletes) and the headers the frontend sends; no credentials and no wildcards.
 /// </summary>
 public static class CorsSetup
 {
@@ -33,7 +34,7 @@ public static class CorsSetup
             .Configure<IOptions<CorsSettings>>((options, settings) =>
                 options.AddDefaultPolicy(policy => policy
                     .WithOrigins(settings.Value.AllowedOrigins)
-                    .WithMethods(HttpMethods.Get, HttpMethods.Post)
+                    .WithMethods(HttpMethods.Get, HttpMethods.Post, HttpMethods.Put, HttpMethods.Delete)
                     .WithHeaders(AllowedHeaders)));
         return services;
     }

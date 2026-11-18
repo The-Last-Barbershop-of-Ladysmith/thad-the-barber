@@ -46,12 +46,25 @@ public sealed class CorsTests(ApiFactory factory) : IClassFixture<ApiFactory>
     [Fact]
     public async Task PreflightOffersOnlyThePolicyMethodsAndHeaders()
     {
-        using HttpResponseMessage response = await SendPreflightAsync(ApiFactory.FrontendOrigin, "DELETE", "x-not-allowed");
+        using HttpResponseMessage response = await SendPreflightAsync(ApiFactory.FrontendOrigin, "PATCH", "x-not-allowed");
 
-        Assert.Equal(["GET", "POST"], SplitHeader(response, "Access-Control-Allow-Methods"));
+        Assert.Equal(["GET", "POST", "PUT", "DELETE"], SplitHeader(response, "Access-Control-Allow-Methods"));
         Assert.Equal(
             ["Authorization", "Content-Type", "X-Manage-Token", "X-Lookup-Token", "traceparent", "tracestate"],
             SplitHeader(response, "Access-Control-Allow-Headers"));
+    }
+
+    // The admin area saves with PUT (announcements, shop info) and deletes with DELETE (gallery photos); a preflight that
+    // leaves them out blocks those calls in the browser before they are sent.
+    [Theory]
+    [InlineData("PUT")]
+    [InlineData("DELETE")]
+    public async Task PreflightAllowsTheMethodsTheAdminAreaUses(string method)
+    {
+        using HttpResponseMessage response = await SendPreflightAsync(ApiFactory.FrontendOrigin, method, "authorization,content-type");
+
+        Assert.Equal(ApiFactory.FrontendOrigin, Assert.Single(response.Headers.GetValues("Access-Control-Allow-Origin")));
+        Assert.Contains(method, SplitHeader(response, "Access-Control-Allow-Methods"));
     }
 
     private static string[] SplitHeader(HttpResponseMessage response, string name) =>
