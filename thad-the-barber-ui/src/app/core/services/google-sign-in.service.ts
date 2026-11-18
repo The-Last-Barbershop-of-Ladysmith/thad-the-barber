@@ -3,7 +3,7 @@ import { CSP_NONCE, Injectable, inject } from '@angular/core';
 import { GoogleAccountsId, GoogleCredentialResponse, GoogleWindow } from '../models/google-identity.models';
 
 const GOOGLE_SCRIPT_URL: string = 'https://accounts.google.com/gsi/client';
-const BUTTON_WIDTH: number = 320;
+const MAX_BUTTON_WIDTH: number = 400;
 
 type ScriptLoad = Promise<GoogleAccountsId>;
 
@@ -39,7 +39,7 @@ export class GoogleSignInService {
       text: 'signin_with',
       shape: 'rectangular',
       logo_alignment: 'left',
-      width: BUTTON_WIDTH,
+      width: Math.min(MAX_BUTTON_WIDTH, container.clientWidth || MAX_BUTTON_WIDTH),
     });
   }
 

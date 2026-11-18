@@ -7,6 +7,7 @@ import {
   isManagedBookingRequest,
   isNextTimesRequest,
 } from './booking';
+import { fulfillAdminOverview, isAdminOverviewRequest } from './admin';
 import { fulfillStaticMap, isStaticMap } from './map';
 import { fulfillAnnouncements, isAnnouncementsRequest } from './announcements';
 import { fulfillGallery, isGalleryRequest } from './gallery';
@@ -28,6 +29,7 @@ export function isTelemetryIngestion(url: URL): boolean {
  * since every API call needs a session token. `GET /api/shop` returns the made-up shop in
  * `src/testing/test-shop.ts` (`shop.ts`), availability opens every day from today, the next open times are six over
  * the next three days, and any booking asked for by ID is upcoming (`booking.ts`).
+ * The admin overview's three lists answer empty until a test mocks them (`admin.ts`).
  * Tests mock endpoints with their own `page.route`, which takes precedence over the catch-all.
  * Each test already gets a fresh browser context, so localStorage starts empty.
  * No fake clock: `page.clock` stalls PrimeNG's drawer animation.
@@ -43,6 +45,7 @@ export const test: typeof base = base.extend({
       },
     );
 
+    await page.route(isAdminOverviewRequest, fulfillAdminOverview);
     await page.route(isTelemetryIngestion, (route: Route): Promise<void> => route.fulfill({ status: 200, json: {} }));
     await page.route(isMedia, fulfillMedia);
     await page.route(isGalleryRequest, fulfillGallery);

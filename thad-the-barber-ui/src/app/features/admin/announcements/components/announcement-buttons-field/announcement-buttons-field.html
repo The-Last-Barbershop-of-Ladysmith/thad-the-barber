@@ -1,0 +1,100 @@
+<div class="buttons-field">
+@for (button of buttons(); track $index) {
+  <div class="button-row" data-testid="button-row">
+    <div class="form-field">
+      <label [for]="'button-label-' + $index">Label</label>
+      <input
+        pInputText
+        [id]="'button-label-' + $index"
+        maxlength="40"
+        [value]="button.label"
+        (input)="onInput($index, 'label', $event)"
+      />
+    </div>
+    <div class="form-field">
+      <label [for]="'button-url-' + $index">Link</label>
+      <input
+        pInputText
+        [id]="'button-url-' + $index"
+        maxlength="500"
+        [value]="button.url"
+        (input)="onInput($index, 'url', $event)"
+      />
+    </div>
+    <div class="form-field" role="group" aria-label="Button style">
+      <span class="field-label">Style</span>
+      <div class="segments">
+        @for (variant of variants; track variant) {
+          <button
+            type="button"
+            class="segment is-capitalized"
+            [attr.aria-pressed]="button.variant === variant"
+            (click)="change($index, { variant })"
+          >
+            {{ variant }}
+          </button>
+        }
+      </div>
+    </div>
+    @if (isSubmitted() && isBad(button)) {
+      <p-message severity="error" variant="simple" size="small" data-testid="button-error">
+        Give the button a label and a link: a page on this site starting with /, an https link, tel: or mailto:.
+      </p-message>
+    }
+    <div class="row-actions">
+      @if (confirmingIndex() === $index) {
+        <button
+          pButton
+          type="button"
+          size="small"
+          severity="danger"
+          data-testid="confirm-remove-button"
+          (click)="remove($index)"
+        >
+          Yes, remove it
+        </button>
+        <button
+          pButton
+          type="button"
+          size="small"
+          severity="secondary"
+          [text]="true"
+          (click)="confirmingIndex.set(null)"
+        >
+          Keep it
+        </button>
+      } @else {
+        <button
+          pButton
+          type="button"
+          size="small"
+          severity="danger"
+          [text]="true"
+          data-testid="remove-button"
+          (click)="confirmingIndex.set($index)"
+        >
+          <i class="pi pi-trash" aria-hidden="true"></i>
+          Remove button
+        </button>
+      }
+    </div>
+  </div>
+} @empty {
+  <p class="help">No buttons. Add one to send people to the booking page or somewhere else.</p>
+}
+@if (buttons().length < maxButtons) {
+  <button
+    pButton
+    type="button"
+    size="small"
+    severity="secondary"
+    [outlined]="true"
+    class="add"
+    data-testid="add-button"
+    (click)="add()"
+  >
+    <i class="pi pi-plus" aria-hidden="true"></i>
+    Add a button
+  </button>
+}
+</div>

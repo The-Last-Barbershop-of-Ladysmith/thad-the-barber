@@ -18,6 +18,7 @@ import { AdminShopError } from '../../models/admin-shop-error.model';
 import * as AdminShopActions from '../../state/admin-shop.actions';
 import { adminShopFeature } from '../../state/admin-shop.feature';
 import { toShopMessage } from '../../utils/admin-shop-error.utils';
+import { AdminPageHeader } from '../../../components/admin-page-header/admin-page-header';
 
 /** The most the notice can hold; the API refuses more. */
 export const MAX_NOTICE_LENGTH: number = 1000;
@@ -25,7 +26,11 @@ export const MAX_NOTICE_LENGTH: number = 1000;
 /** Edits the notice on the booking page, and whether it shows at all. Blank text means Square's description shows. */
 @Component({
   selector: 'app-admin-shop-info',
-  imports: [ButtonModule, MessageModule],
+  imports: [
+    ButtonModule,
+    MessageModule,
+    AdminPageHeader,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './shop-info.html',
   styleUrl: './shop-info.scss',

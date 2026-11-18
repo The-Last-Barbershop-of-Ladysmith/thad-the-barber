@@ -1,9 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { MockInstance } from 'vitest';
 import { Store, provideStore } from '@ngrx/store';
 import { expectNoAxeViolations } from '../../../../../../testing/axe';
 import { TEST_SHOP } from '../../../../../../testing/test-shop';
+import { RichTextEditor } from '../../../../../shared/components/rich-text-editor/rich-text-editor';
 import { AppState } from '../../../../../store/app.state';
 import * as ShopActions from '../../../../shop/state/shop.actions';
 import { shopFeature } from '../../../../shop/state/shop.feature';
@@ -80,6 +82,13 @@ describe('AnnouncementEdit', (): void => {
     field.dispatchEvent(new Event('input'));
   }
 
+  function writeMessage(html: string): void {
+    const editor: RichTextEditor = fixture.debugElement.query(By.directive(RichTextEditor))
+      .componentInstance as RichTextEditor;
+    editor.htmlChange.emit(html);
+    fixture.detectChanges();
+  }
+
   /** Opens the page the way the router does: the page asks for the list, then the list arrives. */
   async function open(index: string | undefined, announcements: AdminAnnouncementDto[]): Promise<void> {
     if (index !== undefined) {
@@ -98,6 +107,8 @@ describe('AnnouncementEdit', (): void => {
   }
 
   beforeEach((): void => {
+    // The file chooser previews an image through an object URL, which the test DOM doesn't have.
+    URL.createObjectURL = (): string => 'blob:preview';
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
@@ -113,10 +124,13 @@ describe('AnnouncementEdit', (): void => {
     fixture = TestBed.createComponent(AnnouncementEdit);
   });
 
-  it('starts a new announcement with a first day and a last day 30 days on', async (): Promise<void> => {
+  it('starts a new announcement today, ending 30 days on', async (): Promise<void> => {
     await open(undefined, []);
 
     expect(host().querySelector('h1')?.textContent.trim()).toBe('New announcement');
+    expect(host().querySelector('#announcement-start')).toBeNull();
+    element('[data-testid="show-on-dates"]').click();
+    fixture.detectChanges();
     const start: string = input('#announcement-start').value;
     const end: string = input('#announcement-end').value;
     expect(start).toMatch(/^\d{4}-\d{2}-\d{2}$/);
@@ -127,7 +141,7 @@ describe('AnnouncementEdit', (): void => {
     await open(undefined, [SAVED]);
 
     type('#announcement-title', '  Open late  ');
-    type('#announcement-message', 'Until **8**');
+    writeMessage('<p>Until <strong>8</strong></p>');
     element('[data-testid="save-announcement"]').click();
 
     const saved: AnnouncementInputDto[] = lastSaved();
@@ -181,10 +195,14 @@ describe('AnnouncementEdit', (): void => {
     });
   });
 
-  it('saves without the picture once it is removed', async (): Promise<void> => {
+  it('asks twice before removing the picture, then saves without it', async (): Promise<void> => {
     await open('0', [SAVED]);
 
-    buttonByText('Remove photo').click();
+    element('[data-testid="remove-photo"]').click();
+    fixture.detectChanges();
+    expect(host().querySelector('.photo-row')).not.toBeNull();
+
+    element('[data-testid="confirm-remove-photo"]').click();
     fixture.detectChanges();
     element('[data-testid="save-announcement"]').click();
 
@@ -218,12 +236,15 @@ describe('AnnouncementEdit', (): void => {
     element('[data-testid="add-button"]').click();
     fixture.detectChanges();
     type('#button-label-0', 'Call');
+    fixture.detectChanges();
     type('#button-url-0', 'javascript:alert(1)');
+    fixture.detectChanges();
     element('[data-testid="save-announcement"]').click();
     fixture.detectChanges();
     expect(host().querySelector('[data-testid="button-error"]')).not.toBeNull();
 
     type('#button-url-0', 'tel:+15550100');
+    fixture.detectChanges();
     element('[data-testid="save-announcement"]').click();
     expect(lastSaved()[1]?.buttons).toEqual([
       {
@@ -233,7 +254,11 @@ describe('AnnouncementEdit', (): void => {
       },
     ]);
 
-    buttonByText('Remove').click();
+    element('[data-testid="remove-button"]').click();
+    fixture.detectChanges();
+    expect(host().querySelectorAll('[data-testid="button-row"]')).toHaveLength(1);
+
+    element('[data-testid="confirm-remove-button"]').click();
     fixture.detectChanges();
     expect(host().querySelectorAll('[data-testid="button-row"]')).toHaveLength(0);
   });
@@ -248,10 +273,51 @@ describe('AnnouncementEdit', (): void => {
     expect(lastSaved().map((item: AnnouncementInputDto): string => item.title)).toEqual(['Other']);
   });
 
-  it('warns that formatting the editor cannot keep will be dropped', async (): Promise<void> => {
+  it('shows a stored message in the editor and keeps it when nothing is changed', async (): Promise<void> => {
     await open('0', [{ ...SAVED, bodyHtml: '<p>Hi</p><ul><li>One</li></ul>' }]);
 
-    expect(host().querySelector('[data-testid="markup-warning"]')).not.toBeNull();
+    element('[data-testid="save-announcement"]').click();
+
+    expect(lastSaved()[0]?.bodyHtml).toBe('<p>Hi</p><ul><li>One</li></ul>');
+  });
+
+  it('shows the announcement as it will look, following what is typed', async (): Promise<void> => {
+    await open(undefined, []);
+
+    type('#announcement-title', 'Open late');
+    writeMessage('<p>Until <strong>8</strong></p>');
+
+    expect(element('[data-testid="announcement-preview"]').textContent).toContain('Open late');
+    expect(element('[data-testid="preview-body"] strong').textContent).toBe('8');
+  });
+
+  it('previews at desktop width, or at the width of a phone', async (): Promise<void> => {
+    await open('0', [SAVED]);
+    const stage: HTMLElement = element('.preview-viewport');
+
+    expect(stage.classList.contains('is-phone')).toBe(false);
+
+    element('[data-testid="preview-phone"]').click();
+    fixture.detectChanges();
+    expect(stage.classList.contains('is-phone')).toBe(true);
+
+    element('[data-testid="preview-desktop"]').click();
+    fixture.detectChanges();
+    expect(stage.classList.contains('is-phone')).toBe(false);
+  });
+
+  it('starts on a picked day, or from today again', async (): Promise<void> => {
+    await open('0', [SAVED]);
+
+    expect(input('#announcement-start').value).toBe('2026-11-20');
+
+    element('[data-testid="show-now"]').click();
+    fixture.detectChanges();
+    expect(host().querySelector('#announcement-start')).toBeNull();
+    element('[data-testid="save-announcement"]').click();
+
+    expect(lastSaved()[0]?.startDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(lastSaved()[0]?.startDate).not.toBe('2026-11-20');
   });
 
   it('says so when the announcement is no longer in the list', async (): Promise<void> => {
@@ -267,12 +333,11 @@ describe('AnnouncementEdit', (): void => {
   });
 
   function choosePhoto(file: File): void {
-    const picker: HTMLInputElement = input('#announcement-photo');
-    const files: FileList = { length: 1, item: (): File => file } as unknown as FileList;
+    const picker: HTMLInputElement = input('[data-testid="announcement-photo"] input[type="file"]');
     Object.defineProperty(
       picker,
       'files',
-      { value: files, configurable: true },
+      { value: [file], configurable: true },
     );
     picker.dispatchEvent(new Event('change'));
   }
@@ -298,7 +363,7 @@ describe('AnnouncementEdit', (): void => {
     Object.defineProperty(
       big,
       'size',
-      { value: 9 * 1024 * 1024 },
+      { value: 26 * 1024 * 1024 },
     );
     choosePhoto(big);
     fixture.detectChanges();

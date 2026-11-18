@@ -10,6 +10,7 @@ describe(
   (): void => {
     const session: AdminSession = {
       email: 'owner@example.com',
+      name: 'Q. Testperson',
       expiresAt: '2031-02-28T12:30:00Z',
     };
     const signedIn: AdminState = {

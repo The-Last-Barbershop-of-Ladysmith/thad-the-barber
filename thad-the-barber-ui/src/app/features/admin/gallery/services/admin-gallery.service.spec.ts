@@ -25,7 +25,7 @@ describe('AdminGalleryService', (): void => {
     request.flush([]);
   });
 
-  it('posts the file and its description as a form', (): void => {
+  it('posts the file and its description as a form', async (): Promise<void> => {
     const file: File = new File(
       ['x'],
       'fade.jpg',
@@ -33,7 +33,9 @@ describe('AdminGalleryService', (): void => {
     );
     service.upload(file, 'Skin fade').subscribe();
 
-    const request: ReturnType<HttpTestingController['expectOne']> = http.expectOne(ADMIN_GALLERY_URL);
+    const request: ReturnType<HttpTestingController['expectOne']> = await vi.waitFor(
+      (): ReturnType<HttpTestingController['expectOne']> => http.expectOne(ADMIN_GALLERY_URL),
+    );
     const form: FormData = request.request.body as FormData;
     expect(request.request.method).toBe('POST');
     expect(form.get('altText')).toBe('Skin fade');

@@ -1,0 +1,61 @@
+<div class="menu">
+  <div class="brand">
+    <img class="logo" src="assets/logo.png" width="480" height="212" alt="Thad the Barber" />
+    <span class="brand-tag">Admin</span>
+  </div>
+
+  <nav class="sections" aria-label="Admin sections">
+    @for (item of nav; track item.label) {
+      <a
+        class="menu-link"
+        [routerLink]="item.path"
+        routerLinkActive="is-current"
+        ariaCurrentWhenActive="page"
+        (click)="navigated.emit()"
+      >
+        <span class="menu-number" aria-hidden="true">{{ $index | number: '2.0-0' }}</span>{{ item.label }}
+      </a>
+    }
+  </nav>
+
+  <div class="planned">
+    <span class="eyebrow">Coming later</span>
+    @for (item of planned; track item.label) {
+      <span class="planned-row">{{ item.label }}<span class="soon">Soon</span></span>
+    }
+  </div>
+
+  <div class="who">
+    <div class="who-row">
+      <span class="avatar" aria-hidden="true">{{ initial() }}</span>
+      <div class="who-text">
+        @if (name(); as signedInName) {
+          <span class="who-name" data-testid="admin-name">{{ signedInName }}</span>
+        }
+        <span class="who-email" data-testid="admin-email">{{ email() }}</span>
+      </div>
+    </div>
+    @if (session(); as signedIn) {
+      <span class="until" data-testid="admin-until">
+        <span class="until-dot" aria-hidden="true"></span>Signed in until {{ signedIn.expiresAt | date: 'shortTime' }}
+      </span>
+    }
+    <div class="who-actions">
+      <a pButton size="small" severity="secondary" [outlined]="true" routerLink="/" (click)="navigated.emit()">
+        View site
+      </a>
+      <button
+        pButton
+        type="button"
+        size="small"
+        severity="danger"
+        [outlined]="true"
+        data-testid="admin-sign-out"
+        (click)="signOut()"
+      >
+        <i class="pi pi-sign-out" aria-hidden="true"></i>
+        Sign out
+      </button>
+    </div>
+  </div>
+</div>

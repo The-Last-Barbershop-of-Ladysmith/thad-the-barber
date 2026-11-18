@@ -30,6 +30,7 @@ import {
   filterAnnouncements,
   formatAnnouncementDates,
 } from '../../utils/announcement-list.utils';
+import { AdminPageHeader } from '../../../components/admin-page-header/admin-page-header';
 
 interface FilterTab {
   filter: AnnouncementFilter;
@@ -41,6 +42,7 @@ interface FilterTab {
 @Component({
   selector: 'app-admin-announcements-list',
   imports: [
+    AdminPageHeader,
     RouterLink,
     ButtonModule,
     MessageModule,

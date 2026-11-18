@@ -6,4 +6,6 @@ export interface AdminSessionDto {
   token: string;
   expiresAt: string;
   email: string;
+  /** What Google shows for the account; null when it gave none. */
+  name: string | null;
 }

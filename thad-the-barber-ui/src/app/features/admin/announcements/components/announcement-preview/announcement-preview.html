@@ -1,0 +1,60 @@
+<div
+  class="preview-viewport"
+  #viewport
+  [class.is-phone]="isPhone()"
+  [style.height.px]="scaledHeight()"
+>
+  <div
+    class="preview-canvas"
+    #canvas
+    [style.width.px]="isPhone() ? null : desktopWidth"
+    [style.transform]="isPhone() ? null : 'scale(' + scale() + ')'"
+  >
+    <div class="preview-frame">
+      <div class="preview" [class.has-image]="image()" data-testid="announcement-preview">
+        <div class="preview-copy">
+          <p class="eyebrow">
+            Shop news ·
+            @if (endDate() === '') {
+              Pick the last day
+            } @else if (startDate() === endDate()) {
+              {{ endDate() | date: 'MMM d' }}
+            } @else {
+              Thru {{ endDate() | date: 'MMM d' }}
+            }
+          </p>
+          <h3 class="preview-title">{{ title() || 'Your title shows here' }}</h3>
+          @if (bodyHtml()) {
+            <div
+              class="rich-text preview-body"
+              data-testid="preview-body"
+              [innerHTML]="bodyHtml()"
+            ></div>
+          }
+          @if (buttons().length > 0) {
+            <div class="preview-actions">
+              @for (button of buttons(); track $index) {
+                <span
+                  pButton
+                  aria-disabled="true"
+                  [severity]="buttonStyles[button.variant].severity"
+                  [variant]="buttonStyles[button.variant].variant"
+                >
+                  {{ button.label || 'Button' }}
+                </span>
+              }
+            </div>
+          }
+        </div>
+        @if (image(); as photo) {
+          <img
+            class="preview-media"
+            [class.is-left]="photo.position === imagePositions.Left"
+            [src]="photo.src"
+            [alt]="photo.altText"
+          />
+        }
+      </div>
+    </div>
+  </div>
+</div>

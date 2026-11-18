@@ -1,0 +1,70 @@
+// The desktop view is drawn at its real width and scaled from its top left corner; the phone view is a phone wide.
+.preview-viewport {
+  width: 100%;
+  overflow: hidden;
+
+  &.is-phone {
+    max-width: 24.375rem;
+    margin-inline: auto;
+  }
+
+  .preview-canvas {
+    transform-origin: top left;
+  }
+}
+
+// The layout follows the width of the preview itself (as on the site's slide), not the screen's, so it looks the same
+// whether it sits beside the form or below it.
+.preview-frame {
+  container-type: inline-size;
+}
+
+.preview {
+  display: grid;
+  gap: 1.5rem;
+
+  &.has-image {
+    @container (min-width: 34rem) {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      align-items: center;
+
+      .preview-media.is-left {
+        order: -1;
+      }
+    }
+  }
+
+  .preview-copy {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: flex-start;
+
+    .preview-title {
+      margin: 0;
+      font-family: var(--p-font-family-display);
+      font-size: clamp(1.5rem, 6cqi, 3.5rem);
+      line-height: 0.95;
+      font-weight: 800;
+      text-transform: uppercase;
+      overflow-wrap: anywhere;
+    }
+
+    .preview-body {
+      max-width: 34em;
+    }
+
+    .preview-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+  }
+
+  .preview-media {
+    width: 100%;
+    border-radius: 0.75rem;
+    object-fit: cover;
+  }
+}

@@ -1,81 +1,81 @@
-<header class="head">
-  <span class="eyebrow">Shop info</span>
-  <h1 class="h1" tabindex="-1" data-testid="admin-heading">The notice on the booking page</h1>
-  <p class="lead">
-    Say something important before someone books, such as a policy or a closure. Changes show on the
-    booking page on the next page load.
+<app-admin-page-header eyebrow="03 · Shop info" heading="The notice on the booking page">
+  <p pageLead class="lead">
+    Say something important before someone books, such as a policy or a closure. Changes show on the booking page on
+    the next page load.
   </p>
-</header>
+</app-admin-page-header>
 
-@if (problem(); as problemText) {
-  <p-message severity="error" data-testid="shop-error">{{ problemText }}</p-message>
-}
+<div class="admin-body">
+  @if (problem(); as problemText) {
+    <p-message severity="error" data-testid="shop-error">{{ problemText }}</p-message>
+  }
 
-@if (isLoading() && !isLoaded()) {
-  <p class="note" role="status" data-testid="shop-loading">Loading the shop info…</p>
-} @else if (isLoaded()) {
-  <form class="form" novalidate (submit)="$event.preventDefault(); save()">
-    <label class="check">
-      <input
-        type="checkbox"
-        data-testid="notice-shown"
-        [checked]="isNoticeShown()"
-        (change)="onToggle($event)"
-      />
-      Show the notice on the booking page
-    </label>
+  @if (isLoading() && !isLoaded()) {
+    <p class="note" role="status" data-testid="shop-loading">Loading the shop info…</p>
+  } @else if (isLoaded()) {
+    <form class="form" novalidate (submit)="$event.preventDefault(); save()">
+      <label class="check">
+        <input
+          type="checkbox"
+          data-testid="notice-shown"
+          [checked]="isNoticeShown()"
+          (change)="onToggle($event)"
+        />
+        Show the notice on the booking page
+      </label>
 
-    <div class="field">
-      <label for="shop-notice">Notice</label>
-      <textarea
-        id="shop-notice"
-        class="textarea"
-        rows="8"
-        aria-describedby="shop-notice-help"
-        [attr.maxlength]="maxLength"
-        [value]="notice()"
-        (input)="onNotice($event)"
-      ></textarea>
-      <span class="help" id="shop-notice-help">
-        {{ notice().length }} / {{ maxLength }}. A blank line starts a new paragraph. Leave it empty
-        to show the text from your Square location instead.
-      </span>
-      @if (!isNoticeShown()) {
-        <p-message severity="warn" variant="simple" size="small" data-testid="notice-hidden">
-          The notice is off, so nothing shows on the booking page.
-        </p-message>
+      <div class="field">
+        <label for="shop-notice">Notice</label>
+        <textarea
+          id="shop-notice"
+          class="textarea"
+          rows="8"
+          aria-describedby="shop-notice-help"
+          [attr.maxlength]="maxLength"
+          [value]="notice()"
+          (input)="onNotice($event)"
+        ></textarea>
+        <span class="help" id="shop-notice-help">
+          {{ notice().length }} / {{ maxLength }}. A blank line starts a new paragraph. Leave it empty
+          to show the text from your Square location instead.
+        </span>
+        @if (!isNoticeShown()) {
+          <p-message severity="warn" variant="simple" size="small" data-testid="notice-hidden">
+            The notice is off, so nothing shows on the booking page.
+          </p-message>
+        }
+      </div>
+
+      @if (notice().trim() === '' && squareNotice() !== '') {
+        <section class="square" aria-label="The text from Square" data-testid="square-notice">
+          <h2 class="square-title">Showing from your Square location</h2>
+          <p class="square-text">{{ squareNotice() }}</p>
+        </section>
+      } @else if (squareNotice() !== '') {
+        <button
+          pButton
+          type="button"
+          size="small"
+          severity="secondary"
+          [outlined]="true"
+          data-testid="use-square"
+          (click)="useSquareText()"
+        >
+          Use the text from Square instead
+        </button>
       }
-    </div>
 
-    @if (notice().trim() === '' && squareNotice() !== '') {
-      <section class="square" aria-label="The text from Square" data-testid="square-notice">
-        <h2 class="square-title">Showing from your Square location</h2>
-        <p class="square-text">{{ squareNotice() }}</p>
-      </section>
-    } @else if (squareNotice() !== '') {
-      <button
-        pButton
-        type="button"
-        size="small"
-        severity="secondary"
-        [outlined]="true"
-        data-testid="use-square"
-        (click)="useSquareText()"
-      >
-        Use the text from Square instead
-      </button>
-    }
+      @if (isConfirmed()) {
+        <p-message severity="success" data-testid="shop-saved"
+          >Saved. The booking page shows it on its next load.</p-message
+        >
+      }
 
-    @if (isConfirmed()) {
-      <p-message severity="success" data-testid="shop-saved"
-        >Saved. The booking page shows it on its next load.</p-message
-      >
-    }
-
-    <div class="actions">
-      <button pButton type="submit" data-testid="save-shop" [disabled]="isSaving()">
-        Save changes
-      </button>
-    </div>
-  </form>
-}
+      <div class="actions">
+        <button pButton type="submit" data-testid="save-shop" [disabled]="isSaving()">
+          Save changes
+        </button>
+      </div>
+    </form>
+  }
+</div>

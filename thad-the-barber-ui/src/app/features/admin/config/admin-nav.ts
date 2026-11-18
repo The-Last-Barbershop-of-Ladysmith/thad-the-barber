@@ -17,14 +17,14 @@ export const ADMIN_NAV: readonly AdminNavItem[] = [
     path: '/admin/announcements',
   },
   {
-    label: 'Shop info',
-    icon: 'pi-shop',
-    path: '/admin/shop',
-  },
-  {
     label: 'Gallery',
     icon: 'pi-images',
     path: '/admin/gallery',
+  },
+  {
+    label: 'Shop info',
+    icon: 'pi-shop',
+    path: '/admin/shop',
   },
 ];
 

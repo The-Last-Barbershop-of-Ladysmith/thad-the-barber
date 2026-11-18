@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot, RouterStateSnapshot, UrlTree, provideRouter } from '@angular/router';
-import { AdminTokenService } from '../../../core/services/admin-token.service';
+import { AdminSessionStorage } from '../services/admin-session-storage';
 import { adminGuard, signInGuard } from './admin.guard';
 
 describe(
@@ -10,12 +10,26 @@ describe(
     const state: RouterStateSnapshot = {} as RouterStateSnapshot;
 
     function signIn(): void {
-      TestBed.inject(AdminTokenService).set('admin-jwt', new Date(Date.now() + 60_000).toISOString());
+      TestBed.inject(AdminSessionStorage).start(
+        'admin-jwt',
+        new Date(Date.now() + 60_000).toISOString(),
+        'owner@example.test',
+        null,
+      );
     }
 
     function run(guard: typeof adminGuard): boolean | UrlTree {
       return TestBed.runInInjectionContext((): boolean | UrlTree => guard(route, state) as boolean | UrlTree);
     }
+
+    // The admin sign-in is kept in the tab's session storage, which outlives a test.
+
+    beforeEach((): void => {
+
+      sessionStorage.clear();
+
+    });
+
 
     beforeEach((): void => {
       TestBed.configureTestingModule({ providers: [provideRouter([])] });

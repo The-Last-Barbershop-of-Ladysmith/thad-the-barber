@@ -45,6 +45,15 @@ describe(
     let http: HttpTestingController;
     let recaptchaTokens: number;
 
+    // The admin sign-in is kept in the tab's session storage, which outlives a test.
+
+    beforeEach((): void => {
+
+      sessionStorage.clear();
+
+    });
+
+
     beforeEach((): void => {
       recaptchaTokens = 0;
       TestBed.configureTestingModule({
@@ -72,7 +81,7 @@ describe(
     it(
       'sends the admin token, with no visitor session fetched',
       (): void => {
-        TestBed.inject(AdminTokenService).set('admin-jwt', new Date(Date.now() + 60_000).toISOString());
+        TestBed.inject(AdminTokenService).set('admin-jwt', Date.now() + 60_000);
 
         TestBed.inject(HttpClient).get(meUrl).subscribe();
 

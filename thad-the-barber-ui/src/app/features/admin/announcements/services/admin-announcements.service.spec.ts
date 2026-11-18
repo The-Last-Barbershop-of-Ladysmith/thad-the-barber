@@ -36,7 +36,7 @@ describe('AdminAnnouncementsService', (): void => {
     request.flush([]);
   });
 
-  it('posts a photo for an announcement as a form', (): void => {
+  it('posts a photo for an announcement as a form', async (): Promise<void> => {
     const file: File = new File(
       ['x'],
       'sign.webp',
@@ -44,7 +44,9 @@ describe('AdminAnnouncementsService', (): void => {
     );
     service.uploadImage(file).subscribe();
 
-    const request: ReturnType<HttpTestingController['expectOne']> = http.expectOne(`${ADMIN_ANNOUNCEMENTS_URL}/images`);
+    const request: ReturnType<HttpTestingController['expectOne']> = await vi.waitFor(
+      (): ReturnType<HttpTestingController['expectOne']> => http.expectOne(`${ADMIN_ANNOUNCEMENTS_URL}/images`),
+    );
     expect(request.request.method).toBe('POST');
     expect((request.request.body as FormData).get('file')).toBeInstanceOf(File);
     request.flush({ fileName: 'a.webp', src: 'https://example.test/a.webp' });

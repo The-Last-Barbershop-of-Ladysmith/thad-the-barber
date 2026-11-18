@@ -10,6 +10,7 @@ import { AdminConfigDto } from '../dtos/admin-config.dto';
 import { AdminSessionDto } from '../dtos/admin-session.dto';
 import { AdminSignInError } from '../models/admin-sign-in-error.model';
 import { AdminService } from '../services/admin.service';
+import { AdminSessionStorage } from '../services/admin-session-storage';
 import * as AdminActions from './admin.actions';
 import { leaveAdmin, loadAdminConfig, openOverviewAfterSignIn, signInToAdmin } from './admin.effects';
 
@@ -20,6 +21,7 @@ describe(
       token: 'admin-jwt',
       expiresAt: new Date(Date.now() + 30 * 60_000).toISOString(),
       email: 'owner@example.com',
+      name: 'Q. Testperson',
     };
     let actions: Subject<Action>;
     let adminService: {
@@ -27,6 +29,15 @@ describe(
       signIn: (idToken: string) => Observable<AdminSessionDto>;
     };
     let navigations: string[];
+
+    // The admin sign-in is kept in the tab's session storage, which outlives a test.
+
+    beforeEach((): void => {
+
+      sessionStorage.clear();
+
+    });
+
 
     beforeEach((): void => {
       actions = new Subject<Action>();
@@ -108,6 +119,7 @@ describe(
               AdminActions.AdminSignInRequestSuccess({
                 session: {
                   email: 'owner@example.com',
+                  name: 'Q. Testperson',
                   expiresAt: sessionDto.expiresAt,
                 },
               }),
@@ -143,6 +155,7 @@ describe(
               AdminActions.AdminSignInRequestSuccess({
                 session: {
                   email: 'owner@example.com',
+                  name: 'Q. Testperson',
                   expiresAt: sessionDto.expiresAt,
                 },
               }),
@@ -163,7 +176,12 @@ describe(
         ])(
           'drops the token and goes to the sign-in page on %s',
           (_name: string, action: Action): void => {
-            TestBed.inject(AdminTokenService).set('admin-jwt', sessionDto.expiresAt);
+            TestBed.inject(AdminSessionStorage).start(
+              'admin-jwt',
+              sessionDto.expiresAt,
+              'owner@example.test',
+              null,
+            );
 
             emitted(leaveAdmin, action);
 

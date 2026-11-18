@@ -73,4 +73,11 @@ export const adminReducer: ActionReducer<AdminState> = createReducer(
       signInError: AdminSignInError.SessionEnded,
     }),
   ),
+  on(
+    AdminActions.AdminSessionRestored,
+    (state: AdminState, { session }: { session: AdminSession; }): AdminState => ({
+      ...state,
+      session,
+    }),
+  ),
 );

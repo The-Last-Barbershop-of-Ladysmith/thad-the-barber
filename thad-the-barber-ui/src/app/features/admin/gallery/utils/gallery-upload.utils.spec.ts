@@ -31,7 +31,7 @@ describe('findUploadProblem', (): void => {
     expect(findUploadProblem(photo(''), 'Fade')).toBe(GalleryUploadProblem.NotAnImage);
   });
 
-  it('refuses a photo over 8 MB', (): void => {
+  it('refuses a photo over 25 MB', (): void => {
     expect(findUploadProblem(photo('image/png', MAX_PHOTO_BYTES), 'Fade')).toBeNull();
     expect(findUploadProblem(photo('image/png', MAX_PHOTO_BYTES + 1), 'Fade')).toBe(GalleryUploadProblem.TooBig);
   });

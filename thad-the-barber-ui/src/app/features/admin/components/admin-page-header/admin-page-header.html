@@ -1,0 +1,28 @@
+<header class="band">
+  <img
+    class="band-photo"
+    src="assets/keys/band.avif"
+    srcset="
+      assets/keys/band-960.avif 960w,
+      assets/keys/band-1440.avif 1440w,
+      assets/keys/band.avif 1920w
+    "
+    sizes="100vw"
+    alt=""
+    data-testid="admin-band-photo"
+  />
+  <div class="band-content">
+    <div class="band-text">
+      <ng-content select="[pageBack]" />
+      <div class="eyebrow-row">
+        <span class="teeth" aria-hidden="true"></span>
+        <span class="eyebrow">{{ eyebrow() }}</span>
+      </div>
+      <h1 class="admin-title" tabindex="-1" data-testid="admin-heading">{{ heading() }}</h1>
+      <ng-content select="[pageLead]" />
+    </div>
+    <div class="band-actions">
+      <ng-content select="[pageActions]" />
+    </div>
+  </div>
+</header>

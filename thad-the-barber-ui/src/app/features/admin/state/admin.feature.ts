@@ -9,11 +9,15 @@ import { AdminState } from './admin.state';
 export type AdminExtraSelectors = {
   selectIsSignedIn: MemoizedSelector<object, boolean>;
   selectEmail: MemoizedSelector<object, string>;
+  selectName: MemoizedSelector<object, string | null>;
 };
 
 export const adminFeatureKey: 'admin' = 'admin' as const;
 
-/** Registered with the admin routes, so the public site never loads it. Not saved: the token lives in memory only. */
+/**
+ * Registered with the admin routes, so the public site never loads it. Not saved: `AdminSessionStorage` keeps the
+ * sign-in and restores who is signed in after a reload.
+ */
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the Feature type.
 export const adminFeature = createFeature({
   name: adminFeatureKey,
@@ -26,6 +30,10 @@ export const adminFeature = createFeature({
     selectEmail: createSelector(
       selectSession,
       (session: AdminSession | null): string => session?.email ?? '',
+    ),
+    selectName: createSelector(
+      selectSession,
+      (session: AdminSession | null): string | null => session?.name ?? null,
     ),
   }),
 });
