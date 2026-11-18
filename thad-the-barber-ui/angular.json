@@ -47,7 +47,14 @@
           },
           "configurations": {
             "production": {
-              "optimization": true,
+              "optimization": {
+                "scripts": true,
+                "styles": {
+                  "minify": true,
+                  "inlineCritical": false
+                },
+                "fonts": true
+              },
               "extractLicenses": true,
               "sourceMap": false,
               "outputHashing": "all",
@@ -110,7 +117,14 @@
               ]
             },
             "test": {
-              "optimization": true,
+              "optimization": {
+                "scripts": true,
+                "styles": {
+                  "minify": true,
+                  "inlineCritical": false
+                },
+                "fonts": true
+              },
               "extractLicenses": true,
               "sourceMap": false,
               "outputHashing": "all",
