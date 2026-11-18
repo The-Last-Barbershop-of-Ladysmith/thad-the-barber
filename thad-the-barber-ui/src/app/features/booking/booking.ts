@@ -129,8 +129,7 @@ export class Booking implements LeaveConfirmable {
       nonNullable: true,
       validators: PHONE_VALIDATORS,
     }),
-    // Required and unticked at first: the customer opts in to the confirmation and reminder texts by ticking it.
-    hasTextConsent: new FormControl(false, {
+    hasTextConsent: new FormControl(true, {
       nonNullable: true,
       validators: Validators.requiredTrue,
     }),
