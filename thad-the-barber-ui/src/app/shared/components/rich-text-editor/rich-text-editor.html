@@ -1,0 +1,71 @@
+<div class="rich-text-editor">
+  <div class="toolbar" role="toolbar" aria-label="Formatting">
+    @for (group of toolGroups; track $index) {
+      <div class="tool-group" role="group">
+        @for (tool of group; track tool.id) {
+          <button
+            pButton
+            type="button"
+            size="small"
+            severity="secondary"
+            [text]="true"
+            class="tool"
+            [class]="'tool-' + tool.id"
+            [attr.aria-label]="tool.label"
+            [attr.title]="tool.label"
+            [attr.data-testid]="'format-' + tool.id"
+            [attr.aria-pressed]="tool.isAction ? null : activeTools().has(tool.id)"
+            [disabled]="disabledTools().has(tool.id)"
+            (click)="useTool(tool.id)"
+          >
+            @if (tool.icon) {
+              <i class="pi" [class]="tool.icon" [class.mirrored]="tool.isMirrored" aria-hidden="true"></i>
+            } @else {
+              <span class="glyph" aria-hidden="true">{{ tool.glyph }}</span>
+            }
+          </button>
+        }
+      </div>
+    }
+  </div>
+
+  @if (isEditingLink()) {
+    <div class="link-panel" role="group" aria-label="Link address">
+      <input
+        pInputText
+        #linkInput
+        class="link-input"
+        aria-label="Link address"
+        placeholder="https://… or /book"
+        maxlength="500"
+        data-testid="link-url"
+        [value]="linkUrl()"
+        (input)="onLinkInput($event)"
+        (keydown.enter)="$event.preventDefault(); applyLink()"
+        (keydown.escape)="closeLink()"
+      />
+      <button pButton type="button" size="small" data-testid="link-apply" (click)="applyLink()">Apply</button>
+      @if (isLinkOn()) {
+        <button
+          pButton
+          type="button"
+          size="small"
+          severity="danger"
+          [outlined]="true"
+          data-testid="link-remove"
+          (click)="removeLink()"
+        >
+          Remove link
+        </button>
+      }
+      <button pButton type="button" size="small" severity="secondary" [text]="true" (click)="closeLink()">
+        Cancel
+      </button>
+    </div>
+  }
+  @if (linkProblem(); as problemText) {
+    <p class="link-problem" role="alert" data-testid="link-problem">{{ problemText }}</p>
+  }
+
+  <div class="surface" #surface></div>
+</div>
