@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 var csp = createRequire(import.meta.url)('../lib/content-security-policy');
 var sources = {
-  'connect-src': ['https://api.example.com', 'https://centralus-2.in.applicationinsights.azure.com'],
+  'connect-src': ['https://api.example.com', 'https://eastus-8.in.applicationinsights.azure.com'],
   'img-src': ['https://media.example.com'],
 };
 
@@ -40,7 +40,7 @@ describe('content security policy', function() {
     expect(directive(csp.contentSecurityPolicy('abc', sources), 'connect-src')).toEqual([
       "'self'",
       'https://api.example.com',
-      'https://centralus-2.in.applicationinsights.azure.com',
+      'https://eastus-8.in.applicationinsights.azure.com',
       'https://www.google.com/recaptcha/',
     ]);
   });

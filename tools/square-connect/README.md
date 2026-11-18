@@ -8,7 +8,7 @@ Run it again only if the seller disconnects the app in Square, the scopes change
 
 1. `Square--ApplicationSecret` is in the environment's vault (`infra/scripts/Set-TtbSecrets.ps1 -Environment dev -Name Square--ApplicationSecret`).
 2. The API's `appsettings.{Environment}.json` has `Square:ApplicationId` (and, outside prod, the sandbox `Square:BaseUrl`). The script reads the same files, so they can't disagree.
-3. The Square app's **Redirect URL** (Developer Console → the app → OAuth, sandbox or production tab) is a page on that environment's site, for example `https://as-ttb-ui-dev-centralus.azurewebsites.net/square/connected`. Square requires HTTPS, even in the sandbox. The page itself doesn't matter (it's the site's 404); you only copy its URL.
+3. The Square app's **Redirect URL** (Developer Console → the app → OAuth, sandbox or production tab) is a page on that environment's site, for example `https://as-ttb-ui-dev-eastus.azurewebsites.net/square/connected`. Square requires HTTPS, even in the sandbox. The page itself doesn't matter (it's the site's 404); you only copy its URL.
 
 ## Run it
 

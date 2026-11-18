@@ -10,9 +10,9 @@ public sealed class KeyVaultSetupTests
     [Fact]
     public void VaultNameBecomesItsUri()
     {
-        Uri? uri = KeyVaultSetup.GetVaultUri(Configuration("kv-ttb-dev-centralus"));
+        Uri? uri = KeyVaultSetup.GetVaultUri(Configuration("kv-ttb-dev-eastus"));
 
-        Assert.Equal(new Uri("https://kv-ttb-dev-centralus.vault.azure.net/"), uri);
+        Assert.Equal(new Uri("https://kv-ttb-dev-eastus.vault.azure.net/"), uri);
     }
 
     [Theory]
@@ -24,8 +24,8 @@ public sealed class KeyVaultSetupTests
     }
 
     [Theory]
-    [InlineData("Development", "kv-ttb-dev-centralus")]
-    [InlineData("Test", "kv-ttb-test-centralus")]
+    [InlineData("Development", "kv-ttb-dev-eastus")]
+    [InlineData("Test", "kv-ttb-test-eastus")]
     public void EachAzureEnvironmentNamesItsVault(string environment, string expected)
     {
         Assert.Equal(expected, AppSettings(environment)["KeyVault:Name"]);
