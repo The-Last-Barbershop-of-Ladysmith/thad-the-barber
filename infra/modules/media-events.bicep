@@ -3,7 +3,7 @@
 param envName string
 param topicName string
 
-@description('Origin of the environment\'s API, e.g. https://as-ttb-api-dev-centralus.azurewebsites.net.')
+@description('Origin of the environment\'s API, e.g. https://as-ttb-api-dev-eastus.azurewebsites.net.')
 param apiUrl string
 
 @secure()

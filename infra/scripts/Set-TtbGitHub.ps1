@@ -27,7 +27,7 @@ param(
     [string] $Repo = 'The-Last-Barbershop-of-Ladysmith/thad-the-barber',
 
     # Region of the nonprod resources (the last part of their names).
-    [string] $Location = 'centralus',
+    [string] $Location = 'eastus',
 
     # GitHub login that must approve production deploys. Defaults to you.
     [string] $Reviewer

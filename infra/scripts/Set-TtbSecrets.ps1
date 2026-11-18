@@ -28,18 +28,14 @@ param(
     # Set only these secrets instead of prompting for all of them.
     [string[]] $Name,
 
-    # Region in the vault name (kv-ttb-<env>-<region>). Defaults to centralus for dev/test, eastus for prod.
-    [string] $Location,
+    # Region in the vault name (kv-ttb-<env>-<region>). Defaults to eastus.
+    [string] $Location = 'eastus',
 
     # Create the missing random keys (ManageLink--HmacKey, MediaWebhook--Key) instead of prompting.
     [switch] $Generate
 )
 
 $ErrorActionPreference = 'Stop'
-
-if (-not $Location) {
-    $Location = if ($Environment -eq 'prod') { 'eastus' } else { 'centralus' }
-}
 
 # Key Vault names map to .NET configuration keys ('--' becomes ':').
 $secrets = [ordered]@{
