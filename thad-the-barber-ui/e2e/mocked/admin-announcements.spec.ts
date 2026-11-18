@@ -1,8 +1,8 @@
 import { Page, Route } from '@playwright/test';
-import { AdminAnnouncementDto } from '../../src/app/features/admin-announcements/dtos/admin-announcement.dto';
+import { AdminAnnouncementDto } from '../../src/app/features/admin/announcements/dtos/admin-announcement.dto';
 import {
   AdminAnnouncementStatus,
-} from '../../src/app/features/admin-announcements/models/admin-announcement-status.model';
+} from '../../src/app/features/admin/announcements/models/admin-announcement-status.model';
 import {
   ADMIN_ANNOUNCEMENTS_URL,
   ADMIN_SESSION_URL,

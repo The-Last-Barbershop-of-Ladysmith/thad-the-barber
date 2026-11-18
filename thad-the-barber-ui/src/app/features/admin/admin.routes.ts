@@ -48,17 +48,17 @@ export const ADMIN_ROUTES: Routes = [
         children: [
           {
             path: 'announcements',
-            loadChildren: (): Promise<Routes> => import('../admin-announcements/admin-announcements.routes')
+            loadChildren: (): Promise<Routes> => import('./announcements/admin-announcements.routes')
               .then((module: { ADMIN_ANNOUNCEMENTS_ROUTES: Routes; }): Routes => module.ADMIN_ANNOUNCEMENTS_ROUTES),
           },
           {
             path: 'shop',
-            loadChildren: (): Promise<Routes> => import('../admin-shop/admin-shop.routes')
+            loadChildren: (): Promise<Routes> => import('./shop/admin-shop.routes')
               .then((module: { ADMIN_SHOP_ROUTES: Routes; }): Routes => module.ADMIN_SHOP_ROUTES),
           },
           {
             path: 'gallery',
-            loadChildren: (): Promise<Routes> => import('../admin-gallery/admin-gallery.routes')
+            loadChildren: (): Promise<Routes> => import('./gallery/admin-gallery.routes')
               .then((module: { ADMIN_GALLERY_ROUTES: Routes; }): Routes => module.ADMIN_GALLERY_ROUTES),
           },
           {

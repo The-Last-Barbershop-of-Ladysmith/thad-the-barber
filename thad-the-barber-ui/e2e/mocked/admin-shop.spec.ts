@@ -1,5 +1,5 @@
 import { Page, Route } from '@playwright/test';
-import { AdminShopInfoDto } from '../../src/app/features/admin-shop/dtos/admin-shop-info.dto';
+import { AdminShopInfoDto } from '../../src/app/features/admin/shop/dtos/admin-shop-info.dto';
 import {
   ADMIN_SESSION_URL,
   ADMIN_SHOP_URL,

@@ -1,16 +1,16 @@
 import { Page, Route } from '@playwright/test';
 import { AdminSessionDto } from '../../src/app/features/admin/dtos/admin-session.dto';
-import { AdminGalleryPhotoDto } from '../../src/app/features/admin-gallery/dtos/admin-gallery-photo.dto';
-import { AdminShopInfoDto } from '../../src/app/features/admin-shop/dtos/admin-shop-info.dto';
-import { ShopInfoSaveRequestDto } from '../../src/app/features/admin-shop/dtos/shop-info-save-request.dto';
-import { AdminAnnouncementDto } from '../../src/app/features/admin-announcements/dtos/admin-announcement.dto';
+import { AdminGalleryPhotoDto } from '../../src/app/features/admin/gallery/dtos/admin-gallery-photo.dto';
+import { AdminShopInfoDto } from '../../src/app/features/admin/shop/dtos/admin-shop-info.dto';
+import { ShopInfoSaveRequestDto } from '../../src/app/features/admin/shop/dtos/shop-info-save-request.dto';
+import { AdminAnnouncementDto } from '../../src/app/features/admin/announcements/dtos/admin-announcement.dto';
 import {
   AnnouncementInputDto,
   AnnouncementsSaveRequestDto,
-} from '../../src/app/features/admin-announcements/dtos/announcements-save-request.dto';
+} from '../../src/app/features/admin/announcements/dtos/announcements-save-request.dto';
 import {
   AdminAnnouncementStatus,
-} from '../../src/app/features/admin-announcements/models/admin-announcement-status.model';
+} from '../../src/app/features/admin/announcements/models/admin-announcement-status.model';
 import { servedEnvironment } from './served-environment';
 
 export const ADMIN_CONFIG_URL: string = `${servedEnvironment.apiBaseUrl}/admin/config`;
@@ -83,14 +83,17 @@ export const ADMIN_ANNOUNCEMENTS_URL: string = `${servedEnvironment.apiBaseUrl}/
 
 /** The announcements the mocked admin API holds, and every list the page saved (`PUT`). */
 export interface MockedAnnouncements {
-  items: AdminAnnouncementDto[];
+  announcements: AdminAnnouncementDto[];
   saves: AnnouncementInputDto[][];
 }
 
 /** Stands in for `GET` and `PUT /api/admin/announcements`: a save replaces the list, and every item then shows. */
-export async function mockAdminAnnouncements(page: Page, items: AdminAnnouncementDto[]): Promise<MockedAnnouncements> {
+export async function mockAdminAnnouncements(
+  page: Page,
+  announcements: AdminAnnouncementDto[],
+): Promise<MockedAnnouncements> {
   const mocked: MockedAnnouncements = {
-    items,
+    announcements,
     saves: [],
   };
   await page.route(
@@ -99,7 +102,7 @@ export async function mockAdminAnnouncements(page: Page, items: AdminAnnouncemen
       if (route.request().method() === 'PUT') {
         const saved: AnnouncementInputDto[] = (route.request().postDataJSON() as AnnouncementsSaveRequestDto).items;
         mocked.saves.push(saved);
-        mocked.items = saved.map((input: AnnouncementInputDto): AdminAnnouncementDto => ({
+        mocked.announcements = saved.map((input: AnnouncementInputDto): AdminAnnouncementDto => ({
           ...input,
           image: input.image === null
             ? null
@@ -110,7 +113,7 @@ export async function mockAdminAnnouncements(page: Page, items: AdminAnnouncemen
           status: AdminAnnouncementStatus.Showing,
         }));
       }
-      await route.fulfill({ json: mocked.items });
+      await route.fulfill({ json: mocked.announcements });
     },
   );
   return mocked;
