@@ -1,3 +1,4 @@
+import { inject, provideEnvironmentInitializer } from '@angular/core';
 import { Routes } from '@angular/router';
 import { provideEffects } from '@ngrx/effects';
 import { provideState } from '@ngrx/store';
@@ -5,6 +6,7 @@ import { RouteSeo } from '../../shared/models/route-seo.model';
 import { AdminShell } from './components/admin-shell/admin-shell';
 import { adminGuard, signInGuard } from './guards/admin.guard';
 import { Overview } from './pages/overview/overview';
+import { AdminSessionStorage } from './services/admin-session-storage';
 import { SignIn } from './pages/sign-in/sign-in';
 import * as adminEffects from './state/admin.effects';
 import { adminFeature } from './state/admin.feature';
@@ -30,6 +32,10 @@ export const ADMIN_ROUTES: Routes = [
   {
     path: '',
     providers: [
+      // Before any admin page asks for the token, so a sign-in kept in the tab is picked up first.
+      provideEnvironmentInitializer((): void => {
+        inject(AdminSessionStorage);
+      }),
       provideState(adminFeature),
       provideEffects(adminEffects),
     ],

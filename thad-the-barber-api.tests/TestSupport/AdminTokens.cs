@@ -13,13 +13,19 @@ public static class AdminTokens
         SecurityKey key,
         string? role = AdminTokenIssuer.AdminRole,
         string audience = AdminTokenIssuer.Audience,
-        DateTime? expires = null)
+        DateTime? expires = null,
+        string? name = null)
     {
         DateTime expiresAt = expires ?? DateTime.UtcNow.AddMinutes(30);
         List<Claim> claims = [new Claim(JwtRegisteredClaimNames.Sub, "google-subject-1"), new Claim("email", AdminHarness.AllowedEmail)];
         if (role is not null)
         {
             claims.Add(new Claim(AdminTokenIssuer.RoleClaim, role));
+        }
+
+        if (name is not null)
+        {
+            claims.Add(new Claim("name", name));
         }
 
         return new JsonWebTokenHandler().CreateToken(new SecurityTokenDescriptor

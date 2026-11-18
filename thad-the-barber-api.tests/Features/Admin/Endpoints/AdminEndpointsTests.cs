@@ -19,18 +19,20 @@ public sealed class AdminEndpointsTests
         using ApiFactory api = new();
         using HttpClient client = api.CreateClient();
 
-        using HttpResponseMessage signIn = await SignInAsync(client, GoogleIdTokens.Create(api.GoogleKeys.Key));
+        using HttpResponseMessage signIn = await SignInAsync(client, GoogleIdTokens.Create(api.GoogleKeys.Key, name: AdminHarness.AllowedName));
 
         Assert.Equal(HttpStatusCode.OK, signIn.StatusCode);
         Assert.True(signIn.Headers.CacheControl?.NoStore);
         JsonElement session = await signIn.Content.ReadFromJsonAsync<JsonElement>(Cancellation);
         Assert.Equal(AdminHarness.AllowedEmail, session.GetProperty("email").GetString());
+        Assert.Equal(AdminHarness.AllowedName, session.GetProperty("name").GetString());
         Assert.True(session.GetProperty("expiresAt").GetDateTimeOffset() > DateTimeOffset.UtcNow);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", session.GetProperty("token").GetString());
         using HttpResponseMessage me = await client.GetAsync("/api/admin/me", Cancellation);
         Assert.Equal(HttpStatusCode.OK, me.StatusCode);
         JsonElement profile = await me.Content.ReadFromJsonAsync<JsonElement>(Cancellation);
         Assert.Equal(AdminHarness.AllowedEmail, profile.GetProperty("email").GetString());
+        Assert.Equal(AdminHarness.AllowedName, profile.GetProperty("name").GetString());
     }
 
     [Fact]

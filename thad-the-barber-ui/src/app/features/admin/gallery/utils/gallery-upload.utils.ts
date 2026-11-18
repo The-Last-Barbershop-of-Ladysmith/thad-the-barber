@@ -1,7 +1,7 @@
 import { GalleryUploadProblem } from '../models/gallery-upload-problem.model';
 
 /** The largest photo the API accepts, in bytes. */
-export const MAX_PHOTO_BYTES: number = 8 * 1024 * 1024;
+export const MAX_PHOTO_BYTES: number = 25 * 1024 * 1024;
 
 /** The longest description the API accepts. */
 export const MAX_ALT_TEXT_LENGTH: number = 100;

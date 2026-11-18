@@ -210,6 +210,25 @@
     padding-left: 1.25em;
     list-style: decimal;
   }
+  & h2,
+  & h3 {
+    font-family: var(--p-font-family-display);
+    font-weight: 800;
+    line-height: 1.05;
+    text-transform: uppercase;
+  }
+  & h2 {
+    font-size: 1.1em;
+  }
+  & mark {
+    background: var(--p-primary-300);
+    color: var(--p-surface-950);
+  }
+  & blockquote {
+    padding-left: 1em;
+    border-left: 3px solid var(--p-primary-color);
+    color: var(--p-surface-100);
+  }
 }
 
 /* A narrow reading column of titled sections split by hairlines (privacy, accessibility) */

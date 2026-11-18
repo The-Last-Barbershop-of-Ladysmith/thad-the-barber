@@ -1,8 +1,13 @@
+<app-admin-styles />
 <div class="sign-in">
   <section class="intro" aria-label="About the admin area">
+    <picture class="backdrop" aria-hidden="true">
+      <source media="(min-width: 48rem)" srcset="assets/backdrop/desktop/keys/k6.avif" />
+      <img class="photo" src="assets/backdrop/phone/keys/k6.avif" alt="" fetchpriority="high" />
+    </picture>
     <span class="brand"><span class="brand-name">THAD</span><span class="brand-tag">Admin</span></span>
     <div class="pitch">
-      <h1 class="h1" tabindex="-1">Keep the site fresh.</h1>
+      <h1 class="admin-title" tabindex="-1">Keep the site fresh.</h1>
       <p class="pitch-text">Post announcements and manage the gallery. Bookings stay in Square.</p>
     </div>
     <span class="fine">Only the shop owner’s Google account can sign in here.</span>
@@ -10,7 +15,7 @@
 
   <section class="card" aria-labelledby="sign-in-heading">
     <span class="eyebrow">Sign in</span>
-    <h2 id="sign-in-heading" class="title">Manage the site</h2>
+    <h2 id="sign-in-heading" class="admin-title">Manage the site</h2>
 
     @if (message(); as text) {
       <p-message
@@ -25,6 +30,12 @@
 
     @if (isButtonShown()) {
       <div class="google-button" #googleButton data-testid="google-button"></div>
+    }
+    @if (isLoadingButton()) {
+      <div class="google-button" role="status" data-testid="admin-sign-in-loading">
+        <p-skeleton width="100%" height="2.5rem" borderRadius="4px" aria-hidden="true" />
+        <span class="sr-only">Getting Google sign-in ready…</span>
+      </div>
     }
     @if (isSigningIn()) {
       <p class="status" role="status" data-testid="admin-signing-in">Signing you in…</p>

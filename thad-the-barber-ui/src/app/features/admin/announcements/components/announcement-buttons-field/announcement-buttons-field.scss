@@ -1,0 +1,31 @@
+// The host is a plain inline element, so the stack is this wrapper.
+.buttons-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.button-row {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.875rem;
+  border: 1px solid var(--p-brand-divider);
+  border-radius: 0.75rem;
+  background: var(--p-surface-950);
+
+  .row-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+}
+
+.help {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--p-text-muted-color);
+}
+
+.add {
+  align-self: flex-start;
+}

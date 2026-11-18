@@ -1,4 +1,4 @@
-import { Page, Route } from '@playwright/test';
+import { Locator, Page, Route } from '@playwright/test';
 import { AdminAnnouncementDto } from '../../src/app/features/admin/announcements/dtos/admin-announcement.dto';
 import {
   AdminAnnouncementStatus,
@@ -11,6 +11,7 @@ import {
   fulfillProblem,
   mockAdminAnnouncements,
   mockAnnouncementImageUpload,
+  goToAdminSection,
   mockGoogleSignIn,
 } from '../support/admin';
 import { expectNoA11yViolations } from '../support/axe';
@@ -45,7 +46,7 @@ async function signInAndOpenList(page: Page): Promise<void> {
   await page.goto('/admin');
   await page.locator('#google-stub-button').click();
   await expect(page).toHaveURL(/\/admin\/overview$/);
-  await page.getByRole('navigation', { name: 'Admin sections' }).getByRole('link', { name: 'Announcements' }).click();
+  await goToAdminSection(page, 'Announcements');
   await expect(page).toHaveURL(/\/admin\/announcements$/);
 }
 
@@ -76,14 +77,81 @@ test.describe(
         await expect(page.getByRole('heading', { level: 1, name: 'New announcement' })).toBeVisible();
         await expectNoA11yViolations(page);
         await page.getByLabel('Title').fill('Open late Fridays');
-        await page.getByLabel('Message').fill('We are open until **8 PM** on Fridays.');
+        await page.getByRole('textbox', { name: 'Message' }).fill('We are open until 8 PM on Fridays.');
+        await page.keyboard.press('Control+A');
+        await page.getByTestId('format-bold').click();
+        await expect(page.getByTestId('preview-body').locator('strong')).toHaveText('We are open until 8 PM on Fridays.');
         await page.getByTestId('save-announcement').click();
 
         await expect(page).toHaveURL(/\/admin\/announcements$/);
         await expect(page.getByTestId('announcement-item')).toHaveCount(2);
         expect(mocked.saves).toHaveLength(1);
         expect(mocked.saves[0]?.[1]?.title).toBe('Open late Fridays');
-        expect(mocked.saves[0]?.[1]?.bodyHtml).toBe('<p>We are open until <strong>8 PM</strong> on Fridays.</p>');
+        expect(mocked.saves[0]?.[1]?.bodyHtml).toBe('<p><strong>We are open until 8 PM on Fridays.</strong></p>');
+      },
+    );
+
+    test(
+      'makes selected words a link, and refuses a link the site does not accept',
+      async ({ page }: { page: Page; }): Promise<void> => {
+        const mocked: MockedAnnouncements = await mockAdminAnnouncements(page, []);
+        await signInAndOpenList(page);
+        await page.getByTestId('new-announcement').click();
+        await page.getByLabel('Title').fill('Book now');
+        await page.getByRole('textbox', { name: 'Message' }).fill('Book your cut');
+
+        await page.getByTestId('format-link').click();
+        await expect(page.getByTestId('link-problem')).toBeVisible();
+
+        await page.getByRole('textbox', { name: 'Message' }).click();
+        await page.keyboard.press('Control+A');
+        await page.getByTestId('format-link').click();
+        await page.getByTestId('link-url').fill('javascript:alert(1)');
+        await page.getByTestId('link-apply').click();
+        await expect(page.getByTestId('link-problem')).toBeVisible();
+
+        await page.getByTestId('link-url').fill('/book');
+        await page.getByTestId('link-apply').click();
+        await expect(page.getByTestId('preview-body').locator('a')).toHaveAttribute('href', '/book');
+        await page.getByTestId('save-announcement').click();
+
+        await expect(page).toHaveURL(/\/admin\/announcements$/);
+        expect(mocked.saves[0]?.[0]?.bodyHtml).toBe('<p><a href="/book">Book your cut</a></p>');
+      },
+    );
+
+    test(
+      'makes bullet and numbered lists that show their markers, and saves them',
+      async ({ page }: { page: Page; }): Promise<void> => {
+        const mocked: MockedAnnouncements = await mockAdminAnnouncements(page, []);
+        await signInAndOpenList(page);
+        await page.getByTestId('new-announcement').click();
+        await page.getByLabel('Title').fill('Hot towel shaves');
+        const editor: Locator = page.getByRole('textbox', { name: 'Message' });
+        await editor.click();
+
+        await page.getByTestId('format-bulletList').click();
+        await expect(editor).toBeFocused();
+        await page.keyboard.type('Hot towel');
+        await page.keyboard.press('Enter');
+        await page.keyboard.type('Beard trim');
+        await page.keyboard.press('Enter');
+        await page.keyboard.press('Enter');
+        await page.getByTestId('format-numberedList').click();
+        await expect(editor).toBeFocused();
+        await page.keyboard.type('Pick a day');
+        await page.keyboard.press('Enter');
+        await page.keyboard.type('Pick a time');
+
+        await expect(editor.locator('ul')).toHaveCSS('list-style-type', 'disc');
+        await expect(editor.locator('ol')).toHaveCSS('list-style-type', 'decimal');
+        await expect(page.getByTestId('format-numberedList')).toHaveAttribute('aria-pressed', 'true');
+        await page.getByTestId('save-announcement').click();
+
+        await expect(page).toHaveURL(/\/admin\/announcements$/);
+        expect(mocked.saves[0]?.[0]?.bodyHtml).toBe(
+          '<ul><li><p>Hot towel</p></li><li><p>Beard trim</p></li></ul><ol><li><p>Pick a day</p></li><li><p>Pick a time</p></li></ol>',
+        );
       },
     );
 
@@ -133,7 +201,7 @@ test.describe(
         await page.getByTestId('new-announcement').click();
 
         await page.getByLabel('Title').fill('Big sale');
-        await page.getByLabel('Add a photo').setInputFiles({
+        await page.getByTestId('announcement-photo').locator('input[type="file"]').setInputFiles({
           name: 'sale sign.jpg',
           mimeType: 'image/jpeg',
           buffer: Buffer.from('not really a photo'),

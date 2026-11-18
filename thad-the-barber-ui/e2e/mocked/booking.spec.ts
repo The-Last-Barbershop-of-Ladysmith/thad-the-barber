@@ -97,6 +97,26 @@ test.describe(
     );
 
     test(
+      'keeps the step that opens in sight, under the header, on a short screen',
+      async ({ page }: { page: Page; }): Promise<void> => {
+        await page.setViewportSize({
+          width: 390,
+          height: 600,
+        });
+        await page.goto('/book');
+        await openDays(page).first().click();
+        const openTimes: Locator = page.getByTestId('time-list').locator('[role="button"]');
+        await openTimes.first().waitFor();
+
+        await openTimes.first().click();
+
+        const openStep: Locator = page.locator('.p-step-active .p-step-header');
+        await expect.poll(async (): Promise<number> => (await openStep.boundingBox())?.y ?? -1).toBeGreaterThan(100);
+        await expect.poll(async (): Promise<number> => (await openStep.boundingBox())?.y ?? -1).toBeLessThan(260);
+      },
+    );
+
+    test(
       'books the first open time with the session token and an E.164 phone',
       async ({ page }: { page: Page; }): Promise<void> => {
         const bookings: Request[] = [];
@@ -292,6 +312,8 @@ test.describe(
 
         const notice: Locator = page.getByTestId('booking-notice');
         await expect(notice).toHaveClass(/p-message-warn/);
+        // The confirm button sits below the notice, so the page has to bring the notice back into view.
+        await expect(notice).toBeInViewport();
         await expect(notice.getByTestId('notice-call')).toHaveAttribute('href', `tel:${TEST_SHOP.phone}`);
         await expect(notice.getByTestId('notice-text')).toHaveAttribute('href', `sms:${TEST_SHOP.phone}`);
         await expect(notice.getByTestId('notice-booking-site')).toHaveAttribute('href', TEST_SHOP.squareBookingSiteUrl ?? '');

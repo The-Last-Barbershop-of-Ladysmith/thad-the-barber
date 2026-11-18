@@ -23,7 +23,7 @@ export function toGalleryMessage(error: AdminGalleryError): string {
     case AdminGalleryError.Unavailable:
       return 'The gallery could not be reached. Nothing was changed. Try again in a minute.';
     case AdminGalleryError.InvalidImage:
-      return 'That file could not be used. Use a JPEG, PNG, WebP or AVIF photo under 8 MB, and describe it in words.';
+      return 'That file could not be used. Use a JPEG, PNG, WebP or AVIF photo under 25 MB, and describe it in words.';
     case AdminGalleryError.NotFound:
       return 'That photo was already gone, so it has been taken off this page.';
     case AdminGalleryError.Failed:
@@ -39,7 +39,7 @@ export function toUploadProblemMessage(problem: GalleryUploadProblem): string {
     case GalleryUploadProblem.NotAnImage:
       return 'Use a JPEG, PNG, WebP or AVIF photo.';
     case GalleryUploadProblem.TooBig:
-      return 'That photo is too big. Use one under 8 MB.';
+      return 'That photo is too big. Use one under 25 MB.';
     case GalleryUploadProblem.NoDescription:
       return 'Describe the photo in words, up to 100 characters, so everyone can enjoy it.';
   }

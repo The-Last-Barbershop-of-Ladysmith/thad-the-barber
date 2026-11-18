@@ -7,6 +7,7 @@ describe(
   (): void => {
     const session: AdminSession = {
       email: 'owner@example.com',
+      name: 'Q. Testperson',
       expiresAt: '2031-02-28T12:30:00Z',
     };
 
@@ -19,6 +20,7 @@ describe(
       (): void => {
         expect(adminFeature.selectIsSignedIn(stateOf(initialAdminState))).toBe(false);
         expect(adminFeature.selectEmail(stateOf(initialAdminState))).toBe('');
+        expect(adminFeature.selectName(stateOf(initialAdminState))).toBeNull();
       },
     );
 
@@ -32,6 +34,7 @@ describe(
 
         expect(adminFeature.selectIsSignedIn(signedIn)).toBe(true);
         expect(adminFeature.selectEmail(signedIn)).toBe('owner@example.com');
+        expect(adminFeature.selectName(signedIn)).toBe('Q. Testperson');
       },
     );
   },

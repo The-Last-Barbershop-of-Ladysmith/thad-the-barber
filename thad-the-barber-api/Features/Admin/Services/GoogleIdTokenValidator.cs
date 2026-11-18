@@ -60,6 +60,14 @@ public sealed class GoogleIdTokenValidator(IGoogleSigningKeys signingKeys, TimeP
             throw new InvalidIdTokenException("The Google ID token has no verified email.");
         }
 
-        return new GoogleIdentity(token.Subject, email);
+        string? name = token.TryGetPayloadValue("name", out string? displayName) && !string.IsNullOrWhiteSpace(displayName)
+            ? displayName.Trim()
+            : null;
+
+        return new GoogleIdentity(
+            token.Subject,
+            email,
+            name
+        );
     }
 }

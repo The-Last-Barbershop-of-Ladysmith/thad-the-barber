@@ -5,6 +5,7 @@ using ThadTheBarber.Api.Features.Gallery.Exceptions;
 using ThadTheBarber.Api.Features.Gallery.Models;
 using ThadTheBarber.Api.Features.Gallery.Services;
 using ThadTheBarber.Api.Infrastructure.Headers.Middleware;
+using ThadTheBarber.Api.Infrastructure.Storage.Middleware;
 using ThadTheBarber.Api.Infrastructure.Storage.Services;
 
 namespace ThadTheBarber.Api.Features.Gallery.Endpoints;
@@ -22,6 +23,7 @@ public static class AdminGalleryEndpoints
         // The admin token is a bearer header, not a cookie, so a form post can't be forged from another site.
         group.MapPost("/", UploadPhotoAsync)
             .DisableAntiforgery()
+            .AllowImageUpload()
             .WithName("UploadAdminGalleryPhoto")
             .NoStore();
         group.MapDelete("/{fileName}", DeletePhotoAsync)

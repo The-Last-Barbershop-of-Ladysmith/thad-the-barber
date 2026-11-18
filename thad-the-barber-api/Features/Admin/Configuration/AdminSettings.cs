@@ -18,7 +18,7 @@ public sealed class AdminSettings
     /// </summary>
     public List<string> AllowedEmails { get; set; } = [];
 
-    public TimeSpan Lifetime { get; set; } = TimeSpan.FromMinutes(30);
+    public TimeSpan Lifetime { get; set; } = TimeSpan.FromHours(4);
 
     public bool IsConfigured => !string.IsNullOrWhiteSpace(GoogleClientId) && AllowedEmails.Any(email => !string.IsNullOrWhiteSpace(email));
 }

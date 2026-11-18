@@ -11,6 +11,7 @@ export enum AdminActionTypes {
   AdminSignInRequestFailure = '[Admin API] Sign In Request Failed',
   AdminSignOut = '[Admin] Signed Out',
   AdminSessionEnded = '[Admin] Session Ended',
+  AdminSessionRestored = '[Admin] Session Restored',
 }
 
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
@@ -53,8 +54,15 @@ export const AdminSignOut = createAction(
   AdminActionTypes.AdminSignOut,
 );
 
-/** An admin call came back 401: the token expired, so the admin has to sign in again. */
+/** The token expired or the admin sat idle too long (or a call came back 401): they have to sign in again. */
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
 export const AdminSessionEnded = createAction(
   AdminActionTypes.AdminSessionEnded,
+);
+
+/** The page was reloaded with the sign-in still working in this tab, so the state learns who is signed in again. */
+// eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
+export const AdminSessionRestored = createAction(
+  AdminActionTypes.AdminSessionRestored,
+  props<{ session: AdminSession; }>(),
 );

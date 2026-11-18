@@ -1,29 +1,101 @@
-<header class="head">
-  <span class="eyebrow">Overview</span>
-  <h1 class="h1" tabindex="-1" data-testid="admin-heading">Welcome to the admin area</h1>
-  <p class="lead">
-    You are signed in. Announcements and the gallery are the first things you will manage here.
-  </p>
-</header>
+<app-admin-page-header eyebrow="Overview" [heading]="heading()">
+  <p pageLead class="lead" data-testid="overview-date">{{ today | date: 'EEEE, MMMM d' }}</p>
+</app-admin-page-header>
 
-<section class="cards" aria-label="Your tools">
-  <div class="card">
-    <h2 class="card-title">Announcements</h2>
-    <p class="card-text">Write, schedule and end the shop news that shows on the site.</p>
-    <a class="card-link" routerLink="/admin/announcements" data-testid="overview-announcements"
-      >Manage announcements</a
-    >
-  </div>
-  <div class="card">
-    <h2 class="card-title">Shop info</h2>
-    <p class="card-text">Edit the notice on the booking page, and choose whether it shows.</p>
-    <a class="card-link" routerLink="/admin/shop" data-testid="overview-shop">Edit shop info</a>
-  </div>
-  <div class="card">
-    <h2 class="card-title">Gallery</h2>
-    <p class="card-text">Add photos with a description, and delete the ones you no longer want.</p>
-    <a class="card-link" routerLink="/admin/gallery" data-testid="overview-gallery"
-      >Manage the gallery</a
-    >
-  </div>
-</section>
+<div class="admin-body">
+  <section class="tiles" aria-label="Your tools">
+    <article class="tile wide" aria-labelledby="tile-announcements">
+      <div class="tile-main">
+        <div class="tile-label"><span class="number" aria-hidden="true">01</span><span class="eyebrow">Announcements</span></div>
+        <h2 id="tile-announcements" class="tile-title">What’s new at the shop</h2>
+        @if (announcements() === undefined) {
+          <p-skeleton width="14rem" height="1.75rem" borderRadius="99px" />
+        } @else if (announcements() === null) {
+          <p class="note" data-testid="announcements-unavailable">Couldn’t load the announcements right now.</p>
+        } @else {
+          <div class="pills" data-testid="announcement-counts">
+            <span class="pill"><span class="dot" aria-hidden="true"></span>{{ showingCount() }} showing</span>
+            <span class="pill">{{ scheduledCount() }} scheduled</span>
+            <span class="pill muted">{{ endedCount() }} ended</span>
+          </div>
+          @if (nextToEnd(); as soonest) {
+            <p class="note">Next to end: <strong>{{ soonest.title }}</strong>, {{ nextToEndDate() }}.</p>
+          }
+        }
+        <div class="tile-actions">
+          <a pButton routerLink="/admin/announcements/new" data-testid="overview-new-announcement">
+            New announcement
+            <i class="pi pi-plus" aria-hidden="true"></i>
+          </a>
+          <a pButton severity="secondary" [outlined]="true" routerLink="/admin/announcements" data-testid="overview-announcements">
+            Manage all
+          </a>
+        </div>
+      </div>
+    </article>
+
+    <article class="tile" aria-labelledby="tile-gallery">
+      <div class="tile-main">
+        <div class="tile-label"><span class="number" aria-hidden="true">02</span><span class="eyebrow">Gallery</span></div>
+        <h2 id="tile-gallery" class="tile-title">The photos on the site</h2>
+        @if (photos() === undefined) {
+          <p-skeleton width="100%" height="4.5rem" borderRadius="10px" />
+        } @else if (photos() === null) {
+          <p class="note" data-testid="gallery-unavailable">Couldn’t load the gallery right now.</p>
+        } @else {
+          <div class="thumbs" data-testid="gallery-thumbs">
+            @for (photo of previewPhotos(); track photo.fileName) {
+              <img class="thumb" [src]="photo.src" alt="" loading="lazy" />
+            }
+            @if (morePhotoCount() > 0) {
+              <span class="thumb more">+{{ morePhotoCount() }}</span>
+            }
+          </div>
+          <p class="note">{{ photos()?.length }} {{ photos()?.length === 1 ? 'photo' : 'photos' }} on the site</p>
+        }
+        <div class="tile-actions">
+          <a pButton routerLink="/admin/gallery" data-testid="overview-gallery">
+            Add a photo
+            <i class="pi pi-plus" aria-hidden="true"></i>
+          </a>
+        </div>
+      </div>
+    </article>
+
+    <article class="tile" aria-labelledby="tile-shop">
+      <div class="tile-main">
+        <div class="tile-label"><span class="number" aria-hidden="true">03</span><span class="eyebrow">Shop info</span></div>
+        <h2 id="tile-shop" class="tile-title">The notice on the booking page</h2>
+        @if (shopInfo() === undefined) {
+          <p-skeleton width="100%" height="3.5rem" borderRadius="10px" />
+        } @else if (shopInfo() === null) {
+          <p class="note" data-testid="shop-unavailable">Couldn’t load the notice right now.</p>
+        } @else {
+          @if (noticeText(); as text) {
+            <p class="notice-text" data-testid="overview-notice">{{ text }}</p>
+          } @else {
+            <p class="note">No notice written yet.</p>
+          }
+          <span class="pill" data-testid="overview-notice-state">
+            <span class="dot" [class.off]="!shopInfo()?.isNoticeShown" aria-hidden="true"></span>
+            {{ shopInfo()?.isNoticeShown ? 'Showing on the booking page' : 'Hidden from the booking page' }}
+          </span>
+        }
+        <div class="tile-actions">
+          <a pButton severity="secondary" [outlined]="true" routerLink="/admin/shop" data-testid="overview-shop">Edit notice</a>
+        </div>
+      </div>
+    </article>
+
+    <article class="tile wide" aria-labelledby="tile-later">
+      <div class="tile-main">
+        <div class="tile-label"><span class="number" aria-hidden="true">04</span><span class="eyebrow" id="tile-later">Coming later</span></div>
+        <ul class="later">
+          <li><strong>Bookings</strong><span>See and move appointments.</span><span class="pill muted">Soon</span></li>
+          <li><strong>Customers</strong><span>Who comes back, and when.</span><span class="pill muted">Soon</span></li>
+          <li><strong>Reviews</strong><span>Reply to Google reviews.</span><span class="pill muted">Soon</span></li>
+        </ul>
+      </div>
+    </article>
+  </section>
+</div>

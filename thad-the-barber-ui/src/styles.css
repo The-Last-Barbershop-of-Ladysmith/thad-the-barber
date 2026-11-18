@@ -4,6 +4,10 @@
 @import "tailwindcss";
 @import "tailwindcss-primeui";
 @import "./app/theme/tailwind/theme.css";
+/* Words in the rich text toolbar's code ("italic", "underline") are names, not classes. */
+@source not "./app/shared/utils/rich-text-tools.utils.ts";
+@source not "./app/shared/models/rich-text-tool-id.model.ts";
+@source not "./app/shared/components/rich-text-editor";
 
 /* Google allows hiding the reCAPTCHA badge when its notice is shown: the footer carries it on every page. */
 .grecaptcha-badge {

@@ -11,7 +11,36 @@
     justify-content: space-between;
     gap: 2.5rem;
     padding: 3.5rem;
-    background: linear-gradient(160deg, var(--p-surface-950) 0%, var(--p-surface-900) 55%, var(--p-ink) 100%);
+    position: relative;
+    isolation: isolate;
+    background: var(--p-surface-950);
+
+    .backdrop {
+      position: absolute;
+      inset: 0;
+      z-index: -2;
+
+      .photo {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: 62% 50%;
+      }
+    }
+
+    // Darkens the photo toward the text; it clears toward the chair.
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background: linear-gradient(
+        160deg,
+        color-mix(in srgb, var(--p-surface-950) 88%, transparent) 0%,
+        color-mix(in srgb, var(--p-surface-950) 55%, transparent) 100%
+      );
+    }
 
     .brand {
       display: flex;
@@ -43,18 +72,6 @@
       flex-direction: column;
       gap: 1rem;
 
-      .h1 {
-        margin: 0;
-        font-family: var(--p-font-family-display);
-        font-size: 2.875rem;
-        font-weight: 800;
-        line-height: 1.05;
-
-        &:focus {
-          outline: none;
-        }
-      }
-
       .pitch-text {
         margin: 0;
         font-size: 1.0625rem;
@@ -77,22 +94,6 @@
     > * {
       width: 100%;
       max-width: 26rem;
-    }
-
-    .eyebrow {
-      font-size: 0.75rem;
-      font-weight: 700;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: var(--p-primary-color);
-    }
-
-    .title {
-      margin: 0;
-      font-family: var(--p-font-family-display);
-      font-size: 1.875rem;
-      font-weight: 800;
-      line-height: 1.1;
     }
 
     .google-button {

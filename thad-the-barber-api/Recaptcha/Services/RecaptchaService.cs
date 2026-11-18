@@ -15,11 +15,11 @@ public sealed class RecaptchaService(HttpClient http, IOptions<RecaptchaSettings
 {
     private const string ApiKeyHeader = "X-Goog-Api-Key";
 
-    public async Task<RecaptchaAssessment> AssessAsync(string token, string expectedAction, CancellationToken cancellationToken)
+    public async Task<RecaptchaAssessment> AssessAsync(string token, string expectedAction, string origin, CancellationToken cancellationToken)
     {
         try
         {
-            return await RequestAssessmentAsync(token, expectedAction, cancellationToken);
+            return await RequestAssessmentAsync(token, expectedAction, origin, cancellationToken);
         }
         catch (Exception exception) when (exception is HttpRequestException or JsonException
             || (exception is TaskCanceledException && !cancellationToken.IsCancellationRequested))
@@ -28,7 +28,7 @@ public sealed class RecaptchaService(HttpClient http, IOptions<RecaptchaSettings
         }
     }
 
-    private async Task<RecaptchaAssessment> RequestAssessmentAsync(string token, string expectedAction, CancellationToken cancellationToken)
+    private async Task<RecaptchaAssessment> RequestAssessmentAsync(string token, string expectedAction, string origin, CancellationToken cancellationToken)
     {
         RecaptchaSettings recaptcha = settings.Value;
         using HttpRequestMessage request = new(HttpMethod.Post, $"v1/projects/{Uri.EscapeDataString(recaptcha.ProjectId)}/assessments")
@@ -44,6 +44,7 @@ public sealed class RecaptchaService(HttpClient http, IOptions<RecaptchaSettings
             }),
         };
         request.Headers.Add(ApiKeyHeader, recaptcha.ApiKey);
+        request.Headers.Referrer = new Uri($"{origin}/");
 
         using HttpResponseMessage response = await http.SendAsync(request, cancellationToken);
         response.EnsureSuccessStatusCode();

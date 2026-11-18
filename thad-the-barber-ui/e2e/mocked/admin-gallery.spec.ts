@@ -8,6 +8,7 @@ import {
   adminSession,
   fulfillProblem,
   mockAdminGallery,
+  goToAdminSection,
   mockGoogleSignIn,
 } from '../support/admin';
 import { expectNoA11yViolations } from '../support/axe';
@@ -39,7 +40,7 @@ async function signInAndOpenGallery(page: Page): Promise<void> {
   await page.goto('/admin');
   await page.locator('#google-stub-button').click();
   await expect(page).toHaveURL(/\/admin\/overview$/);
-  await page.getByRole('navigation', { name: 'Admin sections' }).getByRole('link', { name: 'Gallery' }).click();
+  await goToAdminSection(page, 'Gallery');
   await expect(page).toHaveURL(/\/admin\/gallery$/);
 }
 
@@ -64,7 +65,7 @@ test.describe(
         const mocked: MockedGallery = await mockAdminGallery(page, [FADE]);
         await signInAndOpenGallery(page);
 
-        await page.getByLabel('Photo', { exact: true }).setInputFiles({
+        await page.getByTestId('gallery-file').locator('input[type="file"]').setInputFiles({
           name: 'cut.jpg',
           mimeType: 'image/jpeg',
           buffer: Buffer.from('not really a photo'),
@@ -85,7 +86,7 @@ test.describe(
         const mocked: MockedGallery = await mockAdminGallery(page, []);
         await signInAndOpenGallery(page);
 
-        await page.getByLabel('Photo', { exact: true }).setInputFiles({
+        await page.getByTestId('gallery-file').locator('input[type="file"]').setInputFiles({
           name: 'cut.jpg',
           mimeType: 'image/jpeg',
           buffer: Buffer.from('x'),

@@ -3,6 +3,7 @@ using ThadTheBarber.Api.Features.Admin.Endpoints;
 using ThadTheBarber.Api.Features.Announcements.Models;
 using ThadTheBarber.Api.Features.Announcements.Services;
 using ThadTheBarber.Api.Infrastructure.Headers.Middleware;
+using ThadTheBarber.Api.Infrastructure.Storage.Middleware;
 using ThadTheBarber.Api.Infrastructure.Storage.Services;
 
 namespace ThadTheBarber.Api.Features.Announcements.Endpoints;
@@ -23,6 +24,7 @@ public static class AdminAnnouncementsEndpoints
         // The admin token is a bearer header, not a cookie, so a form post can't be forged from another site.
         group.MapPost("/images", UploadImageAsync)
             .DisableAntiforgery()
+            .AllowImageUpload()
             .WithName("UploadAdminAnnouncementImage")
             .NoStore();
         return api;

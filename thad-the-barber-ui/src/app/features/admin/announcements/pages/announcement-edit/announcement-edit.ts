@@ -1,3 +1,4 @@
+import { DOCUMENT } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -10,15 +11,21 @@ import {
   inject,
   input,
   signal,
+  viewChild,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
+import { PhotoUpload } from '../../../../../shared/components/photo-upload/photo-upload';
+import { RichTextEditor } from '../../../../../shared/components/rich-text-editor/rich-text-editor';
 import { shopFeature } from '../../../../shop/state/shop.feature';
 import { toIsoDate, toIsoDateIn } from '../../../../../shared/utils/date.utils';
+import { isPhoneScreen } from '../../../../../shared/utils/screen.utils';
 import { AppState } from '../../../../../store/app.state';
+import { AnnouncementButtonsField } from '../../components/announcement-buttons-field/announcement-buttons-field';
+import { AnnouncementPreview } from '../../components/announcement-preview/announcement-preview';
 import { ANNOUNCEMENTS_PATH } from '../../config/announcements-paths';
 import {
   AdminAnnouncementButtonDto,
@@ -29,15 +36,12 @@ import { AdminAnnouncementImageUploadDto } from '../../dtos/admin-announcement-i
 import { AnnouncementInputDto } from '../../dtos/announcements-save-request.dto';
 import { ACCEPTED_PHOTO_TYPES, MAX_PHOTO_BYTES } from '../../../gallery/utils/gallery-upload.utils';
 import { AdminAnnouncementsError } from '../../models/admin-announcements-error.model';
-import { AnnouncementButtonVariant } from '../../models/announcement-button-variant.model';
 import { AnnouncementFormValue } from '../../models/announcement-form-value.model';
 import { AnnouncementImagePosition } from '../../models/announcement-image-position.model';
 import * as AdminAnnouncementsActions from '../../state/admin-announcements.actions';
 import { adminAnnouncementsFeature } from '../../state/admin-announcements.feature';
-import { hasUnsupportedMarkup } from '../../utils/announcement-body.utils';
 import {
-  MAX_BUTTONS,
-  isAllowedButtonLink,
+  isBadButton,
   isEndBeforeStart,
   toAnnouncementInput,
   toFormValue,
@@ -45,15 +49,21 @@ import {
 } from '../../utils/announcement-form.utils';
 import { removeAt, toInputs } from '../../utils/announcement-list.utils';
 import { toAnnouncementsMessage } from '../../utils/announcements-message.utils';
+import { AdminPageHeader } from '../../../components/admin-page-header/admin-page-header';
 
 /** Writes a new announcement, or edits (and can delete) the one at `index` in the saved list. */
 @Component({
   selector: 'app-admin-announcement-edit',
   imports: [
+    AdminPageHeader,
     RouterLink,
     ButtonModule,
     InputTextModule,
     MessageModule,
+    PhotoUpload,
+    RichTextEditor,
+    AnnouncementButtonsField,
+    AnnouncementPreview,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './announcement-edit.html',
@@ -64,10 +74,7 @@ export class AnnouncementEdit implements OnInit {
   readonly index: InputSignal<string | undefined> = input<string>();
 
   protected readonly listPath: string = ANNOUNCEMENTS_PATH;
-  protected readonly maxButtons: number = MAX_BUTTONS;
-  protected readonly accept: string = ACCEPTED_PHOTO_TYPES.join(',');
   protected readonly positions: AnnouncementImagePosition[] = Object.values(AnnouncementImagePosition);
-  protected readonly variants: AnnouncementButtonVariant[] = Object.values(AnnouncementButtonVariant);
 
   // The fields are signals read from native inputs, not Angular forms: the page's form code would otherwise land in the
   // initial bundle, which is nearly at its budget.
@@ -86,28 +93,36 @@ export class AnnouncementEdit implements OnInit {
 
   protected readonly submitted: WritableSignal<boolean> = signal<boolean>(false);
   protected readonly isConfirmingDelete: WritableSignal<boolean> = signal<boolean>(false);
+  /** A phone starts on the phone preview, which fits it, and a wide screen on the desktop one. */
+  protected readonly isPhonePreview: WritableSignal<boolean> = signal<boolean>(
+    isPhoneScreen(inject(DOCUMENT).defaultView),
+  );
+  protected readonly isConfirmingPhotoRemoval: WritableSignal<boolean> = signal<boolean>(false);
+  /** Whether the first day is picked, rather than the announcement starting today. */
+  protected readonly isScheduled: WritableSignal<boolean> = signal<boolean>(false);
   /** Why the chosen photo can't be sent, found before anything is sent. */
   protected readonly photoProblem: WritableSignal<string | null> = signal<string | null>(null);
-  protected readonly hasLostMarkup: WritableSignal<boolean> = signal<boolean>(false);
 
   private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
   private readonly announcements: Signal<AdminAnnouncementDto[]> = this.store.selectSignal(
     adminAnnouncementsFeature.selectAnnouncements,
   );
   private readonly timeZone: Signal<string | null> = this.store.selectSignal(shopFeature.selectTimeZone);
+  private readonly photoUpload: Signal<PhotoUpload | undefined> = viewChild<PhotoUpload>('photoUpload');
+  private readonly uploadedImage: Signal<AdminAnnouncementImageUploadDto | null> = this.store.selectSignal(
+    adminAnnouncementsFeature.selectUploadedImage,
+  );
+  private readonly error: Signal<AdminAnnouncementsError | null> = this.store.selectSignal(
+    adminAnnouncementsFeature.selectError,
+  );
+  private today: string = '';
   private isFormReady: boolean = false;
 
   protected readonly isLoaded: Signal<boolean> = this.store.selectSignal(adminAnnouncementsFeature.selectIsLoaded);
   protected readonly isUploadingImage: Signal<boolean> = this.store.selectSignal(
     adminAnnouncementsFeature.selectIsImageUploading,
   );
-  private readonly uploadedImage: Signal<AdminAnnouncementImageUploadDto | null> = this.store.selectSignal(
-    adminAnnouncementsFeature.selectUploadedImage,
-  );
   protected readonly isSaving: Signal<boolean> = this.store.selectSignal(adminAnnouncementsFeature.selectIsSaving);
-  private readonly error: Signal<AdminAnnouncementsError | null> = this.store.selectSignal(
-    adminAnnouncementsFeature.selectError,
-  );
 
   protected readonly problem: Signal<string | null> = computed((): string | null => {
     const error: AdminAnnouncementsError | null = this.error();
@@ -137,8 +152,19 @@ export class AnnouncementEdit implements OnInit {
   protected readonly isAltTextMissing: Signal<boolean> = computed((): boolean =>
     this.image() !== null && this.imageAltText().trim() === '');
 
-  protected readonly hasBadButton: Signal<boolean> = computed((): boolean =>
-    this.buttons().some((button: AdminAnnouncementButtonDto): boolean => this.isBadButton(button)));
+  /** The photo as the form has it now: the stored file with the description and side being edited. */
+  protected readonly previewImage: Signal<AdminAnnouncementImageDto | null> = computed(
+    (): AdminAnnouncementImageDto | null => {
+      const image: AdminAnnouncementImageDto | null = this.image();
+      return image === null
+        ? null
+        : {
+          ...image,
+          altText: this.imageAltText(),
+          position: this.imagePosition(),
+        };
+    },
+  );
 
   constructor() {
     // A photo that was stored becomes the announcement's photo; it has no description yet, which the form asks for.
@@ -171,66 +197,36 @@ export class AnnouncementEdit implements OnInit {
     field.set((event.target as HTMLInputElement).value);
   }
 
-  protected onButtonInput(
-    position: number,
-    field: 'label' | 'url',
-    event: Event,
-  ): void {
-    this.changeButton(position, { [field]: (event.target as HTMLInputElement).value });
+  protected showFromToday(): void {
+    this.isScheduled.set(false);
+    this.startDate.set(this.today);
   }
 
-  protected changeButton(position: number, change: Partial<AdminAnnouncementButtonDto>): void {
-    this.buttons.update((buttons: AdminAnnouncementButtonDto[]): AdminAnnouncementButtonDto[] =>
-      buttons.map((button: AdminAnnouncementButtonDto, place: number): AdminAnnouncementButtonDto =>
-        place === position ? { ...button, ...change } : button));
-  }
-
-  protected addButton(): void {
-    if (this.buttons().length < MAX_BUTTONS) {
-      this.buttons.update((buttons: AdminAnnouncementButtonDto[]): AdminAnnouncementButtonDto[] => [
-        ...buttons,
-        {
-          label: '',
-          url: '',
-          variant: AnnouncementButtonVariant.Primary,
-        },
-      ]);
-    }
-  }
-
-  protected removeButton(position: number): void {
-    this.buttons.update((buttons: AdminAnnouncementButtonDto[]): AdminAnnouncementButtonDto[] =>
-      removeAt(buttons, position));
-  }
-
-  protected onPhoto(event: Event): void {
-    const input: HTMLInputElement = event.target as HTMLInputElement;
-    const file: File | null = input.files?.item(0) ?? null;
-    input.value = '';
+  protected onPhoto(file: File | null): void {
     if (file === null) {
       return;
     }
     if (!ACCEPTED_PHOTO_TYPES.includes(file.type)) {
       this.photoProblem.set('Use a JPEG, PNG, WebP or AVIF photo.');
     } else if (file.size > MAX_PHOTO_BYTES) {
-      this.photoProblem.set('That photo is too big. Use one under 8 MB.');
+      this.photoProblem.set('That photo is too big. Use one under 25 MB.');
     } else {
       this.photoProblem.set(null);
       this.store.dispatch(AdminAnnouncementsActions.AdminAnnouncementsImageUpload({ file }));
     }
+    // The photo goes up as soon as it is chosen and then shows above, so the box is ready for the next one.
+    this.photoUpload()?.clear();
   }
 
   protected removeImage(): void {
+    this.isConfirmingPhotoRemoval.set(false);
     this.image.set(null);
-  }
-
-  protected isBadButton(button: AdminAnnouncementButtonDto): boolean {
-    return button.label.trim() === '' || !isAllowedButtonLink(button.url);
   }
 
   protected save(): void {
     this.submitted.set(true);
-    if (this.isTitleMissing() || this.hasBadDates() || this.hasBadButton() || this.isAltTextMissing()) {
+    const hasBadButton: boolean = this.buttons().some(isBadButton);
+    if (this.isTitleMissing() || this.hasBadDates() || hasBadButton || this.isAltTextMissing()) {
       return;
     }
     const value: AnnouncementFormValue = {
@@ -265,16 +261,16 @@ export class AnnouncementEdit implements OnInit {
     const place: number | null = this.place();
     const item: AdminAnnouncementDto | null = place === null ? null : this.announcements()[place] ?? null;
     const timeZone: string | null = this.timeZone();
-    const today: string = timeZone === null ? toIsoDate(new Date()) : toIsoDateIn(timeZone, new Date());
-    const value: AnnouncementFormValue = toFormValue(item, today);
+    this.today = timeZone === null ? toIsoDate(new Date()) : toIsoDateIn(timeZone, new Date());
+    const value: AnnouncementFormValue = toFormValue(item, this.today);
     this.title.set(value.title);
     this.message.set(value.message);
     this.startDate.set(value.startDate);
     this.endDate.set(value.endDate);
+    this.isScheduled.set(value.startDate > this.today);
     this.imageAltText.set(value.imageAltText);
     this.imagePosition.set(value.imagePosition);
     this.buttons.set(value.buttons);
     this.image.set(item?.image ?? null);
-    this.hasLostMarkup.set(item !== null && hasUnsupportedMarkup(item.bodyHtml));
   }
 }

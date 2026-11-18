@@ -36,7 +36,7 @@ public sealed partial class SessionService(
             throw new BotCheckFailedException("The request had no reCAPTCHA token.");
         }
 
-        RecaptchaAssessment assessment = await AssessAsync(recaptchaToken, cancellationToken);
+        RecaptchaAssessment assessment = await AssessAsync(recaptchaToken, origin, cancellationToken);
         LogBotCheckScored(logger, assessment.Score, assessment.IsValid, assessment.InvalidReason, assessment.Action, assessment.Hostname);
         if (!Passes(assessment, new Uri(origin).Host))
         {
@@ -46,11 +46,11 @@ public sealed partial class SessionService(
         return await issuer.IssueAsync(cancellationToken);
     }
 
-    private async Task<RecaptchaAssessment> AssessAsync(string recaptchaToken, CancellationToken cancellationToken)
+    private async Task<RecaptchaAssessment> AssessAsync(string recaptchaToken, string origin, CancellationToken cancellationToken)
     {
         try
         {
-            return await recaptcha.AssessAsync(recaptchaToken, RecaptchaAction, cancellationToken);
+            return await recaptcha.AssessAsync(recaptchaToken, RecaptchaAction, origin, cancellationToken);
         }
         catch (RecaptchaUnavailableException exception)
         {

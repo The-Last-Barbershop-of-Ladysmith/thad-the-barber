@@ -1,0 +1,23 @@
+<p-fileupload
+  #fileUpload
+  mode="advanced"
+  name="photo"
+  [attr.aria-labelledby]="labelledBy()"
+  [customUpload]="true"
+  [pt]="fileUploadPassThrough"
+  [disabled]="isDisabled()"
+  [multiple]="false"
+  [fileLimit]="1"
+  [showUploadButton]="false"
+  [showCancelButton]="false"
+  (onSelect)="onFileSelect($event)"
+  (onRemove)="onFileRemove()"
+  (onClear)="onFileRemove()"
+>
+  <ng-template #empty>
+    <button type="button" class="drop-zone" data-testid="photo-drop-zone" [disabled]="isDisabled()" (click)="fileUpload.choose()">
+      <i class="pi pi-cloud-upload" aria-hidden="true"></i>
+      <span>Click to choose a photo, or drag one here.</span>
+    </button>
+  </ng-template>
+</p-fileupload>

@@ -1,10 +1,13 @@
 import { addDays, fromIsoDate, toIsoDate } from '../../../../shared/utils/date.utils';
-import { linkKind } from '../../../../shared/utils/link.utils';
-import { AdminAnnouncementDto, AdminAnnouncementImageDto } from '../dtos/admin-announcement.dto';
+import { isAllowedLink } from '../../../../shared/utils/link-allowed.utils';
+import {
+  AdminAnnouncementButtonDto,
+  AdminAnnouncementDto,
+  AdminAnnouncementImageDto,
+} from '../dtos/admin-announcement.dto';
 import { AnnouncementInputDto } from '../dtos/announcements-save-request.dto';
 import { AnnouncementFormValue } from '../models/announcement-form-value.model';
 import { AnnouncementImagePosition } from '../models/announcement-image-position.model';
-import { bodyHtmlToText, textToBodyHtml } from './announcement-body.utils';
 
 /** A new announcement ends 30 days after it starts, so the board never fills with old news. */
 export const DEFAULT_RUN_DAYS: number = 30;
@@ -26,7 +29,7 @@ export function toFormValue(item: AdminAnnouncementDto | null, today: string): A
   }
   return {
     title: item.title,
-    message: bodyHtmlToText(item.bodyHtml),
+    message: item.bodyHtml,
     startDate: item.startDate,
     endDate: item.endDate,
     imageAltText: item.image?.altText ?? '',
@@ -42,7 +45,7 @@ export function toAnnouncementInput(
 ): AnnouncementInputDto {
   return {
     title: value.title.trim(),
-    bodyHtml: textToBodyHtml(value.message),
+    bodyHtml: value.message.trim(),
     startDate: value.startDate,
     endDate: value.endDate,
     image: image === null
@@ -78,7 +81,7 @@ export function isEndBeforeStart(startDate: string, endDate: string): boolean {
   return startDate !== '' && endDate !== '' && endDate < startDate;
 }
 
-/** A button link is a site path, https, tel: or mailto:, the same as the API accepts. */
-export function isAllowedButtonLink(url: string): boolean {
-  return linkKind(url.trim()) !== null;
+/** A button needs a label and a link: a site path, https, tel: or mailto:, the same as the API accepts. */
+export function isBadButton(button: AdminAnnouncementButtonDto): boolean {
+  return button.label.trim() === '' || !isAllowedLink(button.url);
 }

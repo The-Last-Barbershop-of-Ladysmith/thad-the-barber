@@ -7,6 +7,7 @@ import {
   adminSession,
   fulfillProblem,
   mockAdminShop,
+  goToAdminSection,
   mockGoogleSignIn,
 } from '../support/admin';
 import { expectNoA11yViolations } from '../support/axe';
@@ -30,7 +31,7 @@ async function signInAndOpenShop(page: Page): Promise<void> {
   await page.goto('/admin');
   await page.locator('#google-stub-button').click();
   await expect(page).toHaveURL(/\/admin\/overview$/);
-  await page.getByRole('navigation', { name: 'Admin sections' }).getByRole('link', { name: 'Shop info' }).click();
+  await goToAdminSection(page, 'Shop info');
   await expect(page).toHaveURL(/\/admin\/shop$/);
 }
 

@@ -3,9 +3,9 @@ import { alpha } from '../alpha';
 
 export type Severity = 'info' | 'success' | 'warn' | 'error';
 
-/** The app has no blue state, so `info` is the copper brand notice. */
+/** `info` is blue, so it never reads as the copper brand accent or as a warning. */
 export const SEVERITY_COLORS: Record<Severity, string> = {
-  info: '{primary.hover.color}',
+  info: '{brand.info}',
   success: '{brand.success}',
   warn: '{brand.warn}',
   error: '{brand.error}',

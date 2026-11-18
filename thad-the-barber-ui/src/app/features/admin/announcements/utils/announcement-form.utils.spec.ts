@@ -1,10 +1,10 @@
-import { AdminAnnouncementDto } from '../dtos/admin-announcement.dto';
+import { AdminAnnouncementButtonDto, AdminAnnouncementDto } from '../dtos/admin-announcement.dto';
 import { AnnouncementInputDto } from '../dtos/announcements-save-request.dto';
 import { AdminAnnouncementStatus } from '../models/admin-announcement-status.model';
 import { AnnouncementButtonVariant } from '../models/announcement-button-variant.model';
 import { AnnouncementImagePosition } from '../models/announcement-image-position.model';
 import {
-  isAllowedButtonLink,
+  isBadButton,
   isEndBeforeStart,
   toAnnouncementInput,
   toFormValue,
@@ -45,17 +45,17 @@ describe('toFormValue', (): void => {
     });
   });
 
-  it('reads a saved announcement, with its message as text', (): void => {
+  it('reads a saved announcement, with its message as the stored HTML', (): void => {
     const value: ReturnType<typeof toFormValue> = toFormValue(SAVED, '2026-11-17');
 
-    expect(value.message).toBe('We are **closed**.');
+    expect(value.message).toBe('<p>We are <strong>closed</strong>.</p>');
     expect(value.imageAltText).toBe('A sign');
     expect(value.imagePosition).toBe(AnnouncementImagePosition.Left);
   });
 });
 
 describe('toAnnouncementInput', (): void => {
-  it('turns the message back into HTML and keeps the picture file', (): void => {
+  it('trims the title and message and keeps the picture file', (): void => {
     const input: AnnouncementInputDto = toAnnouncementInput(
       {
         ...toFormValue(SAVED, '2026-11-17'),
@@ -110,13 +110,23 @@ describe('isEndBeforeStart', (): void => {
   });
 });
 
-describe('isAllowedButtonLink', (): void => {
-  it('accepts a site path, https, tel and mailto links, and refuses the rest', (): void => {
-    expect(isAllowedButtonLink('/book')).toBe(true);
-    expect(isAllowedButtonLink(' https://example.test ')).toBe(true);
-    expect(isAllowedButtonLink('tel:+15550100')).toBe(true);
-    expect(isAllowedButtonLink('javascript:alert(1)')).toBe(false);
-    expect(isAllowedButtonLink('//evil.test')).toBe(false);
-    expect(isAllowedButtonLink('')).toBe(false);
+describe('isBadButton', (): void => {
+  const button: AdminAnnouncementButtonDto = {
+    label: 'Book',
+    url: '/book',
+    variant: AnnouncementButtonVariant.Primary,
+  };
+
+  it('accepts a label with a site path, https, tel or mailto link', (): void => {
+    expect(isBadButton(button)).toBe(false);
+    expect(isBadButton({ ...button, url: ' https://example.test ' })).toBe(false);
+    expect(isBadButton({ ...button, url: 'tel:+15550100' })).toBe(false);
+  });
+
+  it('refuses a blank label and any other link', (): void => {
+    expect(isBadButton({ ...button, label: '  ' })).toBe(true);
+    expect(isBadButton({ ...button, url: 'javascript:alert(1)' })).toBe(true);
+    expect(isBadButton({ ...button, url: '//evil.test' })).toBe(true);
+    expect(isBadButton({ ...button, url: '' })).toBe(true);
   });
 });

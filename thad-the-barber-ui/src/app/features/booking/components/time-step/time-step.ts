@@ -3,6 +3,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { MessageModule } from 'primeng/message';
 import { SelectButtonModule } from 'primeng/selectbutton';
+import { NoParentForm } from '../../../../shared/directives/no-parent-form';
 import { formatLongDate, fromIsoDate } from '../../../../shared/utils/date.utils';
 import { AppState } from '../../../../store/app.state';
 import { shopFeature } from '../../../shop/state/shop.feature';
@@ -22,6 +23,7 @@ interface TimeSlot {
     ReactiveFormsModule,
     MessageModule,
     SelectButtonModule,
+    NoParentForm,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './time-step.html',

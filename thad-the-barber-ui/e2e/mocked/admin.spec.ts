@@ -2,10 +2,13 @@ import { Page, Request, Route } from '@playwright/test';
 import {
   ADMIN_CONFIG_URL,
   ADMIN_EMAIL,
+  ADMIN_NAME,
   ADMIN_SESSION_URL,
   adminSession,
   fulfillProblem,
   mockGoogleSignIn,
+  inAdminMenu,
+  openAdminMenu,
 } from '../support/admin';
 import { expectNoA11yViolations } from '../support/axe';
 import { expect, test } from '../support/fixtures';
@@ -38,7 +41,9 @@ test.describe(
         await page.locator('#google-stub-button').click();
 
         await expect(page).toHaveURL(/\/admin\/overview$/);
-        await expect(page.getByTestId('admin-email')).toHaveText(ADMIN_EMAIL);
+        await openAdminMenu(page);
+        await expect(inAdminMenu(page, 'admin-name')).toHaveText(ADMIN_NAME);
+        await expect(inAdminMenu(page, 'admin-email')).toHaveText(ADMIN_EMAIL);
         await expect(page.getByTestId('admin-heading')).toBeVisible();
         expect(sessionRequests).toHaveLength(1);
         expect(sessionRequests[0]?.postDataJSON()).toEqual({ idToken: 'e2e-google-id-token' });
@@ -115,12 +120,50 @@ test.describe(
         await signInWithGoogle(page);
         await expect(page).toHaveURL(/\/admin\/overview$/);
 
-        await page.getByTestId('admin-sign-out').click();
+        await openAdminMenu(page);
+        await inAdminMenu(page, 'admin-sign-out').click();
 
         await expect(page).toHaveURL(/\/admin$/);
         await expect(page.getByTestId('google-button')).toBeVisible();
         await page.goto('/admin/overview');
         await expect(page).toHaveURL(/\/admin$/);
+      },
+    );
+
+    test(
+      'stays signed in through a reload of the page, until signing out',
+      async ({ page }: { page: Page; }): Promise<void> => {
+        await mockGoogleSignIn(page);
+        await page.route(
+          (url: URL): boolean => url.href === ADMIN_SESSION_URL,
+          async (route: Route): Promise<void> => {
+            await route.fulfill({ json: adminSession() });
+          },
+        );
+        await signInWithGoogle(page);
+        await expect(page).toHaveURL(/\/admin\/overview$/);
+
+        await page.reload();
+
+        await expect(page).toHaveURL(/\/admin\/overview$/);
+        await openAdminMenu(page);
+        await expect(inAdminMenu(page, 'admin-email')).toHaveText(ADMIN_EMAIL);
+
+        await inAdminMenu(page, 'admin-sign-out').click();
+        await page.goto('/admin/overview');
+        await expect(page).toHaveURL(/\/admin$/);
+      },
+    );
+
+    test(
+      'shows it is getting Google sign-in ready until the button is there',
+      async ({ page }: { page: Page; }): Promise<void> => {
+        await mockGoogleSignIn(page);
+
+        await page.goto('/admin');
+
+        await expect(page.getByTestId('google-button')).toBeVisible();
+        await expect(page.getByTestId('admin-sign-in-loading')).toHaveCount(0);
       },
     );
 

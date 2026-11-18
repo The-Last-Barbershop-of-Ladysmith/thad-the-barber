@@ -1,3 +1,4 @@
+import { ApplicationRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockInstance } from 'vitest';
 import { Router, provideRouter } from '@angular/router';
@@ -195,6 +196,26 @@ describe(
         await fixture.whenStable();
 
         await expectNoAxeViolations(fixture.nativeElement as HTMLElement);
+      },
+    );
+
+    it(
+      'brings itself back into view when it appears while the visitor is further down the page',
+      async (): Promise<void> => {
+        const scrollIntoView: ReturnType<typeof vi.fn> = vi.fn();
+        Element.prototype.scrollIntoView = scrollIntoView as unknown as Element['scrollIntoView'];
+        window.matchMedia = ((): MediaQueryList => ({ matches: false }) as MediaQueryList);
+        vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({ top: -500 } as DOMRect);
+
+        render({
+          severity: NoticeSeverity.Error,
+          text: 'Made-up failure',
+          canRetry: false,
+        });
+        await TestBed.inject(ApplicationRef).whenStable();
+
+        expect(scrollIntoView).toHaveBeenCalled();
+        vi.restoreAllMocks();
       },
     );
   },

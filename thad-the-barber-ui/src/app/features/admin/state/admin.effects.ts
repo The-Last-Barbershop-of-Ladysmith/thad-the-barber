@@ -3,11 +3,11 @@ import { inject } from '@angular/core';
 import { Actions, FunctionalEffect, createEffect, ofType } from '@ngrx/effects';
 import { Action } from '@ngrx/store';
 import { Observable, catchError, exhaustMap, map, of, switchMap, tap } from 'rxjs';
-import { AdminTokenService } from '../../../core/services/admin-token.service';
 import { AdminConfigDto } from '../dtos/admin-config.dto';
 import { OVERVIEW_PATH, SIGN_IN_PATH } from '../config/admin-paths';
 import { AdminSessionDto } from '../dtos/admin-session.dto';
 import { AdminService } from '../services/admin.service';
+import { AdminSessionStorage } from '../services/admin-session-storage';
 import { toAdminSignInError } from '../utils/admin-sign-in-error.utils';
 import * as AdminActions from './admin.actions';
 
@@ -29,24 +29,30 @@ export const loadAdminConfig: FunctionalEffect = createEffect(
   { functional: true },
 );
 
-/** Takes Google's ID token to the API; the admin token it gets back goes to `AdminTokenService`, never the store. */
+/** Takes Google's ID token to the API; the admin token it gets back goes to `AdminSessionStorage`, never the store. */
 export const signInToAdmin: FunctionalEffect = createEffect(
   (
     actions$: Actions = inject<Actions>(Actions),
     adminService: AdminService = inject(AdminService),
-    adminTokenService: AdminTokenService = inject(AdminTokenService),
+    adminSession: AdminSessionStorage = inject(AdminSessionStorage),
   ): Observable<Action> =>
     actions$.pipe(
       ofType(AdminActions.AdminSignInRequest),
       switchMap(({ idToken }: { idToken: string; }): Observable<Action> =>
         adminService.signIn(idToken).pipe(
           tap((session: AdminSessionDto): void => {
-            adminTokenService.set(session.token, session.expiresAt);
+            adminSession.start(
+              session.token,
+              session.expiresAt,
+              session.email,
+              session.name,
+            );
           }),
           map((session: AdminSessionDto): Action =>
             AdminActions.AdminSignInRequestSuccess({
               session: {
                 email: session.email,
+                name: session.name,
                 expiresAt: session.expiresAt,
               },
             })),
@@ -76,12 +82,12 @@ export const leaveAdmin: FunctionalEffect = createEffect(
   (
     actions$: Actions = inject<Actions>(Actions),
     router: Router = inject(Router),
-    adminTokenService: AdminTokenService = inject(AdminTokenService),
+    adminSession: AdminSessionStorage = inject(AdminSessionStorage),
   ): Observable<unknown> =>
     actions$.pipe(
       ofType(AdminActions.AdminSignOut, AdminActions.AdminSessionEnded),
       tap((): void => {
-        adminTokenService.clear();
+        adminSession.end();
         void router.navigateByUrl(SIGN_IN_PATH);
       }),
     ),

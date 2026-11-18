@@ -1,4 +1,4 @@
-import { Page, Route } from '@playwright/test';
+import { Locator, Page, Request, Route } from '@playwright/test';
 import { AdminSessionDto } from '../../src/app/features/admin/dtos/admin-session.dto';
 import { AdminGalleryPhotoDto } from '../../src/app/features/admin/gallery/dtos/admin-gallery-photo.dto';
 import { AdminShopInfoDto } from '../../src/app/features/admin/shop/dtos/admin-shop-info.dto';
@@ -17,6 +17,7 @@ export const ADMIN_CONFIG_URL: string = `${servedEnvironment.apiBaseUrl}/admin/c
 export const ADMIN_SESSION_URL: string = `${servedEnvironment.apiBaseUrl}/admin/session`;
 
 export const ADMIN_EMAIL: string = 'owner@example.com';
+export const ADMIN_NAME: string = 'Q. Testperson';
 
 /**
  * Stands in for Google Identity Services, so tests never call Google: `renderButton` draws a button that, when
@@ -47,6 +48,7 @@ export function adminSession(): AdminSessionDto {
     token: 'e2e-admin-jwt',
     expiresAt: new Date(Date.now() + 30 * 60_000).toISOString(),
     email: ADMIN_EMAIL,
+    name: ADMIN_NAME,
   };
 }
 
@@ -218,4 +220,49 @@ export async function mockAnnouncementImageUpload(page: Page): Promise<void> {
       });
     },
   );
+}
+
+/** The three lists the admin overview reads, as the API answers `GET` for them. */
+export function isAdminOverviewRequest(url: URL): boolean {
+  return url.href === ADMIN_ANNOUNCEMENTS_URL || url.href === ADMIN_GALLERY_URL || url.href === ADMIN_SHOP_URL;
+}
+
+/**
+ * What the overview finds when a test has not mocked a list of its own: nothing yet. Only a `GET` is answered, so a
+ * save or an upload nobody mocked still fails the test.
+ */
+export async function fulfillAdminOverview(route: Route): Promise<void> {
+  const request: Request = route.request();
+  if (request.method() !== 'GET') {
+    await route.fallback();
+    return;
+  }
+  if (request.url() === ADMIN_SHOP_URL) {
+    const empty: AdminShopInfoDto = {
+      notice: null,
+      isNoticeShown: false,
+      squareNotice: null,
+    };
+    await route.fulfill({ json: empty });
+    return;
+  }
+  await route.fulfill({ json: [] });
+}
+
+/** On a phone the menu is behind a button; on a wide screen it is already there. */
+export async function openAdminMenu(page: Page): Promise<void> {
+  const toggle: Locator = page.getByTestId('admin-menu-toggle');
+  if (await toggle.isVisible()) {
+    await toggle.click();
+  }
+}
+
+export async function goToAdminSection(page: Page, name: string): Promise<void> {
+  await openAdminMenu(page);
+  await page.getByRole('navigation', { name: 'Admin sections' }).getByRole('link', { name }).click();
+}
+
+/** The menu is drawn twice (the side menu and the phone's drawer), so a test asks for the one that can be seen. */
+export function inAdminMenu(page: Page, testId: string): Locator {
+  return page.getByTestId(testId).filter({ visible: true });
 }

@@ -1,0 +1,23 @@
+/** A button on the rich text editor's toolbar. */
+export enum RichTextToolId {
+  Heading = 'heading',
+  Subheading = 'subheading',
+  Bold = 'bold',
+  Italic = 'italic',
+  Underline = 'underline',
+  Strikethrough = 'strikethrough',
+  BulletList = 'bulletList',
+  NumberedList = 'numberedList',
+  Quote = 'quote',
+  Highlight = 'highlight',
+  Superscript = 'superscript',
+  Subscript = 'subscript',
+  AlignLeft = 'alignLeft',
+  AlignCenter = 'alignCenter',
+  AlignRight = 'alignRight',
+  AlignJustify = 'alignJustify',
+  Link = 'link',
+  ClearFormatting = 'clearFormatting',
+  Undo = 'undo',
+  Redo = 'redo',
+}

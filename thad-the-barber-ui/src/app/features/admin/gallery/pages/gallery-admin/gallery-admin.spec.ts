@@ -39,11 +39,8 @@ describe('GalleryAdmin', (): void => {
   }
 
   function choose(file: File | null): void {
-    const input: HTMLInputElement = element('#gallery-file') as HTMLInputElement;
-    const files: FileList = {
-      length: file === null ? 0 : 1,
-      item: (): File | null => file,
-    } as unknown as FileList;
+    const input: HTMLInputElement = element('[data-testid="gallery-file"] input[type="file"]') as HTMLInputElement;
+    const files: File[] = file === null ? [] : [file];
     Object.defineProperty(
       input,
       'files',
@@ -81,6 +78,8 @@ describe('GalleryAdmin', (): void => {
     });
     store = TestBed.inject<Store<AppState>>(Store);
     dispatchSpy = vi.spyOn(store, 'dispatch');
+    // The file chooser previews an image through an object URL, which the test DOM doesn't have.
+    URL.createObjectURL = (): string => 'blob:preview';
     fixture = TestBed.createComponent(GalleryAdmin);
   });
 

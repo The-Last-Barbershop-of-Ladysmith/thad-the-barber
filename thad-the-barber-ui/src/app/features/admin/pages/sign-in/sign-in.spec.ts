@@ -89,6 +89,36 @@ describe(
     );
 
     it(
+      'shows it is getting ready from the start until Google’s button is drawn',
+      async (): Promise<void> => {
+        let drawn: () => void = (): void => undefined;
+        renderResult = new Promise<void>((resolve: () => void): void => {
+          drawn = resolve;
+        });
+        expect(text('[data-testid="admin-sign-in-loading"]')).not.toBeNull();
+
+        store.dispatch(AdminActions.AdminConfigRequestSuccess({ googleClientId: 'client-1' }));
+        await settle();
+        expect(text('[data-testid="admin-sign-in-loading"]')).not.toBeNull();
+
+        drawn();
+        await settle();
+        expect(text('[data-testid="admin-sign-in-loading"]')).toBeNull();
+      },
+    );
+
+    it(
+      'stops showing it is getting ready when something is wrong instead',
+      async (): Promise<void> => {
+        store.dispatch(AdminActions.AdminConfigRequestFailure({ error: AdminSignInError.Unavailable }));
+        await settle();
+
+        expect(text('[data-testid="admin-sign-in-loading"]')).toBeNull();
+        expect(text('[data-testid="admin-sign-in-message"]')).not.toBeNull();
+      },
+    );
+
+    it(
       'shows no button before the client ID arrives',
       (): void => {
         expect(text('[data-testid="google-button"]')).toBeNull();

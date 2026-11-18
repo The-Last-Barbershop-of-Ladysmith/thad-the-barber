@@ -16,6 +16,7 @@ import { Store } from '@ngrx/store';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
+import { PhotoUpload } from '../../../../../shared/components/photo-upload/photo-upload';
 import { AppState } from '../../../../../store/app.state';
 import { AdminGalleryPhotoDto } from '../../dtos/admin-gallery-photo.dto';
 import { AdminGalleryError } from '../../models/admin-gallery-error.model';
@@ -23,23 +24,25 @@ import { GalleryUploadProblem } from '../../models/gallery-upload-problem.model'
 import * as AdminGalleryActions from '../../state/admin-gallery.actions';
 import { adminGalleryFeature } from '../../state/admin-gallery.feature';
 import { toGalleryMessage, toUploadProblemMessage } from '../../utils/admin-gallery-error.utils';
-import { ACCEPTED_PHOTO_TYPES, MAX_ALT_TEXT_LENGTH, findUploadProblem } from '../../utils/gallery-upload.utils';
+import { MAX_ALT_TEXT_LENGTH, findUploadProblem } from '../../utils/gallery-upload.utils';
+import { AdminPageHeader } from '../../../components/admin-page-header/admin-page-header';
 
 /** The gallery: add a photo with its description (its alt text) and delete the ones that are not wanted. */
 @Component({
   selector: 'app-admin-gallery',
   imports: [
+    AdminPageHeader,
     DatePipe,
     ButtonModule,
     InputTextModule,
     MessageModule,
+    PhotoUpload,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './gallery-admin.html',
   styleUrl: './gallery-admin.scss',
 })
 export class GalleryAdmin implements OnInit {
-  protected readonly accept: string = ACCEPTED_PHOTO_TYPES.join(',');
   protected readonly maxAltTextLength: number = MAX_ALT_TEXT_LENGTH;
   protected readonly altText: WritableSignal<string> = signal<string>('');
   protected readonly submitted: WritableSignal<boolean> = signal<boolean>(false);
@@ -47,11 +50,10 @@ export class GalleryAdmin implements OnInit {
   protected readonly confirmingFileName: WritableSignal<string | null> = signal<string | null>(null);
 
   private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
-  private readonly fileInput: Signal<ElementRef<HTMLInputElement> | undefined> =
-    viewChild<ElementRef<HTMLInputElement>>('fileInput');
+  private readonly photoUpload: Signal<PhotoUpload | undefined> = viewChild<PhotoUpload>('photoUpload');
   private readonly altInput: Signal<ElementRef<HTMLInputElement> | undefined> =
     viewChild<ElementRef<HTMLInputElement>>('altInput');
-  private readonly file: WritableSignal<File | null> = signal<File | null>(null);
+  protected readonly file: WritableSignal<File | null> = signal<File | null>(null);
   private readonly error: Signal<AdminGalleryError | null> = this.store.selectSignal(adminGalleryFeature.selectError);
 
   protected readonly photos: Signal<AdminGalleryPhotoDto[]> = this.store.selectSignal(adminGalleryFeature.selectPhotos);
@@ -79,11 +81,11 @@ export class GalleryAdmin implements OnInit {
         this.file.set(null);
         this.altText.set('');
         this.submitted.set(false);
-        // Both inputs are cleared on the element too: the browser keeps a chosen file and typed text of its own.
-        for (const input of [this.fileInput()?.nativeElement, this.altInput()?.nativeElement]) {
-          if (input !== undefined) {
-            input.value = '';
-          }
+        // The chosen file and the typed text are cleared on their elements too: the browser keeps its own copy.
+        this.photoUpload()?.clear();
+        const altInput: HTMLInputElement | undefined = this.altInput()?.nativeElement;
+        if (altInput !== undefined) {
+          altInput.value = '';
         }
       }
     });
@@ -91,10 +93,6 @@ export class GalleryAdmin implements OnInit {
 
   ngOnInit(): void {
     this.store.dispatch(AdminGalleryActions.AdminGalleryRequest());
-  }
-
-  protected onFile(event: Event): void {
-    this.file.set((event.target as HTMLInputElement).files?.item(0) ?? null);
   }
 
   protected onAltText(event: Event): void {

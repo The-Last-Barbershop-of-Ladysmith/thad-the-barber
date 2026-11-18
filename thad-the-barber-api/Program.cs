@@ -28,6 +28,7 @@ using ThadTheBarber.Api.Infrastructure.Headers.Middleware;
 using ThadTheBarber.Api.Infrastructure.KeyVault.Configuration;
 using ThadTheBarber.Api.Infrastructure.OpenApi.Transformers;
 using ThadTheBarber.Api.Infrastructure.Problems.Configuration;
+using ThadTheBarber.Api.Infrastructure.Storage.Middleware;
 using ThadTheBarber.Api.Infrastructure.RateLimiting.Configuration;
 using ThadTheBarber.Api.Infrastructure.Storage.Configuration;
 using ThadTheBarber.Api.Infrastructure.Telemetry.Configuration;
@@ -41,7 +42,8 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.AddKeyVaultIfConfigured(SquareSecrets.All);
 
 builder.AddTelemetry();
-// The largest body is a webhook, capped in characters; UTF-8 takes up to 4 bytes per character.
+// Most bodies are small, the largest being a webhook, capped in characters (UTF-8 takes up to 4 bytes per character);
+// a photo upload raises it for its own endpoints (ImageUploadSizeLimit).
 builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = HttpRequestExtensions.MaxWebhookBodyLength * 4);
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
@@ -96,6 +98,7 @@ app.UseCors();
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseImageUploadSizeLimit();
 
 RouteGroupBuilder api = app.MapGroup("/api").RequireAuthorization();
 api.MapSessionEndpoints();

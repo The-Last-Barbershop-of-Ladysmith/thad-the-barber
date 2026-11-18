@@ -13,6 +13,8 @@ public sealed class RecaptchaServiceTests
 {
     private const string ApiKey = "fake-api-key";
 
+    private const string Origin = "https://app.example.com";
+
     private static CancellationToken Cancellation => TestContext.Current.CancellationToken;
 
     [Fact]
@@ -20,7 +22,7 @@ public sealed class RecaptchaServiceTests
     {
         FakeRecaptchaHttp google = new();
 
-        await CreateService(google).AssessAsync("token-1", "session", Cancellation);
+        await CreateService(google).AssessAsync("token-1", "session", Origin, Cancellation);
 
         Assert.Equal(HttpMethod.Post, google.Request!.Method);
         Assert.Equal("https://google.example/v1/projects/project%2F1/assessments", google.Request.RequestUri!.AbsoluteUri);
@@ -35,10 +37,20 @@ public sealed class RecaptchaServiceTests
     {
         FakeRecaptchaHttp google = new();
 
-        await CreateService(google).AssessAsync("token-1", "session", Cancellation);
+        await CreateService(google).AssessAsync("token-1", "session", Origin, Cancellation);
 
         Assert.Equal([ApiKey], google.Request!.Headers.GetValues("X-Goog-Api-Key"));
         Assert.DoesNotContain(ApiKey, google.Request.RequestUri!.AbsoluteUri, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task AssessSendsTheOriginAsTheReferrerForTheKeysWebsiteRestriction()
+    {
+        FakeRecaptchaHttp google = new();
+
+        await CreateService(google).AssessAsync("token-1", "session", Origin, Cancellation);
+
+        Assert.Equal(new Uri("https://app.example.com/"), google.Request!.Headers.Referrer);
     }
 
     [Fact]
@@ -49,7 +61,7 @@ public sealed class RecaptchaServiceTests
             Body = """{"tokenProperties":{"valid":false,"invalidReason":"DUPE","hostname":"other.example","action":"login"},"riskAnalysis":{"score":0.3}}""",
         };
 
-        RecaptchaAssessment assessment = await CreateService(google).AssessAsync("token-1", "session", Cancellation);
+        RecaptchaAssessment assessment = await CreateService(google).AssessAsync("token-1", "session", Origin, Cancellation);
 
         Assert.Equal(new RecaptchaAssessment(
             IsValid: false,
@@ -72,7 +84,7 @@ public sealed class RecaptchaServiceTests
             Body = """{"error":{"code":403}}""",
         };
 
-        await Assert.ThrowsAsync<RecaptchaUnavailableException>(() => CreateService(google).AssessAsync("token-1", "session", Cancellation));
+        await Assert.ThrowsAsync<RecaptchaUnavailableException>(() => CreateService(google).AssessAsync("token-1", "session", Origin, Cancellation));
     }
 
     [Theory]
@@ -85,7 +97,7 @@ public sealed class RecaptchaServiceTests
             Body = body,
         };
 
-        await Assert.ThrowsAsync<RecaptchaUnavailableException>(() => CreateService(google).AssessAsync("token-1", "session", Cancellation));
+        await Assert.ThrowsAsync<RecaptchaUnavailableException>(() => CreateService(google).AssessAsync("token-1", "session", Origin, Cancellation));
     }
 
     public static TheoryData<Exception> SendFailures() =>
@@ -103,7 +115,7 @@ public sealed class RecaptchaServiceTests
             Failure = failure,
         };
 
-        RecaptchaUnavailableException exception = await Assert.ThrowsAsync<RecaptchaUnavailableException>(() => CreateService(google).AssessAsync("token-1", "session", Cancellation));
+        RecaptchaUnavailableException exception = await Assert.ThrowsAsync<RecaptchaUnavailableException>(() => CreateService(google).AssessAsync("token-1", "session", Origin, Cancellation));
         Assert.Same(failure, exception.InnerException);
     }
 
@@ -117,7 +129,7 @@ public sealed class RecaptchaServiceTests
             Failure = new TaskCanceledException("Cancelled."),
         };
 
-        await Assert.ThrowsAsync<TaskCanceledException>(() => CreateService(google).AssessAsync("token-1", "session", cancelled.Token));
+        await Assert.ThrowsAsync<TaskCanceledException>(() => CreateService(google).AssessAsync("token-1", "session", Origin, cancelled.Token));
     }
 
     private static RecaptchaService CreateService(FakeRecaptchaHttp google) =>

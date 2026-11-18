@@ -54,6 +54,9 @@ export const primitive: TokenSection = {
 
   amber: '#f2c46d',
 
+  /** "Info" notices: the shop's notice on the booking page, "nothing here yet". */
+  sky: '#93c5fd',
+
   coral: '#f28b7d',
 
   fontFamily: {
