@@ -62,8 +62,11 @@ param dotnetRuntime string = 'DOTNETCORE|10.0'
 @description('Log Analytics daily ingestion cap in GB. 0.15 GB/day keeps a month under the 5 GB free allowance.')
 param logDailyCapGb string = '0.15'
 
-@description('Monthly subscription budget in USD.')
+@description('Monthly subscription budget in USD. One budget covers the whole subscription, so only one stage should create it.')
 param budgetAmount int = 5
+
+@description('Create the subscription budget. Prod turns it off so deploying prod never resets the budget nonprod owns.')
+param createBudget bool = true
 
 @description('First day of the first budget month (ISO 8601). Keep it fixed so re-runs make no changes.')
 param budgetStartDate string
@@ -211,7 +214,7 @@ var budgetContacts = {
   ]
 }
 
-resource budget 'Microsoft.Consumption/budgets@2023-11-01' = {
+resource budget 'Microsoft.Consumption/budgets@2023-11-01' = if (createBudget) {
   name: 'budget-ttb-monthly'
   properties: {
     category: 'Cost'
