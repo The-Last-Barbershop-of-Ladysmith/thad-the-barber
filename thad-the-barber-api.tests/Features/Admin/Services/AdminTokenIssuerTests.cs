@@ -15,7 +15,11 @@ public sealed class AdminTokenIssuerTests
 {
     private static readonly DateTimeOffset now = new(2031, 2, 28, 12, 0, 0, TimeSpan.Zero);
 
-    private static readonly GoogleIdentity identity = new("google-subject-1", AdminHarness.AllowedEmail);
+    private static readonly GoogleIdentity identity = new(
+        "google-subject-1",
+        AdminHarness.AllowedEmail,
+        AdminHarness.AllowedName
+    );
 
     private static CancellationToken Cancellation => TestContext.Current.CancellationToken;
 
@@ -54,11 +58,35 @@ public sealed class AdminTokenIssuerTests
     }
 
     [Fact]
-    public async Task TheLifetimeDefaultsToThirtyMinutes()
+    public async Task TheNameIsInTheSessionAndInTheToken()
     {
         AdminSession session = await CreateIssuer(new FakeSessionSigningKey()).IssueAsync(identity, Cancellation);
 
-        Assert.Equal(now.AddMinutes(30), session.ExpiresAt);
+        Assert.Equal(AdminHarness.AllowedName, session.Name);
+        Assert.Equal(AdminHarness.AllowedName, new JsonWebToken(session.Token).GetClaim("name").Value);
+    }
+
+    [Fact]
+    public async Task AGoogleAccountWithoutANameGetsNoNameClaim()
+    {
+        GoogleIdentity unnamed = new(
+            "google-subject-1",
+            AdminHarness.AllowedEmail,
+            null
+        );
+
+        AdminSession session = await CreateIssuer(new FakeSessionSigningKey()).IssueAsync(unnamed, Cancellation);
+
+        Assert.Null(session.Name);
+        Assert.DoesNotContain(new JsonWebToken(session.Token).Claims, claim => claim.Type == "name");
+    }
+
+    [Fact]
+    public async Task TheLifetimeDefaultsToFourHours()
+    {
+        AdminSession session = await CreateIssuer(new FakeSessionSigningKey()).IssueAsync(identity, Cancellation);
+
+        Assert.Equal(now.AddHours(4), session.ExpiresAt);
     }
 
     private static AdminTokenIssuer CreateIssuer(FakeSessionSigningKey signingKey, TimeSpan? lifetime = null)

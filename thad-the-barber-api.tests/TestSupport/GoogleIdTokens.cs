@@ -15,7 +15,8 @@ public static class GoogleIdTokens
         string issuer = GoogleIssuer,
         DateTime? expires = null,
         object? emailVerified = null,
-        bool includeEmail = true)
+        bool includeEmail = true,
+        string? name = null)
     {
         DateTime expiresAt = expires ?? DateTime.UtcNow.AddMinutes(30);
         Dictionary<string, object> claims = new()
@@ -26,6 +27,11 @@ public static class GoogleIdTokens
         if (includeEmail)
         {
             claims["email"] = email;
+        }
+
+        if (name is not null)
+        {
+            claims["name"] = name;
         }
 
         return new JsonWebTokenHandler().CreateToken(new SecurityTokenDescriptor

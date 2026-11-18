@@ -49,5 +49,8 @@ public static class AdminEndpoints
         TypedResults.Ok(admin.GetConfig());
 
     internal static Ok<AdminProfile> GetProfile(ClaimsPrincipal user) =>
-        TypedResults.Ok(new AdminProfile(user.FindFirstValue("email") ?? string.Empty));
+        TypedResults.Ok(new AdminProfile(
+            user.FindFirstValue("email") ?? string.Empty,
+            user.FindFirstValue("name")
+        ));
 }

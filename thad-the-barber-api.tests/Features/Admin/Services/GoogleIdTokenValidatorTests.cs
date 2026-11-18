@@ -28,6 +28,29 @@ public sealed class GoogleIdTokenValidatorTests
         Assert.Equal("google-subject-1", identity.Subject);
     }
 
+    [Fact]
+    public async Task TheNameGoogleGivesIsKeptWithoutItsSpaces()
+    {
+        string token = GoogleIdTokens.Create(_googleKeys.Key, name: "  Q. Testperson ", expires: now.UtcDateTime.AddMinutes(20));
+
+        GoogleIdentity identity = await CreateValidator().ValidateAsync(token, Cancellation);
+
+        Assert.Equal(AdminHarness.AllowedName, identity.Name);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("   ")]
+    public async Task ATokenWithoutAUsableNameStillSignsInWithNoName(string? name)
+    {
+        string token = GoogleIdTokens.Create(_googleKeys.Key, name: name, expires: now.UtcDateTime.AddMinutes(20));
+
+        GoogleIdentity identity = await CreateValidator().ValidateAsync(token, Cancellation);
+
+        Assert.Equal(AdminHarness.AllowedEmail, identity.Email);
+        Assert.Null(identity.Name);
+    }
+
     [Theory]
     [InlineData("https://accounts.google.com")]
     [InlineData("accounts.google.com")]

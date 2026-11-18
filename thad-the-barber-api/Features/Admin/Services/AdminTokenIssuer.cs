@@ -35,13 +35,18 @@ public sealed class AdminTokenIssuer(ISessionSigningKey signingKey, TimeProvider
             ["iat"] = issuedAt,
             ["exp"] = expiresAt,
         };
+        if (identity.Name is not null)
+        {
+            claims["name"] = identity.Name;
+        }
 
         string signingInput = $"{EncodedHeader}.{Base64Url.EncodeToString(JsonSerializer.SerializeToUtf8Bytes(claims))}";
         byte[] signature = await signingKey.SignAsync(Encoding.ASCII.GetBytes(signingInput), cancellationToken);
         return new AdminSession(
             $"{signingInput}.{Base64Url.EncodeToString(signature)}",
             DateTimeOffset.FromUnixTimeSeconds(expiresAt),
-            identity.Email
+            identity.Email,
+            identity.Name
         );
     }
 }
