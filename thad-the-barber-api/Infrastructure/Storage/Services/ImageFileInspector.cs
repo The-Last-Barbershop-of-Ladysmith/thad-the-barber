@@ -8,8 +8,8 @@ namespace ThadTheBarber.Api.Infrastructure.Storage.Services;
 /// </summary>
 public static class ImageFileInspector
 {
-    /// <summary>The largest upload accepted, in bytes.</summary>
-    public const int MaxBytes = 8 * 1024 * 1024;
+    /// <summary>The largest upload accepted, in bytes. The admin page shrinks photos first; this is the safety net.</summary>
+    public const int MaxBytes = 25 * 1024 * 1024;
 
     private static readonly ImageKind Jpeg = new(".jpg", "image/jpeg");
     private static readonly ImageKind Png = new(".png", "image/png");

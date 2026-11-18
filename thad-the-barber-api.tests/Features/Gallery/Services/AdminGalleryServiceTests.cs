@@ -4,6 +4,7 @@ using ThadTheBarber.Api.Common.Exceptions;
 using ThadTheBarber.Api.Features.Gallery.Exceptions;
 using ThadTheBarber.Api.Features.Gallery.Models;
 using ThadTheBarber.Api.Features.Gallery.Services;
+using ThadTheBarber.Api.Infrastructure.Storage.Services;
 using ThadTheBarber.Api.Tests.TestSupport;
 using ThadTheBarber.Api.Tests.TestSupport.Fakes;
 
@@ -88,7 +89,7 @@ public sealed class AdminGalleryServiceTests
     {
         await Assert.ThrowsAsync<InvalidImageException>(() => _admin.UploadAsync(ImageBytes.Script, "Fade", Cancellation));
         await Assert.ThrowsAsync<InvalidImageException>(() => _admin.UploadAsync([], "Fade", Cancellation));
-        byte[] huge = new byte[(8 * 1024 * 1024) + 1];
+        byte[] huge = new byte[ImageFileInspector.MaxBytes + 1];
         ImageBytes.Jpeg.CopyTo(huge, 0);
         await Assert.ThrowsAsync<InvalidImageException>(() => _admin.UploadAsync(huge, "Fade", Cancellation));
 
