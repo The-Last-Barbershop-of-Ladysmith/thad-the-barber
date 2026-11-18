@@ -1,5 +1,5 @@
 import { Page, Route } from '@playwright/test';
-import { AdminGalleryPhotoDto } from '../../src/app/features/admin-gallery/dtos/admin-gallery-photo.dto';
+import { AdminGalleryPhotoDto } from '../../src/app/features/admin/gallery/dtos/admin-gallery-photo.dto';
 import {
   ADMIN_GALLERY_URL,
   ADMIN_SESSION_URL,
