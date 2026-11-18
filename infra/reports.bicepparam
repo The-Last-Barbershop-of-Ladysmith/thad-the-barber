@@ -1,10 +1,10 @@
-// CI reports for every environment, in rg-ttb-ci-centralus, with the viewer on the nonprod plan (issue #137).
+// CI reports for every environment, in rg-ttb-ci-eastus, with the viewer on the nonprod plan (issue #137).
 // Personal values come from the same environment variables as nonprod.bicepparam:
 //   TTB_ADMIN_OBJECT_ID   (required) your Entra object ID, the only account the viewer lets in
 //   TTB_ALLOWED_IPS       your public IP(s), comma-separated. Without it the viewer refuses you.
 using 'reports.bicep'
 
-param location = 'centralus'
+param location = 'eastus'
 
 param ownerPrincipalId = readEnvironmentVariable('TTB_ADMIN_OBJECT_ID')
 

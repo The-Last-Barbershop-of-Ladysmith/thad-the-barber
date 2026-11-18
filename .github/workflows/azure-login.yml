@@ -27,8 +27,8 @@ jobs:
     env:
       ENV_NAME: ${{ startsWith(github.ref_name, 'dev/') && 'dev' || 'test' }}
       OTHER_ENV: ${{ startsWith(github.ref_name, 'dev/') && 'test' || 'dev' }}
-      RESOURCE_GROUP: rg-ttb-nonprod-centralus
-      REGION: centralus
+      RESOURCE_GROUP: rg-ttb-nonprod-eastus
+      REGION: eastus
     steps:
       - uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
         with:

@@ -4,9 +4,9 @@ export const environment: Environment = {
   production: false,
   apiBaseUrl: 'http://localhost:5078/api',
   siteUrl: 'http://localhost:4200',
-  mediaBaseUrl: 'https://storttbnonprodcentralus.blob.core.windows.net/media-dev',
+  mediaBaseUrl: 'https://storttbnonprodeastus.blob.core.windows.net/media-dev',
   recaptchaSiteKey: '6LfdeugtAAAAAH8ctabtu7arVmL3hMAp9Uxad6Dp',
   staticMapApiKey: 'AIzaSyAY_UceiUsEtgAlBBceYVO-HeXex65bWdU',
   staticMapId: '234d0df10aa5c1f753283583',
-  appInsightsConnectionString: 'InstrumentationKey=e98a89ed-6192-4b0c-9cf6-322a6f9d5e29;IngestionEndpoint=https://centralus-2.in.applicationinsights.azure.com/;LiveEndpoint=https://centralus.livediagnostics.monitor.azure.com/;ApplicationId=4bc47276-55a1-4e2b-b416-e2aacd02aac2',
+  appInsightsConnectionString: 'InstrumentationKey=5160f25b-b732-4bd9-a1df-7ce07ff94f6e;IngestionEndpoint=https://eastus-8.in.applicationinsights.azure.com/;LiveEndpoint=https://eastus.livediagnostics.monitor.azure.com/;ApplicationId=97305979-73e6-4655-bb59-346625847de8',
 };

@@ -53,7 +53,7 @@ class SettingsTests(unittest.TestCase):
         settings = read_settings("dev")
 
         self.assertEqual(settings.base_url, BASE_URL)
-        self.assertEqual(settings.vault_name, "kv-ttb-dev-centralus")
+        self.assertEqual(settings.vault_name, "kv-ttb-dev-eastus")
         self.assertTrue(settings.application_id.startswith("sandbox-"))
 
 

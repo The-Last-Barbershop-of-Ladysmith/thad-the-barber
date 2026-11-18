@@ -1,4 +1,4 @@
-// dev + test on one F1 Free Linux plan in rg-ttb-nonprod-centralus (issue #9).
+// dev + test on one F1 Free Linux plan in rg-ttb-nonprod-eastus (issue #9).
 // Personal values come from environment variables so they stay out of this public repo:
 //   TTB_ALERT_EMAIL          (required) who gets every alert (the $5 budget, Square)
 //   TTB_ALERT_PHONE          (optional) US mobile number, 10 digits, for the same alerts by SMS
@@ -13,8 +13,8 @@ param allowedIpRanges = filter(map(split(readEnvironmentVariable('TTB_ALLOWED_IP
 
 param stage = 'nonprod'
 
-// Central US: East US had no F1 quota. Prod stays in East US, closest to the shop.
-param location = 'centralus'
+// East US, closest to the shop, like prod. (Nonprod ran in Central US until 2026-11, when East US F1 quota was available.)
+param location = 'eastus'
 
 param planSku = 'F1'
 

@@ -57,7 +57,7 @@ jobs:
         run: |
           for ip in ${TTB_ALLOWED_IPS//,/ }; do echo "::add-mask::${ip%/32}"; done
           az deployment sub what-if \
-            --location centralus \
+            --location eastus \
             --validation-level ProviderNoRbac \
             --parameters infra/nonprod.bicepparam
         env:

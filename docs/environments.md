@@ -6,10 +6,10 @@ How code moves from a topic branch to production. The decisions behind this are 
 
 | | dev | test | prod (later) |
 | --- | --- | --- | --- |
-| Resource group | `rg-ttb-nonprod-centralus` | `rg-ttb-nonprod-centralus` | `rg-ttb-prod-eastus` |
-| App Service plan | `asp-ttb-nonprod-centralus` (**F1 Free Linux**, shared) | `asp-ttb-nonprod-centralus` | `asp-ttb-prod-eastus` (**B1 Linux, Always On**) |
-| Web app (Express) | `as-ttb-ui-dev-centralus` | `as-ttb-ui-test-centralus` | `as-ttb-ui-prod-eastus` |
-| API app (.NET) | `as-ttb-api-dev-centralus` | `as-ttb-api-test-centralus` | `as-ttb-api-prod-eastus` |
+| Resource group | `rg-ttb-nonprod-eastus` | `rg-ttb-nonprod-eastus` | `rg-ttb-prod-eastus` |
+| App Service plan | `asp-ttb-nonprod-eastus` (**F1 Free Linux**, shared) | `asp-ttb-nonprod-eastus` | `asp-ttb-prod-eastus` (**B1 Linux, Always On**) |
+| Web app (Express) | `as-ttb-ui-dev-eastus` | `as-ttb-ui-test-eastus` | `as-ttb-ui-prod-eastus` |
+| API app (.NET) | `as-ttb-api-dev-eastus` | `as-ttb-api-test-eastus` | `as-ttb-api-prod-eastus` |
 | Deploys when | a PR merges into `dev/*` | a PR merges into `release/*` or `hotfix/*` | a person approves the tested `release/*` artifact |
 | Square | Sandbox | Sandbox (seeded test data) | Production |
 | Frontend config | `environment.dev-cloud.ts` (`-c devCloud`) | `environment.test.ts` (`-c test`) | `environment.ts` (`-c production`) |
@@ -27,14 +27,14 @@ How code moves from a topic branch to production. The decisions behind this are 
 
 | Resource | Name | Notes |
 | --- | --- | --- |
-| Resource group | `rg-ttb-nonprod-centralus` | Central US (East US had no F1 quota; prod stays in East US) |
-| App Service plan | `asp-ttb-nonprod-centralus` | F1 Free Linux, shared by all four apps |
-| Web apps (Express) | `as-ttb-ui-dev-centralus`, `as-ttb-ui-test-centralus` | Node 24 LTS |
-| API apps (.NET) | `as-ttb-api-dev-centralus`, `as-ttb-api-test-centralus` | .NET 10 LTS |
-| Key Vaults | `kv-ttb-dev-centralus`, `kv-ttb-test-centralus` | One per environment, because the secret names are the same in each. Standard, RBAC, soft delete + purge protection |
-| Application Insights | `ai-ttb-dev-centralus`, `ai-ttb-test-centralus` | Workspace-based, on `log-ttb-nonprod-centralus` (30-day retention, 0.15 GB/day cap ≈ 4.5 GB/month, under the 5 GB free allowance) |
-| Storage | `storttbnonprodcentralus` | Standard LRS, hot. Containers `media-dev`/`media-test` (image files, public read: `Container` until `restrictMediaListing` is on, then `Blob`, so a file loads by its exact URL but nobody can list it) and private `content-dev`/`content-test` (`announcements.json` and `reviews.json`, read only by the API). HTTPS only, TLS 1.2, **shared-key access off** (uploads use Entra ID). Blob CORS allows GET from the web origins |
-| Event Grid | `evgt-ttb-nonprod-centralus` (system topic on the storage account), `evgs-ttb-media-dev`, `evgs-ttb-media-test` | One topic per stage, one subscription per environment, created or updated when that environment's webhook key is provided (a deploy without it leaves an existing subscription as it is; remove one with `az eventgrid system-topic event-subscription delete`; the PR what-if never shows it). `BlobCreated`/`BlobDeleted` for `media-<env>/gallery/` and `content-<env>/announcements.json` go to `POST /api/webhooks/media` with the secret header `x-media-webhook-key`, so the API refetches within seconds (#204). Free under 100,000 operations a month |
+| Resource group | `rg-ttb-nonprod-eastus` | East US, like prod |
+| App Service plan | `asp-ttb-nonprod-eastus` | F1 Free Linux, shared by all four apps |
+| Web apps (Express) | `as-ttb-ui-dev-eastus`, `as-ttb-ui-test-eastus` | Node 24 LTS |
+| API apps (.NET) | `as-ttb-api-dev-eastus`, `as-ttb-api-test-eastus` | .NET 10 LTS |
+| Key Vaults | `kv-ttb-dev-eastus`, `kv-ttb-test-eastus` | One per environment, because the secret names are the same in each. Standard, RBAC, soft delete + purge protection |
+| Application Insights | `ai-ttb-dev-eastus`, `ai-ttb-test-eastus` | Workspace-based, on `log-ttb-nonprod-eastus` (30-day retention, 0.15 GB/day cap ≈ 4.5 GB/month, under the 5 GB free allowance) |
+| Storage | `storttbnonprodeastus` | Standard LRS, hot. Containers `media-dev`/`media-test` (image files, public read: `Container` until `restrictMediaListing` is on, then `Blob`, so a file loads by its exact URL but nobody can list it) and private `content-dev`/`content-test` (`announcements.json` and `reviews.json`, read only by the API). HTTPS only, TLS 1.2, **shared-key access off** (uploads use Entra ID). Blob CORS allows GET from the web origins |
+| Event Grid | `evgt-ttb-nonprod-eastus` (system topic on the storage account), `evgs-ttb-media-dev`, `evgs-ttb-media-test` | One topic per stage, one subscription per environment, created or updated when that environment's webhook key is provided (a deploy without it leaves an existing subscription as it is; remove one with `az eventgrid system-topic event-subscription delete`; the PR what-if never shows it). `BlobCreated`/`BlobDeleted` for `media-<env>/gallery/` and `content-<env>/announcements.json` go to `POST /api/webhooks/media` with the secret header `x-media-webhook-key`, so the API refetches within seconds (#204). Free under 100,000 operations a month |
 | Budget | `budget-ttb-monthly` | $5/month on the subscription; alerts at 80% and 100% actual and 100% forecast through the action group |
 | Action group | `ag-ttb-<stage>` | Every alert (budget, Square): email to `TTB_ALERT_EMAIL`, plus SMS to `TTB_ALERT_PHONE` when set. US SMS: first 100/month free |
 | Key Vault audit logs | `audit-to-log-analytics` on each vault | Every vault operation to Log Analytics, so reads of the Square secrets can be checked (#23) |
@@ -89,7 +89,7 @@ No app can write to Key Vault (#23). Bicep doesn't delete role assignments it no
 | App access restrictions: deny by default, allow `TTB_ALLOWED_IPS` + the `AzureCloud` service tag (GitHub runners, for smoke tests); the API also allows Square's sandbox webhook IPs (#31) and the `AzureEventGrid` service tag (#204; the UI app doesn't get it) | On (`restrictAppAccess = true`) | Off: the site is public. Geo-filtering to DC/MD/VA is a separate M5 decision |
 | Key Vault firewall: deny by default, allow the apps' outbound IPs + `TTB_ALLOWED_IPS` | On | On |
 
-- The **lock** blocks deletes, not changes. To tear nonprod down, delete the lock first (`az lock delete --name lock-ttb-nonprod-centralus --resource-group rg-ttb-nonprod-centralus`).
+- The **lock** blocks deletes, not changes. To tear nonprod down, delete the lock first (`az lock delete --name lock-ttb-nonprod-eastus --resource-group rg-ttb-nonprod-eastus`).
 - The **Kudu deploy endpoint** (`*.scm.azurewebsites.net`) keeps its own open rules so CI can deploy; basic auth is off there, so it needs an Entra sign-in.
 - `AzureCloud` covers every Azure IP, so anyone running a VM in Azure can reach dev/test too. That's the price of letting GitHub-hosted runners in; the apps still need a session token for anything useful.
 - **Your IP changes** (home internet, phone hotspot): when dev/test or the vault start returning 403, set `TTB_ALLOWED_IPS` to the new IP and re-run `create`.
@@ -106,11 +106,11 @@ $env:TTB_ALERT_EMAIL     = '<the app-activity email>'
 $env:TTB_ALERT_PHONE     = '<10-digit US mobile>'   # optional: the same alerts by SMS
 $env:TTB_ADMIN_OBJECT_ID = az ad signed-in-user show --query id -o tsv
 $env:TTB_ALLOWED_IPS     = (Invoke-RestMethod https://api.ipify.org)   # comma-separate more than one
-az deployment sub what-if --location centralus --parameters infra/nonprod.bicepparam
-az deployment sub create  --location centralus --parameters infra/nonprod.bicepparam
+az deployment sub what-if --location eastus --parameters infra/nonprod.bicepparam
+az deployment sub create  --location eastus --parameters infra/nonprod.bicepparam
 ./infra/scripts/Set-TtbSecrets.ps1 -Environment dev -Generate    # random keys first; the API won't start without them
 ./infra/scripts/Set-TtbSecrets.ps1 -Environment dev    # then both again with -Environment test
-az deployment sub create --name reports --location centralus --parameters infra/reports.bicepparam   # CI reports, see below
+az deployment sub create --name reports --location eastus --parameters infra/reports.bicepparam   # CI reports, see below
 ```
 
 Personal values come from environment variables, so they never land in this public repo. A second `create` should report no changes in `what-if`. `budgetStartDate` is fixed in the param file; Azure rejects a monthly budget whose start date is before the current month, so if the first deploy happens after October 2026, move it to the first of that month.
@@ -126,22 +126,22 @@ The gallery and announcements move behind the API, so the order matters: the dep
 3. **Move `announcements.json`** (the old copy keeps the current UI working until the new UI ships, so delete it only then):
 
    ```powershell
-   az storage blob copy start --auth-mode login --account-name storttbnonprodcentralus `
+   az storage blob copy start --auth-mode login --account-name storttbnonprodeastus `
      --source-container media-dev --source-blob content/announcements.json `
      --destination-container content-dev --destination-blob announcements.json
-   az storage blob show --auth-mode login --account-name storttbnonprodcentralus --container-name content-dev --name announcements.json --query properties.copy.status
-   curl https://as-ttb-api-dev-centralus.azurewebsites.net/api/announcements   # from an allowed IP
+   az storage blob show --auth-mode login --account-name storttbnonprodeastus --container-name content-dev --name announcements.json --query properties.copy.status
+   curl https://as-ttb-api-dev-eastus.azurewebsites.net/api/announcements   # from an allowed IP
    ```
 
 4. **Subscription.** Put the environment's vault key in the environment and deploy again; an environment without its key gets no subscription, so dev can go first. The API must be running, or Event Grid's handshake fails and the deploy errors:
 
    ```powershell
-   $env:TTB_MEDIA_WEBHOOK_KEY_DEV  = az keyvault secret show --vault-name kv-ttb-dev-centralus  --name MediaWebhook--Key --query value -o tsv
-   az deployment sub create --location centralus --parameters infra/nonprod.bicepparam
+   $env:TTB_MEDIA_WEBHOOK_KEY_DEV  = az keyvault secret show --vault-name kv-ttb-dev-eastus  --name MediaWebhook--Key --query value -o tsv
+   az deployment sub create --location eastus --parameters infra/nonprod.bicepparam
    ```
 
-   Upload a photo to `media-dev/gallery/`; it should show on the home page within seconds. For test, repeat with `TTB_MEDIA_WEBHOOK_KEY_TEST` and `kv-ttb-test-centralus` once its API runs.
-5. **Stop anonymous listing**, after the UI that reads `/api/gallery` is live: delete the old `media-<env>/content/announcements.json`, then set that environment's `restrictMediaListing` to `true` in `infra/nonprod.bicepparam` and deploy again. Check that `https://storttbnonprodcentralus.blob.core.windows.net/media-dev?restype=container&comp=list` now answers 404/403 anonymously while a direct image URL still loads.
+   Upload a photo to `media-dev/gallery/`; it should show on the home page within seconds. For test, repeat with `TTB_MEDIA_WEBHOOK_KEY_TEST` and `kv-ttb-test-eastus` once its API runs.
+5. **Stop anonymous listing**, after the UI that reads `/api/gallery` is live: delete the old `media-<env>/content/announcements.json`, then set that environment's `restrictMediaListing` to `true` in `infra/nonprod.bicepparam` and deploy again. Check that `https://storttbnonprodeastus.blob.core.windows.net/media-dev?restype=container&comp=list` now answers 404/403 anonymously while a direct image URL still loads.
 
 **Moving `reviews.json`.** The API reads `reviews.json` from `content-<env>` instead of `media-<env>/content/`. Per environment: deploy the API first (until the file is in `content-<env>` the site hides the reviews section), copy the file the same way as step 3 (`--source-blob content/reviews.json --destination-blob reviews.json`), check `/api/reviews`, then delete `media-<env>/content/reviews.json`. Deploying Bicep afterwards is optional: it adds `reviews.json` to the Event Grid filter, so an edit shows within seconds; without it an edit shows when the 60-minute cache refreshes.
 
@@ -155,8 +155,8 @@ The storage CORS rule is unchanged: the UI no longer needs it for the gallery, b
 gcloud services enable recaptchaenterprise.googleapis.com apikeys.googleapis.com
 # One score key per environment. Nonprod keys return a fixed score, so dev and test never depend on real traffic;
 # rerun with --testing-score=0.1 to try the call/text fallback.
-gcloud recaptcha keys create --display-name=ttb-dev  --web --integration-type=score --domains=as-ttb-ui-dev-centralus.azurewebsites.net,localhost --testing-score=0.9
-gcloud recaptcha keys create --display-name=ttb-test --web --integration-type=score --domains=as-ttb-ui-test-centralus.azurewebsites.net --testing-score=0.9
+gcloud recaptcha keys create --display-name=ttb-dev  --web --integration-type=score --domains=as-ttb-ui-dev-eastus.azurewebsites.net,localhost --testing-score=0.9
+gcloud recaptcha keys create --display-name=ttb-test --web --integration-type=score --domains=as-ttb-ui-test-eastus.azurewebsites.net --testing-score=0.9
 # Prod (M5): no --testing-score, domains = the custom domain.
 ```
 
@@ -172,10 +172,10 @@ GitHub Actions signs in with **user-assigned managed identities** that trust Git
 
 | Identity | Trusts (OIDC subject) | Can do |
 | --- | --- | --- |
-| `id-ttb-deploy-dev-centralus` | jobs in GitHub environment `dev` | deploy `as-ttb-ui-dev-centralus` + `as-ttb-api-dev-centralus`, upload to `media-dev` |
-| `id-ttb-deploy-test-centralus` | jobs in GitHub environment `test` | the same for the test apps and `media-test` |
-| `id-ttb-preview-nonprod-centralus` | `pull_request` jobs | read the subscription and run what-if (no writes) |
-| `id-ttb-reports-ci-centralus` | `pull_request` jobs, and jobs on `main` without an environment (the nightly smoke) | write to the `reports` container only ([CI reports](#ci-reports)) |
+| `id-ttb-deploy-dev-eastus` | jobs in GitHub environment `dev` | deploy `as-ttb-ui-dev-eastus` + `as-ttb-api-dev-eastus`, upload to `media-dev` |
+| `id-ttb-deploy-test-eastus` | jobs in GitHub environment `test` | the same for the test apps and `media-test` |
+| `id-ttb-preview-nonprod-eastus` | `pull_request` jobs | read the subscription and run what-if (no writes) |
+| `id-ttb-reports-ci-eastus` | `pull_request` jobs, and jobs on `main` without an environment (the nightly smoke) | write to the `reports` container only ([CI reports](#ci-reports)) |
 | prod (M5) | jobs in GitHub environment `production` | created by `prod.bicepparam` |
 
 - One identity per environment, rather than one app registration for all of them, so the `dev` sign-in can't touch test (they share a resource group).
@@ -186,8 +186,8 @@ GitHub Actions signs in with **user-assigned managed identities** that trust Git
 
 | Environment | Deploys from | Approval | `AZURE_CLIENT_ID` variable |
 | --- | --- | --- | --- |
-| `dev` | `dev/*` | none | `id-ttb-deploy-dev-centralus` |
-| `test` | `release/*`, `hotfix/*` | none | `id-ttb-deploy-test-centralus` |
+| `dev` | `dev/*` | none | `id-ttb-deploy-dev-eastus` |
+| `test` | `release/*`, `hotfix/*` | none | `id-ttb-deploy-test-eastus` |
 | `production` | `release/*`, `hotfix/*` | required reviewer (you) | added at M5 |
 
 Repo variables `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID` and `AZURE_PREVIEW_CLIENT_ID` (IDs, not secrets). The what-if job also needs the `TTB_ALERT_EMAIL`, `TTB_ALERT_PHONE`, `TTB_ADMIN_OBJECT_ID` and `TTB_ALLOWED_IPS` values; they're repo **secrets** so the public workflow logs mask them. After deploying, set up GitHub with the same `TTB_*` variables still set in your shell:
@@ -206,19 +206,19 @@ Every Playwright, Lighthouse and API coverage report opens in the browser from a
 
 | Resource | Name | Notes |
 | --- | --- | --- |
-| Resource group | `rg-ttb-ci-centralus` | Holds every environment's reports. `CanNotDelete` lock `lock-ttb-ci-centralus` |
-| Storage | `storttbcicentralus`, container `reports` | Standard LRS. No anonymous access, no shared keys (Entra only), TLS 1.2, no static website. Lifecycle: Hot for 30 days, then Cool (links keep working), deleted after 365 days |
-| Viewer app | `as-ttb-reports-nonprod-centralus` | .NET 10 ([`tools/report-viewer/`](../tools/report-viewer/)) on the nonprod F1 plan, so it's in `rg-ttb-nonprod-centralus`. Same access restrictions as the other nonprod apps |
+| Resource group | `rg-ttb-ci-eastus` | Holds every environment's reports. `CanNotDelete` lock `lock-ttb-ci-eastus` |
+| Storage | `storttbcieastus`, container `reports` | Standard LRS. No anonymous access, no shared keys (Entra only), TLS 1.2, no static website. Lifecycle: Hot for 30 days, then Cool (links keep working), deleted after 365 days |
+| Viewer app | `as-ttb-reports-nonprod-eastus` | .NET 10 ([`tools/report-viewer/`](../tools/report-viewer/)) on the nonprod F1 plan, so it's in `rg-ttb-nonprod-eastus`. Same access restrictions as the other nonprod apps |
 | Entra app | `Thad the Barber reports viewer (nonprod)` (`uniqueName` `ttb-reports-viewer-nonprod`) | App Service authentication signs in with it. **Assignment required**, and only you (`TTB_ADMIN_OBJECT_ID`) are assigned. The auth settings also allow only your object ID (`allowedPrincipals`) |
-| Identity | `id-ttb-reports-auth-nonprod-centralus` | Assigned to the viewer only. The Entra app trusts it through a federated credential, which replaces the client secret (`OVERRIDE_USE_MI_FIC_ASSERTION_CLIENTID`), so there's no secret to rotate |
-| Identity | `id-ttb-reports-ci-centralus` | Pull requests and the nightly smoke run upload with it (table above) |
+| Identity | `id-ttb-reports-auth-nonprod-eastus` | Assigned to the viewer only. The Entra app trusts it through a federated credential, which replaces the client secret (`OVERRIDE_USE_MI_FIC_ASSERTION_CLIENTID`), so there's no secret to rotate |
+| Identity | `id-ttb-reports-ci-eastus` | Pull requests and the nightly smoke run upload with it (table above) |
 
 | Who | Role | Scope |
 | --- | --- | --- |
 | viewer (system-assigned identity) | Storage Blob Data Reader | `reports` |
-| `id-ttb-reports-ci-centralus` | Storage Blob Data Contributor | `reports` |
-| `id-ttb-deploy-dev-centralus`, `id-ttb-deploy-test-centralus` | Storage Blob Data Contributor | `reports` (smoke reports) |
-| `id-ttb-deploy-dev-centralus` | Website Contributor | the viewer app (`cd-dev` deploys it) |
+| `id-ttb-reports-ci-eastus` | Storage Blob Data Contributor | `reports` |
+| `id-ttb-deploy-dev-eastus`, `id-ttb-deploy-test-eastus` | Storage Blob Data Contributor | `reports` (smoke reports) |
+| `id-ttb-deploy-dev-eastus` | Website Contributor | the viewer app (`cd-dev` deploys it) |
 
 **Layout** in `reports`. A folder without an `index.html` lists its subfolders, newest run first:
 
@@ -231,11 +231,11 @@ Every Playwright, Lighthouse and API coverage report opens in the browser from a
 | `nightly/test/<run-id>/smoke/` | nightly smoke report | `deploy.yml` `publish-smoke` |
 
 - Fork and Dependabot PRs get no OIDC token, so they skip publishing. Their checks still pass, and the zip artifacts stay as the fallback for every run.
-- The test environment only admits `release/*` and `hotfix/*`, but scheduled runs come from `main`. So the nightly upload runs without an environment and signs in as `id-ttb-reports-ci-centralus`, which trusts `main` and can only write reports.
+- The test environment only admits `release/*` and `hotfix/*`, but scheduled runs come from `main`. So the nightly upload runs without an environment and signs in as `id-ttb-reports-ci-eastus`, which trusts `main` and can only write reports.
 - `cd-dev` redeploys the viewer when `tools/report-viewer/` changes on `dev/*`.
 - **F1 limits** apply to the viewer: it cold-starts, and every report you open counts toward the plan's shared 165 MB/day outbound cap. Responses carry ETags, so reopening a report costs a 304 instead of the whole file.
 - **Cost:** storage only, a few cents a month at this volume. The app runs on the free plan, and the Entra app and identities are free.
-- **Checking the lockdown:** a signed-out browser is sent to the Entra sign-in; another account in the tenant is refused (not assigned); a plain `curl` to a blob URL on `storttbcicentralus` is refused (public access is off).
+- **Checking the lockdown:** a signed-out browser is sent to the Entra sign-in; another account in the tenant is refused (not assigned); a plain `curl` to a blob URL on `storttbcieastus` is refused (public access is off).
 
 ## CI (every pull request)
 

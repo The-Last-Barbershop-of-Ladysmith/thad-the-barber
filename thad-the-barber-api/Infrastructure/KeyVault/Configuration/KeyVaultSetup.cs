@@ -27,7 +27,7 @@ public static class KeyVaultSetup
         return builder;
     }
 
-    /// <summary>The vault's URI from its name, e.g. <c>kv-ttb-dev-centralus</c> → <c>https://kv-ttb-dev-centralus.vault.azure.net/</c>.</summary>
+    /// <summary>The vault's URI from its name, e.g. <c>kv-ttb-dev-eastus</c> → <c>https://kv-ttb-dev-eastus.vault.azure.net/</c>.</summary>
     public static Uri? GetVaultUri(IConfiguration configuration) =>
         configuration["KeyVault:Name"] is { Length: > 0 } name
             ? new Uri($"https://{name.Trim()}.vault.azure.net/")

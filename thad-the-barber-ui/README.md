@@ -61,8 +61,8 @@ Each build configuration swaps `src/environments/environment.ts` for its own fil
 | Configuration | File | Used for |
 | --- | --- | --- |
 | `development` (`ng serve` default) | `environment.development.ts` | Local; calls the API from `dotnet run` at `http://localhost:5078/api` |
-| `devCloud` | `environment.dev-cloud.ts` | Azure dev (`as-ttb-ui-dev-centralus`) |
-| `test` | `environment.test.ts` | Azure test (`as-ttb-ui-test-centralus`) |
+| `devCloud` | `environment.dev-cloud.ts` | Azure dev (`as-ttb-ui-dev-eastus`) |
+| `test` | `environment.test.ts` | Azure test (`as-ttb-ui-test-eastus`) |
 | `production` (`ng build` default) | `environment.ts` | Prod |
 
 Fields: `production`, `apiBaseUrl` (absolute, includes `/api`), `siteUrl`, `mediaBaseUrl` (only the CSP `img-src` reads it; the gallery and announcement image URLs come from the API), `recaptchaSiteKey` and `appInsightsConnectionString`. Build request URLs as `${environment.apiBaseUrl}/path`. Unit tests run with the `development` replacement, and Vitest only picks up `*.spec.ts` files, because `environment.test.ts` would otherwise match its `*.test.ts` pattern.

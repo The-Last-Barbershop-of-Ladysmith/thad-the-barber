@@ -95,4 +95,4 @@ jobs:
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
-      - run: az webapp deploy --resource-group rg-ttb-nonprod-centralus --name as-ttb-reports-nonprod-centralus --src-path viewer.zip --type zip
+      - run: az webapp deploy --resource-group rg-ttb-nonprod-eastus --name as-ttb-reports-nonprod-eastus --src-path viewer.zip --type zip

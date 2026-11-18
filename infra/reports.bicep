@@ -1,7 +1,7 @@
 // CI reports (issue #137): Playwright, Lighthouse and coverage reports in a private storage account, read through an
 // Entra-protected viewer app. Deploy after main.bicep, since the viewer runs on the nonprod plan and the deploy
 // identities get upload rights:
-//   az deployment sub create --name reports --location centralus --parameters infra/reports.bicepparam
+//   az deployment sub create --name reports --location eastus --parameters infra/reports.bicepparam
 // then re-run infra/scripts/Set-TtbGitHub.ps1, which reads this deployment's outputs into repo variables.
 // Separate from main.bicep because it creates Entra (Microsoft Graph) objects, which what-if can't preview.
 // See docs/environments.md#ci-reports.
@@ -10,7 +10,7 @@ targetScope = 'subscription'
 import * as github from 'github.bicep'
 
 @description('Region of the nonprod resources. Also the last part of every name here.')
-param location string = 'centralus'
+param location string = 'eastus'
 
 @description('Object ID of the owner, the only user who may sign in to the viewer.')
 param ownerPrincipalId string

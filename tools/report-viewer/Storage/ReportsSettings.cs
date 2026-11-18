@@ -6,7 +6,7 @@ public sealed class ReportsSettings
 {
     public const string SectionName = "Reports";
 
-    /// <summary>Storage account name, e.g. <c>storttbcicentralus</c>. Set by Bicep as an app setting.</summary>
+    /// <summary>Storage account name, e.g. <c>storttbcieastus</c>. Set by Bicep as an app setting.</summary>
     [Required]
     public string StorageAccount { get; set; } = null!;
 
