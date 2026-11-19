@@ -3,7 +3,6 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { Store, provideStore } from '@ngrx/store';
-import { expectNoAxeViolations } from '../../../../../testing/axe';
 import { AppState } from '../../../../store/app.state';
 import { AdminAnnouncementDto } from '../../announcements/dtos/admin-announcement.dto';
 import { AdminAnnouncementStatus } from '../../announcements/models/admin-announcement-status.model';
@@ -204,28 +203,6 @@ describe(
         expect(text('gallery-unavailable')).toBeNull();
         expect(text('overview-notice-state')).toBe('Hidden from the booking page');
         http.verify();
-      },
-    );
-
-    it(
-      'has no accessibility violations once everything has loaded',
-      async (): Promise<void> => {
-        answer('/admin/announcements', [
-          announcement(
-            'Holiday hours',
-            AdminAnnouncementStatus.Showing,
-            '2026-12-26',
-          ),
-        ]);
-        answer('/admin/gallery', [photo('one.jpg')]);
-        answer('/admin/shop', {
-          notice: 'Closed Monday.',
-          isNoticeShown: true,
-          squareNotice: null,
-        } satisfies AdminShopInfoDto);
-        await settle();
-
-        await expectNoAxeViolations(host());
       },
     );
   },

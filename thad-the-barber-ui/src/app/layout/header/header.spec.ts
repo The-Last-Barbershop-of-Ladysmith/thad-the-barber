@@ -91,15 +91,6 @@ describe(
         expect(host().querySelector('a.back-link')?.getAttribute('href')).toBe('/');
       },
     );
-
-    it(
-      'has no axe violations on the home page',
-      async (): Promise<void> => {
-        await fixture.whenStable();
-
-        await expectNoAxeViolations(host());
-      },
-    );
     it(
       'has no axe violations with the menu open',
       async (): Promise<void> => {
@@ -108,16 +99,6 @@ describe(
         await fixture.whenStable();
 
         await expectNoAxeViolations(document.body);
-      },
-    );
-    it(
-      'has no axe violations on the booking pages',
-      async (): Promise<void> => {
-        await TestBed.inject(Router).navigateByUrl('/book');
-        fixture.detectChanges();
-        await fixture.whenStable();
-
-        await expectNoAxeViolations(host());
       },
     );
   },

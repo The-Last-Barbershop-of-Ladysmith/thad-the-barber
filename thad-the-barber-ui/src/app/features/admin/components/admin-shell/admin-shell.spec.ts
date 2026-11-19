@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockInstance } from 'vitest';
 import { Router, provideRouter } from '@angular/router';
 import { Store, provideStore } from '@ngrx/store';
-import { expectNoAxeViolations } from '../../../../../testing/axe';
 import { ADMIN_IDLE_LIMIT_MS, AdminSessionStorage } from '../../services/admin-session-storage';
 import { AppState } from '../../../../store/app.state';
 import * as AdminActions from '../../state/admin.actions';
@@ -186,13 +185,6 @@ describe(
 
         expect(host.querySelectorAll('nav')).toHaveLength(1);
         expect(host.querySelector('main')).toBeNull();
-      },
-    );
-
-    it(
-      'has no accessibility violations',
-      async (): Promise<void> => {
-        await expectNoAxeViolations(fixture.nativeElement as HTMLElement);
       },
     );
   },

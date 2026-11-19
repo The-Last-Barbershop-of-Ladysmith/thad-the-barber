@@ -3,7 +3,6 @@ import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { MockInstance } from 'vitest';
 import { Store, provideStore } from '@ngrx/store';
-import { expectNoAxeViolations } from '../../../../../../testing/axe';
 import { TEST_SHOP } from '../../../../../../testing/test-shop';
 import { RichTextEditor } from '../../../../../shared/components/rich-text-editor/rich-text-editor';
 import { AppState } from '../../../../../store/app.state';
@@ -324,12 +323,6 @@ describe('AnnouncementEdit', (): void => {
     await open('5', [SAVED]);
 
     expect(host().querySelector('[data-testid="announcement-missing"]')).not.toBeNull();
-  });
-
-  it('has no accessibility violations', async (): Promise<void> => {
-    await open('0', [SAVED]);
-
-    await expectNoAxeViolations(host());
   });
 
   function choosePhoto(file: File): void {

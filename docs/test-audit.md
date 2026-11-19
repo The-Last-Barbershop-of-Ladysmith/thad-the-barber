@@ -36,6 +36,25 @@ mobile, WebKit desktop, WebKit mobile), and most of the red CI runs this month c
   merge would break the one-spec-per-file layout. The axe repeats each scan a different step of a flow, so they are not duplicates
   either. `environments.spec.ts` guards how URLs are joined. The texting-work merges wait until that branch lands.
 
+## Unit vs e2e overlap (third pass)
+
+I compared the assertions of the same feature at both levels. The overlap was smaller than the titles suggested: most e2e
+"twins" check things jsdom can't, such as real routing and history, real line breaks from CSS, real downloads, the session
+token and 401 retry, nothing kept on the device, and axe in each error state with real contrast. Those stay.
+
+Removed, because the e2e suite already scans the same page or state in a real browser, or the unit test is a strict subset:
+
+- **12 unit axe scans** (jsdom, no contrast): the dedicated "has no accessibility violations" tests of the admin pages
+  (announcement edit and list, shop info, gallery, overview, sign-in, shell), the offline banner, the strip with no announcements,
+  the footer, and the header on the home and booking pages. `admin*.spec.ts`, `error-states.spec.ts`, `home-accessibility.spec.ts`
+  and the booking specs scan those pages in the same states.
+- **The axe call in the contact email-error unit test.** Its ARIA assertions stay; the e2e test scans the same state.
+- **1 e2e test:** "a question cannot be sent until it has a name and a way to reply", a strict subset of the contact unit tests.
+
+Kept on purpose: the header with the menu open and the strip while paused or cycling (no e2e scan of those states), and every axe
+scan on a shared component that no page scan covers alone (`phone-field`, `rich-text-editor`, `photo-upload`, `notice-message`,
+`section-heading`, `titled-page`, the announcement buttons field and preview).
+
 ## Candidates to remove or merge (with how much each saves)
 
 The list as first written, before the second pass above.
@@ -77,4 +96,4 @@ The list as first written, before the second pass above.
 
 ## If all of the above is accepted
 
-The second pass took out 52 e2e runs per pair of browsers and 1 unit test, on top of the 586 e2e runs moved off pull requests.
+The second and third passes took out 52 e2e runs per pair of browsers, 13 unit tests and 1 e2e test, on top of the 586 e2e runs moved off pull requests.

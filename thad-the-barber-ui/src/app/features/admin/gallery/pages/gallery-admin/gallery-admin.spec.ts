@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockInstance } from 'vitest';
 import { Store, provideStore } from '@ngrx/store';
-import { expectNoAxeViolations } from '../../../../../../testing/axe';
 import { AppState } from '../../../../../store/app.state';
 import { AdminGalleryPhotoDto } from '../../dtos/admin-gallery-photo.dto';
 import { AdminGalleryError } from '../../models/admin-gallery-error.model';
@@ -184,11 +183,5 @@ describe('GalleryAdmin', (): void => {
     fixture.detectChanges();
 
     expect(element('[data-testid="gallery-error"]').textContent).toContain('could not be used');
-  });
-
-  it('has no accessibility violations', async (): Promise<void> => {
-    await open([FADE, BEARD]);
-
-    await expectNoAxeViolations(host());
   });
 });
