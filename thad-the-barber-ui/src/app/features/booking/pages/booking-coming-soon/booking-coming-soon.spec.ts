@@ -4,6 +4,7 @@ import { Store, provideStore } from '@ngrx/store';
 import { TEST_SHOP } from '../../../../../testing/test-shop';
 import * as ShopActions from '../../../shop/state/shop.actions';
 import { shopFeature } from '../../../shop/state/shop.feature';
+import { bookingFeature } from '../../state/booking.feature';
 import { BookingComingSoon } from './booking-coming-soon';
 
 describe(
@@ -13,7 +14,13 @@ describe(
 
     beforeEach((): void => {
       TestBed.configureTestingModule({
-        providers: [provideRouter([]), provideStore({ [shopFeature.name]: shopFeature.reducer })],
+        providers: [
+          provideRouter([]),
+          provideStore({
+            [shopFeature.name]: shopFeature.reducer,
+            [bookingFeature.name]: bookingFeature.reducer,
+          }),
+        ],
       });
       TestBed.inject(Store).dispatch(ShopActions.ShopInfoRequestSuccess({ shopInfo: TEST_SHOP }));
       const fixture: ComponentFixture<BookingComingSoon> = TestBed.createComponent(BookingComingSoon);

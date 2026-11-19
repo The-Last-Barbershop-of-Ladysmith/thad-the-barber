@@ -7,7 +7,9 @@ import { TitledPage } from '../../../../shared/components/titled-page/titled-pag
 import { PhoneLinks } from '../../../../shared/models/phone-links.model';
 import { AppState } from '../../../../store/app.state';
 import { shopFeature } from '../../../shop/state/shop.feature';
+import { DateStep } from '../../components/date-step/date-step';
 import { DetailsStep } from '../../components/details-step/details-step';
+import { TimeStep } from '../../components/time-step/time-step';
 import { LeaveConfirmable } from '../../models/leave-confirmable.model';
 
 /**
@@ -20,6 +22,8 @@ import { LeaveConfirmable } from '../../models/leave-confirmable.model';
     ButtonModule,
     MessageModule,
     TitledPage,
+    DateStep,
+    TimeStep,
     DetailsStep,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -35,6 +39,14 @@ export class BookingComingSoon implements LeaveConfirmable {
   readonly isSubmitting: Signal<boolean> = signal(false).asReadonly();
 
   protected readonly phone: Signal<PhoneLinks> = this.store.selectSignal(shopFeature.selectPhoneLinks);
+  protected readonly dateControl: FormControl<string | null> = new FormControl<string | null>({
+    value: null,
+    disabled: true,
+  });
+  protected readonly startAtControl: FormControl<string | null> = new FormControl<string | null>({
+    value: null,
+    disabled: true,
+  });
   protected readonly nameControl: FormControl<string> = new FormControl(
     { value: '', disabled: true },
     { nonNullable: true },

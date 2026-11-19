@@ -1,11 +1,10 @@
 <app-titled-page eyebrow="Book an appointment" heading="Online booking opens soon">
-  <p pageSubtitle class="m-0 text-muted-color">
-    Call or text the shop to book in the meantime.
-  </p>
+  <p pageSubtitle class="m-0 text-muted-color">Call or text the shop to book in the meantime.</p>
 
-  <div class="stack gap-4 max-w-xl" data-testid="booking-coming-soon">
+  <div class="stack gap-4 max-w-4xl" data-testid="booking-coming-soon">
     <p-message severity="info" data-testid="booking-coming-soon-notice"
-      >Booking on this site isn't open yet. Below is how it will work. To book now, call or text the shop.</p-message
+      >Booking on this site isn't open yet. Below is how it will work. To book now, call or text the
+      shop.</p-message
     >
     <div class="stack gap-2 items-start">
       <a class="inline-link font-semibold" data-testid="coming-soon-call" [href]="phone().tel"
@@ -16,14 +15,27 @@
       >
     </div>
 
-    <app-details-step
-      [nameControl]="nameControl"
-      [phoneControl]="phoneControl"
-      [consentControl]="consentControl"
-      [marketingConsentControl]="marketingConsentControl"
-    />
-    <button pButton type="button" data-testid="coming-soon-book" [fluid]="true" [disabled]="true">
-      Book appointment
-    </button>
+    <section class="stack gap-3" aria-labelledby="coming-soon-day-heading">
+      <h2 id="coming-soon-day-heading" class="section-title">Pick a day</h2>
+      <app-date-step [dateControl]="dateControl" />
+    </section>
+
+    <section class="stack gap-3" aria-labelledby="coming-soon-time-heading">
+      <h2 id="coming-soon-time-heading" class="section-title">Select a time</h2>
+      <app-time-step [startAtControl]="startAtControl" [selectedDate]="null" />
+    </section>
+
+    <section class="stack gap-3 max-w-xl" aria-labelledby="coming-soon-details-heading">
+      <h2 id="coming-soon-details-heading" class="section-title">Details &amp; confirm</h2>
+      <app-details-step
+        [nameControl]="nameControl"
+        [phoneControl]="phoneControl"
+        [consentControl]="consentControl"
+        [marketingConsentControl]="marketingConsentControl"
+      />
+      <button pButton type="button" data-testid="coming-soon-book" [fluid]="true" [disabled]="true">
+        Book appointment
+      </button>
+    </section>
   </div>
 </app-titled-page>
