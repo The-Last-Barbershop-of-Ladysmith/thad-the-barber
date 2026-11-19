@@ -55,6 +55,11 @@ describe('content security policy', function() {
     expect(site).not.toContain('accounts.google.com');
   });
 
+  it('lets admin pages, and only them, preview a chosen photo from a blob: URL', function() {
+    expect(directive(csp.contentSecurityPolicy('abc', sources, [], true), 'img-src')).toContain('blob:');
+    expect(directive(csp.contentSecurityPolicy('abc', sources), 'img-src')).not.toContain('blob:');
+  });
+
   it("loads images from the build's media host", function() {
     expect(directive(csp.contentSecurityPolicy('abc', sources), 'img-src')).toEqual(["'self'", 'data:', 'https://media.example.com']);
   });

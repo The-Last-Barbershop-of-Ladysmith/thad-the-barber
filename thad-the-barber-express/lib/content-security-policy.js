@@ -36,7 +36,7 @@ var GOOGLE_SIGN_IN = {
   'style-src': 'https://accounts.google.com/gsi/style',
 };
 
-// sources is the build's csp-sources.json. isAdminPage adds Google's sign-in sources.
+// sources is the build's csp-sources.json. isAdminPage adds Google's sign-in sources and blob: images for upload previews.
 function contentSecurityPolicy(nonce, sources, styleHashes = [], isAdminPage = false) {
   var directives = {
     'default-src': ["'self'"],
@@ -54,6 +54,8 @@ function contentSecurityPolicy(nonce, sources, styleHashes = [], isAdminPage = f
     'form-action': ["'self'"],
   };
   if (isAdminPage) {
+    // The gallery and announcement uploads preview the chosen photo from a blob: URL before it is sent.
+    directives['img-src'].push('blob:');
     Object.entries(GOOGLE_SIGN_IN).forEach(function([name, source]) {
       directives[name].push(source);
     });

@@ -7,7 +7,7 @@ Run after `az deployment sub create` has made the deploy identities. Safe to re-
 
 - Environments: dev (deploys from dev/*), test (release/*, hotfix/*) and production (release/*, hotfix/*, and
   a required reviewer). Each gets an AZURE_CLIENT_ID variable: the client ID of that environment's deploy
-  identity (id-ttb-deploy-<env>-<region>). Production has none until its identity exists (M5).
+  identity (id-ttb-deploy-<env>-<region>). Production's identity lives in rg-ttb-prod-<region>.
 - Repo variables: AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID and AZURE_PREVIEW_CLIENT_ID (the identity pull
   requests use for what-if).
 - Once infra/reports.bicep is deployed (#137), the CI report variables: REPORTS_URL (the viewer),
@@ -43,9 +43,9 @@ function Invoke-Gh {
 
 $resourceGroup = "rg-ttb-nonprod-$Location"
 $environments = @(
-    @{ Name = 'dev'; Branches = @('dev/*'); Identity = "id-ttb-deploy-dev-$Location" }
-    @{ Name = 'test'; Branches = @('release/*', 'hotfix/*'); Identity = "id-ttb-deploy-test-$Location" }
-    @{ Name = 'production'; Branches = @('release/*', 'hotfix/*'); Identity = $null; Reviewed = $true }
+    @{ Name = 'dev'; Branches = @('dev/*'); Identity = "id-ttb-deploy-dev-$Location"; ResourceGroup = $resourceGroup }
+    @{ Name = 'test'; Branches = @('release/*', 'hotfix/*'); Identity = "id-ttb-deploy-test-$Location"; ResourceGroup = $resourceGroup }
+    @{ Name = 'production'; Branches = @('release/*', 'hotfix/*'); Identity = "id-ttb-deploy-prod-$Location"; ResourceGroup = "rg-ttb-prod-$Location"; Reviewed = $true }
 )
 
 if (-not $Reviewer) { $Reviewer = gh api user --jq .login }
@@ -67,7 +67,7 @@ foreach ($e in $environments) {
     }
 
     if ($e.Identity) {
-        $clientId = az identity show --resource-group $resourceGroup --name $e.Identity --query clientId -o tsv
+        $clientId = az identity show --resource-group $e.ResourceGroup --name $e.Identity --query clientId -o tsv
         Invoke-Gh variable set AZURE_CLIENT_ID --repo $Repo --env $e.Name --body $clientId
     }
     Write-Host "Environment $($e.Name): branches $($e.Branches -join ', ')$(if ($e.Reviewed) { ", reviewer $Reviewer" })"

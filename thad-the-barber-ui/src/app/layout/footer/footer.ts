@@ -1,12 +1,14 @@
 import { ChangeDetectionStrategy, Component, Signal, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
+import { IS_BOOKING_PREVIEW } from '../../core/config/booking-preview.token';
 import { NavItem } from '../../shared/models/nav-item.model';
 import { PhoneLinks } from '../../shared/models/phone-links.model';
 import { HoursListVariant } from '../../features/shop/models/hours-list-variant.model';
 import { ShopAddress } from '../../features/shop/models/shop-address.model';
 import { SocialLink } from '../../features/shop/models/social-link.model';
 import { announcementsFeature } from '../../features/announcements/state/announcements.feature';
+import { TextUpdatesForm } from '../../features/text-updates/components/text-updates-form/text-updates-form';
 import { HoursList } from '../../features/shop/components/hours-list/hours-list';
 import { AppState } from '../../store/app.state';
 import { shopFeature } from '../../features/shop/state/shop.feature';
@@ -16,6 +18,7 @@ import { shopFeature } from '../../features/shop/state/shop.feature';
   imports: [
     RouterLink,
     HoursList,
+    TextUpdatesForm,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './footer.html',
@@ -24,6 +27,7 @@ import { shopFeature } from '../../features/shop/state/shop.feature';
 export class Footer {
   private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
 
+  protected readonly isBookingPreview: boolean = inject(IS_BOOKING_PREVIEW);
   protected readonly hoursVariant: HoursListVariant = HoursListVariant.Compact;
   protected readonly shopName: Signal<string> = this.store.selectSignal(shopFeature.selectShopName);
   protected readonly address: Signal<ShopAddress | null> = this.store.selectSignal(shopFeature.selectAddress);

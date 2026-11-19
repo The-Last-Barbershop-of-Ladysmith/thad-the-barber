@@ -27,7 +27,7 @@
         </button>
       }
     </div>
-  } @else {
+  } @else if (!isBookingPreview) {
     <p pageSubtitle class="find-bookings-prompt m-0 text-muted-color">
       Already booked?
       <a class="inline-link" data-testid="find-bookings-link" routerLink="/book/manage"
@@ -134,6 +134,7 @@
                         [nameControl]="bookingForm.controls.name"
                         [phoneControl]="bookingForm.controls.phone"
                         [consentControl]="bookingForm.controls.hasTextConsent"
+                        [marketingConsentControl]="bookingForm.controls.hasMarketingConsent"
                       />
                     }
                     <button
@@ -169,4 +170,7 @@
   }
 </app-titled-page>
 
-<p-confirmdialog key="leave-booking" [pt]="{ pcCloseButton: { root: { 'aria-label': 'Close' } } }" />
+<p-confirmdialog
+  key="leave-booking"
+  [pt]="{ pcCloseButton: { root: { 'aria-label': 'Close' } } }"
+/>

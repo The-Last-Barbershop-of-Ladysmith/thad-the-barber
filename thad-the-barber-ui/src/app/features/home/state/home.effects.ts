@@ -2,11 +2,10 @@ import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { PLATFORM_ID, inject } from '@angular/core';
 import { Actions, FunctionalEffect, createEffect, ofType } from '@ngrx/effects';
 import { Action } from '@ngrx/store';
-import { Observable, catchError, exhaustMap, filter, map, of, switchMap, takeUntil } from 'rxjs';
+import { Observable, catchError, filter, map, of, switchMap, takeUntil } from 'rxjs';
 import { pollWhileVisible } from '../../../shared/utils/poll-while-visible.utils';
 import { NEXT_TIMES_POLL_INTERVAL_MS } from '../config/next-times';
 import { NextTimesService } from '../services/next-times.service';
-import { SmsSignupService } from '../services/sms-signup.service';
 import * as HomeActions from './home.actions';
 
 /**
@@ -32,23 +31,6 @@ export const pollNextTimes: FunctionalEffect = createEffect(
               catchError((): Observable<Action> => of(HomeActions.NextTimesRequestFailure())),
             )),
           takeUntil(actions$.pipe(ofType(HomeActions.HomePageClose))),
-        )),
-    ),
-  { functional: true },
-);
-
-export const subscribeToSms: FunctionalEffect = createEffect(
-  (
-    actions$: Actions = inject<Actions>(Actions),
-    sms: SmsSignupService = inject(SmsSignupService),
-  ): Observable<Action> =>
-    actions$.pipe(
-      ofType(HomeActions.SmsSignupRequest),
-      exhaustMap(({ phone }: { phone: string; }): Observable<Action> =>
-        sms.subscribe(phone).pipe(
-          map((result: { phone: string; }): Action => HomeActions.SmsSignupRequestSuccess({ phone: result.phone })),
-          catchError((): Observable<Action> =>
-            of(HomeActions.SmsSignupRequestFailure({ error: 'Something went wrong. Try again?' }))),
         )),
     ),
   { functional: true },

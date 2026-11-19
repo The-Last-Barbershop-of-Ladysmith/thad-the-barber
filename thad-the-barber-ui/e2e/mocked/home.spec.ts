@@ -2,7 +2,7 @@ import { Locator, Page, Request, Response, Route } from '@playwright/test';
 import { BookingConfirmation } from '../../src/app/features/booking/dtos/booking-confirmation.dto';
 import { BookingRequest } from '../../src/app/features/booking/dtos/booking-request.dto';
 import { expectNoA11yViolations } from '../support/axe';
-import { isBookingRequest, isNextTimesRequest, tickTextConsent } from '../support/booking';
+import { isBookingRequest, isNextTimesRequest } from '../support/booking';
 import { expect, test } from '../support/fixtures';
 import { isStaticMap } from '../support/map';
 import { servedEnvironment } from '../support/served-environment';
@@ -88,10 +88,9 @@ test.describe(
         await timeLinks.nth(2).click();
 
         await expect(page).toHaveURL(/\/book$/);
+        await expect(page.getByTestId('confirm-booking')).toBeDisabled();
         await page.locator('#booking-name').fill('Jordan Customer');
         await page.locator('#booking-phone').pressSequentially('5405550123');
-        await expect(page.getByTestId('confirm-booking')).toBeDisabled();
-        await tickTextConsent(page);
         await expect(page.getByTestId('confirm-booking')).toBeEnabled();
         await page.getByTestId('confirm-booking').click();
         await expect(page).toHaveURL(/\/book\/manage\/made-up-booking$/);

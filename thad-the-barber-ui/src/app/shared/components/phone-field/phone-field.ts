@@ -21,6 +21,7 @@ export class PhoneField {
 
   readonly inputId: InputSignal<string> = input.required<string>();
   readonly isRequiredMarked: InputSignal<boolean> = input<boolean>(false);
+  readonly isLabelHidden: InputSignal<boolean> = input<boolean>(false);
   readonly phoneControl: InputSignal<FormControl<string>> = input.required<FormControl<string>>();
 
   protected readonly isErrorShown: Signal<boolean> = toIsErrorShown(this.phoneControl);

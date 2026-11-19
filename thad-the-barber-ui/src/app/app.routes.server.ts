@@ -24,6 +24,8 @@ export const INDEXED_ROUTES: string[] = [
   '',
   'book',
   'privacy',
+  'terms',
+  'text-updates',
   'accessibility',
   'contact',
 ];
@@ -35,6 +37,8 @@ export const INDEXED_ROUTES: string[] = [
 export const serverRoutes: ServerRoute[] = [
   { path: '', renderMode: RenderMode.Prerender },
   { path: 'privacy', renderMode: RenderMode.Prerender },
+  { path: 'terms', renderMode: RenderMode.Prerender },
+  { path: 'text-updates', renderMode: RenderMode.Prerender },
   { path: 'accessibility', renderMode: RenderMode.Prerender },
   { path: 'contact', renderMode: RenderMode.Prerender },
   { path: 'book', renderMode: RenderMode.Prerender },

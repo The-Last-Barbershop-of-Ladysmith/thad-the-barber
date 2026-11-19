@@ -47,7 +47,7 @@ describe(
         const reducer: ActionReducer<AppState> = createSyncedReducer();
         reducer(
           reducer(undefined, HomeActions.NextTimesRequestFailure()),
-          HomeActions.SmsSignupRequestSuccess({ phone: '(555) 010-0199' }),
+          HomeActions.NextTimesRequestSuccess({ startAts: [] }),
         );
 
         expect(localStorage.getItem('ttb-home')).toBeNull();

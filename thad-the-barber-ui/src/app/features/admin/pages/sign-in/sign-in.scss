@@ -66,13 +66,15 @@
       }
     }
 
+    // Wide enough for the title's longest word at its full size (Syne is about 1.1em a letter), so no word breaks.
     .pitch {
       display: flex;
-      max-width: 30ch;
+      max-width: 40rem;
       flex-direction: column;
       gap: 1rem;
 
       .pitch-text {
+        max-width: 30ch;
         margin: 0;
         font-size: 1.0625rem;
         line-height: 1.6;
@@ -94,6 +96,10 @@
     > * {
       width: 100%;
       max-width: 26rem;
+    }
+
+    .admin-title {
+      max-width: none;
     }
 
     .google-button {

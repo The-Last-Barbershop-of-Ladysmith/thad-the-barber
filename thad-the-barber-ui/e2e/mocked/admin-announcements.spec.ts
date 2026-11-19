@@ -78,7 +78,7 @@ test.describe(
         await expectNoA11yViolations(page);
         await page.getByLabel('Title').fill('Open late Fridays');
         await page.getByRole('textbox', { name: 'Message' }).fill('We are open until 8 PM on Fridays.');
-        await page.keyboard.press('Control+A');
+        await page.getByRole('textbox', { name: 'Message' }).selectText();
         await page.getByTestId('format-bold').click();
         await expect(page.getByTestId('preview-body').locator('strong')).toHaveText('We are open until 8 PM on Fridays.');
         await page.getByTestId('save-announcement').click();
@@ -103,8 +103,7 @@ test.describe(
         await page.getByTestId('format-link').click();
         await expect(page.getByTestId('link-problem')).toBeVisible();
 
-        await page.getByRole('textbox', { name: 'Message' }).click();
-        await page.keyboard.press('Control+A');
+        await page.getByRole('textbox', { name: 'Message' }).selectText();
         await page.getByTestId('format-link').click();
         await page.getByTestId('link-url').fill('javascript:alert(1)');
         await page.getByTestId('link-apply').click();

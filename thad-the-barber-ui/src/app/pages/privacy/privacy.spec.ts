@@ -6,11 +6,11 @@ import { TEST_SHOP } from '../../../testing/test-shop';
 import { SHOP_FALLBACK } from '../../core/config/shop-info';
 import * as ShopActions from '../../features/shop/state/shop.actions';
 import { shopFeature } from '../../features/shop/state/shop.feature';
-import { PrivacySection } from './models/privacy-section.model';
+import { LegalSection } from '../../shared/models/legal-section.model';
 import { Privacy } from './privacy';
 import { PRIVACY_SECTIONS } from './privacy-sections';
 
-const SECTION_IDS: string[] = PRIVACY_SECTIONS.map((section: PrivacySection): string => section.fragment);
+const SECTION_IDS: string[] = PRIVACY_SECTIONS.map((section: LegalSection): string => section.fragment);
 
 describe(
   'Privacy',

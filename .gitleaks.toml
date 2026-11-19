@@ -28,7 +28,7 @@ description = "reCAPTCHA site keys are public: every page that loads reCAPTCHA s
 condition = "AND"
 paths = ['''^thad-the-barber-api/appsettings\.\w+\.json$''', '''^thad-the-barber-ui/src/environments/environment[\w.-]*\.ts$''']
 regexTarget = "line"
-regexes = ['''^\s*("SiteKey":\s*"6L[\w-]{38}"|recaptchaSiteKey:\s*'6L[\w-]{38}',)\s*$''']
+regexes = ['''^\s*("SiteKey":\s*"6L[\w-]{38}",?|recaptchaSiteKey:\s*'6L[\w-]{38}',)\s*$''']
 
 [[allowlists]]
 description = "The Static Maps key is public: the page's image URL carries it, so Google Cloud restricts it to the site's domains and the Maps Static API (#223)"

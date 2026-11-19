@@ -1,7 +1,10 @@
 <div class="stack gap-1.5">
-  <label class="field-label" [for]="inputId()"
-    >Phone@if (isRequiredMarked()) {<span class="required-mark" aria-hidden="true">*</span>}</label
-  >
+  <label class="field-label" [class.sr-only]="isLabelHidden()" [for]="inputId()"
+    >Phone
+    @if (isRequiredMarked()) {
+      <span class="required-mark" aria-hidden="true">*</span>
+    }
+  </label>
   <p-inputmask
     [inputId]="inputId()"
     [formControl]="phoneControl()"

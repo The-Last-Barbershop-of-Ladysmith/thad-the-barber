@@ -204,7 +204,7 @@ test.describe(
         await page.getByTestId('new-announcement').click();
         const editor: Locator = page.getByRole('textbox', { name: 'Message' });
         await editor.fill('Walk-ins welcome');
-        await page.keyboard.press('Control+A');
+        await editor.selectText();
 
         await page.getByTestId('format-bold').click();
         await expect(editor.locator('strong')).toHaveText('Walk-ins welcome');

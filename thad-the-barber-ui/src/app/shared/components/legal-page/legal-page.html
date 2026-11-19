@@ -1,0 +1,63 @@
+<app-titled-page [eyebrow]="eyebrow()" [heading]="heading()">
+  <p pageSubtitle class="m-0 text-muted-color">Last updated {{ lastUpdated() }}</p>
+
+  <div class="legal-layout" [attr.data-testid]="testIdPrefix()">
+    <ng-template #tocLinks>
+      @for (section of sections(); track section.fragment) {
+        <a
+          class="toc-link"
+          [routerLink]="path()"
+          [fragment]="section.fragment"
+          [attr.aria-current]="section.fragment === activeSection() ? 'location' : null"
+          >{{ section.label }}</a
+        >
+      }
+    </ng-template>
+
+    <nav class="toc-sidebar hidden lg:block" aria-label="On this page" [attr.data-testid]="testIdPrefix() + '-toc'">
+      <span class="eyebrow">On this page</span>
+      <ng-container *ngTemplateOutlet="tocLinks" />
+    </nav>
+
+    <details class="toc-box lg:hidden" [attr.data-testid]="testIdPrefix() + '-toc-box'">
+      <summary class="eyebrow">On this page</summary>
+      <nav class="toc-list" aria-label="On this page">
+        <ng-container *ngTemplateOutlet="tocLinks" />
+      </nav>
+    </details>
+
+    <article class="policy legal-copy">
+      @for (section of sections(); track section.fragment) {
+        <section
+          class="body-copy rich-text"
+          [id]="section.fragment"
+          [attr.data-testid]="testIdPrefix() + '-section-' + section.fragment"
+        >
+          <h2>{{ section.label }}</h2>
+          @for (paragraph of section.paragraphs; track $index) {
+            <p>
+              @for (part of paragraph; track $index) {
+                @switch (part.kind) {
+                  @case (partKinds.ShopName) {
+                    <ng-container>{{ shopName() }}</ng-container>
+                  }
+                  @case (partKinds.Phone) {
+                    <a [href]="phone().tel" [attr.data-testid]="testIdPrefix() + '-phone'">{{ phone().display }}</a>
+                  }
+                  @case (partKinds.ExternalLink) {
+                    <a [href]="part.href" target="_blank" rel="noopener"
+                      >{{ part.text }}<span class="sr-only"> (opens in a new tab)</span></a
+                    >
+                  }
+                  @default {
+                    <ng-container>{{ part.text }}</ng-container>
+                  }
+                }
+              }
+            </p>
+          }
+        </section>
+      }
+    </article>
+  </div>
+</app-titled-page>

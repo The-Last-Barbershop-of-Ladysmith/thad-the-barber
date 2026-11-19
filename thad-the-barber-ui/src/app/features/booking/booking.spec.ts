@@ -12,10 +12,13 @@ import {
 } from '@angular/router';
 import { provideEffects } from '@ngrx/effects';
 import { Action, ActionsSubject, Store, provideStore } from '@ngrx/store';
+import { MessageService } from 'primeng/api';
 import { BehaviorSubject } from 'rxjs';
+import { Mock, vi } from 'vitest';
 import { testFirstMonth } from '../../../testing/test-availability';
 import { testConfirmationIn } from '../../../testing/test-booking';
 import { TEST_SHOP } from '../../../testing/test-shop';
+import { IS_BOOKING_PREVIEW } from '../../core/config/booking-preview.token';
 import { SessionService } from '../../core/services/session.service';
 import { NoticeMessage } from '../../shared/components/notice-message/notice-message';
 import { Notice } from '../../shared/models/notice.model';
@@ -64,11 +67,13 @@ describe(
     let fixture: ComponentFixture<Booking>;
     let page: BookingPage;
     let store: Store<AppState>;
+    let isBookingPreview: boolean;
     let isBotCheckFailed: WritableSignal<boolean>;
     let dispatched: Action[];
     let routeParams: BehaviorSubject<ParamMap>;
 
     beforeEach(async (): Promise<void> => {
+      isBookingPreview = false;
       isBotCheckFailed = signal(false);
       routeParams = new BehaviorSubject<ParamMap>(convertToParamMap({}));
       TestBed.configureTestingModule({
@@ -80,6 +85,8 @@ describe(
           // The page opens its days through this; sending is left to the effects' own spec.
           provideEffects({ openFirstMonth }),
           provideRouter([]),
+          MessageService,
+          { provide: IS_BOOKING_PREVIEW, useFactory: (): boolean => isBookingPreview },
           { provide: SessionService, useValue: { isBotCheckFailed } },
           { provide: ActivatedRoute, useValue: { paramMap: routeParams } },
         ],
@@ -132,7 +139,6 @@ describe(
     function fillInAndConfirm(startAt: string): void {
       page.bookingForm.controls.name.setValue('Test Customer');
       page.bookingForm.controls.phone.setValue('(555) 010-0199');
-      page.bookingForm.controls.hasTextConsent.setValue(true);
       pick(startAt);
       page.confirm();
     }
@@ -250,7 +256,7 @@ describe(
     );
 
     it(
-      'can confirm once a day, a time, a name, a phone and the text-message box are in',
+      'can confirm once a day, a time, a name and a phone are in, with the text-message box left unticked',
       (): void => {
         openPage();
         expect(page.canConfirm()).toBe(false);
@@ -260,10 +266,38 @@ describe(
         expect(page.canConfirm()).toBe(false);
         page.bookingForm.controls.name.setValue('Test Customer');
         page.bookingForm.controls.phone.setValue('(555) 010-0199');
-        expect(page.canConfirm()).toBe(false);
-
-        page.bookingForm.controls.hasTextConsent.setValue(true);
         expect(page.canConfirm()).toBe(true);
+      },
+    );
+
+    it(
+      'only shows a toast that booking opens soon while booking is a preview, and sends nothing',
+      (): void => {
+        isBookingPreview = true;
+        openPage();
+        const toasts: Mock<(message: object) => void> = vi.fn();
+        TestBed.inject(MessageService).messageObserver.subscribe(toasts);
+
+        fillInAndConfirm(FIRST_TIME);
+
+        expect(toasts).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ severity: 'info' }));
+        expect(sentBookings()).toEqual([]);
+      },
+    );
+
+    it(
+      'sends the shop news choice, unticked unless the customer ticks it, and never needs it to book',
+      (): void => {
+        openPage();
+        expect(page.bookingForm.controls.hasMarketingConsent.value).toBe(false);
+        fillInAndConfirm(FIRST_TIME);
+        store.dispatch(BookingActions.BookingRequestFailure({ notice: failedNotice, takenStartAt: null }));
+        page.bookingForm.controls.hasMarketingConsent.setValue(true);
+        page.confirm();
+
+        const [first, ticked]: BookingRequestAction[] = sentBookings();
+        expect(first?.bookingRequest.hasMarketingConsent).toBe(false);
+        expect(ticked?.bookingRequest.hasMarketingConsent).toBe(true);
       },
     );
 
@@ -411,6 +445,16 @@ describe(
         openPage();
 
         expect(byTestId('find-bookings-link')?.getAttribute('href')).toBe('/book/manage');
+      },
+    );
+
+    it(
+      'leaves out the find your bookings link while booking is a preview',
+      (): void => {
+        isBookingPreview = true;
+        openPage();
+
+        expect(byTestId('find-bookings-link')).toBeNull();
       },
     );
 
