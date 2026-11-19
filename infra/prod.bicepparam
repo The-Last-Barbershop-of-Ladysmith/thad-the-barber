@@ -1,4 +1,4 @@
-// prod: its own B1 plan in rg-ttb-prod-eastus2, with Always On (issue #92). Personal values come from environment
+// prod: its own B1 plan in rg-ttb-prod-eastus, with Always On (issue #92). Personal values come from environment
 // variables so they stay out of this public repo:
 //   TTB_ALERT_EMAIL          (required) who gets every alert
 //   TTB_ALERT_PHONE          (optional) US mobile number, 10 digits, for the same alerts by SMS
@@ -13,8 +13,8 @@ param allowedIpRanges = filter(map(split(readEnvironmentVariable('TTB_ALLOWED_IP
 
 param stage = 'prod'
 
-// East US 2 (also Virginia): the East US B1 quota holds one plan, which nonprod's Free plan already uses.
-param location = 'eastus2'
+// East US, with nonprod: the B1 quota there was raised on 2026-11-18 (East US 2 has none for this subscription).
+param location = 'eastus'
 
 param planSku = 'B1'
 
@@ -23,10 +23,10 @@ param environments = [
     name: 'prod'
     aspnetEnvironment: 'Production'
     githubEnvironment: 'production'
-    // The custom domain: the site on the apex and www, the API on api.thad-the-barber.com. Browsers only ever send the site's origin.
+    // The custom domain: the site on the apex and www, the API on api.cutsbythad.com. Browsers only ever send the site's origin.
     extraCorsOrigins: [
-      'https://thad-the-barber.com'
-      'https://www.thad-the-barber.com'
+      'https://cutsbythad.com'
+      'https://www.cutsbythad.com'
     ]
     squareAlerts: true
     canAdminWriteMedia: true
