@@ -59,7 +59,8 @@ export const BOOKING_ROUTES: Routes = [
         loadComponent: (): Promise<typeof Booking | typeof BookingComingSoon> => {
           if (inject(IS_COMING_SOON)) {
             return import('./pages/booking-coming-soon/booking-coming-soon')
-              .then((m: { BookingComingSoon: typeof BookingComingSoon; }): typeof BookingComingSoon => m.BookingComingSoon);
+              .then((m: { BookingComingSoon: typeof BookingComingSoon; }): typeof BookingComingSoon =>
+                m.BookingComingSoon);
           }
           return import('./booking').then((m: { Booking: typeof Booking; }): typeof Booking => m.Booking);
         },

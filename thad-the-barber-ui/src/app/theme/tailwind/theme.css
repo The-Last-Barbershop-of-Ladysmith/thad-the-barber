@@ -164,6 +164,25 @@
   color: var(--p-text-muted-color);
 }
 
+/* A consent checkbox beside its label, with the rates and STOP wording under the label's first line */
+@utility consent-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+@utility consent-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  line-height: 1.4;
+  cursor: pointer;
+
+  & .small-print {
+    display: block;
+  }
+}
+
 /* Body paragraph inside panels */
 @utility body-copy {
   margin: 0;

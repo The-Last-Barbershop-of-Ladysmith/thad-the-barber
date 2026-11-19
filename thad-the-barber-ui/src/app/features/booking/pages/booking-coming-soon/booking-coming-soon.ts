@@ -28,7 +28,8 @@ import { LeaveConfirmable } from '../../models/leave-confirmable.model';
 export class BookingComingSoon implements LeaveConfirmable {
   private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
 
-  // The booking route's leave guard asks every page it guards; nothing here is ever sent or picked, so it never stops a visitor leaving.
+  // The booking route's leave guard asks every page it guards. Nothing here is sent or picked, so it never holds a
+  // visitor back.
   readonly hasUnconfirmedPick: Signal<boolean> = signal(false).asReadonly();
   readonly isRescheduling: Signal<boolean> = signal(false).asReadonly();
   readonly isSubmitting: Signal<boolean> = signal(false).asReadonly();

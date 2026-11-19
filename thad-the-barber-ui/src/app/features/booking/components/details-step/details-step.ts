@@ -19,7 +19,6 @@ import { toIsErrorShown } from '../../../../shared/utils/form-error.utils';
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './details-step.html',
-  styleUrl: './details-step.scss',
 })
 export class DetailsStep {
   readonly nameControl: InputSignal<FormControl<string>> = input.required<FormControl<string>>();

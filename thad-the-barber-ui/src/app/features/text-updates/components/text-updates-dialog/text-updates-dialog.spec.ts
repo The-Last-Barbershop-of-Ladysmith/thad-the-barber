@@ -1,13 +1,19 @@
+import { Signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideStore } from '@ngrx/store';
 import { shopFeature } from '../../../shop/state/shop.feature';
 import { TextUpdatesDialog } from './text-updates-dialog';
 
+interface TextUpdatesDialogPage {
+  isOpen: Signal<boolean>;
+}
+
 describe(
   'TextUpdatesDialog',
   (): void => {
     let fixture: ComponentFixture<TextUpdatesDialog>;
+    let page: TextUpdatesDialogPage;
 
     function openButton(): HTMLButtonElement | null {
       return (fixture.nativeElement as HTMLElement)
@@ -19,6 +25,7 @@ describe(
         providers: [provideRouter([]), provideStore({ [shopFeature.name]: shopFeature.reducer })],
       });
       fixture = TestBed.createComponent(TextUpdatesDialog);
+      page = fixture.componentInstance as unknown as TextUpdatesDialogPage;
       fixture.detectChanges();
     });
 
@@ -26,7 +33,7 @@ describe(
       'starts closed, with a button to open it',
       (): void => {
         expect(openButton()).not.toBeNull();
-        expect(fixture.componentInstance['isOpen']()).toBe(false);
+        expect(page.isOpen()).toBe(false);
         expect(document.querySelector('[data-testid="text-updates-form"]')).toBeNull();
       },
     );
@@ -39,7 +46,7 @@ describe(
         await fixture.whenStable();
         fixture.detectChanges();
 
-        expect(fixture.componentInstance['isOpen']()).toBe(true);
+        expect(page.isOpen()).toBe(true);
         expect(document.querySelector('[data-testid="text-updates-form"]')).not.toBeNull();
       },
     );

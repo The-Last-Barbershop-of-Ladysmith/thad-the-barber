@@ -48,7 +48,7 @@ describe(
     );
 
     it(
-      "gives the sections that name the shop its name, and the booking texts section the Square phone",
+      'gives the sections that name the shop its name, and the booking texts section the Square phone',
       (): void => {
         TestBed.inject(Store).dispatch(ShopActions.ShopInfoRequestSuccess({ shopInfo: TEST_SHOP }));
         const element: HTMLElement = render();

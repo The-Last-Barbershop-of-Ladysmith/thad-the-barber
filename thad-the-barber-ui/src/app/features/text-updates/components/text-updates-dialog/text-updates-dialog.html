@@ -1,13 +1,14 @@
 <button type="button" class="nav-link" data-testid="text-updates-open" (click)="isOpen.set(true)">
   Text updates
 </button>
-<p-dialog
-  header="Shop news by text"
-  data-testid="text-updates-dialog"
-  [modal]="true"
-  [draggable]="false"
-  [dismissableMask]="true"
-  [(visible)]="isOpen"
->
-  <app-text-updates-form idPrefix="text-updates-dialog" />
-</p-dialog>
+@defer (when isOpen()) {
+  <p-dialog
+    header="Shop news by text"
+    [modal]="true"
+    [draggable]="false"
+    [dismissableMask]="true"
+    [(visible)]="isOpen"
+  >
+    <app-text-updates-form idPrefix="text-updates-dialog" />
+  </p-dialog>
+}

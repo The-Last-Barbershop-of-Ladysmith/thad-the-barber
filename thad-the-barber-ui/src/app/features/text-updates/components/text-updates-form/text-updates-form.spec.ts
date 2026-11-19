@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { FormControl, FormGroup } from '@angular/forms';
 import { provideRouter } from '@angular/router';
 import { provideStore } from '@ngrx/store';
 import { Observable, of, throwError } from 'rxjs';
@@ -11,12 +12,22 @@ import { TextUpdatesForm } from './text-updates-form';
 const MADE_UP_PHONE: string = '(555) 010-0142';
 const MADE_UP_PHONE_E164: string = '+15550100142';
 
+interface TextUpdatesFormPage {
+  signupForm: FormGroup<{
+    phone: FormControl<string>;
+    hasConsent: FormControl<boolean>;
+  }>;
+  submit(): void;
+}
+
 describe(
   'TextUpdatesForm',
   (): void => {
     let subscribe: Mock<(phone: string) => Observable<{ phone: string; }>>;
+    let fixture: ComponentFixture<TextUpdatesForm>;
+    let page: TextUpdatesFormPage;
 
-    function render(isComingSoon: boolean): ComponentFixture<TextUpdatesForm> {
+    function render(isComingSoon: boolean): void {
       TestBed.configureTestingModule({
         providers: [
           provideRouter([]),
@@ -25,19 +36,28 @@ describe(
           { provide: IS_COMING_SOON, useValue: isComingSoon },
         ],
       });
-      const fixture: ComponentFixture<TextUpdatesForm> = TestBed.createComponent(TextUpdatesForm);
+      fixture = TestBed.createComponent(TextUpdatesForm);
+      page = fixture.componentInstance as unknown as TextUpdatesFormPage;
       fixture.detectChanges();
-      return fixture;
     }
 
-    function query<T extends HTMLElement>(fixture: ComponentFixture<TextUpdatesForm>, testId: string): T | null {
-      return (fixture.nativeElement as HTMLElement).querySelector<T>(`[data-testid="${testId}"]`);
+    function element(testId: string): HTMLElement | null {
+      return (fixture.nativeElement as HTMLElement).querySelector<HTMLElement>(`[data-testid="${testId}"]`);
     }
 
-    function fillIn(fixture: ComponentFixture<TextUpdatesForm>, hasConsent: boolean): void {
-      const form: TextUpdatesForm['signupForm'] = fixture.componentInstance['signupForm'];
-      form.controls.phone.setValue(MADE_UP_PHONE);
-      form.controls.hasConsent.setValue(hasConsent);
+    function submitButton(): HTMLButtonElement | null {
+      return (fixture.nativeElement as HTMLElement)
+        .querySelector<HTMLButtonElement>('[data-testid="text-updates-submit"]');
+    }
+
+    function consentLabel(): string {
+      return (fixture.nativeElement as HTMLElement)
+        .querySelector('label[for="text-updates-consent"]')?.textContent ?? '';
+    }
+
+    function fillIn(hasConsent: boolean): void {
+      page.signupForm.controls.phone.setValue(MADE_UP_PHONE);
+      page.signupForm.controls.hasConsent.setValue(hasConsent);
       fixture.detectChanges();
     }
 
@@ -51,46 +71,43 @@ describe(
         it(
           'keeps the sign-up button off until there is a phone and the box is ticked',
           (): void => {
-            const fixture: ComponentFixture<TextUpdatesForm> = render(false);
-            const button: HTMLButtonElement | null = query<HTMLButtonElement>(fixture, 'text-updates-submit');
-            expect(button?.disabled).toBe(true);
+            render(false);
+            expect(submitButton()?.disabled).toBe(true);
 
-            fillIn(fixture, false);
-            expect(button?.disabled).toBe(true);
+            fillIn(false);
+            expect(submitButton()?.disabled).toBe(true);
 
-            fillIn(fixture, true);
-            expect(button?.disabled).toBe(false);
+            fillIn(true);
+            expect(submitButton()?.disabled).toBe(false);
           },
         );
 
         it(
           'shows the consent unticked, with its rates, STOP and terms wording',
           (): void => {
-            const fixture: ComponentFixture<TextUpdatesForm> = render(false);
+            render(false);
             const box: HTMLInputElement | null = (fixture.nativeElement as HTMLElement)
               .querySelector<HTMLInputElement>('#text-updates-consent');
-            const label: string = (fixture.nativeElement as HTMLElement)
-              .querySelector('label[for="text-updates-consent"]')?.textContent ?? '';
 
             expect(box?.checked).toBe(false);
-            expect(label).toContain('Message and data rates may apply');
-            expect(label).toContain('Reply STOP to opt out');
-            expect(label).toContain('not needed to book');
+            expect(consentLabel()).toContain('Message and data rates may apply');
+            expect(consentLabel()).toContain('Reply STOP to opt out');
+            expect(consentLabel()).toContain('not needed to book');
           },
         );
 
         it(
           'sends the phone as E.164 and then thanks the customer',
           (): void => {
-            const fixture: ComponentFixture<TextUpdatesForm> = render(false);
-            fillIn(fixture, true);
+            render(false);
+            fillIn(true);
 
-            fixture.componentInstance['submit']();
+            page.submit();
             fixture.detectChanges();
 
             expect(subscribe).toHaveBeenCalledExactlyOnceWith(MADE_UP_PHONE_E164);
-            expect(query(fixture, 'text-updates-done')).not.toBeNull();
-            expect(query(fixture, 'text-updates-form')).toBeNull();
+            expect(element('text-updates-done')).not.toBeNull();
+            expect(element('text-updates-form')).toBeNull();
           },
         );
 
@@ -98,24 +115,24 @@ describe(
           'says so and lets the customer try again when the sign-up fails',
           (): void => {
             subscribe.mockReturnValue(throwError((): Error => new Error('made-up failure')));
-            const fixture: ComponentFixture<TextUpdatesForm> = render(false);
-            fillIn(fixture, true);
+            render(false);
+            fillIn(true);
 
-            fixture.componentInstance['submit']();
+            page.submit();
             fixture.detectChanges();
 
-            expect(query(fixture, 'text-updates-error')).not.toBeNull();
-            expect(query<HTMLButtonElement>(fixture, 'text-updates-submit')?.disabled).toBe(false);
+            expect(element('text-updates-error')).not.toBeNull();
+            expect(submitButton()?.disabled).toBe(false);
           },
         );
 
         it(
           'sends nothing while the consent box is unticked',
           (): void => {
-            const fixture: ComponentFixture<TextUpdatesForm> = render(false);
-            fillIn(fixture, false);
+            render(false);
+            fillIn(false);
 
-            fixture.componentInstance['submit']();
+            page.submit();
 
             expect(subscribe).not.toHaveBeenCalled();
           },
@@ -129,31 +146,29 @@ describe(
         it(
           'says sign-up opens soon and switches the form off',
           (): void => {
-            const fixture: ComponentFixture<TextUpdatesForm> = render(true);
+            render(true);
 
-            expect(query(fixture, 'text-updates-coming-soon')).not.toBeNull();
-            expect(fixture.componentInstance['signupForm'].disabled).toBe(true);
-            expect(query<HTMLButtonElement>(fixture, 'text-updates-submit')?.disabled).toBe(true);
+            expect(element('text-updates-coming-soon')).not.toBeNull();
+            expect(page.signupForm.disabled).toBe(true);
+            expect(submitButton()?.disabled).toBe(true);
           },
         );
 
         it(
           'still shows the consent wording a reviewer needs to read',
           (): void => {
-            const fixture: ComponentFixture<TextUpdatesForm> = render(true);
-            const label: string = (fixture.nativeElement as HTMLElement)
-              .querySelector('label[for="text-updates-consent"]')?.textContent ?? '';
+            render(true);
 
-            expect(label).toContain('Reply STOP to opt out');
+            expect(consentLabel()).toContain('Reply STOP to opt out');
           },
         );
 
         it(
           'sends nothing even when submitted',
           (): void => {
-            const fixture: ComponentFixture<TextUpdatesForm> = render(true);
+            render(true);
 
-            fixture.componentInstance['submit']();
+            page.submit();
 
             expect(subscribe).not.toHaveBeenCalled();
           },

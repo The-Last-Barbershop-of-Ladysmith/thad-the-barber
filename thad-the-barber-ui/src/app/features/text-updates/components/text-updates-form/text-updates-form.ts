@@ -53,7 +53,6 @@ type TextUpdatesFormGroup = FormGroup<{
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './text-updates-form.html',
-  styleUrl: './text-updates-form.scss',
 })
 export class TextUpdatesForm {
   private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
