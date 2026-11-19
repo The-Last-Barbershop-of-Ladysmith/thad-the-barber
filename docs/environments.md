@@ -6,10 +6,10 @@ How code moves from a topic branch to production. The decisions behind this are 
 
 | | dev | test | prod (later) |
 | --- | --- | --- | --- |
-| Resource group | `rg-ttb-nonprod-eastus` | `rg-ttb-nonprod-eastus` | `rg-ttb-prod-eastus` |
-| App Service plan | `asp-ttb-nonprod-eastus` (**F1 Free Linux**, shared) | `asp-ttb-nonprod-eastus` | `asp-ttb-prod-eastus` (**B1 Linux, Always On**) |
-| Web app (Express) | `as-ttb-ui-dev-eastus` | `as-ttb-ui-test-eastus` | `as-ttb-ui-prod-eastus` |
-| API app (.NET) | `as-ttb-api-dev-eastus` | `as-ttb-api-test-eastus` | `as-ttb-api-prod-eastus` |
+| Resource group | `rg-ttb-nonprod-eastus` | `rg-ttb-nonprod-eastus` | `rg-ttb-prod-eastus2` |
+| App Service plan | `asp-ttb-nonprod-eastus` (**F1 Free Linux**, shared) | `asp-ttb-nonprod-eastus` | `asp-ttb-prod-eastus2` (**B1 Linux, Always On**) |
+| Web app (Express) | `as-ttb-ui-dev-eastus` | `as-ttb-ui-test-eastus` | `as-ttb-ui-prod-eastus2` |
+| API app (.NET) | `as-ttb-api-dev-eastus` | `as-ttb-api-test-eastus` | `as-ttb-api-prod-eastus2` |
 | Deploys when | a PR merges into `dev/*` | a PR merges into `release/*` or `hotfix/*` | a person approves the tested `release/*` artifact |
 | Square | Sandbox | Sandbox (seeded test data) | Production |
 | Frontend config | `environment.dev-cloud.ts` (`-c devCloud`) | `environment.test.ts` (`-c test`) | `environment.ts` (`-c production`) |

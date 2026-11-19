@@ -1,4 +1,4 @@
-// prod: its own B1 plan in rg-ttb-prod-eastus, with Always On (issue #92). Personal values come from environment
+// prod: its own B1 plan in rg-ttb-prod-eastus2, with Always On (issue #92). Personal values come from environment
 // variables so they stay out of this public repo:
 //   TTB_ALERT_EMAIL          (required) who gets every alert
 //   TTB_ALERT_PHONE          (optional) US mobile number, 10 digits, for the same alerts by SMS
@@ -13,7 +13,8 @@ param allowedIpRanges = filter(map(split(readEnvironmentVariable('TTB_ALLOWED_IP
 
 param stage = 'prod'
 
-param location = 'eastus'
+// East US 2 (also Virginia): the East US B1 quota holds one plan, which nonprod's Free plan already uses.
+param location = 'eastus2'
 
 param planSku = 'B1'
 
