@@ -7,6 +7,7 @@ using ThadTheBarber.Api.Features.Booking.Mappers;
 using ThadTheBarber.Api.Features.Booking.Models;
 using ThadTheBarber.Api.Features.MarketingTexts.Models;
 using ThadTheBarber.Api.Features.MarketingTexts.Services;
+using ThadTheBarber.Api.Features.TextMessages.Services;
 using ThadTheBarber.Api.Square.Exceptions;
 using ThadTheBarber.Api.Square.Models;
 using ThadTheBarber.Api.Square.Services;
@@ -25,6 +26,7 @@ public sealed class BookingService(
     LookupTokenSigner lookupTokens,
     ITwilioVerifyService twilioVerify,
     MarketingOptInService marketingOptIns,
+    BookingTextService bookingTexts,
     IOptions<BookingSettings> settings,
     TimeProvider time)
 {
@@ -113,6 +115,8 @@ public sealed class BookingService(
             await marketingOptIns.AddAsync(request.Phone, MarketingOptInSource.Booking, cancellationToken);
         }
 
+        await bookingTexts.AfterBookedAsync(appointment, request.Phone, cancellationToken);
+
         return appointment.ToBookingConfirmationDto(manageTokens.Sign(appointment.Id));
     }
 
@@ -196,6 +200,7 @@ public sealed class BookingService(
         TimeSlot bookedTimeSlot = await square.FindBookedTimeSlotAsync(shopDetails.LocationId, customerId, request.StartAt, cancellationToken)
             ?? throw new SlotUnavailableException("The time is taken or outside the booking window.");
         Appointment appointment = await square.CreateBookingAsync(customerId, bookedTimeSlot, idempotencyKey, cancellationToken);
+        await bookingTexts.AfterBookedAsync(appointment, request.Phone, cancellationToken);
 
         return appointment.ToBookingConfirmationDto(manageTokens.Sign(appointment.Id));
     }

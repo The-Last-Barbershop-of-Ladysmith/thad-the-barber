@@ -62,6 +62,32 @@ public sealed class BookingServiceTests
     }
 
     [Fact]
+    public async Task ABookingTextsItsConfirmationWithTheManageLinkWhenTextsAreOn()
+    {
+        FakeSquareService square = new();
+        TextHarness texts = TextHarness.Create(square, time: new FakeTimeProvider(now));
+
+        BookingConfirmation confirmation = await Service(square, texts: texts).BookAsync(Request(openTime), Cancellation);
+
+        FakeTwilioMessageService.SentText text = Assert.Single(texts.Twilio.Sent);
+        Assert.Equal("+15550100187", text.Phone);
+        Assert.Contains($"/book/manage/{confirmation.Id}#t={confirmation.ManageToken}", text.Body, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ABookingWhoseTextFailsIsStillBooked()
+    {
+        FakeSquareService square = new();
+        TextHarness texts = TextHarness.Create(square, time: new FakeTimeProvider(now));
+        texts.Storage.Failure = new InvalidOperationException("storage is down");
+
+        BookingConfirmation confirmation = await Service(square, texts: texts).BookAsync(Request(openTime), Cancellation);
+
+        Assert.Equal(openTime, confirmation.StartAt);
+        Assert.Single(square.Bookings);
+    }
+
+    [Fact]
     public async Task ABookingWithoutMarketingConsentLeavesTheNewsTextsListAlone()
     {
         FakeMediaStorage storage = new();
@@ -518,7 +544,8 @@ public sealed class BookingServiceTests
         FakeSquareService square,
         FakeTwilioVerifyService? twilio = null,
         FakeTimeProvider? clock = null,
-        FakeMediaStorage? storage = null)
+        FakeMediaStorage? storage = null,
+        TextHarness? texts = null)
     {
         FakeTimeProvider time = clock ?? new FakeTimeProvider(now);
         return new BookingService(
@@ -537,6 +564,7 @@ public sealed class BookingServiceTests
                 time,
                 NullLogger<MarketingOptInService>.Instance
             ),
+            (texts ?? TextHarness.Disabled(square, storage, time)).Bookings,
             Options.Create(new BookingSettings
             {
                 MaxUpcomingPerPhone = MaxUpcomingPerPhone,

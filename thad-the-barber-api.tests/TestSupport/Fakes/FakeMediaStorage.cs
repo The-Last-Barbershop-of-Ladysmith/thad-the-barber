@@ -168,6 +168,7 @@ public sealed class FakeMediaStorage : IMediaStorage
 
         bool removed = MediaFiles.Remove(blobName);
         removed |= GalleryBlobs.RemoveAll(blob => blob.Name == blobName) > 0;
+        removed |= ContentFiles.Remove(blobName);
         return Task.FromResult(removed);
     }
 }
