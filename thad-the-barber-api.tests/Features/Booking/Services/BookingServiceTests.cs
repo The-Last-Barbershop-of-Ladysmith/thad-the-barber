@@ -62,12 +62,25 @@ public sealed class BookingServiceTests
     }
 
     [Fact]
-    public async Task ABookingTextsItsConfirmationWithTheManageLinkWhenTextsAreOn()
+    public async Task ABookingWithoutTheTextBoxTickedGetsNoConfirmationOrReminder()
     {
         FakeSquareService square = new();
         TextHarness texts = TextHarness.Create(square, time: new FakeTimeProvider(now));
 
-        BookingConfirmation confirmation = await Service(square, texts: texts).BookAsync(Request(openTime), Cancellation);
+        await Service(square, texts: texts).BookAsync(Request(openTime), Cancellation);
+
+        Assert.Empty(texts.Twilio.Sent);
+        Assert.Empty(texts.Storage.ContentFiles);
+    }
+
+    [Fact]
+    public async Task ABookingTextsItsConfirmationWithTheManageLinkWhenTheCustomerAskedForIt()
+    {
+        FakeSquareService square = new();
+        TextHarness texts = TextHarness.Create(square, time: new FakeTimeProvider(now));
+
+        BookingConfirmation confirmation = await Service(square, texts: texts)
+            .BookAsync(Request(openTime) with { HasTextConsent = true }, Cancellation);
 
         FakeTwilioMessageService.SentText text = Assert.Single(texts.Twilio.Sent);
         Assert.Equal("+15550100187", text.Phone);
@@ -81,7 +94,8 @@ public sealed class BookingServiceTests
         TextHarness texts = TextHarness.Create(square, time: new FakeTimeProvider(now));
         texts.Storage.Failure = new InvalidOperationException("storage is down");
 
-        BookingConfirmation confirmation = await Service(square, texts: texts).BookAsync(Request(openTime), Cancellation);
+        BookingConfirmation confirmation = await Service(square, texts: texts)
+            .BookAsync(Request(openTime) with { HasTextConsent = true }, Cancellation);
 
         Assert.Equal(openTime, confirmation.StartAt);
         Assert.Single(square.Bookings);

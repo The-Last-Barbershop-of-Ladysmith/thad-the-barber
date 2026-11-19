@@ -115,9 +115,18 @@ public sealed class BookingService(
             await marketingOptIns.AddAsync(request.Phone, MarketingOptInSource.Booking, cancellationToken);
         }
 
-        await bookingTexts.AfterBookedAsync(appointment, request.Phone, cancellationToken);
+        await TextBookingAsync(appointment, request, cancellationToken);
 
         return appointment.ToBookingConfirmationDto(manageTokens.Sign(appointment.Id));
+    }
+
+    /// <summary>Texts the confirmation and sets the reminder, but only for a customer who ticked the box for them (BR-25).</summary>
+    private async Task TextBookingAsync(Appointment appointment, BookingRequest request, CancellationToken cancellationToken)
+    {
+        if (request.HasTextConsent)
+        {
+            await bookingTexts.AfterBookedAsync(appointment, request.Phone, cancellationToken);
+        }
     }
 
     /// <summary>
@@ -200,7 +209,7 @@ public sealed class BookingService(
         TimeSlot bookedTimeSlot = await square.FindBookedTimeSlotAsync(shopDetails.LocationId, customerId, request.StartAt, cancellationToken)
             ?? throw new SlotUnavailableException("The time is taken or outside the booking window.");
         Appointment appointment = await square.CreateBookingAsync(customerId, bookedTimeSlot, idempotencyKey, cancellationToken);
-        await bookingTexts.AfterBookedAsync(appointment, request.Phone, cancellationToken);
+        await TextBookingAsync(appointment, request, cancellationToken);
 
         return appointment.ToBookingConfirmationDto(manageTokens.Sign(appointment.Id));
     }
