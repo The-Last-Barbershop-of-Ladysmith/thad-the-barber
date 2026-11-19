@@ -48,6 +48,7 @@ import {
   withAnnouncement,
 } from '../../utils/announcement-form.utils';
 import { removeAt, toInputs } from '../../utils/announcement-list.utils';
+import { announcementTextPath } from '../../utils/announcement-text-path.utils';
 import { toAnnouncementsMessage } from '../../utils/announcements-message.utils';
 import { AdminPageHeader } from '../../../components/admin-page-header/admin-page-header';
 
@@ -100,6 +101,8 @@ export class AnnouncementEdit implements OnInit {
   protected readonly isConfirmingPhotoRemoval: WritableSignal<boolean> = signal<boolean>(false);
   /** Whether the first day is picked, rather than the announcement starting today. */
   protected readonly isScheduled: WritableSignal<boolean> = signal<boolean>(false);
+  /** Whether, once saved, the page goes on to ask to text the announcement to the subscribers. */
+  protected readonly isTextingSubscribers: WritableSignal<boolean> = signal<boolean>(false);
   /** Why the chosen photo can't be sent, found before anything is sent. */
   protected readonly photoProblem: WritableSignal<string | null> = signal<string | null>(null);
 
@@ -197,6 +200,10 @@ export class AnnouncementEdit implements OnInit {
     field.set((event.target as HTMLInputElement).value);
   }
 
+  protected onTextSubscribers(event: Event): void {
+    this.isTextingSubscribers.set((event.target as HTMLInputElement).checked);
+  }
+
   protected showFromToday(): void {
     this.isScheduled.set(false);
     this.startDate.set(this.today);
@@ -245,6 +252,7 @@ export class AnnouncementEdit implements OnInit {
         this.place(),
         input,
       ),
+      nextPath: this.isTextingSubscribers() ? announcementTextPath(input.title, input.startDate) : undefined,
     }));
   }
 

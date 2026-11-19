@@ -133,6 +133,25 @@ describe('admin announcements effects', (): void => {
     expect(results).toEqual([failure]);
   });
 
+  it('goes to the page the save names when it names one, and carries it to the success', (): void => {
+    const results: Action[] = emitted(
+      saveAdminAnnouncements,
+      AdminAnnouncementsActions.AdminAnnouncementsSave({ announcements: [], nextPath: '/admin/announcements/text?x=1' }),
+    );
+    emitted(
+      showListAfterSave,
+      AdminAnnouncementsActions.AdminAnnouncementsSaveSuccess({ announcements: [], nextPath: '/admin/announcements/text?x=1' }),
+    );
+
+    expect(results).toEqual([
+      AdminAnnouncementsActions.AdminAnnouncementsSaveSuccess({
+        announcements: [ITEM],
+        nextPath: '/admin/announcements/text?x=1',
+      }),
+    ]);
+    expect(navigations).toEqual(['/admin/announcements/text?x=1']);
+  });
+
   it('goes to the list after a save', (): void => {
     emitted(showListAfterSave, AdminAnnouncementsActions.AdminAnnouncementsSaveSuccess({ announcements: [] }));
 

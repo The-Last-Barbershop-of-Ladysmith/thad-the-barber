@@ -136,6 +136,32 @@ describe('AnnouncementEdit', (): void => {
     expect((Date.parse(end) - Date.parse(start)) / 86_400_000).toBe(30);
   });
 
+  it('goes to the list after saving when the switch is off', async (): Promise<void> => {
+    await open(undefined, []);
+    type('#announcement-title', 'Open late');
+
+    element('[data-testid="save-announcement"]').click();
+
+    const saved: unknown = dispatchSpy.mock.calls.at(-1)?.[0];
+    expect((saved as { nextPath?: string; }).nextPath).toBeUndefined();
+  });
+
+  it('goes on to the text page after saving when the switch is on', async (): Promise<void> => {
+    await open(undefined, []);
+    type('#announcement-title', 'Open late');
+    const checkbox: HTMLInputElement = input('[data-testid="text-subscribers"]');
+    checkbox.checked = true;
+    checkbox.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+
+    element('[data-testid="save-announcement"]').click();
+
+    const saved: unknown = dispatchSpy.mock.calls.at(-1)?.[0];
+    expect((saved as { nextPath?: string; }).nextPath).toMatch(
+      /^\/admin\/announcements\/text\?title=Open%20late&startDate=\d{4}-\d{2}-\d{2}$/,
+    );
+  });
+
   it('adds a new announcement to the end of the saved list', async (): Promise<void> => {
     await open(undefined, [SAVED]);
 

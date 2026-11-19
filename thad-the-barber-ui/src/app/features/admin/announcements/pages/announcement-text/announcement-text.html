@@ -1,0 +1,83 @@
+<app-admin-page-header eyebrow="01 · Announcements" heading="Text this to subscribers">
+  <a pageBack class="back" [routerLink]="listPath">← All announcements</a>
+  <p pageLead class="lead">
+    This goes only to people who signed up for the shop's texts. Check the wording, then send. Each announcement is
+    texted once.
+  </p>
+</app-admin-page-header>
+
+<div class="admin-body">
+  @if (problem(); as problemText) {
+    <p-message severity="error" data-testid="text-error">{{ problemText }}</p-message>
+  }
+
+  @if (sent(); as status) {
+    <p-message severity="success" data-testid="text-sent">
+      @if (isGoingOutToday()) {
+        The text is going out now to {{ status.total }} {{ status.total === 1 ? 'person' : 'people' }}. You can leave
+        this page.
+      } @else {
+        The text is saved and will go out on {{ status.sendOn }}, the announcement's first day.
+      }
+    </p-message>
+    <a pButton [routerLink]="listPath">Back to the announcements</a>
+  } @else if (isMissing()) {
+    <p-message severity="warn" data-testid="text-missing"
+      >That announcement is not in the list, so there is nothing to text.</p-message
+    >
+    <a pButton severity="secondary" [routerLink]="listPath">Back to the announcements</a>
+  } @else if (preview(); as shown) {
+    @if (!shown.isEnabled) {
+      <p-message severity="warn" data-testid="text-off"
+        >Texts are not switched on yet, so nothing can be sent. The announcement itself is saved.</p-message
+      >
+    } @else if (shown.alreadyTexted) {
+      <p-message severity="info" data-testid="text-already"
+        >This announcement was already texted or scheduled, so it will not go out again.</p-message
+      >
+    } @else if (shown.subscriberCount === 0) {
+      <p-message severity="info" data-testid="text-nobody">Nobody has signed up for texts yet.</p-message>
+    }
+
+    <section class="card" aria-labelledby="text-heading">
+      <h2 class="card-title" id="text-heading">The text</h2>
+      <div class="form-field">
+        <label for="text-message">What people will read</label>
+        <textarea
+          id="text-message"
+          class="message"
+          rows="6"
+          aria-describedby="text-help"
+          data-testid="text-message"
+          [value]="message()"
+          [disabled]="sent() !== null"
+          [attr.aria-invalid]="isTooLong()"
+          (input)="onMessage($event)"
+        ></textarea>
+        <span class="help" id="text-help" data-testid="text-length">
+          {{ length() }} characters, about {{ segments() }} {{ segments() === 1 ? 'text' : 'texts' }} each.
+          @if (isTooLong()) {
+            That is too long: keep it under 480.
+          }
+        </span>
+      </div>
+      <p class="who" data-testid="text-who">
+        @if (shown.isScheduled) {
+          It will go out on the announcement's first day, {{ startDate() }}, to everyone signed up then. Right now that
+          is {{ shown.subscriberCount }} {{ shown.subscriberCount === 1 ? 'person' : 'people' }}.
+        } @else {
+          It will go out now to {{ shown.subscriberCount }} {{ shown.subscriberCount === 1 ? 'person' : 'people' }}.
+        }
+      </p>
+    </section>
+
+    <div class="actions">
+      <a pButton severity="secondary" [text]="true" [routerLink]="listPath" data-testid="text-skip">Don't text it</a>
+      <button pButton type="button" data-testid="text-send" [disabled]="!canSend()" (click)="send()">
+        {{ isSending() ? 'Sending…' : 'Send the text' }}
+      </button>
+    </div>
+  } @else if (isPreviewing() || !isLoaded()) {
+    <p class="note" role="status" data-testid="text-loading">Loading…</p>
+  }
+</div>

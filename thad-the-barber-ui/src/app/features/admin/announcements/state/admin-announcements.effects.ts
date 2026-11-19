@@ -38,10 +38,12 @@ export const saveAdminAnnouncements: FunctionalEffect = createEffect(
   ): Observable<Action> =>
     actions$.pipe(
       ofType(AdminAnnouncementsActions.AdminAnnouncementsSave),
-      switchMap(({ announcements }: { announcements: AnnouncementInputDto[]; }): Observable<Action> =>
+      switchMap((
+        { announcements, nextPath }: { announcements: AnnouncementInputDto[]; nextPath?: string; },
+      ): Observable<Action> =>
         service.save(announcements).pipe(
           map((saved: AdminAnnouncementDto[]): Action =>
-            AdminAnnouncementsActions.AdminAnnouncementsSaveSuccess({ announcements: saved })),
+            AdminAnnouncementsActions.AdminAnnouncementsSaveSuccess({ announcements: saved, nextPath })),
           catchError((error: unknown): Observable<Action> =>
             of(AdminAnnouncementsActions.AdminAnnouncementsSaveFailure({ error: toAdminAnnouncementsError(error) }))),
         )),
@@ -69,7 +71,10 @@ export const uploadAdminAnnouncementImage: FunctionalEffect = createEffect(
   { functional: true },
 );
 
-/** A saved change (from the form, or End now and Delete on the list) leaves the viewer on the list. */
+/**
+ * A saved change (from the form, or End now and Delete on the list) leaves the viewer on the list, unless the save
+ * names a next page.
+ */
 export const showListAfterSave: FunctionalEffect = createEffect(
   (
     actions$: Actions = inject<Actions>(Actions),
@@ -77,8 +82,8 @@ export const showListAfterSave: FunctionalEffect = createEffect(
   ): Observable<unknown> =>
     actions$.pipe(
       ofType(AdminAnnouncementsActions.AdminAnnouncementsSaveSuccess),
-      tap((): void => {
-        void router.navigateByUrl(ANNOUNCEMENTS_PATH);
+      tap(({ nextPath }: { nextPath?: string; }): void => {
+        void router.navigateByUrl(nextPath ?? ANNOUNCEMENTS_PATH);
       }),
     ),
   { functional: true, dispatch: false },

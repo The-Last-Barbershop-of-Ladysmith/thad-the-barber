@@ -14,6 +14,7 @@ export const CLIENT_ROUTES: string[] = [
   'admin/overview',
   'admin/announcements',
   'admin/announcements/new',
+  'admin/announcements/text',
   'admin/announcements/:index',
   'admin/shop',
   'admin/gallery',

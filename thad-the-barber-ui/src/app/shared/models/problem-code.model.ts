@@ -20,4 +20,6 @@ export enum ProblemCode {
   GalleryUnavailable = 'gallery_unavailable',
   InvalidImage = 'invalid_image',
   PhotoNotFound = 'photo_not_found',
+  TextsUnavailable = 'texts_unavailable',
+  AlreadyTexted = 'already_texted',
 }
