@@ -219,8 +219,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3]
-        shardTotal: [3]
+        shard: [1, 2]
+        shardTotal: [2]
     # Playwright's own image has the browsers and their system libraries, so nothing installs per run. Its tag must
     # match @playwright/test; after a bump, the tests fail asking for the new image.
     container:
@@ -248,7 +248,9 @@ jobs:
           name: site-test
           path: thad-the-barber-express/public/app/thad-the-barber-ui
 
-      - run: npm run e2e -- --shard=${{ matrix.shard }}/${{ matrix.shardTotal }}
+      # Chromium only: WebKit is the slow, flakier half of the suite, so e2e-webkit.yml runs it nightly and before each
+      # release deploy instead of on every PR.
+      - run: npm run e2e:chromium -- --shard=${{ matrix.shard }}/${{ matrix.shardTotal }}
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: ${{ !cancelled() }}
