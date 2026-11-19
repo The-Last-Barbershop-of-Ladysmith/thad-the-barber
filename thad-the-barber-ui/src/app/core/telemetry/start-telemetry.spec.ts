@@ -2,35 +2,17 @@ import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { provideStore } from '@ngrx/store';
 import { MessageService } from 'primeng/api';
-import { Mock } from 'vitest';
+import { applicationInsightsSpies as sdk } from '../../../testing/application-insights-mock';
 import { TEST_TELEMETRY_SETTINGS } from '../../../testing/test-telemetry-settings';
 import { shopFeature } from '../../features/shop/state/shop.feature';
 import { ErrorToastService } from './error-toast.service';
 import { ExceptionReporter } from './exception-reporter';
 import { startTelemetry } from './start-telemetry';
 
-interface SdkSpies {
-  trackException: Mock;
-  trackPageView: Mock;
-}
-
-const sdk: SdkSpies = vi.hoisted((): SdkSpies => ({
-  trackException: vi.fn(),
-  trackPageView: vi.fn(),
-}));
-
 vi.mock(
   '@microsoft/applicationinsights-web',
-  (): Record<string, unknown> => ({
-    DistributedTracingModes: { W3C: 2 },
-    ApplicationInsights: class {
-      trackException: Mock = sdk.trackException;
-      trackPageView: Mock = sdk.trackPageView;
-      loadAppInsights: Mock = vi.fn();
-      addTelemetryInitializer: Mock = vi.fn();
-      getTraceCtx: Mock = vi.fn();
-    },
-  }),
+  async (): Promise<Record<string, unknown>> =>
+    (await import('../../../testing/application-insights-mock')).applicationInsightsModule(),
 );
 
 describe(

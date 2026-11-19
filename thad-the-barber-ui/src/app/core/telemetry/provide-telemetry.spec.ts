@@ -10,15 +10,8 @@ import { ExceptionReporter } from './exception-reporter';
 
 vi.mock(
   '@microsoft/applicationinsights-web',
-  (): Record<string, unknown> => ({
-    DistributedTracingModes: { W3C: 2 },
-    ApplicationInsights: class {
-      loadAppInsights: () => void = vi.fn();
-      addTelemetryInitializer: () => void = vi.fn();
-      getTraceCtx: () => void = vi.fn();
-      trackPageView: () => void = vi.fn();
-    },
-  }),
+  async (): Promise<Record<string, unknown>> =>
+    (await import('../../../testing/application-insights-mock')).applicationInsightsModule(),
 );
 
 function configure(appInsightsConnectionString: string): void {
