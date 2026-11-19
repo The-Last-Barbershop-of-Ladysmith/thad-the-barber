@@ -24,7 +24,21 @@ mobile, WebKit desktop, WebKit mobile), and most of the red CI runs this month c
 - **Pull requests run Chromium only** (586 of the 1,172 e2e runs, in 2 shards instead of 3). `e2e-webkit.yml` runs WebKit every
   night, on `release/**` and `hotfix/**` pushes, and on demand.
 
+## Removed in the second pass (owner said to pick)
+
+- **`book-layout` and `home-layout` now run on the desktop projects only** (26 cases, so 52 fewer runs per pair of browsers).
+  They set their own width and only measure CSS geometry. They pass on `chromium-desktop`. Set in `playwright.config.ts`.
+- **The "reaches every page the app has" test in `app.routes.seo.spec.ts`** is gone. Its 19-path list was fully covered by the
+  "hides from search" and "indexes" lists next to it, which name every page as hidden or indexed, and by "gives every route
+  data.seo".
+- **Not taken, on a closer read:** `layout-reflow` and `layout-shift` stay on every project, because mobile emulation lays out narrow
+  pages differently, so the mobile runs are not duplicates (the estimate in item 1 below was too high). The `*-error.utils.spec.ts`
+  merge would break the one-spec-per-file layout. The axe repeats each scan a different step of a flow, so they are not duplicates
+  either. `environments.spec.ts` guards how URLs are joined. The texting-work merges wait until that branch lands.
+
 ## Candidates to remove or merge (with how much each saves)
+
+The list as first written, before the second pass above.
 
 1. **Layout specs that set their own viewport, run on all four projects.** `book-layout` (13 cases), `home-layout` (13),
    `layout-reflow` (8) and `layout-shift` (8) each call `setViewportSize` (or build their own phone context), so the desktop and
@@ -63,4 +77,4 @@ mobile, WebKit desktop, WebKit mobile), and most of the red CI runs this month c
 
 ## If all of the above is accepted
 
-About 150 fewer tests run per CI pass (126 e2e runs plus about 25 unit tests), on top of the 586 e2e runs moved off pull requests.
+The second pass took out 52 e2e runs per pair of browsers and 1 unit test, on top of the 586 e2e runs moved off pull requests.
