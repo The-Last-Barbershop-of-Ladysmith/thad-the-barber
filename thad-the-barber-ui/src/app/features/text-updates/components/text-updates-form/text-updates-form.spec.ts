@@ -3,6 +3,7 @@ import { FormControl, FormGroup } from '@angular/forms';
 import { provideRouter } from '@angular/router';
 import { provideStore } from '@ngrx/store';
 import { Observable, of, throwError } from 'rxjs';
+import { MessageService } from 'primeng/api';
 import { Mock, vi } from 'vitest';
 import { IS_COMING_SOON } from '../../../../core/config/coming-soon.token';
 import { shopFeature } from '../../../shop/state/shop.feature';
@@ -32,6 +33,7 @@ describe(
         providers: [
           provideRouter([]),
           provideStore({ [shopFeature.name]: shopFeature.reducer }),
+          MessageService,
           { provide: SmsSignupService, useValue: { subscribe } },
           { provide: IS_COMING_SOON, useValue: isComingSoon },
         ],
@@ -110,6 +112,20 @@ describe(
             expect(subscribe).toHaveBeenCalledExactlyOnceWith(MADE_UP_PHONE_E164);
             expect(element('text-updates-done')).not.toBeNull();
             expect(element('text-updates-form')).toBeNull();
+          },
+        );
+
+        it(
+          'shows a success toast once the sign-up is done',
+          (): void => {
+            render(false);
+            const toasts: Mock<(message: object) => void> = vi.fn();
+            TestBed.inject(MessageService).messageObserver.subscribe(toasts);
+            fillIn(true);
+
+            page.submit();
+
+            expect(toasts).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ severity: 'success' }));
           },
         );
 

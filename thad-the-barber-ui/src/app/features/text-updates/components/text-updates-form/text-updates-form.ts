@@ -14,6 +14,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
+import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
 import { MessageModule } from 'primeng/message';
@@ -58,6 +59,7 @@ type TextUpdatesFormGroup = FormGroup<{
 export class TextUpdatesForm {
   private readonly store: Store<AppState> = inject<Store<AppState>>(Store);
   private readonly signups: SmsSignupService = inject(SmsSignupService);
+  private readonly messageService: MessageService = inject(MessageService);
   private readonly destroyRef: DestroyRef = inject(DestroyRef);
 
   readonly idPrefix: InputSignal<string> = input<string>('text-updates');
@@ -102,6 +104,7 @@ export class TextUpdatesForm {
       .subscribe({
         next: (): void => {
           this.status.set(RequestStatus.Success);
+          this.messageService.add({ severity: 'success', summary: 'You’re signed up for shop news texts' });
         },
         error: (): void => {
           this.status.set(RequestStatus.Error);
