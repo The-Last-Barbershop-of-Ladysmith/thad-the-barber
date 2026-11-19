@@ -25,7 +25,8 @@ public sealed partial class MarketingOptInService(
     IMediaStorage storage,
     IOptions<MediaStorageSettings> settings,
     TimeProvider time,
-    ILogger<MarketingOptInService> logger)
+    ILogger<MarketingOptInService> logger,
+    LegacyOptInImporter? legacyImporter = null)
 {
     public const string Prefix = "optins/";
     private const int MaxAttempts = 5;
@@ -70,6 +71,7 @@ public sealed partial class MarketingOptInService(
     /// <summary>Records that the phone replied STOP. A phone that never signed up has nothing to change, and nothing is written for it.</summary>
     public async Task OptOutAsync(string phone, CancellationToken cancellationToken)
     {
+        await EnsureImportedAsync(cancellationToken);
         string container = settings.Value.ContentContainerName;
         string blobName = BlobNameFor(phone);
         for (int attempt = 0; attempt < MaxAttempts; attempt++)
@@ -102,6 +104,7 @@ public sealed partial class MarketingOptInService(
     /// </summary>
     public async Task<bool> OptInAgainAsync(string phone, CancellationToken cancellationToken)
     {
+        await EnsureImportedAsync(cancellationToken);
         string container = settings.Value.ContentContainerName;
         string blobName = BlobNameFor(phone);
         for (int attempt = 0; attempt < MaxAttempts; attempt++)
@@ -131,6 +134,7 @@ public sealed partial class MarketingOptInService(
     /// <summary>The people the shop may text its news to now, oldest consent first.</summary>
     public async Task<List<MarketingOptIn>> ListActiveAsync(CancellationToken cancellationToken)
     {
+        await EnsureImportedAsync(cancellationToken);
         string container = settings.Value.ContentContainerName;
         List<StoredBlob> blobs = await storage.ListAsync(container, Prefix, cancellationToken);
         List<MarketingOptIn> active = [];
@@ -148,6 +152,7 @@ public sealed partial class MarketingOptInService(
 
     private async Task SaveAsync(string phone, MarketingOptInSource source, CancellationToken cancellationToken)
     {
+        await EnsureImportedAsync(cancellationToken);
         string container = settings.Value.ContentContainerName;
         string blobName = BlobNameFor(phone);
         MarketingOptIn fresh = new(
@@ -183,6 +188,9 @@ public sealed partial class MarketingOptInService(
 
         throw new InvalidOperationException("The opt-in kept conflicting with other changes.");
     }
+
+    private Task EnsureImportedAsync(CancellationToken cancellationToken) =>
+        legacyImporter?.EnsureImportedAsync(cancellationToken) ?? Task.CompletedTask;
 
     private static MarketingOptIn Read(string text) =>
         JsonSerializer.Deserialize<MarketingOptIn>(text, FileOptions)

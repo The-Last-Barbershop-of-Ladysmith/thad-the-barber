@@ -7,6 +7,7 @@ public static class MarketingTextsSetup
     public static IServiceCollection AddMarketingTexts(this IServiceCollection services)
     {
         services.AddSingleton<MarketingOptInService>();
+        services.AddSingleton<LegacyOptInImporter>();
         return services;
     }
 }

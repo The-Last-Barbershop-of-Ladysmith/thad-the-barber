@@ -220,17 +220,16 @@ Every change ships with its tests:
 - `bodyHtml` is cleaned by the API (HtmlSanitizer, https/tel/mailto links only) and again by Angular's sanitizer through `[innerHTML]`; links to `/…` route in the app (BR-33).
 - The ticker is deferred (BR-31).
 
-## L. Text alerts
+## L. Texts
 
-⏸ **Deferred.** The text-alerts sign-up is removed from the announcements section for now. The `SmsSignup` component, service, effect, and state stay in the repo unused until the text-alerts milestone.
+✅ **Built (#338), off until the A2P campaign is approved** (`TextMessages:IsEnabled`). Twilio is the sender (decided 2026-11-19; it already runs Verify for the booking lookup). There is **no database**: the state is small typed JSON in the environment's private content container, behind `IMediaStorage`, and a database (#96, Azure SQL's free offer) waits until usage shows it is needed.
 
-The design for when it's picked up needs no database:
-- The list is a Square **Customer Group** ("Text alerts").
-- Consent (TCPA) is stored as Square **customer custom attributes**: `sms_consent_at`, `sms_consent_source`, `sms_consent_text_version`, and `sms_opted_out_at`.
-- The sender is still open:
-  - **Square Text Message Marketing** (~$10/mo + per text). Thad sends from the Square Dashboard. Unverified: whether API sign-ups count as consent.
-  - **Twilio** (~$0.01/text + A2P 10DLC). We build the sending.
-- Announcement texts go out only when Thad sends them, never automatically.
+- **What goes out.** A booking made with the unticked text box (BR-25) gets a confirmation with its own manage link (not Square's) and, when it starts a day or more away, one reminder 24 hours before. Announcement texts go to the people who opted in, only when Thad confirms them in the admin area, once per announcement (BR-46). Square's own customer confirmations and reminders are turned off in Square once ours are on, so nobody gets two.
+- **Layout** (the content container): `optins/<sha256 of the phone>.json` one per person, written with ETag checks; `confirmations/<bookingId>.json`, `reminders/<shop-local date>/<bookingId>.json` and `announcement-sends/<id>.json`, created or claimed with atomic conditional writes so nothing is texted twice; `messages/<yyyy-MM>.jsonl`, an append log of message SIDs and statuses without any phone number. Phones are kept only in the opt-in and reminder blobs; names are hashes.
+- **Claim, then send.** A text is claimed first. A refusal by Twilio gives the claim back; a call Twilio didn't answer keeps it, since the text may have gone: at most once, never twice. A claim stuck in `claimed` is what an alert watches for.
+- **Errors and alerts** are App Insights' job, never with a phone number: `TextRefused`, `TextUnreachable` (error), `TextNotDelivered`, `RemindersFailed` and `AnnouncementTextsFailed` (error) are the events to alert on, with the same kind of Azure log alert as `contact-alerts.bicep`. The monthly log is the business record, found by message SID.
+- **STOP.** Twilio's Advanced Opt-Out blocks and answers STOP and HELP on the number. The webhooks only keep our list in step, so the news list never includes someone Twilio would refuse. One shared number means a STOP to a news text also stops booking texts to that person; Twilio's error 21610 opts them out here too.
+- **Registration (#284).** Sole Proprietor campaigns have one campaign and one number, so confirmations, reminders and news texts are registered together as a mixed campaign, or the news texts wait for a second one.
 
 ## M. Security
 

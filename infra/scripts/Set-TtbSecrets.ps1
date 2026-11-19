@@ -48,6 +48,7 @@ $secrets = [ordered]@{
     'Twilio--AccountSid'          = 'Twilio account SID (AC...) for Verify text codes'
     'Twilio--ApiKeySid'           = 'Twilio API key SID (SK...) for Verify text codes'
     'Twilio--ApiKeySecret'        = 'Twilio API key secret for Verify text codes'
+    'Twilio--AuthToken'           = 'Twilio account auth token, only to check the signature of Twilio webhooks (replies, delivery reports)'
     'Google--ClientSecret'        = 'Google OAuth client secret (reviews)'
     'Google--RefreshToken'        = 'Google OAuth refresh token (reviews)'
 }
