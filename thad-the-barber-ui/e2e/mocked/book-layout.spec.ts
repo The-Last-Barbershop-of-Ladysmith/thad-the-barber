@@ -42,7 +42,7 @@ test.describe(
           await expect(page.getByTestId('time-list')).toBeVisible();
 
           await expect(async (): Promise<void> => {
-            const formHeight: number = await page.locator('form')
+            const formHeight: number = await page.locator('form.booking-form')
               .evaluate((form: Element): number => form.getBoundingClientRect().height);
             const stepperHeight: number = await page.locator('p-stepper')
               .evaluate((stepper: Element): number => stepper.getBoundingClientRect().height);
@@ -70,7 +70,7 @@ test.describe(
             (window as unknown as { footerTops: number[]; }).footerTops = footerDistances;
             const sampleFooterTop: () => void = (): void => {
               const footer: Element | null = document.querySelector('footer');
-              const form: Element | null = document.querySelector('form');
+              const form: Element | null = document.querySelector('form.booking-form');
               if (footer && form && footerDistances.length < frameCount) {
                 footerDistances.push(footer.getBoundingClientRect().top - form.getBoundingClientRect().top);
               }
