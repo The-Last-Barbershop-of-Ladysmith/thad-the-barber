@@ -1,5 +1,5 @@
 <div class="rich-text-editor">
-  <div class="toolbar" role="toolbar" aria-label="Formatting">
+  <div class="toolbar" role="toolbar" aria-label="Formatting" (mousedown)="$event.preventDefault()">
     @for (group of toolGroups; track $index) {
       <div class="tool-group" role="group">
         @for (tool of group; track tool.id) {
