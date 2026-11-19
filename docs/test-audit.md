@@ -12,7 +12,8 @@ is to keep existing specs ([CLAUDE.md](../CLAUDE.md)), so each item below needs 
 | Express (Vitest) | 98 | 9 | under 1 s |
 | End-to-end (Playwright) | 1,172 runs | 48 | about 14 min per CI shard |
 
-The unit suites are fast. The end-to-end suite is the cost: 293 written cases run once per project (Chromium desktop, Chromium
+The API and UI counts include the texting work on `feature/text-messaging`, which is not merged yet; without it the UI has 1,014
+tests in 155 files. The unit suites are fast. The end-to-end suite is the cost: 293 written cases run once per project (Chromium desktop, Chromium
 mobile, WebKit desktop, WebKit mobile), and most of the red CI runs this month came from the WebKit half.
 
 ## Already done
@@ -42,7 +43,7 @@ mobile, WebKit desktop, WebKit mobile), and most of the red CI runs this month c
 5. **Axe scans.** 74 scans across 26 e2e files, plus 30 in unit specs. Many scan the same page in each state of one flow (booking
    has 10, manage 8, find 7). Keep one scan per distinct page and state, and drop the repeats inside one flow. Saves roughly
    **20 scans** (about a second each, times 4 projects). Needs a look at each flow before cutting.
-6. **Fine-grained tests from the texting work** (mine). `TextMessagesSettingsValidatorTests` (7), the preview and unknown-id cases
+6. **Fine-grained tests from the texting work** (mine, on `feature/text-messaging`, so this applies once it merges). `TextMessagesSettingsValidatorTests` (7), the preview and unknown-id cases
    in `AnnouncementTextServiceTests`, and the 3 preview cases in `TwilioWebhookEndpointsTests` could be merged with `[Theory]`.
    Saves about **10 tests**, with no loss of what they check.
 
