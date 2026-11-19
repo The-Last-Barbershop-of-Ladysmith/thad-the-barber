@@ -56,7 +56,7 @@ export class BookingComingSoon implements LeaveConfirmable {
     { nonNullable: true },
   );
   protected readonly consentControl: FormControl<boolean> = new FormControl(
-    { value: true, disabled: true },
+    { value: false, disabled: true },
     { nonNullable: true },
   );
   protected readonly marketingConsentControl: FormControl<boolean> = new FormControl(

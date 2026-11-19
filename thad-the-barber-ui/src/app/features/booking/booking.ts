@@ -58,7 +58,7 @@ const STEP_MOTION_MS: number = 300;
 interface BookingFormValue {
   name: string;
   phone: string;
-  /** Ticked to get the booking texts, which the shop's booking system sends. */
+  /** Ticked to get the booking texts, which is optional, starts unticked and is never needed to book. */
   hasTextConsent: boolean;
   /** Ticked to also get the shop's news texts, which is optional and never needed to book. */
   hasMarketingConsent: boolean;
@@ -131,10 +131,7 @@ export class Booking implements LeaveConfirmable {
       nonNullable: true,
       validators: PHONE_VALIDATORS,
     }),
-    hasTextConsent: new FormControl(true, {
-      nonNullable: true,
-      validators: Validators.requiredTrue,
-    }),
+    hasTextConsent: new FormControl(false, { nonNullable: true }),
     hasMarketingConsent: new FormControl(false, { nonNullable: true }),
     date: new FormControl<string | null>(null, [Validators.required]),
     startAt: new FormControl<string | null>(null, [Validators.required]),
@@ -179,7 +176,6 @@ export class Booking implements LeaveConfirmable {
       || (
         !this.bookingForm.controls.name.invalid
         && !this.bookingForm.controls.phone.invalid
-        && !this.bookingForm.controls.hasTextConsent.invalid
       );
     const canSend: boolean = !this.isSubmitting() && !this.isSubmitDone() && !this.isBotCheckFailed();
     return date !== null && startAt !== null && areDetailsValid && canSend;

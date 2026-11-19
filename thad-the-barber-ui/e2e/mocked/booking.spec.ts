@@ -5,7 +5,7 @@ import { ShopInfo } from '../../src/app/features/shop/models/shop-info.model';
 import { ProblemCode } from '../../src/app/shared/models/problem-code.model';
 import { TEST_SHOP } from '../../src/testing/test-shop';
 import { expectNoA11yViolations } from '../support/axe';
-import { fulfillAvailability, isAvailabilityRequest, isBookingRequest, tickTextConsent } from '../support/booking';
+import { fulfillAvailability, isAvailabilityRequest, isBookingRequest } from '../support/booking';
 import { expect, test } from '../support/fixtures';
 import { fulfillSession, isSessionRequest } from '../support/session';
 import { SHOP_URL } from '../support/shop';
@@ -57,7 +57,6 @@ async function fillInDetails(page: Page): Promise<void> {
     await phone.fill(CUSTOMER_PHONE);
     await expect(phone).toHaveValue('(540) 555-0123', { timeout: 1_000 });
   }).toPass();
-  await tickTextConsent(page);
 }
 
 async function book(page: Page): Promise<void> {
@@ -69,13 +68,13 @@ test.describe(
   'booking',
   (): void => {
     test(
-      'shows the ticked text-message box with the confirm button, and no accessibility violations',
+      'shows the unticked text-message box with the confirm button enabled, and no accessibility violations',
       async ({ page }: { page: Page; }): Promise<void> => {
         await page.goto('/book');
         await fillInBooking(page);
 
         await expect(page.getByTestId('text-consent')).toBeVisible();
-        await expect(page.locator('#booking-text-consent')).toBeChecked();
+        await expect(page.locator('#booking-text-consent')).not.toBeChecked();
         await expect(page.getByTestId('confirm-booking')).toBeEnabled();
         await expectNoA11yViolations(page);
       },

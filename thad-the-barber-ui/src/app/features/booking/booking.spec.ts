@@ -132,7 +132,6 @@ describe(
     function fillInAndConfirm(startAt: string): void {
       page.bookingForm.controls.name.setValue('Test Customer');
       page.bookingForm.controls.phone.setValue('(555) 010-0199');
-      page.bookingForm.controls.hasTextConsent.setValue(true);
       pick(startAt);
       page.confirm();
     }
@@ -250,20 +249,17 @@ describe(
     );
 
     it(
-      'can confirm once a day, a time, a name, a phone and the text-message box are in',
+      'can confirm once a day, a time, a name and a phone are in, with the text-message box left unticked',
       (): void => {
         openPage();
         expect(page.canConfirm()).toBe(false);
-        expect(page.bookingForm.controls.hasTextConsent.value).toBe(true);
+        expect(page.bookingForm.controls.hasTextConsent.value).toBe(false);
 
         pick(FIRST_TIME);
         expect(page.canConfirm()).toBe(false);
         page.bookingForm.controls.name.setValue('Test Customer');
         page.bookingForm.controls.phone.setValue('(555) 010-0199');
         expect(page.canConfirm()).toBe(true);
-
-        page.bookingForm.controls.hasTextConsent.setValue(false);
-        expect(page.canConfirm()).toBe(false);
       },
     );
 

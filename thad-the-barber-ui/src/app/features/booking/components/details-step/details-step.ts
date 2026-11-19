@@ -27,5 +27,4 @@ export class DetailsStep {
   readonly marketingConsentControl: InputSignal<FormControl<boolean>> = input.required<FormControl<boolean>>();
 
   protected readonly isNameErrorShown: Signal<boolean> = toIsErrorShown(this.nameControl);
-  protected readonly isConsentErrorShown: Signal<boolean> = toIsErrorShown(this.consentControl);
 }

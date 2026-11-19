@@ -44,25 +44,20 @@ test.describe(
     );
 
     test(
-      'asks for the text-message box to be ticked: ticked at first, explained once it is unticked and left, cleared when ticked',
+      'offers the text-message box as an optional choice: unticked, no asterisk, and leaving it alone raises no error',
       async ({ page }: { page: Page; }): Promise<void> => {
         await openDetailsStep(page);
         const consent: Locator = page.locator('#booking-text-consent');
-        await expect(consent).toBeChecked();
-        await expect(page.locator('label[for="booking-text-consent"] .required-mark')).toHaveAttribute('aria-hidden', 'true');
-        await expect(page.locator('#booking-text-consent-error')).toHaveCount(0);
+        await expect(consent).not.toBeChecked();
+        await expect(page.locator('label[for="booking-text-consent"] .required-mark')).toHaveCount(0);
 
         await tabUntilFocused(page, '#booking-text-consent');
-        await page.keyboard.press('Space');
-        await expect(consent).not.toBeChecked();
         await page.keyboard.press('Tab');
-        await expect(page.locator('#booking-text-consent-error')).toHaveAttribute('role', 'alert');
-        await expect(page.getByTestId('confirm-booking')).toBeDisabled();
+        await expect(page.locator('#booking-text-consent-error')).toHaveCount(0);
         await expectNoA11yViolations(page);
 
         await page.locator('label[for="booking-text-consent"]').click();
         await expect(consent).toBeChecked();
-        await expect(page.locator('#booking-text-consent-error')).toHaveCount(0);
         await expectNoA11yViolations(page);
       },
     );
