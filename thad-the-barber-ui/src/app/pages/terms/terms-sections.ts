@@ -62,7 +62,8 @@ export const TERMS_SECTIONS: readonly LegalSection[] = [
       [
         {
           kind: LegalPartKind.Text,
-          text: 'Agreeing is needed to get these texts, and the site asks you to tick the box on the booking form. '
+          text: 'Agreeing is optional and never needed to book. To get these texts, tick the box for them on the '
+            + 'booking form, which starts unticked. '
             + 'Message and data rates may apply. Reply STOP to any text to stop them, or HELP for help. You can also '
             + 'call or text ',
         },

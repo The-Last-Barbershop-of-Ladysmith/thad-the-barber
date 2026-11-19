@@ -39,7 +39,8 @@ export const PRIVACY_SECTIONS: readonly LegalSection[] = [
           kind: LegalPartKind.Text,
           text: "After you book, the shop's booking system, Square, texts the phone number you gave to confirm your "
             + 'appointment, and may text a reminder before it. A text is sent only after you tick the box for it on '
-            + 'the booking form and submit a booking with a phone number. Booking texts never include promotions.',
+            + 'the booking form, which starts unticked, and submit a booking with a phone number. You can book without '
+            + 'ticking it. Booking texts never include promotions.',
         },
       ],
       [
