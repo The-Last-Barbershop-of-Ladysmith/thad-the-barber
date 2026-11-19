@@ -24,7 +24,7 @@ interface TextUpdatesFormPage {
 describe(
   'TextUpdatesForm',
   (): void => {
-    let subscribe: Mock<(phone: string) => Observable<{ phone: string; }>>;
+    let subscribe: Mock<(phone: string) => Observable<null>>;
     let fixture: ComponentFixture<TextUpdatesForm>;
     let page: TextUpdatesFormPage;
 
@@ -64,7 +64,7 @@ describe(
     }
 
     beforeEach((): void => {
-      subscribe = vi.fn((phone: string): Observable<{ phone: string; }> => of({ phone }));
+      subscribe = vi.fn((): Observable<null> => of(null));
     });
 
     describe(

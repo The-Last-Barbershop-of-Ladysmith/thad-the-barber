@@ -1,6 +1,9 @@
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideStore } from '@ngrx/store';
+import { MessageService } from 'primeng/api';
 import { shopFeature } from '../../features/shop/state/shop.feature';
 import { TextUpdates } from './text-updates';
 
@@ -11,7 +14,13 @@ describe(
       'shows the sign-up form and its consent wording on the page, with no click needed',
       (): void => {
         TestBed.configureTestingModule({
-          providers: [provideRouter([]), provideStore({ [shopFeature.name]: shopFeature.reducer })],
+          providers: [
+            provideRouter([]),
+            provideHttpClient(),
+            provideHttpClientTesting(),
+            MessageService,
+            provideStore({ [shopFeature.name]: shopFeature.reducer }),
+          ],
         });
         const fixture: ComponentFixture<TextUpdates> = TestBed.createComponent(TextUpdates);
         fixture.detectChanges();
