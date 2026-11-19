@@ -2,6 +2,7 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Options;
+using ThadTheBarber.Api.Features.MarketingTexts.Exceptions;
 using ThadTheBarber.Api.Features.MarketingTexts.Models;
 using ThadTheBarber.Api.Infrastructure.Storage.Configuration;
 using ThadTheBarber.Api.Infrastructure.Storage.Services;
@@ -12,8 +13,8 @@ namespace ThadTheBarber.Api.Features.MarketingTexts.Services;
 /// Keeps the phones that agreed to the shop's news texts as one JSON array, <c>marketing-opt-ins.json</c> in the private
 /// content container, so the list is ready when sending is built. A phone is listed once, with its first consent. The
 /// file is read and replaced whole, so the lock keeps two simultaneous opt-ins from losing one (it covers this one app
-/// instance, which is all the site runs on). A failure to save is logged without the phone and never thrown, because
-/// the booking it came with has already been made.
+/// instance, which is all the site runs on). A failure to save a booking's opt-in is logged without the phone and never
+/// thrown, because the booking has already been made; a failure to save a sign-up throws, so the visitor is told.
 /// </summary>
 public sealed partial class MarketingOptInService(
     IMediaStorage storage,
@@ -33,6 +34,30 @@ public sealed partial class MarketingOptInService(
     private readonly SemaphoreSlim fileLock = new(1, 1);
 
     public async Task AddAsync(string phone, MarketingOptInSource source, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await SaveAsync(phone, source, cancellationToken);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            LogNotSaved(logger, exception, source);
+        }
+    }
+
+    public async Task SignUpAsync(string phone, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await SaveAsync(phone, MarketingOptInSource.SignUp, cancellationToken);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            throw new MarketingSignUpUnavailableException(exception);
+        }
+    }
+
+    private async Task SaveAsync(string phone, MarketingOptInSource source, CancellationToken cancellationToken)
     {
         await fileLock.WaitAsync(cancellationToken);
         try
@@ -56,10 +81,6 @@ public sealed partial class MarketingOptInService(
                 source
             ));
             await storage.WriteTextAsync(container, FileName, JsonSerializer.Serialize(optIns, FileOptions), cancellationToken);
-        }
-        catch (Exception exception) when (exception is not OperationCanceledException)
-        {
-            LogNotSaved(logger, exception, source);
         }
         finally
         {

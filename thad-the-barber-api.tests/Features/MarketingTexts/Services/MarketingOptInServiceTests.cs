@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
+using ThadTheBarber.Api.Features.MarketingTexts.Exceptions;
 using ThadTheBarber.Api.Features.MarketingTexts.Models;
 using ThadTheBarber.Api.Features.MarketingTexts.Services;
 using ThadTheBarber.Api.Tests.TestSupport.Fakes;
@@ -83,6 +84,28 @@ public sealed class MarketingOptInServiceTests : IDisposable
         FakeLogRecord record = Assert.Single(_logger.Collector.GetSnapshot());
         Assert.Equal(LogLevel.Warning, record.Level);
         Assert.DoesNotContain(FirstPhone, record.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ASignUpIsListedWithItsSource()
+    {
+        await _optIns.SignUpAsync(FirstPhone, Cancellation);
+
+        JsonElement entry = Assert.Single(ReadList().EnumerateArray());
+        Assert.Equal(FirstPhone, entry.GetProperty("phone").GetString());
+        Assert.Equal("signUp", entry.GetProperty("source").GetString());
+    }
+
+    [Fact]
+    public async Task AStorageFailureOnASignUpThrowsWithoutLoggingThePhone()
+    {
+        _storage.Failure = new InvalidOperationException("storage is down");
+
+        MarketingSignUpUnavailableException thrown = await Assert.ThrowsAsync<MarketingSignUpUnavailableException>(
+            () => _optIns.SignUpAsync(FirstPhone, Cancellation));
+
+        Assert.Same(_storage.Failure, thrown.InnerException);
+        Assert.DoesNotContain(FirstPhone, thrown.Message, StringComparison.Ordinal);
     }
 
     [Fact]
