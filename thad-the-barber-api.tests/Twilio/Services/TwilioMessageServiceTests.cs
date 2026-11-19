@@ -56,7 +56,7 @@ public sealed class TwilioMessageServiceTests
     {
         FakeTwilioHttp http = new() { Body = CreatedMessage };
         TwilioSettings settings = MessagingServiceSettings();
-        settings.StatusCallbackUrl = "https://api.example.com/api/webhooks/twilio/status";
+        settings.WebhookBaseUrl = "https://api.example.com/";
 
         await Service(http, settings).SendAsync(Phone, MessageBody, Cancellation);
 

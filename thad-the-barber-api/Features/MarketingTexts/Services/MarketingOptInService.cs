@@ -93,6 +93,38 @@ public sealed partial class MarketingOptInService(
         throw new InvalidOperationException("The opt-out kept conflicting with other changes.");
     }
 
+    /// <summary>
+    /// Puts back a phone that had opted out and now replies START. A phone that never signed up stays off the list: a
+    /// reply to a booking text is not consent to news texts. True when the phone is listed again.
+    /// </summary>
+    public async Task<bool> OptInAgainAsync(string phone, CancellationToken cancellationToken)
+    {
+        string container = settings.Value.ContentContainerName;
+        string blobName = BlobNameFor(phone);
+        for (int attempt = 0; attempt < MaxAttempts; attempt++)
+        {
+            StoredText? stored = await storage.ReadTextWithETagAsync(container, blobName, cancellationToken);
+            if (stored is null || Read(stored.Text).IsActive)
+            {
+                return false;
+            }
+
+            MarketingOptIn again = new(
+                phone,
+                time.GetUtcNow(),
+                MarketingOptInSource.Reply,
+                MarketingOptIn.CurrentConsentTextVersion,
+                null
+            );
+            if (await storage.TryReplaceTextAsync(container, blobName, Serialize(again), stored.ETag, cancellationToken))
+            {
+                return true;
+            }
+        }
+
+        throw new InvalidOperationException("The opt-in kept conflicting with other changes.");
+    }
+
     /// <summary>The people the shop may text its news to now, oldest consent first.</summary>
     public async Task<List<MarketingOptIn>> ListActiveAsync(CancellationToken cancellationToken)
     {

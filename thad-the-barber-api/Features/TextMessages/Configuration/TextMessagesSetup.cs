@@ -15,6 +15,7 @@ public static class TextMessagesSetup
         services.AddSingleton<TextMessageSender>();
         services.AddSingleton<ReminderService>();
         services.AddSingleton<BookingTextService>();
+        services.AddSingleton<TwilioWebhookService>();
         services.AddSingleton<ReminderWorker>();
         services.AddHostedService(provider => provider.GetRequiredService<ReminderWorker>());
         return services;

@@ -39,10 +39,19 @@ public sealed class TwilioSettings
     public string AuthToken { get; set; } = string.Empty;
 
     /// <summary>
-    /// Where Twilio reports each text's delivery (<c>…/api/webhooks/twilio/status</c>), sent with every message. Left empty,
-    /// the Messaging Service's own delivery status URL in the Twilio console is used.
+    /// The API's public address (<c>https://api.cutsbythad.com</c>), which Twilio's webhooks are signed against: a text's
+    /// delivery report goes to <c>{this}/api/webhooks/twilio/status</c>, sent with every message, and a customer's replies
+    /// (STOP, START) to <c>{this}/api/webhooks/twilio/incoming</c>, set on the Messaging Service. Left empty, the
+    /// webhooks answer 503 and delivery reports are not requested.
     /// </summary>
-    public string StatusCallbackUrl { get; set; } = string.Empty;
+    public string WebhookBaseUrl { get; set; } = string.Empty;
+
+    public const string StatusWebhookPath = "/api/webhooks/twilio/status";
+
+    public const string IncomingWebhookPath = "/api/webhooks/twilio/incoming";
+
+    public string StatusCallbackUrl => WebhookBaseUrl.Length > 0 ? WebhookBaseUrl.TrimEnd('/') + StatusWebhookPath : string.Empty;
+
 
     public bool IsConfigured => AccountSid.Length > 0 && VerifyServiceSid.Length > 0 && ApiKeySid.Length > 0 && ApiKeySecret.Length > 0;
 

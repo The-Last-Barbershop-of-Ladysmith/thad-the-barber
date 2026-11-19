@@ -27,7 +27,7 @@ public sealed class AuthSetupTests(ApiFactory factory) : IClassFixture<ApiFactor
         $"/api/bookings/availability?from={DateTime.UtcNow:yyyy-MM-dd}&to={DateTime.UtcNow.AddDays(30):yyyy-MM-dd}"
     );
 
-    private static readonly string[] exemptRoutes = ["/api/announcements", "/api/bookings/next", "/api/gallery", "/api/health", "/api/reviews", "/api/session", "/api/shop", "/api/webhooks/media", "/api/webhooks/square"];
+    private static readonly string[] exemptRoutes = ["/api/announcements", "/api/bookings/next", "/api/gallery", "/api/health", "/api/reviews", "/api/session", "/api/shop", "/api/webhooks/media", "/api/webhooks/square", "/api/webhooks/twilio/incoming", "/api/webhooks/twilio/status"];
 
     private static CancellationToken Cancellation => TestContext.Current.CancellationToken;
 

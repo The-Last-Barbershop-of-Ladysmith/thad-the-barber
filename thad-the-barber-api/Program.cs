@@ -9,6 +9,7 @@ using ThadTheBarber.Api.Features.Contact.Configuration;
 using ThadTheBarber.Api.Features.MarketingTexts.Configuration;
 using ThadTheBarber.Api.Features.MarketingTexts.Endpoints;
 using ThadTheBarber.Api.Features.TextMessages.Configuration;
+using ThadTheBarber.Api.Features.TextMessages.Endpoints;
 using ThadTheBarber.Api.Features.Contact.Endpoints;
 using ThadTheBarber.Api.Features.Booking.Endpoints;
 using ThadTheBarber.Api.Features.Announcements.Configuration;
@@ -121,6 +122,7 @@ api.MapAdminShopEndpoints();
 api.MapBookingEndpoints();
 api.MapSquareWebhookEndpoints();
 api.MapMediaWebhookEndpoints();
+api.MapTwilioWebhookEndpoints();
 
 if (app.Environment.IsDevelopment())
 {

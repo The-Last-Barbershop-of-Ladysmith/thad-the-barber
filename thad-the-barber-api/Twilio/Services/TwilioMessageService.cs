@@ -44,7 +44,7 @@ public sealed class TwilioMessageService(IOptions<TwilioSettings> settings, IHtt
             options.From = new PhoneNumber(twilio.FromNumber);
         }
 
-        if (twilio.StatusCallbackUrl.Length > 0)
+        if (twilio.WebhookBaseUrl.Length > 0)
         {
             options.StatusCallback = new Uri(twilio.StatusCallbackUrl);
         }

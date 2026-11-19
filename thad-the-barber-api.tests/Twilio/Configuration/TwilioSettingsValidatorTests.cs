@@ -100,12 +100,12 @@ public sealed class TwilioSettingsValidatorTests
     }
 
     [Fact]
-    public void AStatusCallbackMustBeAnHttpsUrl()
+    public void TheWebhookBaseUrlMustBeAnHttpsUrl()
     {
         TwilioSettings settings = FullSettings();
-        settings.StatusCallbackUrl = "http://api.example.com/status";
+        settings.WebhookBaseUrl = "http://api.example.com";
 
-        Assert.Contains(nameof(TwilioSettings.StatusCallbackUrl), validator.Validate(null, settings).FailureMessage, StringComparison.Ordinal);
+        Assert.Contains(nameof(TwilioSettings.WebhookBaseUrl), validator.Validate(null, settings).FailureMessage, StringComparison.Ordinal);
     }
 
     [Fact]
