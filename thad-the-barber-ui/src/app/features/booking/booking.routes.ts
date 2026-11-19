@@ -8,6 +8,7 @@ import { IS_COMING_SOON } from '../../core/config/coming-soon.token';
 import * as bookingEffects from './state/booking.effects';
 import { Booking } from './booking';
 import { leaveBookingGuard } from './guards/leave-booking.guard';
+import { managePagesOpenGuard } from './guards/manage-pages-open.guard';
 import { bookingFeature } from './state/booking.feature';
 import { BookingComingSoon } from './pages/booking-coming-soon/booking-coming-soon';
 import { FindBookings } from './pages/find-bookings/find-bookings';
@@ -67,6 +68,7 @@ export const BOOKING_ROUTES: Routes = [
       },
       {
         path: 'manage',
+        canMatch: [managePagesOpenGuard],
         data: { seo: findBookingsSeo },
         loadComponent: (): Promise<typeof FindBookings> =>
           import('./pages/find-bookings/find-bookings')
@@ -74,6 +76,7 @@ export const BOOKING_ROUTES: Routes = [
       },
       {
         path: 'manage/:id/reschedule',
+        canMatch: [managePagesOpenGuard],
         data: { seo: rescheduleSeo },
         canDeactivate: [leaveBookingGuard],
         loadComponent: (): Promise<typeof Booking> =>
@@ -81,6 +84,7 @@ export const BOOKING_ROUTES: Routes = [
       },
       {
         path: 'manage/:id',
+        canMatch: [managePagesOpenGuard],
         data: { seo: manageSeo },
         loadComponent: (): Promise<typeof ManageBooking> =>
           import('./pages/manage-booking/manage-booking')

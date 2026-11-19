@@ -16,7 +16,9 @@
         <span class="heading eyebrow">Bookings</span>
         <div class="column-links">
           <a class="nav-link" routerLink="/book">Book a cut</a>
-          <a class="nav-link" routerLink="/book/manage">Manage a booking</a>
+          @if (!isBookingPreview) {
+            <a class="nav-link" routerLink="/book/manage">Manage a booking</a>
+          }
         </div>
       </div>
 

@@ -448,6 +448,16 @@ describe(
       },
     );
 
+    it(
+      'leaves out the find your bookings link while booking is a preview',
+      (): void => {
+        isBookingPreview = true;
+        openPage();
+
+        expect(byTestId('find-bookings-link')).toBeNull();
+      },
+    );
+
     describe(
       'moving a booking (/book/manage/{id}/reschedule)',
       (): void => {

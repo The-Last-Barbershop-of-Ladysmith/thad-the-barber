@@ -99,7 +99,7 @@ export class Booking implements LeaveConfirmable {
   private readonly route: ActivatedRoute = inject(ActivatedRoute);
   private readonly injector: Injector = inject(Injector);
   private readonly messageService: MessageService = inject(MessageService);
-  private readonly isBookingPreview: boolean = inject(IS_BOOKING_PREVIEW);
+  protected readonly isBookingPreview: boolean = inject(IS_BOOKING_PREVIEW);
 
   // Moving a booking: read from the path, not an input, since input binding would also turn `/book?id=…` into a move.
   private readonly bookingId: Signal<string | null> = toSignal(
