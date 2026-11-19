@@ -14,6 +14,7 @@ import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, ParamMap, Router, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
+import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { StepPassThrough, StepperPassThrough } from 'primeng/types/stepper';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
@@ -23,6 +24,7 @@ import { ProgressBarModule } from 'primeng/progressbar';
 import { SkeletonModule } from 'primeng/skeleton';
 import { StepperModule } from 'primeng/stepper';
 import { distinctUntilChanged, map } from 'rxjs';
+import { IS_BOOKING_PREVIEW } from '../../core/config/booking-preview.token';
 import { SessionService } from '../../core/services/session.service';
 import { TitledPage } from '../../shared/components/titled-page/titled-page';
 import { NoticeMessage } from '../../shared/components/notice-message/notice-message';
@@ -96,6 +98,8 @@ export class Booking implements LeaveConfirmable {
   private readonly router: Router = inject(Router);
   private readonly route: ActivatedRoute = inject(ActivatedRoute);
   private readonly injector: Injector = inject(Injector);
+  private readonly messageService: MessageService = inject(MessageService);
+  private readonly isBookingPreview: boolean = inject(IS_BOOKING_PREVIEW);
 
   // Moving a booking: read from the path, not an input, since input binding would also turn `/book?id=…` into a move.
   private readonly bookingId: Signal<string | null> = toSignal(
@@ -235,6 +239,14 @@ export class Booking implements LeaveConfirmable {
     const bookingId: string | null = this.bookingId();
     const manageToken: string | null = this.manageToken();
     if (!startAt || !this.canConfirm()) {
+      return;
+    }
+    if (this.isBookingPreview) {
+      this.messageService.add({
+        severity: 'info',
+        summary: 'Online booking opens soon',
+        detail: 'Call or text the shop to book your time.',
+      });
       return;
     }
     if (bookingId && manageToken) {

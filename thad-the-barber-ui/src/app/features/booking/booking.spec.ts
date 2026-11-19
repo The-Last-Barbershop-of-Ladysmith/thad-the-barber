@@ -12,10 +12,13 @@ import {
 } from '@angular/router';
 import { provideEffects } from '@ngrx/effects';
 import { Action, ActionsSubject, Store, provideStore } from '@ngrx/store';
+import { MessageService } from 'primeng/api';
 import { BehaviorSubject } from 'rxjs';
+import { Mock, vi } from 'vitest';
 import { testFirstMonth } from '../../../testing/test-availability';
 import { testConfirmationIn } from '../../../testing/test-booking';
 import { TEST_SHOP } from '../../../testing/test-shop';
+import { IS_BOOKING_PREVIEW } from '../../core/config/booking-preview.token';
 import { SessionService } from '../../core/services/session.service';
 import { NoticeMessage } from '../../shared/components/notice-message/notice-message';
 import { Notice } from '../../shared/models/notice.model';
@@ -64,11 +67,13 @@ describe(
     let fixture: ComponentFixture<Booking>;
     let page: BookingPage;
     let store: Store<AppState>;
+    let isBookingPreview: boolean;
     let isBotCheckFailed: WritableSignal<boolean>;
     let dispatched: Action[];
     let routeParams: BehaviorSubject<ParamMap>;
 
     beforeEach(async (): Promise<void> => {
+      isBookingPreview = false;
       isBotCheckFailed = signal(false);
       routeParams = new BehaviorSubject<ParamMap>(convertToParamMap({}));
       TestBed.configureTestingModule({
@@ -80,6 +85,8 @@ describe(
           // The page opens its days through this; sending is left to the effects' own spec.
           provideEffects({ openFirstMonth }),
           provideRouter([]),
+          MessageService,
+          { provide: IS_BOOKING_PREVIEW, useFactory: (): boolean => isBookingPreview },
           { provide: SessionService, useValue: { isBotCheckFailed } },
           { provide: ActivatedRoute, useValue: { paramMap: routeParams } },
         ],
@@ -260,6 +267,21 @@ describe(
         page.bookingForm.controls.name.setValue('Test Customer');
         page.bookingForm.controls.phone.setValue('(555) 010-0199');
         expect(page.canConfirm()).toBe(true);
+      },
+    );
+
+    it(
+      'only shows a toast that booking opens soon while booking is a preview, and sends nothing',
+      (): void => {
+        isBookingPreview = true;
+        openPage();
+        const toasts: Mock<(message: object) => void> = vi.fn();
+        TestBed.inject(MessageService).messageObserver.subscribe(toasts);
+
+        fillInAndConfirm(FIRST_TIME);
+
+        expect(toasts).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ severity: 'info' }));
+        expect(sentBookings()).toEqual([]);
       },
     );
 
