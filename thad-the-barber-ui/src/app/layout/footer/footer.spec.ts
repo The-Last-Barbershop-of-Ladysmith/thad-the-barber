@@ -40,6 +40,18 @@ describe(
     );
 
     it(
+      'carries the shop news text sign-up as a column, with its own field ids',
+      (): void => {
+        const column: HTMLElement | null = footer.querySelector('[data-testid="footer-text-updates"]');
+
+        expect(column?.classList.contains('column')).toBe(true);
+        expect(column?.querySelector('[data-testid="text-updates-form"]')).not.toBeNull();
+        expect(column?.querySelector('#footer-text-updates-phone')).not.toBeNull();
+        expect(column?.querySelector('#footer-text-updates-consent')).not.toBeNull();
+      },
+    );
+
+    it(
       'links each home section in the Site column, in page order',
       (): void => {
         const hrefs: (string | null)[] = Array.from(footer.querySelectorAll<HTMLAnchorElement>('.column-links.is-split a'))

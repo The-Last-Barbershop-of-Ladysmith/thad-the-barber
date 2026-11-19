@@ -4,23 +4,26 @@
     stop them.</p-message
   >
 } @else {
-  <form class="stack gap-4" data-testid="text-updates-form" [formGroup]="signupForm" (ngSubmit)="submit()">
+  <form
+    class="text-updates-form"
+    data-testid="text-updates-form"
+    [formGroup]="signupForm"
+    (ngSubmit)="submit()"
+  >
     @if (isComingSoon) {
-      <p-message severity="info" data-testid="text-updates-coming-soon"
+      <p-message class="notice" severity="info" data-testid="text-updates-coming-soon"
         >Text updates open soon. You can't sign up yet, but this is how it will work.</p-message
       >
     }
-    <p class="m-0 text-muted-color">
-      <span class="required-mark" aria-hidden="true">*</span> marks a required field.
-    </p>
-
     <app-phone-field
+      class="phone"
       [inputId]="phoneId()"
       [isRequiredMarked]="true"
+      [isLabelHidden]="true"
       [phoneControl]="signupForm.controls.phone"
     />
 
-    <div class="stack gap-1.5">
+    <div class="consent stack gap-1.5">
       <div class="consent-row">
         <p-checkbox
           data-testid="text-updates-consent"
@@ -32,15 +35,13 @@
         />
         <label class="consent-label" [for]="consentId()">
           <span
-            >Yes, text me news from {{ shopName() }}: openings, closures, special hours and offers.<span
-              class="required-mark"
-              aria-hidden="true"
-              >*</span
-            ></span
+            >Yes, text me news from {{ shopName() }}: openings, closures, special hours and
+            offers.</span
           >
           <span class="small-print"
             >Up to 4 messages a month. Message and data rates may apply. Reply STOP to opt out, HELP
-            for help. Agreeing is not needed to book or buy anything. See the
+            for help. Your number is never shared or sold. Agreeing is not needed to book or buy
+            anything. See the
             <a class="inline-link external-link" routerLink="/terms" target="_blank"
               >Terms and conditions<span class="sr-only"> (opens in a new tab)</span></a
             >
@@ -60,13 +61,14 @@
     </div>
 
     @if (status() === requestStatus.Error) {
-      <p-message severity="error" data-testid="text-updates-error"
+      <p-message class="error" severity="error" data-testid="text-updates-error"
         >We couldn't sign you up just now. Please try again in a moment.</p-message
       >
     }
 
     <button
       pButton
+      class="submit"
       type="submit"
       data-testid="text-updates-submit"
       [disabled]="isComingSoon || signupForm.invalid || isSubmitting()"

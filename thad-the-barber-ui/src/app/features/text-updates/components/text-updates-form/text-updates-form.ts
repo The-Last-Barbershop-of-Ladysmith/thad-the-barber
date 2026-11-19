@@ -36,7 +36,7 @@ type TextUpdatesFormGroup = FormGroup<{
 
 /**
  * The sign-up for the shop's news texts: a phone and its own consent, separate from the booking texts. It owns its
- * one-visit state, so the dialog and the `/text-updates` page both just place it. `idPrefix` keeps ids unique if two
+ * one-visit state, so the footer and the `/text-updates` page both just place it. `idPrefix` keeps ids unique if two
  * are ever on one page.
  */
 @Component({
@@ -53,6 +53,7 @@ type TextUpdatesFormGroup = FormGroup<{
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './text-updates-form.html',
+  styleUrl: './text-updates-form.scss',
 })
 export class TextUpdatesForm {
   private readonly store: Store<AppState> = inject<Store<AppState>>(Store);

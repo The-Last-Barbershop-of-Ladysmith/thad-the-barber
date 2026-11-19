@@ -92,6 +92,8 @@ describe(
             expect(box?.checked).toBe(false);
             expect(consentLabel()).toContain('Message and data rates may apply');
             expect(consentLabel()).toContain('Reply STOP to opt out');
+            expect(consentLabel()).toContain('Up to 4 messages a month');
+            expect(consentLabel()).toContain('never shared or sold');
             expect(consentLabel()).toContain('not needed to book');
           },
         );
