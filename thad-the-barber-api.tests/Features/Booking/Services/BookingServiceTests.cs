@@ -58,7 +58,7 @@ public sealed class BookingServiceTests
         await Service(new FakeSquareService(), storage: storage)
             .BookAsync(Request(openTime) with { HasMarketingConsent = true }, Cancellation);
 
-        Assert.Contains("+15550100187", storage.ContentFiles[MarketingOptInService.FileName], StringComparison.Ordinal);
+        Assert.Contains("+15550100187", storage.ContentFiles[MarketingOptInService.BlobNameFor("+15550100187")], StringComparison.Ordinal);
     }
 
     [Fact]

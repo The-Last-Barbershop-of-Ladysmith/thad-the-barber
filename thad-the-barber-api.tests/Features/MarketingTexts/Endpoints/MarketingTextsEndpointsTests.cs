@@ -25,7 +25,7 @@ public sealed class MarketingTextsEndpointsTests
             Cancellation);
 
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
-        JsonElement entry = Assert.Single(JsonDocument.Parse(media.ContentFiles[MarketingOptInService.FileName]).RootElement.EnumerateArray());
+        JsonElement entry = JsonDocument.Parse(media.ContentFiles[MarketingOptInService.BlobNameFor(AnyPhone)]).RootElement;
         Assert.Equal(AnyPhone, entry.GetProperty("phone").GetString());
         Assert.Equal("signUp", entry.GetProperty("source").GetString());
     }
@@ -41,7 +41,7 @@ public sealed class MarketingTextsEndpointsTests
         using HttpResponseMessage second = await client.PostAsJsonAsync("/api/marketing-texts/opt-ins", new { phone = AnyPhone, hasConsent = true }, Cancellation);
 
         Assert.Equal(HttpStatusCode.NoContent, second.StatusCode);
-        Assert.Equal(1, JsonDocument.Parse(media.ContentFiles[MarketingOptInService.FileName]).RootElement.GetArrayLength());
+        Assert.Single(media.ContentFiles);
     }
 
     [Fact]

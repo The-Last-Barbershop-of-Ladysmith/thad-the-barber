@@ -4,7 +4,8 @@ using ThadTheBarber.Api.Infrastructure.Storage.Services;
 namespace ThadTheBarber.Api.Tests.TestSupport.Fakes;
 
 /// <summary>
-/// The storage account, in memory: the blobs in the gallery folder and the text files in the content container. Set
+/// The storage account, in memory: the blobs in the gallery folder and the text files in the content container (listed
+/// by prefix like the real thing, direct children only). Set
 /// <see cref="Failure"/> to make every call throw, like storage being down.
 /// </summary>
 public sealed class FakeMediaStorage : IMediaStorage
@@ -33,7 +34,11 @@ public sealed class FakeMediaStorage : IMediaStorage
             throw Failure;
         }
 
-        return Task.FromResult(GalleryBlobs.Where(blob => blob.Name.StartsWith(prefix, StringComparison.Ordinal)).ToList());
+        IEnumerable<StoredBlob> contentBlobs = ContentFiles.Keys.Select(name => new StoredBlob(name, DateTimeOffset.MinValue));
+        return Task.FromResult(GalleryBlobs
+            .Concat(contentBlobs)
+            .Where(blob => blob.Name.StartsWith(prefix, StringComparison.Ordinal) && !blob.Name[prefix.Length..].Contains('/'))
+            .ToList());
     }
 
     public Task<string?> ReadTextAsync(string container, string blobName, CancellationToken cancellationToken)
@@ -62,6 +67,67 @@ public sealed class FakeMediaStorage : IMediaStorage
 
         return Task.CompletedTask;
     }
+
+    public Task<bool> TryWriteNewTextAsync(string container, string blobName, string text, CancellationToken cancellationToken)
+    {
+        Calls++;
+        if (Failure is not null)
+        {
+            throw Failure;
+        }
+
+        return Task.FromResult(ContentFiles.TryAdd(blobName, text));
+    }
+
+    public Task<StoredText?> ReadTextWithETagAsync(string container, string blobName, CancellationToken cancellationToken)
+    {
+        Calls++;
+        if (Failure is not null)
+        {
+            throw Failure;
+        }
+
+        StoredText? stored = ContentFiles.TryGetValue(blobName, out string? text) ? new StoredText(text, ETagOf(text)) : null;
+        return Task.FromResult(stored);
+    }
+
+    /// <summary>Runs just before the next <see cref="TryReplaceTextAsync"/> compares ETags, once: a second writer getting in first.</summary>
+    public Action? BeforeNextReplace { get; set; }
+
+    public Task<bool> TryReplaceTextAsync(string container, string blobName, string text, string eTag, CancellationToken cancellationToken)
+    {
+        Calls++;
+        if (Failure is not null)
+        {
+            throw Failure;
+        }
+
+        Action? beforeReplace = BeforeNextReplace;
+        BeforeNextReplace = null;
+        beforeReplace?.Invoke();
+        if (!ContentFiles.TryGetValue(blobName, out string? current) || ETagOf(current) != eTag)
+        {
+            return Task.FromResult(false);
+        }
+
+        ContentFiles[blobName] = text;
+        return Task.FromResult(true);
+    }
+
+    public Task AppendLineAsync(string container, string blobName, string line, CancellationToken cancellationToken)
+    {
+        Calls++;
+        if (Failure is not null)
+        {
+            throw Failure;
+        }
+
+        ContentFiles[blobName] = ContentFiles.GetValueOrDefault(blobName, string.Empty) + line + "\n";
+        return Task.CompletedTask;
+    }
+
+    private static string ETagOf(string text) =>
+        Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(text)));
 
     public Task WriteTextAsync(string container, string blobName, string text, CancellationToken cancellationToken)
     {

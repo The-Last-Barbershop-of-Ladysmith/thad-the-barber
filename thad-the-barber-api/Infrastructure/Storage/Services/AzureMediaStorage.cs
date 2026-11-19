@@ -1,6 +1,7 @@
 using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using Azure.Storage.Blobs.Specialized;
 using ThadTheBarber.Api.Infrastructure.Storage.Models;
 
 namespace ThadTheBarber.Api.Infrastructure.Storage.Services;
@@ -58,6 +59,60 @@ public sealed class AzureMediaStorage(BlobServiceClient blobService) : IMediaSto
             HttpHeaders = new BlobHttpHeaders { ContentType = "application/json" },
         };
         await blob.UploadAsync(BinaryData.FromString(text), options, cancellationToken);
+    }
+
+    public async Task<bool> TryWriteNewTextAsync(string container, string blobName, string text, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await WriteNewTextAsync(container, blobName, text, cancellationToken);
+            return true;
+        }
+        catch (RequestFailedException exception) when (exception.Status is StatusCodes.Status409Conflict or StatusCodes.Status412PreconditionFailed)
+        {
+            return false;
+        }
+    }
+
+    public async Task<StoredText?> ReadTextWithETagAsync(string container, string blobName, CancellationToken cancellationToken)
+    {
+        BlobClient blob = blobService.GetBlobContainerClient(container).GetBlobClient(blobName);
+        try
+        {
+            BlobDownloadResult download = await blob.DownloadContentAsync(cancellationToken);
+            return new StoredText(download.Content.ToString().TrimStart('\uFEFF'), download.Details.ETag.ToString());
+        }
+        catch (RequestFailedException exception) when (exception.Status == StatusCodes.Status404NotFound)
+        {
+            return null;
+        }
+    }
+
+    public async Task<bool> TryReplaceTextAsync(string container, string blobName, string text, string eTag, CancellationToken cancellationToken)
+    {
+        BlobClient blob = blobService.GetBlobContainerClient(container).GetBlobClient(blobName);
+        BlobUploadOptions options = new()
+        {
+            Conditions = new BlobRequestConditions { IfMatch = new ETag(eTag) },
+            HttpHeaders = new BlobHttpHeaders { ContentType = "application/json" },
+        };
+        try
+        {
+            await blob.UploadAsync(BinaryData.FromString(text), options, cancellationToken);
+            return true;
+        }
+        catch (RequestFailedException exception) when (exception.Status is StatusCodes.Status412PreconditionFailed or StatusCodes.Status404NotFound)
+        {
+            return false;
+        }
+    }
+
+    public async Task AppendLineAsync(string container, string blobName, string line, CancellationToken cancellationToken)
+    {
+        AppendBlobClient blob = blobService.GetBlobContainerClient(container).GetAppendBlobClient(blobName);
+        await blob.CreateIfNotExistsAsync(cancellationToken: cancellationToken);
+        using MemoryStream content = new(System.Text.Encoding.UTF8.GetBytes(line + "\n"));
+        await blob.AppendBlockAsync(content, cancellationToken: cancellationToken);
     }
 
     public async Task WriteTextAsync(string container, string blobName, string text, CancellationToken cancellationToken)

@@ -5,4 +5,5 @@ public enum MarketingOptInSource
 {
     Booking,
     SignUp,
+    Reply,
 }
