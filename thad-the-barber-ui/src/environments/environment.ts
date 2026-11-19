@@ -2,7 +2,7 @@ import { Environment } from './environment.model';
 
 export const environment: Environment = {
   production: true,
-  isComingSoon: true,
+  isComingSoon: false,
   apiBaseUrl: 'https://api.cutsbythad.com/api',
   siteUrl: 'https://cutsbythad.com',
   mediaBaseUrl: 'https://storttbprodeastus.blob.core.windows.net/media-prod',
