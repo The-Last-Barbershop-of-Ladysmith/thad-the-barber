@@ -123,6 +123,7 @@ api.MapBookingEndpoints();
 api.MapSquareWebhookEndpoints();
 api.MapMediaWebhookEndpoints();
 api.MapTwilioWebhookEndpoints();
+api.MapAdminAnnouncementTextsEndpoints();
 
 if (app.Environment.IsDevelopment())
 {

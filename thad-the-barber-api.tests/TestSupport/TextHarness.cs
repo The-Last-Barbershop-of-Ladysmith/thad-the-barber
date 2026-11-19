@@ -34,6 +34,9 @@ public sealed class TextHarness
         Reminders = new ReminderService(square, storage, storageSettings, options, ManageTokens.Signer, Sender, time, NullLogger<ReminderService>.Instance);
         Bookings = new BookingTextService(square, Sender, Reminders, options, NullLogger<BookingTextService>.Instance);
         Worker = new ReminderWorker(Reminders, square, options, time, NullLogger<ReminderWorker>.Instance);
+        Signal = new AnnouncementTextSignal();
+        Announcements = new AnnouncementTextService(square, OptIns, Sender, Signal, storage, storageSettings, options, time, NullLogger<AnnouncementTextService>.Instance);
+        AnnouncementWorker = new AnnouncementTextWorker(Announcements, Signal, time, NullLogger<AnnouncementTextWorker>.Instance);
     }
 
     public FakeSquareService Square { get; }
@@ -57,6 +60,12 @@ public sealed class TextHarness
     public BookingTextService Bookings { get; }
 
     public ReminderWorker Worker { get; }
+
+    public AnnouncementTextSignal Signal { get; }
+
+    public AnnouncementTextService Announcements { get; }
+
+    public AnnouncementTextWorker AnnouncementWorker { get; }
 
     public static TextHarness Create(FakeSquareService? square = null, FakeMediaStorage? storage = null, FakeTimeProvider? time = null) =>
         new(square ?? new FakeSquareService(), storage ?? new FakeMediaStorage(), time ?? new FakeTimeProvider(), true);

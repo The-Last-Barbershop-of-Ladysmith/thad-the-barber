@@ -37,8 +37,11 @@ public sealed partial class MarketingOptInService(
         Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
     };
 
-    public static string BlobNameFor(string phone) =>
-        $"{Prefix}{Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(phone)))}.json";
+    /// <summary>What names a phone's blob, and stands for the phone wherever it must be remembered without being kept (a send's progress).</summary>
+    public static string HashFor(string phone) =>
+        Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(phone)));
+
+    public static string BlobNameFor(string phone) => $"{Prefix}{HashFor(phone)}.json";
 
     public async Task AddAsync(string phone, MarketingOptInSource source, CancellationToken cancellationToken)
     {

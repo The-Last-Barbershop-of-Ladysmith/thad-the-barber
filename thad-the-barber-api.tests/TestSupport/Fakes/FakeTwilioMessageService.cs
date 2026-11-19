@@ -15,6 +15,9 @@ public sealed class FakeTwilioMessageService : ITwilioMessageService
 
     public Exception? PhoneFailure { get; set; }
 
+    /// <summary>Runs once, right after the next text is sent: something happening elsewhere mid-send.</summary>
+    public Action? AfterSend { get; set; }
+
     public Task<string> SendAsync(string phone, string body, CancellationToken cancellationToken)
     {
         if (Failure is not null)
@@ -29,6 +32,7 @@ public sealed class FakeTwilioMessageService : ITwilioMessageService
 
         string sid = $"SM{Sent.Count + 1:D32}";
         Sent.Add(new SentText(phone, body, sid));
+        AfterSend?.Invoke();
         return Task.FromResult(sid);
     }
 
