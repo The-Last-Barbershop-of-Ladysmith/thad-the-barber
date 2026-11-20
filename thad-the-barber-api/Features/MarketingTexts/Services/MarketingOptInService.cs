@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Encodings.Web;
@@ -30,6 +31,7 @@ public sealed partial class MarketingOptInService(
 {
     public const string Prefix = "optins/";
     private const int MaxAttempts = 5;
+    private const int MaxParallelReads = 8;
 
     private static readonly JsonSerializerOptions FileOptions = new(JsonSerializerDefaults.Web)
     {
@@ -137,17 +139,25 @@ public sealed partial class MarketingOptInService(
         await EnsureImportedAsync(cancellationToken);
         string container = settings.Value.ContentContainerName;
         List<StoredBlob> blobs = await storage.ListAsync(container, Prefix, cancellationToken);
-        List<MarketingOptIn> active = [];
-        foreach (StoredBlob blob in blobs)
-        {
-            string? text = await storage.ReadTextAsync(container, blob.Name, cancellationToken);
-            if (text is not null && Read(text) is { IsActive: true } optIn)
+        ConcurrentBag<MarketingOptIn> active = [];
+        await Parallel.ForEachAsync(
+            blobs,
+            new ParallelOptions
             {
-                active.Add(optIn);
+                MaxDegreeOfParallelism = MaxParallelReads,
+                CancellationToken = cancellationToken,
+            },
+            async (StoredBlob blob, CancellationToken token) =>
+            {
+                string? text = await storage.ReadTextAsync(container, blob.Name, token);
+                if (text is not null && Read(text) is { IsActive: true } optIn)
+                {
+                    active.Add(optIn);
+                }
             }
-        }
+        );
 
-        return [.. active.OrderBy(optIn => optIn.ConsentedAt)];
+        return [.. active.OrderBy(optIn => optIn.ConsentedAt).ThenBy(optIn => optIn.Phone, StringComparer.Ordinal)];
     }
 
     private async Task SaveAsync(string phone, MarketingOptInSource source, CancellationToken cancellationToken)
