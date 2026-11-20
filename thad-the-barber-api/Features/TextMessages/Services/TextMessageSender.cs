@@ -27,7 +27,6 @@ public sealed partial class TextMessageSender(
     TimeProvider time,
     ILogger<TextMessageSender> logger)
 {
-    /// <summary>Twilio's error for a phone that replied STOP to the sender.</summary>
     public const int RecipientOptedOutErrorCode = 21610;
 
     public bool IsEnabled => settings.Value.IsEnabled;

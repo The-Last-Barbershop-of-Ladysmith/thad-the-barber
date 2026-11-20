@@ -33,7 +33,6 @@ import { toAnnouncementTextMessage } from '../../utils/announcement-text-error.u
 /** One text is 160 characters; a longer message goes out as several, which a carrier bills and shows as one. */
 const SMS_SEGMENT_LENGTH: number = 160;
 
-/** The longest message the API accepts. */
 const MAX_MESSAGE_LENGTH: number = 480;
 
 /**

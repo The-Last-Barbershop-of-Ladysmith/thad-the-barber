@@ -7,7 +7,6 @@ export interface AdminAnnouncementTextsState {
   preview: AnnouncementTextPreviewDto | null;
   previewStatus: RequestStatus;
   sendStatus: RequestStatus;
-  /** Where the text stands once it was requested. */
   sent: AnnouncementTextStatusDto | null;
   error: AnnouncementTextError | null;
 }
