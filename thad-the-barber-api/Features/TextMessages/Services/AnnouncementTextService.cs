@@ -36,8 +36,6 @@ public sealed partial class AnnouncementTextService(
     /// <summary>A send that has saved no progress for this long is taken to have stopped, and the next run takes it over.</summary>
     public static readonly TimeSpan StaleAfter = TimeSpan.FromMinutes(10);
 
-    private const string Prefix = "announcement-sends/";
-
     public async Task<AnnouncementTextPreview> PreviewAsync(AnnouncementTextPreviewRequest request, CancellationToken cancellationToken)
     {
         ShopDetails shop = await square.GetShopDetailsAsync(cancellationToken);
@@ -81,7 +79,7 @@ public sealed partial class AnnouncementTextService(
         bool isCreated;
         try
         {
-            isCreated = await storage.TryWriteNewTextAsync(storageSettings.Value.ContentContainerName, BlobName(id), Serialize(send), cancellationToken);
+            isCreated = await storage.TryWriteNewTextAsync(storageSettings.Value.ContentContainerName, TextBlobNames.AnnouncementSend(id), Serialize(send), cancellationToken);
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
@@ -112,7 +110,7 @@ public sealed partial class AnnouncementTextService(
         }
 
         int finished = 0;
-        List<StoredBlob> sends = await storage.ListAsync(storageSettings.Value.ContentContainerName, Prefix, cancellationToken);
+        List<StoredBlob> sends = await storage.ListAsync(storageSettings.Value.ContentContainerName, TextBlobNames.AnnouncementSendPrefix, cancellationToken);
         foreach (StoredBlob blob in sends)
         {
             if (await ProcessAsync(blob.Name, cancellationToken))
@@ -227,7 +225,7 @@ public sealed partial class AnnouncementTextService(
 
     private async Task<(AnnouncementSend Send, string ETag)?> ReadAsync(string id, CancellationToken cancellationToken)
     {
-        StoredText? stored = await storage.ReadTextWithETagAsync(storageSettings.Value.ContentContainerName, BlobName(id), cancellationToken);
+        StoredText? stored = await storage.ReadTextWithETagAsync(storageSettings.Value.ContentContainerName, TextBlobNames.AnnouncementSend(id), cancellationToken);
         return stored is null ? null : (Read(stored.Text), stored.ETag);
     }
 
@@ -239,8 +237,6 @@ public sealed partial class AnnouncementTextService(
         send.SentCount,
         send.FailedCount
     );
-
-    private static string BlobName(string id) => $"{Prefix}{id}.json";
 
     private static AnnouncementSend Read(string text) =>
         JsonSerializer.Deserialize<AnnouncementSend>(text, TextJson.Options)
