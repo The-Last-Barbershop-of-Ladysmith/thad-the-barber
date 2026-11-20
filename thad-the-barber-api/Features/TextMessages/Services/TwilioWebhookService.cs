@@ -72,8 +72,8 @@ public sealed partial class TwilioWebhookService(
             LogNotDelivered(logger, status, errorCode);
         }
 
-        if (errorCode == TextMessageSender.RecipientOptedOutErrorCode.ToString(System.Globalization.CultureInfo.InvariantCulture)
-            && form.GetValueOrDefault("To", string.Empty) is { Length: > 0 } recipient)
+        bool isOptedOutError = int.TryParse(errorCode, out int errorNumber) && errorNumber == TextMessageSender.RecipientOptedOutErrorCode;
+        if (isOptedOutError && form.GetValueOrDefault("To", string.Empty) is { Length: > 0 } recipient)
         {
             await optIns.OptOutAsync(recipient, cancellationToken);
         }
