@@ -81,8 +81,8 @@ public sealed partial class ReminderService(
     /// <summary>Sends every reminder that is due now; returns how many were sent.</summary>
     public async Task<int> RunAsync(CancellationToken cancellationToken)
     {
-        TimeZoneInfo zone = await GetShopZoneAsync(cancellationToken);
         ShopDetails shop = await square.GetShopDetailsAsync(cancellationToken);
+        TimeZoneInfo zone = shop.GetTimeZone();
         string container = storageSettings.Value.ContentContainerName;
         DateTimeOffset now = time.GetUtcNow();
         DateOnly today = zone.ToLocalDate(now);
@@ -174,7 +174,7 @@ public sealed partial class ReminderService(
     private async Task<TimeZoneInfo> GetShopZoneAsync(CancellationToken cancellationToken)
     {
         ShopDetails shop = await square.GetShopDetailsAsync(cancellationToken);
-        return TimeZoneInfo.FindSystemTimeZoneById(shop.TimeZone);
+        return shop.GetTimeZone();
     }
 
     [LoggerMessage(EventName = "ReminderNotUpdated", Level = LogLevel.Warning, Message = "A reminder's job couldn't be moved to {State} after its text was handled.")]

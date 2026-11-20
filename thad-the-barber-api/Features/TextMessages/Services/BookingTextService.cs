@@ -27,7 +27,7 @@ public sealed partial class BookingTextService(
         try
         {
             ShopDetails shop = await square.GetShopDetailsAsync(cancellationToken);
-            TimeZoneInfo zone = TimeZoneInfo.FindSystemTimeZoneById(shop.TimeZone);
+            TimeZoneInfo zone = shop.GetTimeZone();
             string body = BookingTextMessages.Confirmation(shop.Name, zone, appointment.StartAt, reminders.ManageLink(appointment.Id));
             await sender.SendOnceAsync(TextKind.Confirmation, TextBlobNames.Confirmation(appointment.Id), appointment.Id, phone, body, cancellationToken);
             await reminders.ScheduleAsync(appointment, phone, cancellationToken);

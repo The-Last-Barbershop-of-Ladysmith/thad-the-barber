@@ -51,7 +51,7 @@ public sealed partial class ReminderWorker(
         try
         {
             ShopDetails shop = await square.GetShopDetailsAsync(cancellationToken);
-            TimeZoneInfo zone = TimeZoneInfo.FindSystemTimeZoneById(shop.TimeZone);
+            TimeZoneInfo zone = shop.GetTimeZone();
             DateTimeOffset now = time.GetUtcNow();
             (DateOnly Day, int Hour) slot = (zone.ToLocalDate(now), TimeZoneInfo.ConvertTime(now, zone).Hour);
             if (!settings.Value.ReminderHours.Contains(slot.Hour) || _lastRun == slot)

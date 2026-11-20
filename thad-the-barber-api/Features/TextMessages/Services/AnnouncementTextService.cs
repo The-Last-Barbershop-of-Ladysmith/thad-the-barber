@@ -38,7 +38,7 @@ public sealed partial class AnnouncementTextService(
     public async Task<AnnouncementTextPreview> PreviewAsync(AnnouncementTextPreviewRequest request, CancellationToken cancellationToken)
     {
         ShopDetails shop = await square.GetShopDetailsAsync(cancellationToken);
-        TimeZoneInfo zone = TimeZoneInfo.FindSystemTimeZoneById(shop.TimeZone);
+        TimeZoneInfo zone = shop.GetTimeZone();
         string id = AnnouncementTextComposer.SendId(request.StartDate, request.Title);
         AnnouncementSend? existing = (await ReadAsync(id, cancellationToken))?.Send;
         return new AnnouncementTextPreview(
@@ -58,7 +58,7 @@ public sealed partial class AnnouncementTextService(
         }
 
         ShopDetails shop = await square.GetShopDetailsAsync(cancellationToken);
-        TimeZoneInfo zone = TimeZoneInfo.FindSystemTimeZoneById(shop.TimeZone);
+        TimeZoneInfo zone = shop.GetTimeZone();
         DateTimeOffset now = time.GetUtcNow();
         DateOnly today = zone.ToLocalDate(now);
         string id = AnnouncementTextComposer.SendId(request.StartDate, request.Title);
@@ -200,7 +200,7 @@ public sealed partial class AnnouncementTextService(
                 return send.ClaimedAt is null || now - send.ClaimedAt >= StaleAfter;
             case AnnouncementSendState.Scheduled:
                 ShopDetails shop = await square.GetShopDetailsAsync(cancellationToken);
-                return send.SendOn <= TimeZoneInfo.FindSystemTimeZoneById(shop.TimeZone).ToLocalDate(now);
+                return send.SendOn <= shop.GetTimeZone().ToLocalDate(now);
             default:
                 return false;
         }
