@@ -1,6 +1,7 @@
 using System.Reflection;
 using Microsoft.Extensions.Logging;
 using ThadTheBarber.Api.Square.Services;
+using ThadTheBarber.Api.Tests.TestSupport;
 
 namespace ThadTheBarber.Api.Tests.Square.Services;
 
@@ -26,19 +27,8 @@ public sealed class SquareAlertEventTests
     [Fact]
     public void TheAlertQueryMatchesThoseEventNames()
     {
-        string bicep = File.ReadAllText(Path.Combine(RepoRoot(), "infra", "modules", "square-alerts.bicep"));
+        string bicep = RepoFiles.Read("infra", "modules", "square-alerts.bicep");
 
         Assert.All(AlertedEvents, name => Assert.Contains($"'{name}'", bicep));
-    }
-
-    private static string RepoRoot()
-    {
-        DirectoryInfo? directory = new(AppContext.BaseDirectory);
-        while (directory is not null && !Directory.Exists(Path.Combine(directory.FullName, "infra")))
-        {
-            directory = directory.Parent;
-        }
-
-        return directory?.FullName ?? throw new DirectoryNotFoundException("No infra folder above the test output.");
     }
 }
