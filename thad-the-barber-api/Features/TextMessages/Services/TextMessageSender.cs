@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Microsoft.Extensions.Options;
 using ThadTheBarber.Api.Features.MarketingTexts.Services;
 using ThadTheBarber.Api.Features.TextMessages.Configuration;
@@ -92,7 +91,7 @@ public sealed partial class TextMessageSender(
             null,
             null
         );
-        if (!await storage.TryWriteNewTextAsync(container, markerName, JsonSerializer.Serialize(claimed, TextJson.Options), cancellationToken))
+        if (!await storage.TryWriteNewTextAsync(container, markerName, TextJson.Write(claimed), cancellationToken))
         {
             return null;
         }
@@ -121,7 +120,7 @@ public sealed partial class TextMessageSender(
             StoredText? stored = await storage.ReadTextWithETagAsync(container, markerName, cancellationToken);
             if (stored is not null)
             {
-                await storage.TryReplaceTextAsync(container, markerName, JsonSerializer.Serialize(finished, TextJson.Options), stored.ETag, cancellationToken);
+                await storage.TryReplaceTextAsync(container, markerName, TextJson.Write(finished), stored.ETag, cancellationToken);
             }
         }
         catch (Exception exception) when (exception is not OperationCanceledException)

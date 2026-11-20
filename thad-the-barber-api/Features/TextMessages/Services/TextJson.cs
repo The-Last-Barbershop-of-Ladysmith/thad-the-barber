@@ -18,4 +18,10 @@ public static class TextJson
     {
         WriteIndented = false,
     };
+
+    public static T Read<T>(string text) =>
+        JsonSerializer.Deserialize<T>(text, Options)
+        ?? throw new JsonException($"A {typeof(T).Name} blob was empty.");
+
+    public static string Write<T>(T value) => JsonSerializer.Serialize(value, Options);
 }

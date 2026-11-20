@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Microsoft.Extensions.Options;
 using ThadTheBarber.Api.Common.Extensions;
 using ThadTheBarber.Api.Features.MarketingTexts.Models;
@@ -79,7 +78,7 @@ public sealed partial class AnnouncementTextService(
         bool isCreated;
         try
         {
-            isCreated = await storage.TryWriteNewTextAsync(storageSettings.Value.ContentContainerName, TextBlobNames.AnnouncementSend(id), Serialize(send), cancellationToken);
+            isCreated = await storage.TryWriteNewTextAsync(storageSettings.Value.ContentContainerName, TextBlobNames.AnnouncementSend(id), TextJson.Write(send), cancellationToken);
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
@@ -131,7 +130,7 @@ public sealed partial class AnnouncementTextService(
             return false;
         }
 
-        AnnouncementSend send = Read(stored.Text);
+        AnnouncementSend send = TextJson.Read<AnnouncementSend>(stored.Text);
         DateTimeOffset now = time.GetUtcNow();
         if (!await IsDueAsync(send, now, cancellationToken))
         {
@@ -145,7 +144,7 @@ public sealed partial class AnnouncementTextService(
             ClaimedAt = now,
             Total = Math.Max(send.Total, recipients.Count),
         };
-        if (!await storage.TryReplaceTextAsync(container, blobName, Serialize(current), stored.ETag, cancellationToken))
+        if (!await storage.TryReplaceTextAsync(container, blobName, TextJson.Write(current), stored.ETag, cancellationToken))
         {
             return false;
         }
@@ -215,18 +214,18 @@ public sealed partial class AnnouncementTextService(
     {
         string container = storageSettings.Value.ContentContainerName;
         StoredText? stored = await storage.ReadTextWithETagAsync(container, blobName, cancellationToken);
-        if (stored is null || Read(stored.Text).ClaimedAt != expectedClaim)
+        if (stored is null || TextJson.Read<AnnouncementSend>(stored.Text).ClaimedAt != expectedClaim)
         {
             return null;
         }
 
-        return await storage.TryReplaceTextAsync(container, blobName, Serialize(next), stored.ETag, cancellationToken) ? next : null;
+        return await storage.TryReplaceTextAsync(container, blobName, TextJson.Write(next), stored.ETag, cancellationToken) ? next : null;
     }
 
     private async Task<(AnnouncementSend Send, string ETag)?> ReadAsync(string id, CancellationToken cancellationToken)
     {
         StoredText? stored = await storage.ReadTextWithETagAsync(storageSettings.Value.ContentContainerName, TextBlobNames.AnnouncementSend(id), cancellationToken);
-        return stored is null ? null : (Read(stored.Text), stored.ETag);
+        return stored is null ? null : (TextJson.Read<AnnouncementSend>(stored.Text), stored.ETag);
     }
 
     private static AnnouncementTextStatus ToStatus(AnnouncementSend send) => new(
@@ -238,11 +237,6 @@ public sealed partial class AnnouncementTextService(
         send.FailedCount
     );
 
-    private static AnnouncementSend Read(string text) =>
-        JsonSerializer.Deserialize<AnnouncementSend>(text, TextJson.Options)
-        ?? throw new JsonException("An announcement send blob was empty.");
-
-    private static string Serialize(AnnouncementSend send) => JsonSerializer.Serialize(send, TextJson.Options);
 
     [LoggerMessage(EventName = "AnnouncementTextDone", Level = LogLevel.Information, Message = "Announcement text {Id} finished: {Sent} sent, {Failed} not delivered to Twilio.")]
     private static partial void LogDone(ILogger logger, string id, int sent, int failed);

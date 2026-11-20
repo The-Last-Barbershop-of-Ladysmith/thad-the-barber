@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Microsoft.Extensions.Options;
 using ThadTheBarber.Api.Common.Extensions;
 using ThadTheBarber.Api.Features.Booking.Services;
@@ -51,7 +50,7 @@ public sealed partial class ReminderService(
         await storage.WriteTextAsync(
             storageSettings.Value.ContentContainerName,
             TextBlobNames.Reminder(zone.ToLocalDate(appointment.StartAt), appointment.Id),
-            JsonSerializer.Serialize(job, TextJson.Options),
+            TextJson.Write(job),
             cancellationToken
         );
     }
@@ -66,7 +65,7 @@ public sealed partial class ReminderService(
             cancellationToken
         );
 
-        return text is null ? null : Read(text).Phone;
+        return text is null ? null : TextJson.Read<ReminderJob>(text).Phone;
     }
 
     public async Task CancelAsync(Appointment appointment, CancellationToken cancellationToken)
@@ -117,7 +116,7 @@ public sealed partial class ReminderService(
             return false;
         }
 
-        ReminderJob job = Read(stored.Text);
+        ReminderJob job = TextJson.Read<ReminderJob>(stored.Text);
         TimeSpan untilStart = job.StartAt - now;
         if (job.State != ReminderState.Pending || untilStart > settings.Value.ReminderLead)
         {
@@ -126,12 +125,12 @@ public sealed partial class ReminderService(
 
         if (untilStart < settings.Value.ReminderMinimumNotice)
         {
-            await storage.TryReplaceTextAsync(container, blobName, Serialize(job with { State = ReminderState.Skipped, FinishedAt = now }), stored.ETag, cancellationToken);
+            await storage.TryReplaceTextAsync(container, blobName, TextJson.Write(job with { State = ReminderState.Skipped, FinishedAt = now }), stored.ETag, cancellationToken);
             return false;
         }
 
         ReminderJob claimed = job with { State = ReminderState.Claimed };
-        if (!await storage.TryReplaceTextAsync(container, blobName, Serialize(claimed), stored.ETag, cancellationToken))
+        if (!await storage.TryReplaceTextAsync(container, blobName, TextJson.Write(claimed), stored.ETag, cancellationToken))
         {
             return false;
         }
@@ -160,7 +159,7 @@ public sealed partial class ReminderService(
             StoredText? stored = await storage.ReadTextWithETagAsync(container, blobName, cancellationToken);
             if (stored is not null)
             {
-                await storage.TryReplaceTextAsync(container, blobName, Serialize(finished), stored.ETag, cancellationToken);
+                await storage.TryReplaceTextAsync(container, blobName, TextJson.Write(finished), stored.ETag, cancellationToken);
             }
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
@@ -177,12 +176,6 @@ public sealed partial class ReminderService(
         ShopDetails shop = await square.GetShopDetailsAsync(cancellationToken);
         return TimeZoneInfo.FindSystemTimeZoneById(shop.TimeZone);
     }
-
-    private static ReminderJob Read(string text) =>
-        JsonSerializer.Deserialize<ReminderJob>(text, TextJson.Options)
-        ?? throw new JsonException("A reminder blob was empty.");
-
-    private static string Serialize(ReminderJob job) => JsonSerializer.Serialize(job, TextJson.Options);
 
     [LoggerMessage(EventName = "ReminderNotUpdated", Level = LogLevel.Warning, Message = "A reminder's job couldn't be moved to {State} after its text was handled.")]
     private static partial void LogJobNotUpdated(ILogger logger, Exception exception, ReminderState state);
