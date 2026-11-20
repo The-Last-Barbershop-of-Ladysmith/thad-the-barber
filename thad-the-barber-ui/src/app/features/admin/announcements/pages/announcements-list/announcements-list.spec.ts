@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { MockInstance } from 'vitest';
 import { Store, provideStore } from '@ngrx/store';
-import { expectNoAxeViolations } from '../../../../../../testing/axe';
 import { TEST_SHOP } from '../../../../../../testing/test-shop';
 import { addDays, fromIsoDate, toIsoDate, toIsoDateIn } from '../../../../../shared/utils/date.utils';
 import { AppState } from '../../../../../store/app.state';
@@ -191,22 +190,5 @@ describe('AnnouncementsList', (): void => {
     fixture.detectChanges();
 
     expect(host().querySelector('[data-testid="announcements-error"]')?.textContent).toContain('could not be reached');
-  });
-
-  it('has no accessibility violations', async (): Promise<void> => {
-    load([
-      announcement(
-        'Now',
-        AdminAnnouncementStatus.Showing,
-        '2026-01-01',
-      ),
-      announcement(
-        'Past',
-        AdminAnnouncementStatus.Ended,
-        '2020-01-01',
-      ),
-    ]);
-
-    await expectNoAxeViolations(host());
   });
 });

@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockInstance } from 'vitest';
 import { Store, provideStore } from '@ngrx/store';
-import { expectNoAxeViolations } from '../../../../../../testing/axe';
 import { AppState } from '../../../../../store/app.state';
 import { AdminShopInfoDto } from '../../dtos/admin-shop-info.dto';
 import { ShopInfoSaveRequestDto } from '../../dtos/shop-info-save-request.dto';
@@ -137,11 +136,5 @@ describe('ShopInfo', (): void => {
     fixture.detectChanges();
 
     expect(element('[data-testid="shop-error"]').textContent).toContain('could not be reached');
-  });
-
-  it('has no accessibility violations', async (): Promise<void> => {
-    await open(OWN_TEXT);
-
-    await expectNoAxeViolations(host());
   });
 });

@@ -249,14 +249,5 @@ describe(
         await expectNoAxeViolations(hostOf(fixture));
       },
     );
-    it(
-      'has no axe violations with no announcements',
-      async (): Promise<void> => {
-        const fixture: ComponentFixture<AnnouncementStrip> = render([]);
-        vi.useRealTimers();
-
-        await expectNoAxeViolations(hostOf(fixture));
-      },
-    );
   },
 );

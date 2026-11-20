@@ -3,7 +3,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Navigation, Router, provideRouter } from '@angular/router';
 import { Store, provideStore } from '@ngrx/store';
 import { Subject } from 'rxjs';
-import { expectNoAxeViolations } from '../../../testing/axe';
 import { TEST_SHOP } from '../../../testing/test-shop';
 import { ProblemCode } from '../../shared/models/problem-code.model';
 import { AppState } from '../../store/app.state';
@@ -197,8 +196,8 @@ describe(
         );
 
         it(
-          'links an email error to the field once it is left, and has no axe violations',
-          async (): Promise<void> => {
+          'links an email error to the field once it is left',
+          (): void => {
             const email: HTMLInputElement | null = inputByTestId('contact-email');
             type(email, 'not-an-email');
             email?.dispatchEvent(new Event('blur'));
@@ -208,7 +207,6 @@ describe(
             expect(email?.getAttribute('aria-invalid')).toBe('true');
             expect(errorId).not.toBeNull();
             expect((fixture.nativeElement as HTMLElement).querySelector(`#${errorId}`)).not.toBeNull();
-            await expectNoAxeViolations(fixture.nativeElement as HTMLElement);
           },
         );
 

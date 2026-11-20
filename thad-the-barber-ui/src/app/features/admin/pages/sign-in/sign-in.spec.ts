@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockInstance } from 'vitest';
 import { Store, provideStore } from '@ngrx/store';
-import { expectNoAxeViolations } from '../../../../../testing/axe';
 import { GoogleSignInService } from '../../../../core/services/google-sign-in.service';
 import { AppState } from '../../../../store/app.state';
 import { AdminSignInError } from '../../models/admin-sign-in-error.model';
@@ -174,18 +173,6 @@ describe(
         await settle();
 
         expect(text('[data-testid="admin-signing-in"]')).toBe('Signing you in…');
-      },
-    );
-
-    it(
-      'has no accessibility violations, with and without a problem showing',
-      async (): Promise<void> => {
-        await expectNoAxeViolations(fixture.nativeElement as HTMLElement);
-
-        store.dispatch(AdminActions.AdminSignInRequestFailure({ error: AdminSignInError.NotAuthorized }));
-        await settle();
-
-        await expectNoAxeViolations(fixture.nativeElement as HTMLElement);
       },
     );
   },

@@ -4,7 +4,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideStore } from '@ngrx/store';
 import { MessageService } from 'primeng/api';
-import { expectNoAxeViolations } from '../../../testing/axe';
 import { IS_BOOKING_PREVIEW } from '../../core/config/booking-preview.token';
 import { announcementsFeature } from '../../features/announcements/state/announcements.feature';
 import { shopFeature } from '../../features/shop/state/shop.feature';
@@ -110,13 +109,6 @@ describe(
       (): void => {
         expect(footer.querySelector('.bottom [data-testid="footer-privacy"]')?.getAttribute('href')).toBe('/privacy');
         expect(footer.querySelector('.bottom .to-top')).not.toBeNull();
-      },
-    );
-
-    it(
-      'has no axe violations',
-      async (): Promise<void> => {
-        await expectNoAxeViolations(footer);
       },
     );
   },

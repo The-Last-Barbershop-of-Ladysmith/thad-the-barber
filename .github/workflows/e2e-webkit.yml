@@ -1,0 +1,68 @@
+# The mocked end-to-end suite on WebKit (Safari's engine), desktop and mobile. Pull requests run Chromium only (ci.yml),
+# because WebKit is the slow, flakier half of the suite; this runs it every night, before a release or hotfix branch is
+# deployed to test, and on demand, so a Safari-only break is found within a day and before it ships.
+# Scheduled runs fire from the default branch only. A failure here fails this workflow, not a pull request.
+name: e2e-webkit
+
+on:
+  push:
+    branches:
+      - 'release/**'
+      - 'hotfix/**'
+  schedule:
+    - cron: '47 7 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-webkit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  webkit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
+        shardTotal: [2]
+    # Playwright's own image has the browsers and their system libraries. Its tag must match @playwright/test, as in
+    # ci.yml; after a bump, change both.
+    container:
+      image: mcr.microsoft.com/playwright:v1.65.0-noble
+      options: --user 1001
+    defaults:
+      run:
+        working-directory: thad-the-barber-ui
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            thad-the-barber-ui/package-lock.json
+            thad-the-barber-express/package-lock.json
+
+      - run: npm ci
+      - run: npm ci --omit=dev
+        working-directory: thad-the-barber-express
+
+      # The test build Express serves, as the ui job in ci.yml makes it: the optimized build with the real CSP header.
+      - run: npm run build:express:test
+
+      - run: npm run e2e:webkit -- --shard=${{ matrix.shard }}/${{ matrix.shardTotal }}
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ failure() }}
+        with:
+          name: webkit-report-${{ matrix.shard }}
+          path: |
+            thad-the-barber-ui/test-results/
+            thad-the-barber-ui/blob-report/
+          retention-days: 7
+          if-no-files-found: ignore

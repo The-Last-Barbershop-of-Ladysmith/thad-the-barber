@@ -176,7 +176,7 @@ Every change ships with its tests:
 | --- | --- | --- |
 | Components, services, reducers, selectors, effects, utils | Vitest (+ `axe-core`) | Next to the file under test |
 | API services, mappers, webhook signatures, endpoints | xUnit + `WebApplicationFactory` | `thad-the-barber-api.tests/` |
-| End-to-end, mocked API (every PR) | Playwright + `@axe-core/playwright`, Chromium + WebKit, desktop 1280 + mobile 390 | `thad-the-barber-ui/e2e/` |
+| End-to-end, mocked API (every PR on Chromium; WebKit nightly, before release deploys and on demand) | Playwright + `@axe-core/playwright`, Chromium + WebKit, desktop 1280 + mobile 390 | `thad-the-barber-ui/e2e/` |
 | Smoke tests after each deploy | Playwright against the deployed dev/test URL + Square sandbox | `thad-the-barber-ui/e2e/smoke/` |
 
 - The test smoke suite runs a real sandbox booking → cancel round trip that cleans up after itself. It also runs nightly.

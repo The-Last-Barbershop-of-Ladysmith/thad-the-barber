@@ -14,6 +14,12 @@ const mobile: Project['use'] = {
   deviceScaleFactor: 3,
 };
 
+/**
+ * These two set their own width and only measure CSS geometry, so the mobile projects would repeat the desktop ones.
+ * (layout-reflow and layout-shift stay on every project: mobile emulation lays out narrow pages differently.)
+ */
+const desktopOnly: RegExp = /(book-layout|home-layout)\.spec\.ts$/;
+
 /** Mocked-API suite: runs against `ng serve`; the deployed-site smoke suite has its own config. */
 const config: PlaywrightTestConfig = defineConfig({
   testDir: './e2e/mocked',
@@ -41,9 +47,17 @@ const config: PlaywrightTestConfig = defineConfig({
   },
   projects: [
     { name: 'chromium-desktop', use: { browserName: 'chromium', ...desktop } },
-    { name: 'chromium-mobile', use: { browserName: 'chromium', ...mobile } },
+    {
+      name: 'chromium-mobile',
+      use: { browserName: 'chromium', ...mobile },
+      testIgnore: desktopOnly,
+    },
     { name: 'webkit-desktop', use: { browserName: 'webkit', ...desktop } },
-    { name: 'webkit-mobile', use: { browserName: 'webkit', ...mobile } },
+    {
+      name: 'webkit-mobile',
+      use: { browserName: 'webkit', ...mobile },
+      testIgnore: desktopOnly,
+    },
   ],
   webServer: {
     // CI tests what deploys: the optimized build served by Express, with its CSP header and real 404s. The ui job

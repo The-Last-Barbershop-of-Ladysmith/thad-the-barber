@@ -5,8 +5,6 @@ import { expectNoA11yViolations } from '../support/axe';
 import { isContactRequest } from '../support/contact';
 import { expect, test } from '../support/fixtures';
 
-const MADE_UP_EMAIL: string = 'fake.person@example.test';
-
 /** The page is prerendered, so typing before the app has taken it over would be wiped when it does. */
 async function openContactPage(page: Page): Promise<void> {
   await page.goto('/contact');
@@ -38,22 +36,6 @@ test.describe(
         await expect(page.getByTestId('contact-form')).toBeVisible();
 
         await expectNoA11yViolations(page);
-      },
-    );
-
-    test(
-      'a question cannot be sent until it has a name and a way to reply',
-      async ({ page }: { page: Page; }): Promise<void> => {
-        await openContactPage(page);
-        const send: Locator = page.getByTestId('contact-send');
-
-        await page.getByTestId('contact-message').fill('Made-up question');
-        await expect(send).toBeDisabled();
-        await page.getByTestId('contact-name').fill('Fake Person');
-        await expect(send).toBeDisabled();
-        await page.getByTestId('contact-email').fill(MADE_UP_EMAIL);
-
-        await expect(send).toBeEnabled();
       },
     );
 

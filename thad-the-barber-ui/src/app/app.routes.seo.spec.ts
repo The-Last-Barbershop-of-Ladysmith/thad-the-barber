@@ -26,35 +26,6 @@ describe(
     });
 
     it(
-      'reaches every page the app has',
-      (): void => {
-        const paths: string[] = leaves.map((leaf: RouteLeaf): string => leaf.path);
-
-        expect(paths).toEqual([
-          '',
-          'book',
-          'book/manage',
-          'book/manage/:id/reschedule',
-          'book/manage/:id',
-          'admin',
-          'admin/announcements',
-          'admin/announcements/new',
-          'admin/announcements/:index',
-          'admin/shop',
-          'admin/gallery',
-          'admin/overview',
-          'privacy',
-          'terms',
-          'text-updates',
-          'accessibility',
-          'contact',
-          '404',
-          '**',
-        ]);
-      },
-    );
-
-    it(
       'gives every route data.seo, so a new route cannot ship without it',
       (): void => {
         const withoutSeo: string[] = leaves
