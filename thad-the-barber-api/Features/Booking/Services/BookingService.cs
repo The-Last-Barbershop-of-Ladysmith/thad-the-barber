@@ -5,8 +5,6 @@ using ThadTheBarber.Api.Features.Booking.Configuration;
 using ThadTheBarber.Api.Features.Booking.Exceptions;
 using ThadTheBarber.Api.Features.Booking.Mappers;
 using ThadTheBarber.Api.Features.Booking.Models;
-using ThadTheBarber.Api.Features.MarketingTexts.Models;
-using ThadTheBarber.Api.Features.MarketingTexts.Services;
 using ThadTheBarber.Api.Square.Exceptions;
 using ThadTheBarber.Api.Square.Models;
 using ThadTheBarber.Api.Square.Services;
@@ -24,7 +22,6 @@ public sealed class BookingService(
     ManageTokenSigner manageTokens,
     LookupTokenSigner lookupTokens,
     ITwilioVerifyService twilioVerify,
-    MarketingOptInService marketingOptIns,
     IOptions<BookingSettings> settings,
     TimeProvider time)
 {
@@ -108,10 +105,6 @@ public sealed class BookingService(
         string customerId = customerIds.FirstOrDefault()
             ?? await square.CreateCustomerAsync(request.Name, request.Phone, idempotencyKey, cancellationToken);
         Appointment appointment = await square.CreateBookingAsync(customerId, openTimeSlot, idempotencyKey, cancellationToken);
-        if (request.HasMarketingConsent)
-        {
-            await marketingOptIns.AddAsync(request.Phone, MarketingOptInSource.Booking, cancellationToken);
-        }
 
         return appointment.ToBookingConfirmationDto(manageTokens.Sign(appointment.Id));
     }
