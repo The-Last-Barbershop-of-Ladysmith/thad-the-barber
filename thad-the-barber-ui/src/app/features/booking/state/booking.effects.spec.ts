@@ -174,7 +174,6 @@ describe(
       startAt: '2026-02-03T20:00:00Z',
       name: 'Test Customer',
       phone: '+15550100199',
-      hasMarketingConsent: false,
       idempotencyKey: 'made-up-key',
     };
     const confirmation: BookingConfirmation = {

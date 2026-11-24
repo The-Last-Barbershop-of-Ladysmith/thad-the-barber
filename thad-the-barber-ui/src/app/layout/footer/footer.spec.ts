@@ -4,7 +4,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideStore } from '@ngrx/store';
 import { MessageService } from 'primeng/api';
-import { IS_BOOKING_PREVIEW } from '../../core/config/booking-preview.token';
 import { announcementsFeature } from '../../features/announcements/state/announcements.feature';
 import { shopFeature } from '../../features/shop/state/shop.feature';
 import { Footer } from './footer';
@@ -14,7 +13,7 @@ describe(
   (): void => {
     let footer: HTMLElement;
 
-    function render(isBookingPreview: boolean): HTMLElement {
+    function render(): HTMLElement {
       TestBed.resetTestingModule();
       TestBed.configureTestingModule({
         providers: [
@@ -22,7 +21,6 @@ describe(
           provideHttpClient(),
           provideHttpClientTesting(),
           MessageService,
-          { provide: IS_BOOKING_PREVIEW, useValue: isBookingPreview },
           provideStore({
             [announcementsFeature.name]: announcementsFeature.reducer,
             [shopFeature.name]: shopFeature.reducer,
@@ -35,7 +33,7 @@ describe(
     }
 
     beforeEach((): void => {
-      footer = render(false);
+      footer = render();
     });
 
     it(
@@ -48,18 +46,6 @@ describe(
           'https://policies.google.com/terms',
         ]);
         expect(links.every((link: HTMLAnchorElement): boolean => link.target === '_blank' && link.rel.includes('noopener'))).toBe(true);
-      },
-    );
-
-    it(
-      'carries the shop news text sign-up as a column, with its own field ids',
-      (): void => {
-        const column: HTMLElement | null = footer.querySelector('[data-testid="footer-text-updates"]');
-
-        expect(column?.classList.contains('column')).toBe(true);
-        expect(column?.querySelector('[data-testid="text-updates-form"]')).not.toBeNull();
-        expect(column?.querySelector('#footer-text-updates-phone')).not.toBeNull();
-        expect(column?.querySelector('#footer-text-updates-consent')).not.toBeNull();
       },
     );
 
@@ -91,16 +77,6 @@ describe(
         const shopInfo: (string | null)[] = hrefsIn(2);
         expect(shopInfo[0]).toMatch(/^tel:/u);
         expect(shopInfo[1]).toMatch(/^sms:/u);
-      },
-    );
-
-    it(
-      'leaves out the manage a booking link while booking is a preview',
-      (): void => {
-        const hrefs: (string | null)[] = Array.from(render(true).querySelectorAll('.column').item(1).querySelectorAll<HTMLAnchorElement>('a'))
-          .map((link: HTMLAnchorElement): string | null => link.getAttribute('href'));
-
-        expect(hrefs).toEqual(['/book']);
       },
     );
 

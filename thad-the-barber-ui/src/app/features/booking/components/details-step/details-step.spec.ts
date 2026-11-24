@@ -12,8 +12,6 @@ describe(
       const fixture: ComponentFixture<DetailsStep> = TestBed.createComponent(DetailsStep);
       fixture.componentRef.setInput('nameControl', new FormControl<string>('', { nonNullable: true }));
       fixture.componentRef.setInput('phoneControl', new FormControl<string>(phone, { nonNullable: true }));
-      fixture.componentRef.setInput('consentControl', new FormControl<boolean>(false, { nonNullable: true }));
-      fixture.componentRef.setInput('marketingConsentControl', new FormControl<boolean>(false, { nonNullable: true }));
       fixture.detectChanges();
       const phoneInput: HTMLInputElement | null = (fixture.nativeElement as HTMLElement)
         .querySelector<HTMLInputElement>('#booking-phone');
@@ -54,7 +52,6 @@ describe(
       (): void => {
         let fixture: ComponentFixture<DetailsStep>;
         let nameControl: FormControl<string>;
-        let marketingConsentControl: FormControl<boolean>;
 
         function field(selector: string): HTMLInputElement | null {
           return (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>(selector);
@@ -65,15 +62,12 @@ describe(
             nonNullable: true,
             validators: Validators.required,
           });
-          marketingConsentControl = new FormControl<boolean>(false, { nonNullable: true });
           fixture = TestBed.createComponent(DetailsStep);
           fixture.componentRef.setInput('nameControl', nameControl);
           fixture.componentRef.setInput('phoneControl', new FormControl<string>('', {
             nonNullable: true,
             validators: PHONE_VALIDATORS,
           }));
-          fixture.componentRef.setInput('consentControl', new FormControl<boolean>(false, { nonNullable: true }));
-          fixture.componentRef.setInput('marketingConsentControl', marketingConsentControl);
           fixture.detectChanges();
         });
 
@@ -86,38 +80,6 @@ describe(
             expect(field('#booking-name')?.getAttribute('aria-required')).toBe('true');
             expect(field('#booking-phone')?.getAttribute('aria-required')).toBe('true');
             expect(host.querySelector('[data-testid="details-required-note"]')?.textContent).toContain('marks a required field');
-          },
-        );
-
-        it(
-          'shows the text-message box as an optional, unticked choice, with its rates and STOP wording in the label',
-          (): void => {
-            const box: HTMLInputElement | null = field('#booking-text-consent');
-            const label: string = (fixture.nativeElement as HTMLElement)
-              .querySelector('label[for="booking-text-consent"]')?.textContent ?? '';
-
-            expect(box?.checked).toBe(false);
-            expect(box?.hasAttribute('required')).toBe(false);
-            expect(label).toContain('Text me to confirm this appointment');
-            expect(label).toContain('optional');
-            expect(label).toContain('Not needed to book');
-            expect(label).toContain('Message and data rates may apply');
-            expect(label).toContain('Reply STOP to opt out');
-          },
-        );
-
-        it(
-          'offers the shop news texts as an optional box, unticked, apart from the booking texts',
-          (): void => {
-            const box: HTMLInputElement | null = field('#booking-marketing-consent');
-            const label: string = (fixture.nativeElement as HTMLElement)
-              .querySelector('label[for="booking-marketing-consent"]')?.textContent ?? '';
-
-            expect(box?.checked).toBe(false);
-            expect(box?.hasAttribute('required')).toBe(false);
-            expect(label).toContain('optional');
-            expect(label).toContain('Not needed to book');
-            expect(label).toContain('Reply STOP to opt out');
           },
         );
 

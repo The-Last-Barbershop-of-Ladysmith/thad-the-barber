@@ -19,11 +19,11 @@ test.describe(
     );
 
     test(
-      "gives the shop's phone from Square in the booking texts section",
+      "gives the shop's phone from Square in the contact section",
       async ({ page }: { page: Page; }): Promise<void> => {
         await page.goto('/terms');
 
-        await expect(page.getByTestId('terms-section-booking-texts').getByTestId('terms-phone').first())
+        await expect(page.getByTestId('terms-section-contact').getByTestId('terms-phone').first())
           .toHaveAttribute('href', `tel:${TEST_SHOP.phone}`);
       },
     );

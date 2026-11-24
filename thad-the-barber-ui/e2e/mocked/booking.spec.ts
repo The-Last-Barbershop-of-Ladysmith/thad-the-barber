@@ -68,13 +68,11 @@ test.describe(
   'booking',
   (): void => {
     test(
-      'shows the unticked text-message box with the confirm button enabled, and no accessibility violations',
+      'enables the confirm button once the details are in, with no accessibility violations',
       async ({ page }: { page: Page; }): Promise<void> => {
         await page.goto('/book');
         await fillInBooking(page);
 
-        await expect(page.getByTestId('text-consent')).toBeVisible();
-        await expect(page.locator('#booking-text-consent')).not.toBeChecked();
         await expect(page.getByTestId('confirm-booking')).toBeEnabled();
         await expectNoA11yViolations(page);
       },

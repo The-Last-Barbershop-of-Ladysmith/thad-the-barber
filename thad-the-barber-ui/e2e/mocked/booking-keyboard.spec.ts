@@ -66,9 +66,6 @@ test.describe(
           '5405550123',
         );
         await expect(page.locator('#booking-phone')).toHaveValue('(540) 555-0123');
-        await tabUntilFocused(page, '#booking-text-consent');
-        await page.keyboard.press('Space');
-        await expect(page.locator('#booking-text-consent')).toBeChecked();
         await tabUntilFocused(page, '[data-testid="confirm-booking"]');
         await expectNoA11yViolations(page);
         await page.keyboard.press('Enter');

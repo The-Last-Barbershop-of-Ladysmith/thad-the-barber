@@ -28,38 +28,6 @@
       [phoneControl]="phoneControl()"
     />
   </div>
-  <div class="stack gap-1.5 my-4">
-    <div class="consent-row">
-      <p-checkbox
-        inputId="booking-text-consent"
-        data-testid="text-consent"
-        [binary]="true"
-        [formControl]="consentControl()"
-      />
-      <label class="consent-label" for="booking-text-consent">
-        <span>Text me to confirm this appointment and send a reminder (optional).</span>
-        <span class="small-print"
-          >Message and data rates may apply. Reply STOP to opt out, HELP for help. Not needed to
-          book.</span
-        >
-      </label>
-    </div>
-    <div class="consent-row">
-      <p-checkbox
-        inputId="booking-marketing-consent"
-        data-testid="marketing-consent"
-        [binary]="true"
-        [formControl]="marketingConsentControl()"
-      />
-      <label class="consent-label" for="booking-marketing-consent">
-        <span>Also text me shop news, like openings, closures and offers (optional).</span>
-        <span class="small-print"
-          >Up to 4 a month. Message and data rates may apply. Reply STOP to opt out, HELP for help.
-          Not needed to book.</span
-        >
-      </label>
-    </div>
-  </div>
   <p class="small-print">
     Your name and phone go to the shop's Square account to book this appointment. By booking you agree to the
     <a

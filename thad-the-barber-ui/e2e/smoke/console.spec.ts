@@ -94,7 +94,7 @@ test.describe(
           await openDays.first().click();
           await page.locator('[data-testid="time-list"] [role="button"]').first().click();
           await page.locator('#booking-name').fill('Console Check');
-          await page.locator('#booking-text-consent').focus();
+          await page.locator('#booking-phone').focus();
           await page.keyboard.press('Tab');
           await page.waitForTimeout(1_000);
         }

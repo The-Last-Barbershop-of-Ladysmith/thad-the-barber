@@ -25,7 +25,7 @@ export const PRIVACY_SECTIONS: readonly LegalSection[] = [
         {
           kind: LegalPartKind.Text,
           text: "Your name and phone book the appointment, so the shop knows who's coming and can reach you about it. "
-            + "We don't sell them. We use your phone for the shop's news texts only if you choose to get them.",
+            + "We don't sell them.",
         },
       ],
     ],
@@ -38,9 +38,7 @@ export const PRIVACY_SECTIONS: readonly LegalSection[] = [
         {
           kind: LegalPartKind.Text,
           text: "After you book, the shop's booking system, Square, texts the phone number you gave to confirm your "
-            + 'appointment, and may text a reminder before it. A text is sent only after you tick the box for it on '
-            + 'the booking form, which starts unticked, and submit a booking with a phone number. You can book without '
-            + 'ticking it. Booking texts never include promotions.',
+            + 'appointment, and may text a reminder before it. Booking texts never include promotions.',
         },
       ],
       [
@@ -56,32 +54,8 @@ export const PRIVACY_SECTIONS: readonly LegalSection[] = [
       [
         {
           kind: LegalPartKind.Text,
-          text: 'Your number is used only for booking texts and, if you choose them, shop news texts. It is never '
-            + 'shared or sold. If you ask to find your bookings, we also text a one-time code to that number, once '
-            + 'for each request.',
-        },
-      ],
-    ],
-  },
-  {
-    label: 'Shop news texts',
-    fragment: 'news-texts',
-    paragraphs: [
-      [
-        {
-          kind: LegalPartKind.Text,
-          text: 'Separately from booking texts, you can choose to get news from the shop by text: openings, closures, '
-            + 'special hours and offers, no more than 4 a month. You choose this with its own box on the booking '
-            + 'form, which starts unticked, or on the text updates sign-up. You can book without ticking it.',
-        },
-      ],
-      [
-        {
-          kind: LegalPartKind.Text,
-          text: 'If you choose it, the shop keeps your phone number, the date you agreed and where you agreed '
-            + '(the booking form or the sign-up) in a private list in its Azure storage, so the shop can send you '
-            + 'its news and show that you agreed. The list is never shared or sold. Reply STOP to any news text to '
-            + 'stop them, or call or text the shop to be taken off the list. Message and data rates may apply.',
+          text: 'Your number is used only for booking texts. It is never shared or sold. If you ask to find your '
+            + 'bookings, we also text a one-time code to that number, once for each request.',
         },
       ],
     ],

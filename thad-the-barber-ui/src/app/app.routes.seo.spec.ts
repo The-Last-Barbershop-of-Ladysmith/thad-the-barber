@@ -107,7 +107,6 @@ describe(
           'book',
           'privacy',
           'terms',
-          'text-updates',
           'accessibility',
           'contact',
         ]);
