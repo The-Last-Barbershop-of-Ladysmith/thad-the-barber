@@ -1,3 +1,6 @@
+using System.Collections.Concurrent;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -5,24 +8,30 @@ using Microsoft.Extensions.Options;
 using ThadTheBarber.Api.Features.MarketingTexts.Exceptions;
 using ThadTheBarber.Api.Features.MarketingTexts.Models;
 using ThadTheBarber.Api.Infrastructure.Storage.Configuration;
+using ThadTheBarber.Api.Infrastructure.Storage.Models;
 using ThadTheBarber.Api.Infrastructure.Storage.Services;
 
 namespace ThadTheBarber.Api.Features.MarketingTexts.Services;
 
 /// <summary>
-/// Keeps the phones that agreed to the shop's news texts as one JSON array, <c>marketing-opt-ins.json</c> in the private
-/// content container, so the list is ready when sending is built. A phone is listed once, with its first consent. The
-/// file is read and replaced whole, so the lock keeps two simultaneous opt-ins from losing one (it covers this one app
-/// instance, which is all the site runs on). A failure to save a booking's opt-in is logged without the phone and never
-/// thrown, because the booking has already been made; a failure to save a sign-up throws, so the visitor is told.
+/// Keeps who agreed to the shop's news texts as one small JSON blob per phone, <c>optins/&lt;sha256 of the phone&gt;.json</c> in
+/// the private content container. Two people never share a blob, so simultaneous sign-ups can't lose each other, and
+/// two changes to the same person are told apart by the blob's ETag: the later write finds the blob changed and reads
+/// it again. The hash keeps phones out of blob names, which can reach logs. A phone is listed once with its first
+/// consent; it is written again only when it agrees after having opted out. A failure to save a booking's opt-in is
+/// logged without the phone and never thrown, because the booking has already been made; a failure to save a sign-up
+/// throws, so the visitor is told.
 /// </summary>
 public sealed partial class MarketingOptInService(
     IMediaStorage storage,
     IOptions<MediaStorageSettings> settings,
     TimeProvider time,
-    ILogger<MarketingOptInService> logger) : IDisposable
+    ILogger<MarketingOptInService> logger,
+    LegacyOptInImporter? legacyImporter = null)
 {
-    public const string FileName = "marketing-opt-ins.json";
+    public const string Prefix = "optins/";
+    private const int MaxAttempts = 5;
+    private const int MaxParallelReads = 8;
 
     private static readonly JsonSerializerOptions FileOptions = new(JsonSerializerDefaults.Web)
     {
@@ -31,7 +40,11 @@ public sealed partial class MarketingOptInService(
         Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
     };
 
-    private readonly SemaphoreSlim fileLock = new(1, 1);
+    /// <summary>What names a phone's blob, and stands for the phone wherever it must be remembered without being kept (a send's progress).</summary>
+    public static string HashFor(string phone) =>
+        Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(phone)));
+
+    public static string BlobNameFor(string phone) => $"{Prefix}{HashFor(phone)}.json";
 
     public async Task AddAsync(string phone, MarketingOptInSource source, CancellationToken cancellationToken)
     {
@@ -57,38 +70,143 @@ public sealed partial class MarketingOptInService(
         }
     }
 
-    private async Task SaveAsync(string phone, MarketingOptInSource source, CancellationToken cancellationToken)
+    /// <summary>Records that the phone replied STOP. A phone that never signed up has nothing to change, and nothing is written for it.</summary>
+    public async Task OptOutAsync(string phone, CancellationToken cancellationToken)
     {
-        await fileLock.WaitAsync(cancellationToken);
-        try
+        await EnsureImportedAsync(cancellationToken);
+        string container = settings.Value.ContentContainerName;
+        string blobName = BlobNameFor(phone);
+        for (int attempt = 0; attempt < MaxAttempts; attempt++)
         {
-            string container = settings.Value.ContentContainerName;
-            string? existingText = await storage.ReadTextAsync(container, FileName, cancellationToken);
-            List<MarketingOptIn> optIns = [];
-            if (existingText is not null)
-            {
-                optIns = JsonSerializer.Deserialize<List<MarketingOptIn>>(existingText, FileOptions) ?? [];
-            }
-
-            if (optIns.Any(optIn => optIn.Phone == phone))
+            StoredText? stored = await storage.ReadTextWithETagAsync(container, blobName, cancellationToken);
+            if (stored is null)
             {
                 return;
             }
 
-            optIns.Add(new MarketingOptIn(
-                phone,
-                time.GetUtcNow(),
-                source
-            ));
-            await storage.WriteTextAsync(container, FileName, JsonSerializer.Serialize(optIns, FileOptions), cancellationToken);
+            MarketingOptIn current = Read(stored.Text);
+            if (!current.IsActive)
+            {
+                return;
+            }
+
+            MarketingOptIn optedOut = current with { OptedOutAt = time.GetUtcNow() };
+            if (await storage.TryReplaceTextAsync(container, blobName, Serialize(optedOut), stored.ETag, cancellationToken))
+            {
+                return;
+            }
         }
-        finally
-        {
-            fileLock.Release();
-        }
+
+        throw new InvalidOperationException("The opt-out kept conflicting with other changes.");
     }
 
-    public void Dispose() => fileLock.Dispose();
+    /// <summary>
+    /// Puts back a phone that had opted out and now replies START. A phone that never signed up stays off the list: a
+    /// reply to a booking text is not consent to news texts. True when the phone is listed again.
+    /// </summary>
+    public async Task<bool> OptInAgainAsync(string phone, CancellationToken cancellationToken)
+    {
+        await EnsureImportedAsync(cancellationToken);
+        string container = settings.Value.ContentContainerName;
+        string blobName = BlobNameFor(phone);
+        for (int attempt = 0; attempt < MaxAttempts; attempt++)
+        {
+            StoredText? stored = await storage.ReadTextWithETagAsync(container, blobName, cancellationToken);
+            if (stored is null || Read(stored.Text).IsActive)
+            {
+                return false;
+            }
+
+            MarketingOptIn again = new(
+                phone,
+                time.GetUtcNow(),
+                MarketingOptInSource.Reply,
+                MarketingOptIn.CurrentConsentTextVersion,
+                null
+            );
+            if (await storage.TryReplaceTextAsync(container, blobName, Serialize(again), stored.ETag, cancellationToken))
+            {
+                return true;
+            }
+        }
+
+        throw new InvalidOperationException("The opt-in kept conflicting with other changes.");
+    }
+
+    /// <summary>The people the shop may text its news to now, oldest consent first.</summary>
+    public async Task<List<MarketingOptIn>> ListActiveAsync(CancellationToken cancellationToken)
+    {
+        await EnsureImportedAsync(cancellationToken);
+        string container = settings.Value.ContentContainerName;
+        List<StoredBlob> blobs = await storage.ListAsync(container, Prefix, cancellationToken);
+        ConcurrentBag<MarketingOptIn> active = [];
+        await Parallel.ForEachAsync(
+            blobs,
+            new ParallelOptions
+            {
+                MaxDegreeOfParallelism = MaxParallelReads,
+                CancellationToken = cancellationToken,
+            },
+            async (StoredBlob blob, CancellationToken token) =>
+            {
+                string? text = await storage.ReadTextAsync(container, blob.Name, token);
+                if (text is not null && Read(text) is { IsActive: true } optIn)
+                {
+                    active.Add(optIn);
+                }
+            }
+        );
+
+        return [.. active.OrderBy(optIn => optIn.ConsentedAt).ThenBy(optIn => optIn.Phone, StringComparer.Ordinal)];
+    }
+
+    private async Task SaveAsync(string phone, MarketingOptInSource source, CancellationToken cancellationToken)
+    {
+        await EnsureImportedAsync(cancellationToken);
+        string container = settings.Value.ContentContainerName;
+        string blobName = BlobNameFor(phone);
+        MarketingOptIn fresh = new(
+            phone,
+            time.GetUtcNow(),
+            source,
+            MarketingOptIn.CurrentConsentTextVersion,
+            null
+        );
+        for (int attempt = 0; attempt < MaxAttempts; attempt++)
+        {
+            StoredText? stored = await storage.ReadTextWithETagAsync(container, blobName, cancellationToken);
+            if (stored is null)
+            {
+                if (await storage.TryWriteNewTextAsync(container, blobName, Serialize(fresh), cancellationToken))
+                {
+                    return;
+                }
+
+                continue;
+            }
+
+            if (Read(stored.Text).IsActive)
+            {
+                return;
+            }
+
+            if (await storage.TryReplaceTextAsync(container, blobName, Serialize(fresh), stored.ETag, cancellationToken))
+            {
+                return;
+            }
+        }
+
+        throw new InvalidOperationException("The opt-in kept conflicting with other changes.");
+    }
+
+    private Task EnsureImportedAsync(CancellationToken cancellationToken) =>
+        legacyImporter?.EnsureImportedAsync(cancellationToken) ?? Task.CompletedTask;
+
+    private static MarketingOptIn Read(string text) =>
+        JsonSerializer.Deserialize<MarketingOptIn>(text, FileOptions)
+        ?? throw new JsonException("An opt-in blob was empty.");
+
+    private static string Serialize(MarketingOptIn optIn) => JsonSerializer.Serialize(optIn, FileOptions);
 
     [LoggerMessage(EventName = "MarketingOptInNotSaved", Level = LogLevel.Warning, Message = "A news-texts opt-in from {Source} couldn't be saved.")]
     private static partial void LogNotSaved(ILogger logger, Exception exception, MarketingOptInSource source);

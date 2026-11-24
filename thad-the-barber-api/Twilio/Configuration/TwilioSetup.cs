@@ -17,6 +17,8 @@ public static class TwilioSetup
         services.AddSingleton<IValidateOptions<TwilioSettings>, TwilioSettingsValidator>();
         services.AddHttpClient(HttpClientName, client => client.Timeout = httpClientTimeout);
         services.AddSingleton<ITwilioVerifyService, TwilioVerifyService>();
+        services.AddSingleton<ITwilioMessageService, TwilioMessageService>();
+        services.AddSingleton<TwilioSignatureValidator>();
         services.AddExceptionHandler<TwilioExceptionHandler>();
         return services;
     }

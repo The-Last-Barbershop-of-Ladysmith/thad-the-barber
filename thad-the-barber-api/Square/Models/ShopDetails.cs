@@ -11,4 +11,7 @@ public sealed record ShopDetails(
     string? Description,
     string? InstagramUsername,
     string? FacebookUrl
-);
+)
+{
+    public TimeZoneInfo GetTimeZone() => TimeZoneInfo.FindSystemTimeZoneById(TimeZone);
+}

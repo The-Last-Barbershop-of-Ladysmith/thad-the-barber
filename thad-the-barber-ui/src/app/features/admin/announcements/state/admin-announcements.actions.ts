@@ -35,17 +35,17 @@ export const AdminAnnouncementsRequestFailure = createAction(
   props<{ error: AdminAnnouncementsError; }>(),
 );
 
-/** Saves the whole list, which replaces the file. */
+/** Saves the whole list, which replaces the file; once saved the viewer goes to `nextPath`, or to the list. */
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
 export const AdminAnnouncementsSave = createAction(
   AdminAnnouncementsActionTypes.AdminAnnouncementsSave,
-  props<{ announcements: AnnouncementInputDto[]; }>(),
+  props<{ announcements: AnnouncementInputDto[]; nextPath?: string; }>(),
 );
 
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.
 export const AdminAnnouncementsSaveSuccess = createAction(
   AdminAnnouncementsActionTypes.AdminAnnouncementsSaveSuccess,
-  props<{ announcements: AdminAnnouncementDto[]; }>(),
+  props<{ announcements: AdminAnnouncementDto[]; nextPath?: string; }>(),
 );
 
 // eslint-disable-next-line @typescript-eslint/typedef -- NgRx does not export the ActionCreator type.

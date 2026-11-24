@@ -85,6 +85,7 @@ describe(
           'admin',
           'admin/announcements',
           'admin/announcements/new',
+          'admin/announcements/text',
           'admin/announcements/:index',
           'admin/shop',
           'admin/gallery',

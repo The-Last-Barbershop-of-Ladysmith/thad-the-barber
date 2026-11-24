@@ -58,7 +58,47 @@ public sealed class BookingServiceTests
         await Service(new FakeSquareService(), storage: storage)
             .BookAsync(Request(openTime) with { HasMarketingConsent = true }, Cancellation);
 
-        Assert.Contains("+15550100187", storage.ContentFiles[MarketingOptInService.FileName], StringComparison.Ordinal);
+        Assert.Contains("+15550100187", storage.ContentFiles[MarketingOptInService.BlobNameFor("+15550100187")], StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ABookingWithoutTheTextBoxTickedGetsNoConfirmationOrReminder()
+    {
+        FakeSquareService square = new();
+        TextHarness texts = TextHarness.Create(square, time: new FakeTimeProvider(now));
+
+        await Service(square, texts: texts).BookAsync(Request(openTime), Cancellation);
+
+        Assert.Empty(texts.Twilio.Sent);
+        Assert.Empty(texts.Storage.ContentFiles);
+    }
+
+    [Fact]
+    public async Task ABookingTextsItsConfirmationWithTheManageLinkWhenTheCustomerAskedForIt()
+    {
+        FakeSquareService square = new();
+        TextHarness texts = TextHarness.Create(square, time: new FakeTimeProvider(now));
+
+        BookingConfirmation confirmation = await Service(square, texts: texts)
+            .BookAsync(Request(openTime) with { HasTextConsent = true }, Cancellation);
+
+        FakeTwilioMessageService.SentText text = Assert.Single(texts.Twilio.Sent);
+        Assert.Equal("+15550100187", text.Phone);
+        Assert.Contains($"/book/manage/{confirmation.Id}#t={confirmation.ManageToken}", text.Body, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ABookingWhoseTextFailsIsStillBooked()
+    {
+        FakeSquareService square = new();
+        TextHarness texts = TextHarness.Create(square, time: new FakeTimeProvider(now));
+        texts.Storage.Failure = new InvalidOperationException("storage is down");
+
+        BookingConfirmation confirmation = await Service(square, texts: texts)
+            .BookAsync(Request(openTime) with { HasTextConsent = true }, Cancellation);
+
+        Assert.Equal(openTime, confirmation.StartAt);
+        Assert.Single(square.Bookings);
     }
 
     [Fact]
@@ -518,7 +558,8 @@ public sealed class BookingServiceTests
         FakeSquareService square,
         FakeTwilioVerifyService? twilio = null,
         FakeTimeProvider? clock = null,
-        FakeMediaStorage? storage = null)
+        FakeMediaStorage? storage = null,
+        TextHarness? texts = null)
     {
         FakeTimeProvider time = clock ?? new FakeTimeProvider(now);
         return new BookingService(
@@ -537,6 +578,7 @@ public sealed class BookingServiceTests
                 time,
                 NullLogger<MarketingOptInService>.Instance
             ),
+            (texts ?? TextHarness.Disabled(square, storage, time)).Bookings,
             Options.Create(new BookingSettings
             {
                 MaxUpcomingPerPhone = MaxUpcomingPerPhone,

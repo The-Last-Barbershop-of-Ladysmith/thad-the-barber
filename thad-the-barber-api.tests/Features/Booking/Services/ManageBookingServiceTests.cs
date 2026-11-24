@@ -219,6 +219,7 @@ public sealed class ManageBookingServiceTests
             _time
         ),
         ManageTokens.Signer,
+        TextHarness.Disabled(_square, time: _time).Bookings,
         _time
     );
 

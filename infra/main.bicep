@@ -25,6 +25,9 @@ type environmentConfig = {
   @description('Emails the shared action group when a contact-page question or issue arrives. On unless set to false.')
   contactAlerts: bool?
 
+  @description('Three alerts for the shop\'s own texts (a send failed, a text not delivered, no reminder run in a day). Off unless set: turn on where TextMessages:IsEnabled is true.')
+  textAlerts: bool?
+
   @description('Lets the admin (adminPrincipalId) sign with this environment\'s session-JWT key, so local runs under az login can issue session tokens. Dev only.')
   canAdminSignSessions: bool?
 
@@ -152,6 +155,7 @@ module env 'modules/environment.bicep' = [
       adminPrincipalId: adminPrincipalId
       squareAlerts: e.?squareAlerts ?? false
       contactAlerts: e.?contactAlerts ?? true
+      textAlerts: e.?textAlerts ?? false
       canAdminSignSessions: e.?canAdminSignSessions ?? false
       canAdminWriteMedia: e.?canAdminWriteMedia ?? false
       restrictMediaListing: e.?restrictMediaListing ?? false

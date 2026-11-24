@@ -72,6 +72,56 @@ public sealed class TwilioSettingsValidatorTests
         Assert.Equal(3, result.Failures!.Count());
     }
 
+    [Fact]
+    public void TheTestAccountSidMayStandInForTheApiKeySid()
+    {
+        TwilioSettings settings = FullSettings();
+        settings.ApiKeySid = settings.AccountSid;
+
+        Assert.True(validator.Validate(null, settings).Succeeded);
+    }
+
+    [Fact]
+    public void AMessagingServiceSidMustStartWithMG()
+    {
+        TwilioSettings settings = FullSettings();
+        settings.MessagingServiceSid = "XX0000000000000000000000000000000f";
+
+        Assert.Contains(nameof(TwilioSettings.MessagingServiceSid), validator.Validate(null, settings).FailureMessage, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ASenderNumberMustBeInE164Form()
+    {
+        TwilioSettings settings = FullSettings();
+        settings.FromNumber = "5005550006";
+
+        Assert.Contains(nameof(TwilioSettings.FromNumber), validator.Validate(null, settings).FailureMessage, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TheWebhookBaseUrlMustBeAnHttpsUrl()
+    {
+        TwilioSettings settings = FullSettings();
+        settings.WebhookBaseUrl = "http://api.example.com";
+
+        Assert.Contains(nameof(TwilioSettings.WebhookBaseUrl), validator.Validate(null, settings).FailureMessage, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TextsCanBeSentOnlyWithAMessagingServiceOrASenderNumber()
+    {
+        TwilioSettings settings = FullSettings();
+        Assert.False(settings.CanSendTexts);
+
+        settings.FromNumber = "+15005550006";
+        Assert.True(settings.CanSendTexts);
+
+        settings.FromNumber = string.Empty;
+        settings.MessagingServiceSid = "MG0000000000000000000000000000000f";
+        Assert.True(settings.CanSendTexts);
+    }
+
     private static TwilioSettings FullSettings() => new()
     {
         AccountSid = "AC0000000000000000000000000000000f",

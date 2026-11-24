@@ -7,12 +7,15 @@ namespace ThadTheBarber.Api.Features.Booking.Models;
 /// A customer's booking. <see cref="StartAt"/> is one of the UTC start times availability returned, sent back
 /// unchanged; <see cref="IdempotencyKey"/> is a UUID the client generates once per booking attempt. The name and phone
 /// follow BR-09: 2 to 250 characters (Square takes up to 300), and a 10-digit US number in E.164.
-/// <see cref="HasMarketingConsent"/> is the customer's separate, optional agreement to the shop's news texts.
+/// <see cref="HasTextConsent"/> is the customer's optional agreement to a confirmation text with their manage link and one
+/// reminder (BR-25); without it they get no booking text. <see cref="HasMarketingConsent"/> is their separate, optional
+/// agreement to the shop's news texts.
 /// </summary>
 public sealed record BookingRequest(
     [property: JsonRequired] DateTimeOffset StartAt,
     [Required, MinLength(2), MaxLength(250)] string Name,
     [Required, RegularExpression(@"^\+1\d{10}$", ErrorMessage = "Use +1 and 10 digits.")] string Phone,
     [property: JsonRequired] Guid IdempotencyKey,
-    bool HasMarketingConsent = false
+    bool HasMarketingConsent = false,
+    bool HasTextConsent = false
 );

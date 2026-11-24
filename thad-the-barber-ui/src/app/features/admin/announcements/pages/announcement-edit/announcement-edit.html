@@ -260,6 +260,25 @@
         </div>
       </section>
 
+      <section class="form-card texting" aria-labelledby="texting-heading">
+        <h2 class="card-title" id="texting-heading">Text subscribers</h2>
+        <label class="check" for="announcement-text-subscribers">
+          <input
+            type="checkbox"
+            id="announcement-text-subscribers"
+            data-testid="text-subscribers"
+            aria-describedby="announcement-text-subscribers-help"
+            [checked]="isTextingSubscribers()"
+            (change)="onTextSubscribers($event)"
+          />
+          Text this to the people who signed up for news
+        </label>
+        <span class="help" id="announcement-text-subscribers-help"
+          >After you save, you will see the exact text and how many people get it. Nothing is sent until you confirm, and
+          each announcement is texted once.</span
+        >
+      </section>
+
       <div class="actions">
         <a pButton severity="secondary" [text]="true" [routerLink]="listPath">Cancel</a>
         <button pButton type="submit" data-testid="save-announcement" [disabled]="isSaving()">

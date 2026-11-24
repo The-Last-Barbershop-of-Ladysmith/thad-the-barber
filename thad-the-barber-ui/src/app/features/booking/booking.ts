@@ -233,6 +233,7 @@ export class Booking implements LeaveConfirmable {
     const {
       name,
       phone,
+      hasTextConsent,
       hasMarketingConsent,
       startAt,
     }: BookingFormValue = this.bookingForm.getRawValue();
@@ -262,6 +263,7 @@ export class Booking implements LeaveConfirmable {
           startAt,
           name: name.trim(),
           phone: toE164(phone),
+          hasTextConsent,
           hasMarketingConsent,
           idempotencyKey: this.idempotencyKey,
         },

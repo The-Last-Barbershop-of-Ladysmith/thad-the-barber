@@ -33,6 +33,9 @@ param squareAlerts bool
 @description('Deploy the alert that emails when a contact-page question or issue arrives.')
 param contactAlerts bool
 
+@description('Deploy the text alerts (#338). Turn on only where TextMessages:IsEnabled is true: one of them fires when the reminder run is silent.')
+param textAlerts bool
+
 @description('Gives adminPrincipalId Key Vault Crypto User on the session-JWT key, for local runs (dev only).')
 param canAdminSignSessions bool
 
@@ -156,6 +159,17 @@ module contactAlert 'contact-alerts.bicep' = if (contactAlerts) {
     workspaceId: workspaceId
     actionGroupId: actionGroupId
     storageName: storageName
+    tags: tags
+  }
+}
+
+module textAlert 'text-alerts.bicep' = if (textAlerts) {
+  name: 'text-alerts-${envName}'
+  params: {
+    envName: envName
+    location: location
+    workspaceId: workspaceId
+    actionGroupId: actionGroupId
     tags: tags
   }
 }

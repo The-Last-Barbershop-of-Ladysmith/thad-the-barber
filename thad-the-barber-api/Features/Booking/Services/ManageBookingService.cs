@@ -1,6 +1,7 @@
 using ThadTheBarber.Api.Features.Booking.Exceptions;
 using ThadTheBarber.Api.Features.Booking.Mappers;
 using ThadTheBarber.Api.Features.Booking.Models;
+using ThadTheBarber.Api.Features.TextMessages.Services;
 using ThadTheBarber.Api.Square.Exceptions;
 using ThadTheBarber.Api.Square.Models;
 using ThadTheBarber.Api.Square.Services;
@@ -16,6 +17,7 @@ public sealed class ManageBookingService(
     ISquareService square,
     AvailabilityService availability,
     ManageTokenSigner manageTokens,
+    BookingTextService bookingTexts,
     TimeProvider time)
 {
     public async Task<ManagedBooking> GetAsync(string bookingId, string? manageToken, CancellationToken cancellationToken)
@@ -34,6 +36,7 @@ public sealed class ManageBookingService(
 
         EnsureNotStarted(appointment);
         Appointment cancelled = await square.CancelBookingAsync(appointment.Id, appointment.Version, cancellationToken);
+        await bookingTexts.AfterCancelledAsync(appointment, cancellationToken);
 
         return ToManagedBooking(cancelled);
     }
@@ -55,6 +58,7 @@ public sealed class ManageBookingService(
         TimeSlot openTimeSlot = await availability.FindTimeSlotAsync(request.StartAt, cancellationToken)
             ?? throw new SlotUnavailableException("The new time is taken or outside the booking window.");
         Appointment rescheduled = await square.RescheduleBookingAsync(appointment.Id, appointment.Version, openTimeSlot.StartAt, cancellationToken);
+        await bookingTexts.AfterRescheduledAsync(appointment, rescheduled, cancellationToken);
 
         return ToManagedBooking(rescheduled);
     }

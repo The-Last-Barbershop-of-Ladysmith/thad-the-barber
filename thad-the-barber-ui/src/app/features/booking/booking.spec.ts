@@ -286,6 +286,22 @@ describe(
     );
 
     it(
+      'sends the confirmation and reminder text choice, unticked unless the customer ticks it',
+      (): void => {
+        openPage();
+        expect(page.bookingForm.controls.hasTextConsent.value).toBe(false);
+        fillInAndConfirm(FIRST_TIME);
+        store.dispatch(BookingActions.BookingRequestFailure({ notice: failedNotice, takenStartAt: null }));
+        page.bookingForm.controls.hasTextConsent.setValue(true);
+        page.confirm();
+
+        const [first, ticked]: BookingRequestAction[] = sentBookings();
+        expect(first?.bookingRequest.hasTextConsent).toBe(false);
+        expect(ticked?.bookingRequest.hasTextConsent).toBe(true);
+      },
+    );
+
+    it(
       'sends the shop news choice, unticked unless the customer ticks it, and never needs it to book',
       (): void => {
         openPage();
