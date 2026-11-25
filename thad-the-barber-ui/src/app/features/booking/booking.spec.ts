@@ -12,7 +12,6 @@ import {
 } from '@angular/router';
 import { provideEffects } from '@ngrx/effects';
 import { Action, ActionsSubject, Store, provideStore } from '@ngrx/store';
-import { MessageService } from 'primeng/api';
 import { BehaviorSubject } from 'rxjs';
 import { vi } from 'vitest';
 import { testFirstMonth } from '../../../testing/test-availability';
@@ -82,7 +81,6 @@ describe(
           // The page opens its days through this; sending is left to the effects' own spec.
           provideEffects({ openFirstMonth }),
           provideRouter([]),
-          MessageService,
           { provide: SessionService, useValue: { isBotCheckFailed } },
           { provide: ActivatedRoute, useValue: { paramMap: routeParams } },
         ],

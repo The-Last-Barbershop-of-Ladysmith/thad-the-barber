@@ -3,7 +3,6 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideStore } from '@ngrx/store';
-import { MessageService } from 'primeng/api';
 import { announcementsFeature } from '../../features/announcements/state/announcements.feature';
 import { shopFeature } from '../../features/shop/state/shop.feature';
 import { Footer } from './footer';
@@ -20,7 +19,6 @@ describe(
           provideRouter([]),
           provideHttpClient(),
           provideHttpClientTesting(),
-          MessageService,
           provideStore({
             [announcementsFeature.name]: announcementsFeature.reducer,
             [shopFeature.name]: shopFeature.reducer,

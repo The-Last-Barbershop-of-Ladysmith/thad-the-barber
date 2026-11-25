@@ -222,7 +222,7 @@ Every change ships with its tests:
 
 ## L. Text alerts
 
-⏸ **Deferred.** The text-alerts sign-up is removed from the announcements section for now. The `SmsSignup` component, service, effect, and state stay in the repo unused until the text-alerts milestone.
+⏸ **Deferred.** A first version (footer form, `/text-updates` page and an opt-in list in the content container) was built and then removed again for the first release (BR-35). It returns, with the booking opt-in boxes, once the Twilio A2P campaign is approved.
 
 The design for when it's picked up needs no database:
 - The list is a Square **Customer Group** ("Text alerts").

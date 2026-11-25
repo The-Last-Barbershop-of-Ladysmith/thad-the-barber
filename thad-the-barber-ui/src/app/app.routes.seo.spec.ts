@@ -96,7 +96,7 @@ describe(
     );
 
     it(
-      'indexes home, book, privacy, terms, text updates, accessibility and contact',
+      'indexes home, book, privacy, terms, accessibility and contact',
       (): void => {
         const indexed: string[] = leaves
           .filter((leaf: RouteLeaf): boolean => leaf.seo?.isIndexed === true)
