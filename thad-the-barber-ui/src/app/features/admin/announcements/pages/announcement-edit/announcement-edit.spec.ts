@@ -20,8 +20,8 @@ import { AnnouncementEdit } from './announcement-edit';
 const SAVED: AdminAnnouncementDto = {
   title: 'Holiday hours',
   bodyHtml: '<p>We are <strong>closed</strong>.</p>',
-  startDate: '2026-11-20',
-  endDate: '2026-12-26',
+  startDate: '2099-01-10',
+  endDate: '2099-02-10',
   image: {
     fileName: 'hours.webp',
     altText: 'A sign',
@@ -308,7 +308,7 @@ describe('AnnouncementEdit', (): void => {
   it('starts on a picked day, or from today again', async (): Promise<void> => {
     await open('0', [SAVED]);
 
-    expect(input('#announcement-start').value).toBe('2026-11-20');
+    expect(input('#announcement-start').value).toBe('2099-01-10');
 
     element('[data-testid="show-now"]').click();
     fixture.detectChanges();
@@ -316,7 +316,7 @@ describe('AnnouncementEdit', (): void => {
     element('[data-testid="save-announcement"]').click();
 
     expect(lastSaved()[0]?.startDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-    expect(lastSaved()[0]?.startDate).not.toBe('2026-11-20');
+    expect(lastSaved()[0]?.startDate).not.toBe('2099-01-10');
   });
 
   it('says so when the announcement is no longer in the list', async (): Promise<void> => {
