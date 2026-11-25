@@ -60,12 +60,6 @@
     grid-column: 1 / -1;
   }
 
-  .column-news {
-    grid-column: 1 / -1;
-    align-items: stretch;
-    contain: inline-size;
-  }
-
   .heading {
     font-size: 0.6875rem;
   }
@@ -150,14 +144,8 @@
   @media (min-width: 80rem) {
     .columns {
       display: flex;
-      flex: 1;
       flex-wrap: wrap;
-      justify-content: space-between;
       gap: 2.5rem clamp(2rem, 5vw, 5rem);
-    }
-
-    .column-news {
-      flex: 1 1 100%;
     }
   }
 }

@@ -48,61 +48,6 @@ export const TERMS_SECTIONS: readonly LegalSection[] = [
     ],
   },
   {
-    label: 'Booking texts',
-    fragment: 'booking-texts',
-    paragraphs: [
-      [
-        {
-          kind: LegalPartKind.Text,
-          text: 'When you book, you can agree to receive text messages about that appointment. This is the '
-            + 'booking texts program: a text to confirm your appointment and, if the shop sends one, a reminder '
-            + 'before it. You get a small number of texts for each booking, and none unless you book.',
-        },
-      ],
-      [
-        {
-          kind: LegalPartKind.Text,
-          text: 'Agreeing is optional and never needed to book. To get these texts, tick the box for them on the '
-            + 'booking form, which starts unticked. '
-            + 'Message and data rates may apply. Reply STOP to any text to stop them, or HELP for help. You can also '
-            + 'call or text ',
-        },
-        { kind: LegalPartKind.Phone },
-        {
-          kind: LegalPartKind.Text,
-          text: '. Carriers are not liable for delayed or undelivered messages.',
-        },
-      ],
-    ],
-  },
-  {
-    label: 'Shop news texts',
-    fragment: 'shop-news-texts',
-    paragraphs: [
-      [
-        {
-          kind: LegalPartKind.Text,
-          text: 'Separately, you can choose to get shop news by text: openings, closures, special hours and offers '
-            + 'from ',
-        },
-        { kind: LegalPartKind.ShopName },
-        {
-          kind: LegalPartKind.Text,
-          text: '. This is optional and never needed to book a haircut or to get your booking texts. You choose it '
-            + 'with its own box, which starts unticked, or on the text updates sign-up in the footer.',
-        },
-      ],
-      [
-        {
-          kind: LegalPartKind.Text,
-          text: 'Expect no more than 4 messages a month. Message and data rates may apply. Reply STOP at any time '
-            + 'to stop them, or HELP for help. Stopping shop news texts does not stop your booking texts, and the '
-            + 'other way round. Your number is never shared or sold, and is not used for anything else.',
-        },
-      ],
-    ],
-  },
-  {
     label: 'Fair use',
     fragment: 'fair-use',
     paragraphs: [

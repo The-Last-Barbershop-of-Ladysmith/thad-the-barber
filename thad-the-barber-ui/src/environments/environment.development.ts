@@ -2,8 +2,6 @@ import { Environment } from './environment.model';
 
 export const environment: Environment = {
   production: false,
-  isComingSoon: false,
-  isBookingPreview: false,
   apiBaseUrl: 'http://localhost:5078/api',
   siteUrl: 'http://localhost:4200',
   mediaBaseUrl: 'https://storttbnonprodeastus.blob.core.windows.net/media-dev',

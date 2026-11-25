@@ -27,7 +27,7 @@
         </button>
       }
     </div>
-  } @else if (!isBookingPreview) {
+  } @else {
     <p pageSubtitle class="find-bookings-prompt m-0 text-muted-color">
       Already booked?
       <a class="inline-link" data-testid="find-bookings-link" routerLink="/book/manage"
@@ -133,8 +133,6 @@
                       <app-details-step
                         [nameControl]="bookingForm.controls.name"
                         [phoneControl]="bookingForm.controls.phone"
-                        [consentControl]="bookingForm.controls.hasTextConsent"
-                        [marketingConsentControl]="bookingForm.controls.hasMarketingConsent"
                       />
                     }
                     <button

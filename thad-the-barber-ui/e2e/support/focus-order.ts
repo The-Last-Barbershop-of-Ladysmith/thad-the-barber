@@ -41,11 +41,7 @@ export async function tabThrough(page: Page, count: number): Promise<FocusStop[]
           outlineStyle: 'none',
         };
       }
-      // A PrimeNG checkbox keeps its real input invisible and draws the ring on the box beside it.
-      const ringElement: Element = element.classList.contains('p-checkbox-input')
-        ? element.nextElementSibling ?? element
-        : element;
-      const style: CSSStyleDeclaration = getComputedStyle(ringElement);
+      const style: CSSStyleDeclaration = getComputedStyle(element);
       return {
         description: [
           element.tagName.toLowerCase(),

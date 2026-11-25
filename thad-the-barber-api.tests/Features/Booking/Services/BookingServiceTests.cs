@@ -1,6 +1,5 @@
 using System.Globalization;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
 using ThadTheBarber.Api.Common.Exceptions;
@@ -8,7 +7,6 @@ using ThadTheBarber.Api.Features.Booking.Configuration;
 using ThadTheBarber.Api.Features.Booking.Exceptions;
 using ThadTheBarber.Api.Features.Booking.Models;
 using ThadTheBarber.Api.Features.Booking.Services;
-using ThadTheBarber.Api.Features.MarketingTexts.Services;
 using ThadTheBarber.Api.Infrastructure.RateLimiting.Configuration;
 using ThadTheBarber.Api.Square.Configuration;
 using ThadTheBarber.Api.Square.Exceptions;
@@ -48,27 +46,6 @@ public sealed class BookingServiceTests
         Assert.Equal(booking.Appointment.Id, confirmation.Id);
         Assert.Equal(openTime, confirmation.StartAt);
         Assert.True(ManageTokens.Signer.IsValid(confirmation.Id, confirmation.ManageToken));
-    }
-
-    [Fact]
-    public async Task ABookingWithMarketingConsentPutsThePhoneOnTheNewsTextsList()
-    {
-        FakeMediaStorage storage = new();
-
-        await Service(new FakeSquareService(), storage: storage)
-            .BookAsync(Request(openTime) with { HasMarketingConsent = true }, Cancellation);
-
-        Assert.Contains("+15550100187", storage.ContentFiles[MarketingOptInService.FileName], StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public async Task ABookingWithoutMarketingConsentLeavesTheNewsTextsListAlone()
-    {
-        FakeMediaStorage storage = new();
-
-        await Service(new FakeSquareService(), storage: storage).BookAsync(Request(openTime), Cancellation);
-
-        Assert.Empty(storage.ContentFiles);
     }
 
     [Fact]
@@ -517,8 +494,7 @@ public sealed class BookingServiceTests
     private static BookingService Service(
         FakeSquareService square,
         FakeTwilioVerifyService? twilio = null,
-        FakeTimeProvider? clock = null,
-        FakeMediaStorage? storage = null)
+        FakeTimeProvider? clock = null)
     {
         FakeTimeProvider time = clock ?? new FakeTimeProvider(now);
         return new BookingService(
@@ -531,12 +507,6 @@ public sealed class BookingServiceTests
             ManageTokens.Signer,
             LookupTokens.CreateSigner(time),
             twilio ?? new FakeTwilioVerifyService(),
-            new MarketingOptInService(
-                storage ?? new FakeMediaStorage(),
-                Options.Create(FakeMediaStorageSettings.Create()),
-                time,
-                NullLogger<MarketingOptInService>.Instance
-            ),
             Options.Create(new BookingSettings
             {
                 MaxUpcomingPerPhone = MaxUpcomingPerPhone,

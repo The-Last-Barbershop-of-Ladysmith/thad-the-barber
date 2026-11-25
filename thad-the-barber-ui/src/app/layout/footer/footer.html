@@ -16,9 +16,7 @@
         <span class="heading eyebrow">Bookings</span>
         <div class="column-links">
           <a class="nav-link" routerLink="/book">Book a cut</a>
-          @if (!isBookingPreview) {
-            <a class="nav-link" routerLink="/book/manage">Manage a booking</a>
-          }
+          <a class="nav-link" routerLink="/book/manage">Manage a booking</a>
         </div>
       </div>
 
@@ -55,11 +53,6 @@
           </div>
         </div>
       }
-
-      <div class="column column-news" data-testid="footer-text-updates">
-        <span class="heading eyebrow">Shop news by text</span>
-        <app-text-updates-form idPrefix="footer-text-updates" />
-      </div>
     </div>
   </div>
 
